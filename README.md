@@ -28,6 +28,8 @@ pnpm test:e2e
 ```
 Production file storage uses Microsoft Graph with SharePoint evidence libraries and OneDrive working files. RustFS with a pinned digest remains a local development fixture. See docs/architecture/microsoft365-storage.md. Local dependency credentials in `.env.example` are development-only. Services bind to loopback. Never expose this environment publicly.
 
+For tenant registration, selected-folder permissions, application variables and ongoing maintenance, see [the Microsoft 365 configuration guides](docs/microsoft365/README.md).
+
 For live integration checks with the environment running:
 ```
 pnpm exec tsx tests/integration/leases.ts

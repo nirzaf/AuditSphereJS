@@ -9,3 +9,4 @@ Heavy parsing and rendering belong in workers. Use explicit reviewed migrations.
 Do not mutate another module's owned tables. Do not hand-edit generated code.
 Run pnpm verify:affected. Add meaningful invariant tests and record evidence honestly.
 Do not deploy, publish or claim functional acceptance from scaffold tests alone.
+Keep docs/microsoft365/*.md current in the same change when modifying tenant configuration, Entra/Graph integrations, permissions, repository bindings, credentials or their acceptance tests. Record verification dates and limitations; never document secret values.
