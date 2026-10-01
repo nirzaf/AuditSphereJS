@@ -1,0 +1,7 @@
+# Angular MCP uses the installed, lockfile-pinned CLI for this trusted project.
+[mcp_servers.angular-cli]
+command = "node"
+args = ["node_modules/@angular/cli/bin/ng.js", "mcp"]
+cwd = "C:/Users/DELL/repos/AuditSphereJS"
+startup_timeout_sec = 30
+tool_timeout_sec = 180

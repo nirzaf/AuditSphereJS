@@ -1,4 +1,4 @@
-import { Component, Input, signal } from '@angular/core';
+import { Component, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { currentAccessToken } from './identity';
 
@@ -22,15 +22,15 @@ import { currentAccessToken } from './identity';
   }
 ` })
 export class Practice {
-  @Input() token = ''; @Input() engagementId = ''; @Input() entra = false;
+  readonly token = input(''); readonly engagementId = input(''); readonly entra = input(false);
   readonly ledger = signal<any>(null); readonly busy = signal(false); readonly message = signal('Connect in Fieldwork, then load the ledger. A firm-wide practice grant is required.');
   readonly kinds = ['ASSET','LIABILITY','EQUITY','INCOME','EXPENSE'];
   accountCode = ''; accountName = ''; accountKind = 'ASSET'; startsOn = ''; endsOn = ''; periodId = ''; accountingDate = ''; reference = ''; memo = '';
   lines = [{ accountId: '', debit: '0', credit: '0' }, { accountId: '', debit: '0', credit: '0' }];
   addLine() { this.lines.push({ accountId: '', debit: '0', credit: '0' }); }
   private async request(path = '', method = 'GET', body?: unknown) {
-    const token = this.entra ? await currentAccessToken() : this.token;
-    const response = await fetch(`/api/v1/engagements/${encodeURIComponent(this.engagementId)}/practice${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
+    const token = this.entra() ? await currentAccessToken() : this.token();
+    const response = await fetch(`/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const value = await response.json();
     if (!response.ok) throw new Error(JSON.stringify(value.error?.message ?? 'Request failed'));
     return value;

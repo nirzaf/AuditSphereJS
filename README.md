@@ -30,6 +30,8 @@ Production file storage uses Microsoft Graph with SharePoint evidence libraries 
 
 For tenant registration, selected-folder permissions, application variables and ongoing maintenance, see [the Microsoft 365 configuration guides](docs/microsoft365/README.md).
 
+Angular development uses the workspace-pinned [Angular CLI MCP server and standards](docs/architecture/angular-mcp.md), configured in `.codex/config.toml`.
+
 For live integration checks with the environment running:
 ```
 pnpm exec tsx tests/integration/leases.ts

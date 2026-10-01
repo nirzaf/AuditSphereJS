@@ -35,14 +35,16 @@ function startServer() {
       if (message.id !== undefined && pending.has(message.id)) {
         const resolver = pending.get(message.id);
         pending.delete(message.id);
-        resolver(message);
+        clearTimeout(resolver.timer);
+        resolver.resolve(message);
       }
     }
   });
   const request = (id, method, params) => new Promise((resolve, reject) => {
-    pending.set(id, resolve);
+    const entry = { resolve, timer: undefined };
+    pending.set(id, entry);
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
-    setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('MCP timeout: ' + method + (stderr ? ' | ' + stderr.slice(0, 400) : ''))); } }, 60_000);
+    entry.timer = setTimeout(() => { if (pending.has(id)) { pending.delete(id); reject(new Error('MCP timeout: ' + method + (stderr ? ' | ' + stderr.slice(0, 400) : ''))); } }, method === 'tools/call' ? 180_000 : 30_000);
   });
   return { child, request, notify: (method) => child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method }) + '\n'), stderr: () => stderr };
 }
