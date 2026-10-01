@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T21:23:01.594Z",
+  "generatedAt": "2026-10-01T23:40:27.982Z",
   "sourceCommit": null,
   "counts": {
     "PARTIAL": 14,
@@ -152,9 +152,11 @@
         "packages/server/src/modules/fieldwork/service.ts",
         "packages/server/src/modules/fieldwork/taxonomy.ts",
         "prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql",
-        "prisma/migrations/202610010017_mapping_memory/migration.sql"
+        "prisma/migrations/202610010017_mapping_memory/migration.sql",
+        "apps/web/src/module-catalog.ts",
+        "apps/web/src/line-editor.ts"
       ],
-      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings now build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). Not implemented: allocation rules, statement layouts/financial packages, and the mapping UI."
+      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mutated rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines. Not implemented: allocations, statement layouts/financial packages, taxonomy approval and per-import mapping approval actions in the UI, and the suggestion/provenance view."
     },
     {
       "id": "C15",
@@ -180,9 +182,11 @@
       "targetFiles": [
         "packages/server/src/modules/fieldwork/adjustments.ts",
         "prisma/migrations/202610010019_adjustment_journals/migration.sql",
-        "tests/adjustments.integration.ts"
+        "tests/adjustments.integration.ts",
+        "apps/web/src/line-editor.ts",
+        "apps/web/src/module-workspace.ts"
       ],
-      "evidence": "Client audit adjustment journals kept separate from the firm's own ledger: balanced double-entry drafts, posting under a distinct capability with a preparer/poster separation of duties, database-enforced balance and at-least-two-lines at posting, and a posted journal frozen except for one transition to REVERSED via a reversal journal that swaps the sides. Not implemented: adjustment plans, adjusted-balance snapshots, eligibility queries and the differences register."
+      "evidence": "Client audit adjustment journals kept separate from the firm's own ledger: balanced double-entry drafts, posting under a distinct capability with a preparer/poster separation of duties, database-enforced balance and at-least-two-lines at posting, and a posted journal frozen except for one transition to REVERSED via a reversal journal that swaps the sides. The workspace now authors more than two lines through a shared repeating editor with per-line six-decimal validation and a submission gate that refuses incomplete lines, and derived adjusted balances are exposed over the latest publication plus posted journals. Not implemented: adjustment plans, persisted adjusted-balance snapshots, eligibility queries and the differences register."
     },
     {
       "id": "C22",

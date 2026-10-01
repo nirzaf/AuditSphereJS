@@ -72,6 +72,58 @@ it('does not offer journal posting when its protected line review fails', async 
   expect(view.action()).toBeNull(); expect(request).toHaveBeenCalledTimes(1); fixture.destroy();
 });
 
+it('submits every reviewed journal line instead of a fixed two-line shape', async () => {
+  const request = vi.fn().mockResolvedValue(new Response(JSON.stringify([]))); vi.stubGlobal('fetch',request);
+  const fixture = await create('adjustments'); const view = fixture.componentInstance;
+  view.form.patchValue({reference:'ADJ-7',memo:'Accrue the audit fee'});
+  view.onLineChanges({valid:true,rows:[
+    {accountCode:'5000',fsli:'Operating expenses',debit:'200.000000',credit:'0'},
+    {accountCode:'2000',fsli:'Trade payables',debit:'0',credit:'150.000000'},
+    {accountCode:'2100',fsli:'Trade payables',debit:'0',credit:'50.000000'},
+  ]});
+  view.prepare(); expect(view.confirm()).toBe(true); expect(request).not.toHaveBeenCalled();
+  view.save(); await vi.waitFor(() => expect(view.busy()).toBe(false));
+  expect(request.mock.calls[0][0]).toBe('/api/v1/engagements/engagement-a/adjustments');
+  const body = JSON.parse(request.mock.calls[0][1].body);
+  expect(body.lines).toHaveLength(3);
+  expect(body.lines[0]).toEqual({accountCode:'5000',fsli:'Operating expenses',debit:'200.000000',credit:'0'});
+  expect(body.lines[2]).toEqual({accountCode:'2100',fsli:'Trade payables',debit:'0',credit:'50.000000'});
+  fixture.destroy();
+});
+it('refuses to submit incomplete structured lines and reports why', async () => {
+  const request = vi.fn(); vi.stubGlobal('fetch',request);
+  const fixture = await create('adjustments'); const view = fixture.componentInstance;
+  view.form.patchValue({reference:'ADJ-8',memo:'Incomplete'});
+  view.onLineChanges({valid:false,rows:[{accountCode:'5000',debit:'10.000000',credit:'0'},{accountCode:'',debit:'0',credit:''}]});
+  view.prepare();
+  expect(view.confirm()).toBe(false); expect(view.error()).toContain('structured lines');
+  expect(request).not.toHaveBeenCalled(); fixture.destroy();
+});
+it('validates taxonomy lines against the versioned taxonomy contract', async () => {
+  const request = vi.fn().mockResolvedValue(new Response(JSON.stringify([]))); vi.stubGlobal('fetch',request);
+  const fixture = await create('taxonomies'); const view = fixture.componentInstance;
+  view.form.patchValue({name:'STE statutory taxonomy'});
+  view.onLineChanges({valid:true,rows:[
+    {code:'REV',label:'Revenue',statementSection:'INVALID',sortOrder:'0'},
+  ]});
+  view.prepare(); view.save();
+  await vi.waitFor(() => expect(view.busy()).toBe(false));
+  expect(request).not.toHaveBeenCalled();
+  expect(view.error()).toContain('statementSection');
+  view.onLineChanges({valid:true,rows:[
+    {code:'REV',label:'Revenue',statementSection:'INCOME',sortOrder:'0'},
+    {code:'EXP',label:'Operating expenses',statementSection:'EXPENSE',sortOrder:'1'},
+  ]});
+  view.save(); await vi.waitFor(() => expect(view.busy()).toBe(false));
+  expect(request.mock.calls[0][0]).toBe('/api/v1/engagements/engagement-a/taxonomies');
+  const body = JSON.parse(request.mock.calls[0][1].body);
+  expect(body.name).toBe('STE statutory taxonomy');
+  expect(body.lines).toEqual([
+    {code:'REV',label:'Revenue',statementSection:'INCOME',sortOrder:0},
+    {code:'EXP',label:'Operating expenses',statementSection:'EXPENSE',sortOrder:1},
+  ]);
+  fixture.destroy();
+});
 it('reuses the reviewed command key after transport failure and invalidates review when input changes', async () => {
   const request = vi.fn().mockResolvedValue(new Response('{}',{status:500})); vi.stubGlobal('fetch',request);
   const fixture = await create('materiality'); const view = fixture.componentInstance;

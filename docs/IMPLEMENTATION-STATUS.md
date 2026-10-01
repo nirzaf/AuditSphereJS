@@ -26,4 +26,6 @@ Practice now has a real firm ledger and UI: firm-wide grants, typed chart accoun
 
 ## UI module milestone - 2026-10-02
 
-The five modules now expose 36 URL-addressable workspaces in the shared STE shell. Nine workspaces connect to existing APIs or dedicated working views; 27 are explicitly session-only preparation forms. This is presentation coverage, not completion of those 27 business workflows. See `evidence/UI-MODULES.md` for the per-screen boundary and verification.
+The five modules now expose 37 URL-addressable workspaces in the shared STE shell. Ten workspaces connect to existing APIs or dedicated working views; 27 are explicitly session-only preparation forms. This is presentation coverage, not completion of those 27 business workflows. See `evidence/UI-MODULES.md` for the per-screen boundary and verification.
+
+The adjustment and taxonomy workspaces now share a repeating line editor (`apps/web/src/line-editor.ts`) supporting more than two journal lines, per-line six-decimal validation and a submit gate that refuses incomplete lines; the taxonomy workspace is new and creates versioned taxonomy lines through the existing guarded endpoint. Both remain presentation only: the server still owns balance, approval and versioning, and taxonomy/mapping approval actions remain API-only. See `evidence/UI-MODULES.md`.

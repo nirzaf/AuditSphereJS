@@ -1,18 +1,33 @@
 import { Component, computed, effect, input, signal } from '@angular/core';
 import { FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
-import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema } from '@auditsphere/contracts';
+import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema } from '@auditsphere/contracts';
 import { Practice } from './practice';
 import { currentAccessToken } from './identity';
-import { moduleScreens, type ScreenField } from './module-catalog';
+import { LineEditor, type EditorRow } from './line-editor';
+import { moduleScreens, type ModuleScreen, type ScreenField } from './module-catalog';
 
 type RecordValue = Record<string, unknown>;
 type DraftValues = Record<string, string>;
+// Stable input identities: the repeating line editors rebuild only on scope change, so these
+// definitions must not be recreated per change-detection pass.
+const adjustmentLineFields: readonly ScreenField[] = [
+  { key: 'accountCode', label: 'Account code', required: true },
+  { key: 'fsli', label: 'Financial statement line item', required: false },
+  { key: 'debit', label: 'Debit · QAR', type: 'decimal', required: true },
+  { key: 'credit', label: 'Credit · QAR', type: 'decimal', required: true },
+];
+const taxonomyLineFields: readonly ScreenField[] = [
+  { key: 'code', label: 'Taxonomy line code', required: true },
+  { key: 'label', label: 'Statement label', required: true },
+  { key: 'statementSection', label: 'Statement section', type: 'select', options: ['INCOME', 'EXPENSE', 'ASSETS', 'LIABILITIES', 'EQUITY'], required: true },
+  { key: 'sortOrder', label: 'Sort order', type: 'integer', required: true },
+];
 // Presentation drafts only. No localStorage, tokens, approval or business state.
 const sessionDrafts = new Map<string, DraftValues>();
 let sessionIdentity = ''; // Memory only; clear drafts when the authenticated session changes.
 const record = (value: unknown): RecordValue => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : {};
 
-@Component({ selector: 'module-workspace', imports: [ReactiveFormsModule, Practice], templateUrl: './module-workspace.html' })
+@Component({ selector: 'module-workspace', imports: [ReactiveFormsModule, Practice, LineEditor], templateUrl: './module-workspace.html' })
 export class ModuleWorkspace {
   readonly screenId = input.required<string>(); readonly engagementId = input.required<string>();
   readonly token = input(''); readonly entra = input(false);
@@ -20,6 +35,7 @@ export class ModuleWorkspace {
   readonly rows = signal<RecordValue[]>([]); readonly state = signal<RecordValue>({});
   readonly busy = signal(false); readonly error = signal(''); readonly message = signal(''); readonly loaded = signal(false);
   readonly search = signal(''); readonly selected = signal<RecordValue | null>(null); readonly confirm = signal(false);
+  readonly lines = signal<EditorRow[]>([]); readonly linesValid = signal(false);
   readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | null>(null);
   readonly actionFields = signal<ScreenField[]>([]);
   form = new FormRecord<FormControl<string>>({}); actionForm = new FormRecord<FormControl<string>>({});
@@ -35,6 +51,7 @@ export class ModuleWorkspace {
       const identity = this.token(); this.entra();
       if (sessionIdentity !== identity) { sessionDrafts.clear(); sessionIdentity = identity; }
       this.commandKey = crypto.randomUUID(); this.generation++; this.rows.set([]); this.state.set({}); this.loaded.set(false); this.error.set(''); this.message.set(''); this.busy.set(false); this.search.set(''); this.selected.set(null); this.action.set(null); this.confirm.set(false);
+      this.lines.set([]); this.linesValid.set(false);
       this.form = this.controls(screen.fields, sessionDrafts.get(draftKey));
       const subscription = this.form.valueChanges.subscribe(() => { this.confirm.set(false); this.commandKey = crypto.randomUUID(); sessionDrafts.set(draftKey, this.form.getRawValue()); });
       onCleanup(() => { subscription.unsubscribe(); this.generation++; });
@@ -79,29 +96,40 @@ export class ModuleWorkspace {
     this.rows.set(Array.isArray(list) ? list.map(record) : list ? [record(list)] : []); this.loaded.set(true);
   }
   refresh() { void this.run(generation => this.read(generation)); }
+  onLineChanges(event: { rows: EditorRow[]; valid: boolean }) { this.lines.set(event.rows); this.linesValid.set(event.valid); this.error.set(''); }
+  lineFields(screen: ModuleScreen): readonly ScreenField[] { return screen.lineKind === 'taxonomy' ? taxonomyLineFields : adjustmentLineFields; }
+  lineMinimum(screen: ModuleScreen): number { return screen.lineKind === 'taxonomy' ? 1 : 2; }
+  lineTitle(screen: ModuleScreen): string { return screen.lineKind === 'taxonomy' ? 'Taxonomy lines' : 'Journal lines'; }
   prepare() {
     this.form.markAllAsTouched(); if (this.form.invalid) return;
+    if (this.screen().lineKind && !this.linesValid()) { this.error.set('Review the structured lines before confirming.'); return; }
     if (this.screen().action) { this.confirm.set(true); return; }
     sessionDrafts.set(`${this.engagementId()}:${this.screenId()}`, this.form.getRawValue());
     this.message.set('Draft kept in this session. It has not been submitted or approved. Closing or reloading the application clears session drafts.');
   }
-  discard() { sessionDrafts.delete(`${this.engagementId()}:${this.screenId()}`); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.message.set('Draft cleared.'); this.confirm.set(false); }
+  discard() { sessionDrafts.delete(`${this.engagementId()}:${this.screenId()}`); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.lines.set([]); this.linesValid.set(false); this.message.set('Draft cleared.'); this.confirm.set(false); this.error.set(''); }
   save() {
     if (this.form.invalid || !this.screen().action || !this.confirm()) return;
     const screen = this.screen(); const body: RecordValue = { ...this.form.getRawValue() };
     if (screen.id === 'materiality') { body['idempotencyKey'] = this.commandKey; if (!body['destinationCode']) delete body['destinationCode']; }
     if (screen.id === 'publications') { body['expectedVersion'] = Number(body['expectedVersion']); body['idempotencyKey'] = this.commandKey; }
-    if (screen.id === 'adjustments') {
-      body['lines'] = [1,2].map(index => ({accountCode:body[`accountCode${index}`],debit:body[`debit${index}`],credit:body[`credit${index}`]}));
-      for (const key of ['accountCode1','accountCode2','debit1','debit2','credit1','credit2']) delete body[key];
+    if (screen.lineKind === 'adjustment') {
+      if (!this.linesValid()) { this.error.set('Review two or more balanced journal lines before confirming.'); return; }
+      body['lines'] = this.lines().map(row => ({ accountCode: row['accountCode'], ...(row['fsli'] ? { fsli: row['fsli'] } : {}), debit: row['debit'] ?? '0', credit: row['credit'] ?? '0' }));
     }
-    const schema = screen.id === 'materiality' ? calculateMaterialitySchema : screen.id === 'risks' ? createRiskSchema : screen.id === 'reviews' ? raiseReviewNoteSchema : screen.id === 'publications' ? publishSchema : createAdjustmentJournalSchema;
+    if (screen.lineKind === 'taxonomy') {
+      if (!this.linesValid()) { this.error.set('Review one or more taxonomy lines before confirming.'); return; }
+      body['lines'] = this.lines().map((row, index) => ({ code: row['code'], label: row['label'], statementSection: row['statementSection'], sortOrder: Number(row['sortOrder'] ?? index) }));
+    }
+    // Session-only workspaces use one confirmation gate for the whole preparation; the
+    // adjustments and taxonomy editors keep their own line lists outside that draft form.
+    const schema = screen.id === 'materiality' ? calculateMaterialitySchema : screen.id === 'risks' ? createRiskSchema : screen.id === 'reviews' ? raiseReviewNoteSchema : screen.id === 'publications' ? publishSchema : screen.lineKind === 'taxonomy' ? createTaxonomySchema : createAdjustmentJournalSchema;
     const parsed = schema.safeParse(body);
-    if (!parsed.success) { this.error.set(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(' � ')); return; }
+    if (!parsed.success) { this.error.set(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(' � ')); return; }
     void this.run(async generation => {
       await this.request(screen.id === 'publications' ? '/publications' : screen.endpoint!, 'POST', parsed.data);
       if (generation !== this.generation) return;
-      this.confirm.set(false); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); sessionDrafts.delete(`${this.engagementId()}:${screen.id}`);
+      this.confirm.set(false); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.lines.set([]); this.linesValid.set(false); this.error.set(''); sessionDrafts.delete(`${this.engagementId()}:${screen.id}`);
       this.message.set('Saved to the engagement.'); await this.read(generation);
     });
   }
