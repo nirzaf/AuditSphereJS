@@ -2,7 +2,7 @@
 
 | Field | Value |
 | :--- | :--- |
-| Initial status | `NOT_STARTED` |
+| Initial status | `IN_PROGRESS` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `platform` |
@@ -48,16 +48,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Provide a small unit-of-work/transaction context passed to module-owned facades, not a global mutable transaction singleton.
-- [ ] Define lock ordering and bounded retry for retryable PostgreSQL conflicts; never retry validation failures.
-- [ ] Ensure domain changes, audit inserts and required outbox/operation rows commit or roll back together.
-- [ ] Forbid network/PDF/storage waits inside database transactions.
+- [x] Provide a small unit-of-work/transaction context passed to module-owned facades, not a global mutable transaction singleton.
+- [x] Define lock ordering and bounded retry for retryable PostgreSQL conflicts; never retry validation failures.
+- [x] Ensure domain changes, audit inserts and required outbox/operation rows commit or roll back together.
+- [x] Forbid network/PDF/storage waits inside database transactions.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** An induced failure after the first write rolls back the entire command.
-- [ ] **AC2:** Nested module calls use the same connection/transaction.
-- [ ] **AC3:** Retry cannot duplicate a business identifier.
+- [x] **AC1:** An induced failure after the first write rolls back the entire command.
+- [x] **AC2:** Nested module calls use the same connection/transaction.
+- [x] **AC3:** Retry cannot duplicate a business identifier.
 
 Run focused unit plus real-service integration tests for affected contracts, transactions and failure behavior.
 

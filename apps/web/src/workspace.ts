@@ -1,10 +1,11 @@
 import { Component, signal, computed, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Practice } from './practice';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { fslis, TrialBalanceRow } from '@auditsphere/contracts';
 import { identityConfiguration, signIn, currentAccessToken } from './identity';
 // Standalone is the default in Angular v20+; setting it explicitly is unnecessary.
-@Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule], templateUrl: './workspace.html' })
+@Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule, Practice], templateUrl: './workspace.html' })
 export class Workspace implements OnDestroy {
   readonly identityProvider = signal<'loading' | 'entra' | 'development'>('loading');
   engagementId = '00000000-0000-4000-8000-000000000002';

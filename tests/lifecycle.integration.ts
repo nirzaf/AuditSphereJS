@@ -117,6 +117,8 @@ test('guarded lifecycle commands reject invalid paths, enforce evidence and stay
       assert.equal(history.length, 3);
       assert.deepEqual(history.map((row) => row.command), ['START_FIELDWORK', 'SUBMIT_FOR_REVIEW', 'RETURN_FOR_REWORK']);
       assert.equal(await db.auditEvent.count({ where: { engagementId } }), 3);
+      await db.roleGrant.updateMany({ where: { userId: actorId, capability: 'LIFECYCLE_COMMAND' }, data: { revokedAt: new Date(), revokedBy: actorId } });
+      await assert.rejects(applyLifecycleCommand(engagementId, actorId, { command: 'SUBMIT_FOR_REVIEW', expectedVersion: 2, idempotencyKey: key('03') }), /not granted/i, 'revoked authority cannot replay an old receipt');
 
       // History and audit are append-only at the database level.
       await assert.rejects(db.$executeRaw`UPDATE "EngagementTransition" SET "toState" = 'ARCHIVED_READ_ONLY' WHERE "engagementId" = ${engagementId}::uuid`, /append-only/);

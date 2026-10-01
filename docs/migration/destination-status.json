@@ -1,5 +1,5 @@
 {
-  "note": "Destination state as verified on 2026-10-01 against commit 45cc273caea17149579421efd002a536eb8a9681. Statuses are evidence-bounded: PARTIAL means some real code and tests exist but the preservation criterion in the migration plan is not met.",
+  "note": "Destination evidence updated 2026-10-02 after real PostgreSQL and live browser verification. PARTIAL means tested implementation exists but the full preservation criterion is not met; task handoffs bound each claim.",
   "statuses": {
     "C01": {
       "status": "PARTIAL",
@@ -225,9 +225,13 @@
       "migEpic": "MIG-014"
     },
     "C30": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No archive/records service.",
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/platform/audit-chain.ts",
+        "prisma/migrations/202610020001_audit_chain/migration.sql",
+        "tests/audit-chain.integration.ts"
+      ],
+      "evidence": "Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. No immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint is implemented.",
       "migEpic": "MIG-014"
     },
     "C31": {
@@ -237,9 +241,14 @@
       "migEpic": "-"
     },
     "C32": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No firm chart/periods/journals/invoices/ledger.",
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/practice/ledger.ts",
+        "apps/web/src/practice.ts",
+        "prisma/migrations/202610020002_practice_ledger/migration.sql",
+        "tests/practice-ledger.integration.ts"
+      ],
+      "evidence": "Firm-wide authorized chart, active/posting accounts, non-overlapping date-only periods, policy-gated balanced journal posting, immutable posted headers and lines, exact append-only reversing journals, trial balance query and Practice UI. PostgreSQL scope, balance, lock and race guards are implemented. Not implemented: invoices, payment allocations, credit notes, period reopening, bank reconciliation, monthly P/L and AR aging; full source parity remains incomplete.",
       "migEpic": "MIG-006"
     },
     "C33": {

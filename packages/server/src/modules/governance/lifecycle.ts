@@ -67,15 +67,15 @@ export async function applyLifecycleCommand(engagementId: string, actorId: strin
   return db.$transaction(async (tx) => {
     // Serialize commands for this engagement before reading its current state.
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    // Authorize before revealing whether the command applies to the current state.
+    await requireCapability(tx, actorId, 'LIFECYCLE_COMMAND', { firmId: engagement.firmId, clientId: engagement.clientId, engagementId });
     const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
     if (receipt) {
       if (receipt.hash !== hash || receipt.actorId !== actorId || receipt.engagementId !== engagementId) throw new ConflictException('Idempotency key reused');
       return receipt.result;
     }
-    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
-    if (!engagement) throw new NotFoundException('Engagement not found');
-    // Authorize before revealing whether the command applies to the current state.
-    await requireCapability(tx, actorId, 'LIFECYCLE_COMMAND', { firmId: engagement.firmId, clientId: engagement.clientId, engagementId });
     const definition = transitions[body.command];
     if (!definition || !definition.from.includes(engagement.state)) {
       throw new ConflictException(`Command ${body.command} is not valid from ${engagement.state}`);

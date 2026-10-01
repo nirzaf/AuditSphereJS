@@ -1,4 +1,11 @@
 import { test, expect } from '@playwright/test';
+test('Practice exposes a firm ledger workspace without granting access from navigation', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Practice' }).click();
+  await expect(page.getByRole('heading', { name: 'Practice ledger' })).toBeVisible();
+  await expect(page.getByText('A firm-wide practice grant is required.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Chart of accounts' })).toHaveCount(0);
+});
 test('lazy client layout remains unavailable without portal authentication', async ({ page }) => {
   await page.goto('/portal');
   await expect(page.getByRole('heading', { name: 'Client portal' })).toBeVisible();

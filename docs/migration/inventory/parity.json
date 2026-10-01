@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-01T19:25:22.985Z",
+  "generatedAt": "2026-10-01T21:23:01.594Z",
   "sourceCommit": null,
   "counts": {
-    "PARTIAL": 12,
-    "NOT_STARTED": 26
+    "PARTIAL": 14,
+    "NOT_STARTED": 24
   },
   "rows": [
     {
@@ -266,6 +266,59 @@
         "tests/review-notes.integration.ts"
       ],
       "evidence": "Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances."
+    },
+    {
+      "id": "C30",
+      "capability": "Records archive, checkpoints and release evidence",
+      "destinationOwner": "Reporting archive and regulator export",
+      "taskAnchor": "T132-T136; MIG-014",
+      "migEpic": "MIG-014",
+      "symbols": [
+        "RecordsArchiveService"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Records/RecordsArchiveService.cs"
+      ],
+      "sourceFileCount": 1,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/platform/audit-chain.ts",
+        "prisma/migrations/202610020001_audit_chain/migration.sql",
+        "tests/audit-chain.integration.ts"
+      ],
+      "evidence": "Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. No immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint is implemented."
+    },
+    {
+      "id": "C32",
+      "capability": "Firm billing, ledger and finance queries",
+      "destinationOwner": "Practice finance and firm books",
+      "taskAnchor": "T066-T072, T125, T144-T148; MIG-006",
+      "migEpic": "MIG-006",
+      "symbols": [
+        "BillingService",
+        "LedgerService",
+        "FirmFinanceQuery"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Practice/BillingService.cs",
+        "src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs",
+        "src/AuditSphereOps.Application/Practice/LedgerService.cs"
+      ],
+      "sourceFileCount": 3,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/modules/practice/ledger.ts",
+        "apps/web/src/practice.ts",
+        "prisma/migrations/202610020002_practice_ledger/migration.sql",
+        "tests/practice-ledger.integration.ts"
+      ],
+      "evidence": "Firm-wide authorized chart, active/posting accounts, non-overlapping date-only periods, policy-gated balanced journal posting, immutable posted headers and lines, exact append-only reversing journals, trial balance query and Practice UI. PostgreSQL scope, balance, lock and race guards are implemented. Not implemented: invoices, payment allocations, credit notes, period reopening, bank reconciliation, monthly P/L and AR aging; full source parity remains incomplete."
     },
     {
       "id": "C36",
@@ -987,26 +1040,6 @@
       "evidence": "No freeze/deadline/legal hold. The only immutability is DB triggers on finalized TB rows and audit events."
     },
     {
-      "id": "C30",
-      "capability": "Records archive, checkpoints and release evidence",
-      "destinationOwner": "Reporting archive and regulator export",
-      "taskAnchor": "T132-T136; MIG-014",
-      "migEpic": "MIG-014",
-      "symbols": [
-        "RecordsArchiveService"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Records/RecordsArchiveService.cs"
-      ],
-      "sourceFileCount": 1,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No archive/records service."
-    },
-    {
       "id": "C31",
       "capability": "Practice time, budgets and rate cards",
       "destinationOwner": "Practice timesheets and budgets",
@@ -1025,30 +1058,6 @@
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [],
       "evidence": "No practice time/rates/budgets."
-    },
-    {
-      "id": "C32",
-      "capability": "Firm billing, ledger and finance queries",
-      "destinationOwner": "Practice finance and firm books",
-      "taskAnchor": "T066-T072, T125, T144-T148; MIG-006",
-      "migEpic": "MIG-006",
-      "symbols": [
-        "BillingService",
-        "LedgerService",
-        "FirmFinanceQuery"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Practice/BillingService.cs",
-        "src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs",
-        "src/AuditSphereOps.Application/Practice/LedgerService.cs"
-      ],
-      "sourceFileCount": 3,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No firm chart/periods/journals/invoices/ledger."
     },
     {
       "id": "C33",

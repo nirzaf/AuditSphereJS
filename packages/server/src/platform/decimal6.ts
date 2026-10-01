@@ -9,6 +9,11 @@ const SCALE = 6;
 const UNIT = 10n ** 6n;
 const PATTERN = /^-?\d+(\.\d+)?$/;
 
+/** Storage scale of the authoritative decimal policy: PostgreSQL numeric(28,6) and string transport. */
+export const MONEY_SCALE = SCALE;
+/** Integer-digit headroom of numeric(28,6): 28 total digits minus the 6 fractional digits. */
+export const MAX_INTEGER_DIGITS = 22;
+
 /** Half-to-even integer division. Returns round(numerator / denominator). */
 export function roundHalfEvenDiv(numerator: bigint, denominator: bigint): bigint {
   if (denominator <= 0n) throw new Error('Denominator must be positive');
@@ -91,7 +96,65 @@ export class Decimal6 {
     const text = this.toFixed(SCALE);
     return text.includes('.') ? text.replace(/0+$/, '').replace(/\.$/, '') : text;
   }
-  static sum(values: Decimal6[]): Decimal6 { return values.reduce((total, value) => total.add(value), Decimal6.zero()); }
+  static sum(values: Decimal6[]): Decimal6 {
+    return values.reduce((total, value) => total.add(value), Decimal6.zero());
+  }
+
+  /**
+   * Parse an authoritative input value, failing closed on out-of-band digits or scale.
+   * Unlike `from`, this never silently truncates or rounds a supplied figure: money entering the
+   * system must already fit the numeric(28,6) policy (D05 input bounds).
+   */
+  static fromInput(value: string): Decimal6 {
+    const text = value.trim();
+    if (!PATTERN.test(text)) throw new Error('Invalid decimal input: ' + text);
+    const body = text.startsWith('-') ? text.slice(1) : text;
+    const [whole, fraction = ''] = body.split('.');
+    const significantWhole = whole.replace(/^0+(?=\d)/, '');
+    if (significantWhole.length > MAX_INTEGER_DIGITS) {
+      throw new Error(`Decimal input exceeds ${MAX_INTEGER_DIGITS} integer digits: ${text}`);
+    }
+    if (fraction.length > SCALE) throw new Error(`Decimal input exceeds scale ${SCALE}: ${text}`);
+    return Decimal6.from(text);
+  }
+
+  /** Final QAR presentation rounding (two decimals, half-to-even). */
+  roundQar(): Decimal6 { return this.roundTo(2); }
+  /** Authoritative QAR total as a two-decimal string. */
+  toQarString(): string { return this.toFixed(2); }
+
+  /**
+   * Signed-balance display policy. Positive amounts carry an explicit leading '+', negative
+   * amounts keep '-', and zero renders unsigned. The source leaves the sign convention open
+   * (D05); this is the single reviewed default so no component invents its own.
+   */
+  toSignedQarString(): string {
+    const text = this.toFixed(2);
+    if (this.isZero() || !this.isPositive()) return text;
+    return '+' + text;
+  }
+
+  /**
+   * Current-year versus prior-year variance (R044). A zero prior base is reported explicitly as
+   * `NO_BASE` with a null percentage rather than a misleading 0% (D05 / AC2). The percentage is
+   * measured against the absolute prior base so direction reflects movement, not a negative
+   * balance's sign convention.
+   */
+  static variance(current: Decimal6, prior: Decimal6): BalanceVariance {
+    const change = current.subtract(prior);
+    if (prior.isZero()) return { change, percent: null, direction: 'NO_BASE' };
+    if (change.isZero()) return { change, percent: Decimal6.zero(), direction: 'NO_CHANGE' };
+    const percent = new Decimal6(roundHalfEvenDiv(change.minor * 100n * UNIT, prior.abs().minor));
+    return { change, percent, direction: change.isPositive() ? 'INCREASE' : 'DECREASE' };
+  }
+}
+
+export type VarianceDirection = 'NO_BASE' | 'NO_CHANGE' | 'INCREASE' | 'DECREASE';
+export interface BalanceVariance {
+  readonly change: Decimal6;
+  /** Percentage change with six-decimal scale, or null when the prior base is zero. */
+  readonly percent: Decimal6 | null;
+  readonly direction: VarianceDirection;
 }
 
 function numberToPlainString(value: number): string {

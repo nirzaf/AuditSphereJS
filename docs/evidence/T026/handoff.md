@@ -1,0 +1,7 @@
+# Audit chain implementation — 2026-10-02
+
+Migration 202610020001 creates ordered SHA-256 audit sidecars without modifying historical AuditEvent bytes. An insert trigger serializes one head per engagement and atomically appends the event canonical text, predecessor digest and format version. PostgreSQL JSONB serialization and microsecond timestamp text define format 1; it is deliberately not interchangeable with an arbitrary JavaScript JSON serializer. Pre-migration events are chained at migration time, not retrospectively attested.
+
+The verifier compares the current event to its captured canonical bytes, checks ordering and predecessor/hash links, detects unchained records and checks independent manifests. Historical checkpoints verify a chain prefix as new events arrive. Internal scoped API routes expose checkpoint capture and verification. Runtime database roles can read sidecars but cannot write them directly; trigger authority has a fixed search path and no public execution grant.
+
+The focused PostgreSQL 18.6 integration test passed concurrent writes, rollback, payload tampering, application-role head denial, immutable sidecars and independent checkpoint mismatch. The checkpoint interface exports a manifest; independent signing/locked storage is still required. Hashing does not defeat a privileged owner who can rewrite both the chain and every checkpoint. T026 remains IN_REVIEW rather than claiming credentialed checkpoint acceptance.

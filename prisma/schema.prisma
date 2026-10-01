@@ -444,6 +444,79 @@ model AuditEvent {
   action       String
   payload      Json
   createdAt    DateTime @default(now())
+  chainRecord  AuditChainRecord?
+}
+model AuditChainHead {
+  engagementId String @id @db.Uuid
+  sequence BigInt
+  digest String
+}
+model PracticeAccount {
+  id String @id @default(uuid()) @db.Uuid
+  firmId String @db.Uuid
+  code String
+  name String
+  kind String
+  active Boolean @default(true)
+  posting Boolean @default(true)
+  @@unique([firmId, code])
+  @@unique([firmId, id])
+}
+model FirmPostingPolicy {
+  firmId String @id @db.Uuid
+  policyVersion String
+  approvedBy String @db.Uuid
+  approvedAt DateTime @default(now())
+  revenueTreatment String
+  taxTreatment String
+}
+model PracticePeriod {
+  id String @id @default(uuid()) @db.Uuid
+  firmId String @db.Uuid
+  startsOn DateTime @db.Date
+  endsOn DateTime @db.Date
+  closed Boolean @default(false)
+  version Int @default(1)
+  @@unique([firmId, id])
+}
+model PracticeJournal {
+  id String @id @default(uuid()) @db.Uuid
+  firmId String @db.Uuid
+  periodId String @db.Uuid
+  accountingDate DateTime @db.Date
+  reference String
+  memo String
+  status String @default("DRAFT")
+  version Int @default(1)
+  createdBy String @db.Uuid
+  postedBy String? @db.Uuid
+  postedAt DateTime?
+  reversalOf String? @unique @db.Uuid
+  lines PracticeJournalLine[]
+  @@unique([firmId, reference])
+  @@unique([firmId, id])
+}
+model PracticeJournalLine {
+  id String @id @default(uuid()) @db.Uuid
+  firmId String @db.Uuid
+  journalId String @db.Uuid
+  journal PracticeJournal @relation(fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
+  accountId String @db.Uuid
+  position Int
+  debit Decimal @db.Decimal(28, 6)
+  credit Decimal @db.Decimal(28, 6)
+  @@unique([journalId, position])
+}
+model AuditChainRecord {
+  eventId String @id @db.Uuid
+  event AuditEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  engagementId String @db.Uuid
+  sequence BigInt
+  formatVersion Int
+  previousDigest String
+  digest String
+  canonicalText String
+  @@unique([engagementId, sequence])
 }
 model OutboxEvent {
   id          String    @id @default(uuid()) @db.Uuid

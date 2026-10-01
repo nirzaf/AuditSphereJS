@@ -11,8 +11,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 
 | Status | Capabilities |
 | --- | ---: |
-| NOT_STARTED | 26 |
-| PARTIAL | 12 |
+| NOT_STARTED | 24 |
+| PARTIAL | 14 |
 
 ## Destination status by capability
 
@@ -27,6 +27,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C22 | Materiality and risk classification | `src/AuditSphereOps.Application/Audit/MaterialityCalculator.cs`<br>`src/AuditSphereOps.Application/Audit/MaterialityEngineService.cs`<br>`src/AuditSphereOps.Application/Audit/RiskBandService.cs` | 3 | Governance materiality and risk | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-003 |
 | C25 | Sampling runs, evidence and movements | `src/AuditSphereOps.Application/Audit/AuditSamplingService.cs`<br>`src/AuditSphereOps.Domain/Audit/AuditSamplingEngine.cs`<br>`src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs`<br>… 1 more | 5 | Fieldwork sampling and physical evidence | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-010 |
 | C26 | Review notes, reviews and completion | `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs` | 1 | Reporting review inbox and SRM | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
+| C30 | Records archive, checkpoints and release evidence | `src/AuditSphereOps.Application/Records/RecordsArchiveService.cs` | 1 | Reporting archive and regulator export | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-014 |
+| C32 | Firm billing, ledger and finance queries | `src/AuditSphereOps.Application/Practice/BillingService.cs`<br>`src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs`<br>`src/AuditSphereOps.Application/Practice/LedgerService.cs` | 3 | Practice finance and firm books | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-006 |
 | C36 | Operations hosts, workers and scoped operations UI | `src/AuditSphereOps.Application/Operations/Contracts.cs`<br>`src/AuditSphereOps.Application/Operations/OperationDispatcher.cs`<br>`src/AuditSphereOps.Application/Operations/OperationRecoveryService.cs`<br>`src/AuditSphereOps.Worker/Program.cs`<br>… 1 more | 5 | Platform operations and job status | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
 | C37 | API downloads, drafts, upload helpers and route guards | `src/AuditSphereOps.Domain/Documents/Pbc.cs` | 1 | Angular/API contract layer | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-003 |
 | C38 | Migrations, database checks, triggers and indexes | `src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Accounting.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AdjustmentBridge.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Audit.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AuditDeliverables.cs`<br>… 147 more | 151 | Prisma migrations plus reviewed PostgreSQL SQL | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-001, MIG-002, MIG-017 |
@@ -50,9 +52,7 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C27 | Confirmations and holding documents | `src/AuditSphereOps.Application/Audit/AuditConfirmationBatchService.cs`<br>`src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Confirmations.cs`<br>`src/AuditSphereOps.Domain/Audit/Fieldwork.cs`<br>`src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs` | 4 | Fieldwork confirmations / reporting completion gates | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C28 | Opinions, signatures, representations and bundles | `src/AuditSphereOps.Application/Completion/AuditDeliverableService.Bundle.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.OpinionAreas.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.Representations.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.Seal.cs`<br>… 1 more | 5 | Reporting opinions and signed deliverables | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-013 |
 | C29 | Freeze, amendments and document locks | `src/AuditSphereOps.Application/Records/FileFreezeService.cs`<br>`src/AuditSphereOps.Domain/Records/FileFreeze.cs` | 2 | Reporting records and operations | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-014 |
-| C30 | Records archive, checkpoints and release evidence | `src/AuditSphereOps.Application/Records/RecordsArchiveService.cs` | 1 | Reporting archive and regulator export | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-014 |
 | C31 | Practice time, budgets and rate cards | `src/AuditSphereOps.Application/Practice/PracticeTimeService.cs` | 1 | Practice timesheets and budgets | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
-| C32 | Firm billing, ledger and finance queries | `src/AuditSphereOps.Application/Practice/BillingService.cs`<br>`src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs`<br>`src/AuditSphereOps.Application/Practice/LedgerService.cs` | 3 | Practice finance and firm books | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-006 |
 | C33 | Practice analytics and contract contribution | `src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs`<br>`src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs` | 2 | Practice analytics | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-015 |
 | C34 | Technical library and published document versions | `src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs` | 1 | Practice technical library | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-015 |
 | C35 | Global staff search | `src/AuditSphereOps.Application/Search/GlobalSearchQuery.cs` | 1 | Shared staff search | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-015 |
@@ -148,6 +148,26 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs`
 - Destination files: `packages/server/src/modules/reporting/review-notes.ts`, `prisma/migrations/202610010018_review_notes/migration.sql`, `tests/review-notes.integration.ts`
 - Evidence / gap: Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances.
+
+### C30 — Records archive, checkpoints and release evidence
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Reporting archive and regulator export
+- Existing task anchor: T132-T136; MIG-014; migration epic: MIG-014
+- Source symbols resolved: `RecordsArchiveService`
+- Source files: `src/AuditSphereOps.Application/Records/RecordsArchiveService.cs`
+- Destination files: `packages/server/src/platform/audit-chain.ts`, `prisma/migrations/202610020001_audit_chain/migration.sql`, `tests/audit-chain.integration.ts`
+- Evidence / gap: Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. No immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint is implemented.
+
+### C32 — Firm billing, ledger and finance queries
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Practice finance and firm books
+- Existing task anchor: T066-T072, T125, T144-T148; MIG-006; migration epic: MIG-006
+- Source symbols resolved: `BillingService`, `LedgerService`, `FirmFinanceQuery`
+- Source files: `src/AuditSphereOps.Application/Practice/BillingService.cs`, `src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs`, `src/AuditSphereOps.Application/Practice/LedgerService.cs`
+- Destination files: `packages/server/src/modules/practice/ledger.ts`, `apps/web/src/practice.ts`, `prisma/migrations/202610020002_practice_ledger/migration.sql`, `tests/practice-ledger.integration.ts`
+- Evidence / gap: Firm-wide authorized chart, active/posting accounts, non-overlapping date-only periods, policy-gated balanced journal posting, immutable posted headers and lines, exact append-only reversing journals, trial balance query and Practice UI. PostgreSQL scope, balance, lock and race guards are implemented. Not implemented: invoices, payment allocations, credit notes, period reopening, bank reconciliation, monthly P/L and AR aging; full source parity remains incomplete.
 
 ### C36 — Operations hosts, workers and scoped operations UI
 
@@ -379,16 +399,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Destination files: —
 - Evidence / gap: No freeze/deadline/legal hold. The only immutability is DB triggers on finalized TB rows and audit events.
 
-### C30 — Records archive, checkpoints and release evidence
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Reporting archive and regulator export
-- Existing task anchor: T132-T136; MIG-014; migration epic: MIG-014
-- Source symbols resolved: `RecordsArchiveService`
-- Source files: `src/AuditSphereOps.Application/Records/RecordsArchiveService.cs`
-- Destination files: —
-- Evidence / gap: No archive/records service.
-
 ### C31 — Practice time, budgets and rate cards
 
 - Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
@@ -398,16 +408,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Practice/PracticeTimeService.cs`
 - Destination files: —
 - Evidence / gap: No practice time/rates/budgets.
-
-### C32 — Firm billing, ledger and finance queries
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Practice finance and firm books
-- Existing task anchor: T066-T072, T125, T144-T148; MIG-006; migration epic: MIG-006
-- Source symbols resolved: `BillingService`, `LedgerService`, `FirmFinanceQuery`
-- Source files: `src/AuditSphereOps.Application/Practice/BillingService.cs`, `src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs`, `src/AuditSphereOps.Application/Practice/LedgerService.cs`
-- Destination files: —
-- Evidence / gap: No firm chart/periods/journals/invoices/ledger.
 
 ### C33 — Practice analytics and contract contribution
 

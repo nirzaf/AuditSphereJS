@@ -2,7 +2,7 @@
 
 | Field | Value |
 | :--- | :--- |
-| Initial status | `NOT_STARTED` |
+| Initial status | `IN_PROGRESS` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `platform` |
@@ -50,16 +50,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Use a single decimal arithmetic policy with NUMERIC storage and string transport; define input digit/scale bounds and final QAR rounding.
-- [ ] Add UTC instants, date-only accounting dates and an injectable clock for deadlines.
-- [ ] Implement safe percent/variance helpers with explicit zero-base results and signed-balance display policy.
-- [ ] Keep browser calculations as previews; authoritative totals are recomputed by server rules.
+- [x] Use a single decimal arithmetic policy with NUMERIC storage and string transport; define input digit/scale bounds and final QAR rounding.
+- [x] Add UTC instants, date-only accounting dates and an injectable clock for deadlines.
+- [x] Implement safe percent/variance helpers with explicit zero-base results and signed-balance display policy.
+- [x] Keep browser calculations as previews; authoritative totals are recomputed by server rules.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** 0.1 + 0.2 yields exactly 0.3 under the selected decimal abstraction.
-- [ ] **AC2:** Zero-PY variance is not falsely reported as 0% when CY is nonzero.
-- [ ] **AC3:** Date-boundary and midnight tests do not depend on the server local zone.
+- [x] **AC1:** 0.1 + 0.2 yields exactly 0.3 under the selected decimal abstraction.
+- [x] **AC2:** Zero-PY variance is not falsely reported as 0% when CY is nonzero.
+- [x] **AC3:** Date-boundary and midnight tests do not depend on the server local zone.
 
 Run focused unit plus real-service integration tests for affected contracts, transactions and failure behavior.
 
