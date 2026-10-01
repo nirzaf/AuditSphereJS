@@ -5,6 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { Queue, Worker } from 'bullmq';
 import { db } from './platform/db.js';
 import { ensureBucket, retrieve } from './platform/storage.js';
+import { resolveClientRepository } from './platform/repository.js';
+import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
 import { parseTrialBalance } from './modules/fieldwork/parser.js';
 import { createHash } from 'node:crypto';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
@@ -22,7 +24,8 @@ export async function runWorker() {
       const claimed = await db.tbImport.updateMany({ where: { id: batch.id, status: { in: ['QUEUED', 'PARSING', 'FAILED'] } }, data: { status: 'PARSING', error: null } });
       if (!claimed.count) return;
       const document = await db.document.findUniqueOrThrow({ where: { id: batch.documentId } });
-      const content = await retrieve(document.key);
+      const repository = document.key.startsWith('graph:') ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence') : undefined;
+      const content = await retrieve(document.key, repository);
       if (createHash('sha256').update(content).digest('hex') !== document.sha256) throw new Error('Evidence hash mismatch');
       const rows = parseTrialBalance(content);
       await db.$transaction(async tx => {
@@ -55,6 +58,10 @@ export async function runWorker() {
       await db.outboxEvent.update({ where: { id: event.id }, data: { publishedAt: new Date() } });
     } } catch (error) { console.error('Outbox retry', error); } finally { publishing = false; }
   }, 1000);
-  const shutdown = async () => { clearInterval(timer); await worker.close(); await queue.close(); await db.$disconnect(); await app.close(); };
+  // Unreferenced uploads are cleaned only after a grace period, and Graph evidence is never deleted.
+  const sweepTimer = setInterval(() => {
+    sweepUnreferencedUploads({ olderThanMinutes: 60 }).then((result) => { if (result.scanned) console.log('Upload sweep', JSON.stringify({ scanned: result.scanned, cleaned: result.cleaned, reviewRequired: result.reviewRequired })); }).catch((error) => console.error('Upload sweep', error));
+  }, 600_000);
+  const shutdown = async () => { clearInterval(timer); clearInterval(sweepTimer); await worker.close(); await queue.close(); await db.$disconnect(); await app.close(); };
   process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
 }

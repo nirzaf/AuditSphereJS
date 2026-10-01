@@ -1,14 +1,14 @@
 # Reporting
 Purpose: own the reporting domain described in the architecture plan.
-Owned use cases: reserved; implement the matching docs/tasks phase against preserved CURRENT v2.1.
-Owned tables: none implemented.
-Public services: none yet.
-Published events: none yet.
+Owned use cases: anchored review notes with grant-based review authority and a no-self-review rule. Reviews inbox, rework, SRM, opinions, deliverables, release and archive are still pending.
+Owned tables: ReviewNote (frozen once resolved).
+Public services: raiseReviewNote, resolveReviewNote, listReviewNotes, reviewSummary.
+Published events: none yet; audit events are written with the note transition.
 Consumed events: none.
-Allowed dependencies: platform services and shared browser-safe contracts.
+Allowed dependencies: platform services (db, authorization) and shared browser-safe contracts.
 Forbidden dependencies: another module internals or owned-table mutations.
-State transitions: the CURRENT gate definitions are available; production transition commands are not implemented yet.
-Critical invariants: scoped authorization, optimistic versions, decimal-safe money, immutable audit events.
-Relevant tests: tests/invariants.test.ts; full integration acceptance still pending.
+State transitions: a note is OPEN then RESOLVED exactly once, by a different user holding `REVIEW_RESOLVE`; a resolved note is immutable and notes are never deleted.
+Critical invariants: scoped authorization re-checked before the write, no self-review, one transition per note, append-only audit, and a resolved note frozen by database trigger plus check constraints.
+Relevant tests: tests/review-notes.integration.ts; broader reporting acceptance still pending.
 
 Functional source: docs/requirements/CURRENT.md (unchanged v2.1). Decision defaults: docs/decisions/register.json. Production evidence and task completion remain separate from this module scaffold.

@@ -1,0 +1,299 @@
+{
+  "note": "Destination state as verified on 2026-10-01 against commit 45cc273caea17149579421efd002a536eb8a9681. Statuses are evidence-bounded: PARTIAL means some real code and tests exist but the preservation criterion in the migration plan is not met.",
+  "statuses": {
+    "C01": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/platform/auth.ts",
+        "packages/server/src/platform/entra.ts",
+        "packages/server/src/platform/authorization.ts",
+        "prisma/migrations/202610010008_role_grants/migration.sql"
+      ],
+      "evidence": "Entra signature/tenant/audience/scope validation; membership plus an explicit scoped RoleGrant is now required, with expiry, recorded revocation and firm/client/engagement scope enforced in the guard and reapplied inside each write transaction. Not implemented: session/access epoch revocation, segregation-of-duties combinations and a grant administration surface.",
+      "migEpic": "MIG-004"
+    },
+    "C02": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No tenant consent, capability verification or directory provisioning service exists in the destination.",
+      "migEpic": "MIG-012"
+    },
+    "C03": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/platform/graph-storage.ts",
+        "packages/server/src/platform/repository.ts",
+        "prisma/migrations/202610010010_client_repository_versions/migration.sql"
+      ],
+      "evidence": "Per-client repository bindings resolved per purpose (evidence/working), immutable provider-version identity recorded in DocumentVersion, and reads served from the version endpoint with eTag and SHA-256 verification; production fails closed without a binding. Not implemented: site provisioning, tenant consent, live permission verification and retention controls.",
+      "migEpic": "MIG-012"
+    },
+    "C04": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No CRM module implementation; packages/server/src/modules/commercial/README.md only.",
+      "migEpic": "-"
+    },
+    "C05": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/commercial/quotation.ts",
+        "tests/quotation.test.ts"
+      ],
+      "evidence": "Pure fee model ported from the source: sum(hours × rate) → complexity → risk premium → discount with every stage rounded to two decimals half-to-even so the breakdown reconciles to the fee, plus input validation that fails closed and a canonical input hash. The configurable approval matrix is ported with its fail-safe Partner default. docs/migration/03-differential-report.md reports 46/46 checks matched. Not implemented: persisted quotation versions, tender/proposal documents, dispatch and client acceptance of an exact version.",
+      "migEpic": "MIG-006"
+    },
+    "C06": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No acceptance/continuance rules or guarded engagement lifecycle.",
+      "migEpic": "MIG-006"
+    },
+    "C07": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No fee agreement or invoice automation.",
+      "migEpic": "MIG-006"
+    },
+    "C08": {
+      "status": "NOT_STARTED",
+      "targetFiles": [
+        "apps/web/src/portal.ts"
+      ],
+      "evidence": "Client portal is a disabled layout with no client identity/session contract.",
+      "migEpic": "-"
+    },
+    "C09": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No PBC request/upload-intent pipeline.",
+      "migEpic": "-"
+    },
+    "C10": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No client accounting profiles/periods/books; target Engagement is a flat scalar record.",
+      "migEpic": "MIG-007"
+    },
+    "C11": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/fieldwork/service.ts",
+        "packages/server/src/modules/fieldwork/parser.ts",
+        "packages/server/src/worker.ts",
+        "packages/server/src/modules/fieldwork/publication.ts",
+        "packages/server/src/modules/fieldwork/uploads.ts",
+        "prisma/migrations/202610010009_balance_publication/migration.sql",
+        "prisma/migrations/202610010016_stored_object_tracking/migration.sql"
+      ],
+      "evidence": "Bounded CSV upload to staging with sha256 duplicate detection, PG outbox, BullMQ parsing, transactional set-based mapping and zero-sum finalization. Monetary columns are numeric(28,6) with a six-decimal contract. A finalized import now publishes an immutable accepted balance version bound to that exact import version, with capability, state, completeness and zero-sum checks. Concurrent identical uploads now coalesce into one authoritative import, every stored object is tracked before its bytes exist, and a grace-period sweep removes only unreferenced objects while durable Graph evidence is reported for review. Not implemented: XLSX, multi-period/entity intake, sealed source acceptance and currency-aware publication.",
+      "migEpic": "MIG-008"
+    },
+    "C12": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No general-ledger import or completeness checks.",
+      "migEpic": "MIG-008"
+    },
+    "C13": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/contracts/src/index.ts",
+        "packages/server/src/modules/fieldwork/service.ts",
+        "packages/server/src/modules/fieldwork/taxonomy.ts",
+        "prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql",
+        "prisma/migrations/202610010017_mapping_memory/migration.sql"
+      ],
+      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings now build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). Not implemented: allocation rules, statement layouts/financial packages, and the mapping UI.",
+      "migEpic": "MIG-009"
+    },
+    "C14": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No statement drill-down or currency review query.",
+      "migEpic": "MIG-009"
+    },
+    "C15": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/fieldwork/adjustments.ts",
+        "prisma/migrations/202610010019_adjustment_journals/migration.sql",
+        "tests/adjustments.integration.ts"
+      ],
+      "evidence": "Client audit adjustment journals kept separate from the firm's own ledger: balanced double-entry drafts, posting under a distinct capability with a preparer/poster separation of duties, database-enforced balance and at-least-two-lines at posting, and a posted journal frozen except for one transition to REVERSED via a reversal journal that swaps the sides. Not implemented: adjustment plans, adjusted-balance snapshots, eligibility queries and the differences register.",
+      "migEpic": "MIG-008"
+    },
+    "C16": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No reconciliation/valuation/journal-risk analysis.",
+      "migEpic": "MIG-010"
+    },
+    "C17": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No currency remeasurement or translation.",
+      "migEpic": "MIG-010"
+    },
+    "C18": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No consolidation model.",
+      "migEpic": "MIG-011"
+    },
+    "C19": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No advanced consolidation calculators.",
+      "migEpic": "MIG-011"
+    },
+    "C20": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No financial statement package/render/review/seal chain.",
+      "migEpic": "MIG-009"
+    },
+    "C21": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No staffing or resource planning.",
+      "migEpic": "-"
+    },
+    "C22": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/governance/materiality.ts",
+        "packages/server/src/modules/governance/materiality-service.ts",
+        "packages/server/src/modules/governance/risk-service.ts",
+        "prisma/migrations/202610010014_risk_band_assessments/migration.sql",
+        "prisma/migrations/202610010015_risk_owner_assignment/migration.sql",
+        "packages/server/src/platform/decimal6.ts",
+        "prisma/migrations/202610010012_materiality_assessment/migration.sql",
+        "tests/materiality.test.ts",
+        "tests/materiality-persistence.integration.ts"
+      ],
+      "evidence": "Pure calculator ported from the source with identical arithmetic: benchmark derivation from mapped sections with tax excluded from profit before tax, per-benchmark policy validation, PM/TE/SAD on a decimal-safe six-decimal primitive, risk bands with minimum owner rank, and an input hash. docs/migration/03-differential-report.md reports 14/14 checks matched against source-quoted fixtures. Assessments are now persisted against an exact published balance version and taxonomy version, require MATERIALITY_MANAGE to calculate and MATERIALITY_APPROVE to approve, forbid self-approval, become stale when a newer publication exists, and are frozen once approved. Risk is now persisted too: an append-only band-assessment series with the colour derived by the database from the recorded scores (a stored band that does not follow from its inputs is rejected), and mandatory Partner clearance (`RISK_PARTNER_CLEAR`) of the current red band. Risk owners are assigned against the current assessment with a minimum staffing rank enforced both in the service and by a database trigger, red bands require prior Partner clearance, and a user cannot assign a risk to themselves. The `START_FIELDWORK` lifecycle command now refuses to start from an unapproved or stale plan. Not implemented: routing risks into workprograms, the risk/planning UI, and the same staleness gate for later lifecycle steps.",
+      "migEpic": "MIG-003"
+    },
+    "C23": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No audit planning or program library.",
+      "migEpic": "-"
+    },
+    "C24": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No fieldwork schedules, item tests or area assessments.",
+      "migEpic": "-"
+    },
+    "C25": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/fieldwork/sampling.ts",
+        "tests/sampling.test.ts"
+      ],
+      "evidence": "Deterministic engine ported from the source with the same fixed splitmix64 generator: MUS interval crossing, key-item threshold, seeded random draw, stratified key-item-plus-draw, zero-exposure exclusion, absolute-exposure selection with signed totals and a six-decimal coverage percentage. docs/migration/03-differential-report.md reports 33/33 checks matched overall. Not implemented: persisted immutable populations and execution records, physical evidence movements and procedure conclusions.",
+      "migEpic": "MIG-010"
+    },
+    "C26": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/reporting/review-notes.ts",
+        "prisma/migrations/202610010018_review_notes/migration.sql",
+        "tests/review-notes.integration.ts"
+      ],
+      "evidence": "Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances.",
+      "migEpic": "MIG-005"
+    },
+    "C27": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No confirmations.",
+      "migEpic": "-"
+    },
+    "C28": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No opinions/signatures/bundle release.",
+      "migEpic": "MIG-013"
+    },
+    "C29": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No freeze/deadline/legal hold. The only immutability is DB triggers on finalized TB rows and audit events.",
+      "migEpic": "MIG-014"
+    },
+    "C30": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No archive/records service.",
+      "migEpic": "MIG-014"
+    },
+    "C31": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No practice time/rates/budgets.",
+      "migEpic": "-"
+    },
+    "C32": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No firm chart/periods/journals/invoices/ledger.",
+      "migEpic": "MIG-006"
+    },
+    "C33": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No practice analytics.",
+      "migEpic": "MIG-015"
+    },
+    "C34": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No technical library.",
+      "migEpic": "MIG-015"
+    },
+    "C35": {
+      "status": "NOT_STARTED",
+      "targetFiles": [],
+      "evidence": "No global search.",
+      "migEpic": "MIG-015"
+    },
+    "C36": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/worker.ts",
+        "packages/server/src/platform/runtime.ts"
+      ],
+      "evidence": "PostgreSQL outbox plus a reconciliation loop that republishes missing BullMQ jobs, with terminal-success handling and status fencing. Covers only the tb.import job family; no other operation types, no cancellation dispositions, no stale-worker fencing token.",
+      "migEpic": "MIG-005"
+    },
+    "C37": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/contracts/src/index.ts",
+        "packages/server/src/modules/fieldwork/controller.ts"
+      ],
+      "evidence": "Upload/mapping/finalize contracts validated by Zod at the HTTP boundary and an internal guard. No no-store download policy, draft handling or equivalent non-TB journeys.",
+      "migEpic": "MIG-003"
+    },
+    "C38": {
+      "status": "PARTIAL",
+      "targetFiles": [
+        "prisma/migrations/202610010001_initial/migration.sql",
+        "prisma/migrations/202610010002_invariants/migration.sql",
+        "prisma/migrations/202610010003_entra_identity/migration.sql",
+        "prisma/migrations/202610010004_durable_import_outbox/migration.sql",
+        "prisma/migrations/202610010005_monetary_precision/migration.sql",
+        "prisma/migrations/202610010006_scope_model/migration.sql",
+        "prisma/migrations/202610010007_lifecycle_history/migration.sql",
+        "prisma/migrations/202610010008_role_grants/migration.sql",
+        "prisma/migrations/202610010009_balance_publication/migration.sql",
+        "prisma/migrations/202610010010_client_repository_versions/migration.sql"
+      ],
+      "evidence": "Ten reviewed SQL migrations: append-only audit and lifecycle history, finalized-row and published-balance immutability, six-decimal monetary precision, compound firm/client/engagement scope foreign keys and grant scope/revocation/window check constraints. Check constraints, triggers, indexes and immutable-history coverage are still far short of the source's 252 tables.",
+      "migEpic": "MIG-001, MIG-002, MIG-017"
+    }
+  }
+}

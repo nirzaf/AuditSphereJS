@@ -3,6 +3,16 @@ import { parseTrialBalance } from '@auditsphere/server';
 import { mappingSchema, nextState, states, moneySchema } from '@auditsphere/contracts';
 describe('TB validation', () => {
   it('preserves decimal strings without floating arithmetic', () => { expect(parseTrialBalance('code,name,current,prior\n1,Cash,0.10,-0.20')[0].current).toBe('0.10'); expect(moneySchema.safeParse('1e3').success).toBe(false); });
+  it('preserves six-decimal monetary precision and rejects excess scale', () => {
+    const csv = 'code,name,current,prior\n1,Cash,123456789.123456,-0.000001';
+    const row = parseTrialBalance(csv)[0];
+    expect(row.current).toBe('123456789.123456');
+    expect(row.prior).toBe('-0.000001');
+    expect(moneySchema.safeParse('0.123456').success).toBe(true);
+    expect(moneySchema.safeParse('-1234567890123456789012.123456').success).toBe(true);
+    expect(moneySchema.safeParse('0.1234567').success).toBe(false);
+    expect(moneySchema.safeParse('12345678901234567890123').success).toBe(false);
+  });
   it('rejects duplicate codes and malformed balances', () => { expect(() => parseTrialBalance('code,name,current,prior\n1,Cash,1,0\n1,Other,-1,0')).toThrow(); expect(() => parseTrialBalance('code,name,current,prior\n1,Cash,NaN,0')).toThrow(); });
   it.each([5000,25000,50000])('validates %i accounts', count => { const csv = 'code,name,current,prior\n' + Array.from({ length: count }, (_, i) => `${i},Account ${i},${i % 2 ? '-1.00' : '1.00'},0.00`).join('\n'); expect(parseTrialBalance(csv)).toHaveLength(count); });
   it('rejects over-limit imports', () => { const csv = 'code,name,current,prior\n' + Array.from({length:50001},(_,i)=>`${i},Account,0,0`).join('\n'); expect(() => parseTrialBalance(csv)).toThrow('50,000'); });

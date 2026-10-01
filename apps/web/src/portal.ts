@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-@Component({ selector: 'client-portal', standalone: true, template: `
+@Component({ selector: 'client-portal', template: `
   <a class="skip-link" href="#portal-content">Skip to client portal</a>
   <main class="portal-layout" id="portal-content" tabindex="-1">
     <section class="portal-card" aria-labelledby="portal-title">

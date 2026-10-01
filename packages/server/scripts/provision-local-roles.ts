@@ -19,12 +19,46 @@ try {
     const connection = new URL(administrativeUrl); connection.username = role; connection.password = password; settings[variable] = connection.toString();
   }
   await client.query('REVOKE CREATE ON SCHEMA public FROM PUBLIC');
-  await client.query('GRANT SELECT, INSERT, UPDATE, DELETE ON "User", "Membership", "Engagement", "Document", "TbImport", "TbRow", "OutboxEvent", "CommandReceipt" TO auditsphere_api');
-  await client.query('GRANT SELECT, INSERT ON "AuditEvent" TO auditsphere_api');
-  await client.query('GRANT SELECT ON "Document", "TbImport", "TbRow", "OutboxEvent" TO auditsphere_worker');
+  // Grants are explicit per table on purpose: a new table is inaccessible until this list is
+  // deliberately extended, so least privilege is not silently widened by a migration.
+  await client.query('GRANT SELECT, INSERT, UPDATE, DELETE ON "Firm", "Client", "User", "Membership", "Engagement", "Document", "TbImport", "TbRow", "OutboxEvent", "CommandReceipt" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT ON "AuditEvent", "EngagementTransition" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "EngagementTransition" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "RoleGrant" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "RoleGrant" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT ON "BalancePublication", "PublishedBalanceRow" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "BalancePublication", "PublishedBalanceRow" TO auditsphere_report');
+  await client.query('GRANT SELECT ON "BalancePublication", "PublishedBalanceRow" TO auditsphere_worker');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "ClientRepository" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT ON "DocumentVersion" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "ClientRepository", "DocumentVersion" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "ClientRepository", "DocumentVersion" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "TaxonomyVersion", "TaxonomyLine" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT ON "MappingApproval" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "TaxonomyVersion", "TaxonomyLine", "MappingApproval" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "TaxonomyVersion", "TaxonomyLine", "MappingApproval" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "MaterialityAssessment" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "MaterialityAssessment" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "MaterialityAssessment" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT ON "RiskItem", "RiskBandAssessment", "RiskPartnerClearance", "RiskOwnerAssignment" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "RiskItem", "RiskBandAssessment", "RiskPartnerClearance", "RiskOwnerAssignment" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "RiskItem", "RiskBandAssessment", "RiskPartnerClearance", "RiskOwnerAssignment" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "StoredObject" TO auditsphere_api');
+  await client.query('GRANT SELECT, UPDATE ON "StoredObject" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "StoredObject" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "MappingMemoryEntry" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "MappingMemoryEntry" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "MappingMemoryEntry" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "ReviewNote" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "ReviewNote" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "ReviewNote" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "AdjustmentJournal", "AdjustmentJournalLine" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "AdjustmentJournal", "AdjustmentJournalLine" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "AdjustmentJournal", "AdjustmentJournalLine" TO auditsphere_report');
+  await client.query('GRANT SELECT ON "Firm", "Client", "Document", "TbImport", "TbRow", "OutboxEvent" TO auditsphere_worker');
   await client.query('GRANT UPDATE ON "TbImport", "OutboxEvent" TO auditsphere_worker');
   await client.query('GRANT INSERT, UPDATE, DELETE ON "TbRow" TO auditsphere_worker');
-  await client.query('GRANT SELECT ON "Engagement", "TbImport", "TbRow" TO auditsphere_report');
+  await client.query('GRANT SELECT ON "Firm", "Client", "Engagement", "TbImport", "TbRow" TO auditsphere_report');
   let environment = readFileSync('.env', 'utf8');
   for (const [key, value] of Object.entries(settings)) {
     const pattern = new RegExp(`^${key}=.*$`, 'm');

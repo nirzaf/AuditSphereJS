@@ -1,0 +1,557 @@
+{
+  "generatedAt": "2026-10-01T17:47:49.897Z",
+  "tests": [
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/ApiWebApplicationFactory.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/CookieSecurityOptionsTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/GraphDirectoryReaderTests.cs",
+      "testMethods": 9
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/InitialAdministratorSignInTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/PbcHttpTests.cs",
+      "testMethods": 7
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/ProjectProgressReaderTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/RequestCorrelationTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/TelemetryConfigurationTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/TenantConsentRedirectTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Api.Tests/TrustedActorResolverTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AcceptanceChecklistTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AcceptanceDecisionTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AccountingBackfillMigrationTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AccountingBenchmarkTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AccountingIntegrityTests.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AccountingRecordsApprovalTests.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AdjustmentBridgeTests.cs",
+      "testMethods": 17
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AdjustmentEligibilityQueryTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ApprovalTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ArchitectureGuardTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditAreaSummaryTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditCompletionTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditDeliverablesTests.Assembly.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditDeliverablesTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditFieldworkWorkflowTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditPlanningCompletionTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditPlanningTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditProgramWorkflowTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditSamplingEngineTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditSamplingServiceTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditScheduleSourceBindingTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuditScopeIntegrityTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/AuthorizationDecisionTests.cs",
+      "testMethods": 13
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/BillingTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/CashFlowContractTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.AdvancedConsolidation.cs",
+      "testMethods": 10
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.Analysis.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.ChartAndTaxonomy.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.Consolidation.cs",
+      "testMethods": 7
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.Currency.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.ExternalComponents.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.FinancialPackages.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.GeneralLedger.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.PeriodClose.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.Profiles.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.Reconciliations.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientAccountingTests/ClientAccountingTests.Setup.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientPortalOnboardingTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ClientSharePointSitesTests.cs",
+      "testMethods": 8
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/CommercialWorkflowTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/CompletionBundleFixture.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/CompletionTestFixtures.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ConsolidationQueryTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ContractContributionCalculatorTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/CoreEntityCatalogTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/DocumentSnapshotTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/DurableOutboxTests.cs",
+      "testMethods": 18
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/EngagementWorkspaceProvisioningTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ErrorCatalogTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/FakeGraphDrive.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/FieldworkConnectionsTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/FinancialPackageGateTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/FinancialStatementTests.cs",
+      "testMethods": 9
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/FirmOperationsTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/GeneralLedgerQueryTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/GlobalSearchQueryTests.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/GraphPreauthenticatedTransportTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/GraphSelectedResourceProbeTests.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/GraphTenantAdministrationProviderTests.cs",
+      "testMethods": 14
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/LedgerTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/LineTranslationTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/LiveMicrosoftTenantAcceptanceTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/LivePbcSelectedSiteAcceptanceTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/LiveTenantAdministrationMutationTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/MarkdownNamingGuardTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/Microsoft365AccessTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/Microsoft365OnboardingTests.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/OperationRecoveryTests.cs",
+      "testMethods": 8
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/OutboxMigrationTests.cs",
+      "testMethods": 9
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/P2PbcHarness.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PackageSealTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PbcRepositoryBindingResolverTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PbcSeed.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PbcSelectedSiteProviderTests.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PbcSelectedSiteWorkerTests.cs",
+      "testMethods": 8
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PbcTests.cs",
+      "testMethods": 8
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PbcTransferTests.cs",
+      "testMethods": 10
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PgTestSchema.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PlanningResourcesAndMaterialityTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PlanningSeed.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PracticeCrmTests.cs",
+      "testMethods": 11
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/PracticeTimeTests.cs",
+      "testMethods": 7
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ProfilesChartsAndConsolidationTests.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ProviderBoundaryTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/QuotationCalculatorTests.cs",
+      "testMethods": 6
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/RecordsArchiveTests.cs",
+      "testMethods": 7
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ReleaseEvidenceTests.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/ReleaseTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/RoleAdministrationTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/RoleAssignmentTests.cs",
+      "testMethods": 8
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/RouteCatalogTests.cs",
+      "testMethods": 3
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/SharePointClientSiteProviderTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/SiblingClientSeed.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/SourceAcceptanceAndComparativesTests.cs",
+      "testMethods": 7
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/StatementLayoutGrammarTests.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TelemetryEndpointTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TenantAdministrationFixture.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TenantAdministrationTests.cs",
+      "testMethods": 14
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TenantConsentServiceTests.cs",
+      "testMethods": 12
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TrialBalanceCalculatorTests.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TrialBalanceWorkerTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.Domain.Tests/TrialBalanceXlsxImporterTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/AcceptanceJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/AuditAndReleaseJourneyTests.cs",
+      "testMethods": 13
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/AuditProgramLibraryScopeJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/ClientPortalOnboardingJourneyTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/ClientScopeJourneyTests.cs",
+      "testMethods": 39
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/ClientSharePointSitesJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/CommercialJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/CompletionDeliverablesJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/FieldworkConnectionsJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/FinancialArtifactJourneyTests.cs",
+      "testMethods": 19
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/FirmOperationsJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/GlobalSearchJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/InvoiceScopeJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/LivePbcBrowserJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/M365SetupJourneyTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/OwnedBlazorHost.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/PbcUploadJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/PeriodWorkbenchScopeJourneyTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/PlanningAndResourcesJourneyTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/PlaywrightBrowser.cs",
+      "testMethods": 0
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/PracticeBillingLedgerJourneyTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/ResponsiveShellSweepTests.cs",
+      "testMethods": 2
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/RouteRenderSmokeTests.cs",
+      "testMethods": 1
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/SiblingClientIsolationJourneyTests.cs",
+      "testMethods": 4
+    },
+    {
+      "file": "tests/AuditSphereOps.E2E.Tests/TenantAdministrationJourneyTests.cs",
+      "testMethods": 5
+    },
+    {
+      "file": "tests/Shared/OwnedPostgresDatabase.cs",
+      "testMethods": 0
+    }
+  ]
+}

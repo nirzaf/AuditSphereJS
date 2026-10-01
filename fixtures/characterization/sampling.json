@@ -1,0 +1,219 @@
+{
+  "schemaVersion": 1,
+  "capability": "C25 sampling reproducibility",
+  "provenance": {
+    "repository": "nirzaf/AuditSphere",
+    "commit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
+    "sourceFile": "tests/AuditSphereOps.Domain.Tests/AuditSamplingEngineTests.cs",
+    "extraction": "Values quoted from the source domain test file at the referenced line. Method names use the source constants (MUS, KEY_ITEM, RANDOM, STRATIFIED). The source tests assert these expectations; they were NOT executed in this workspace, so these fixtures are characterization inputs, not verified source output."
+  },
+  "population": [
+    [
+      "row-01",
+      "100"
+    ],
+    [
+      "row-02",
+      "250"
+    ],
+    [
+      "row-03",
+      "40"
+    ],
+    [
+      "row-04",
+      "900"
+    ],
+    [
+      "row-05",
+      "75"
+    ],
+    [
+      "row-06",
+      "10"
+    ],
+    [
+      "row-07",
+      "500"
+    ],
+    [
+      "row-08",
+      "60"
+    ],
+    [
+      "row-09",
+      "25"
+    ],
+    [
+      "row-10",
+      "180"
+    ]
+  ],
+  "cases": [
+    {
+      "id": "population-stats",
+      "sourceLine": 22,
+      "intent": "population count and absolute total exclude nothing for a MUS plan",
+      "input": {
+        "method": "MUS",
+        "interval": "300"
+      },
+      "expected": {
+        "populationCount": 10,
+        "populationAbsoluteTotal": "2140",
+        "uniqueSelections": true,
+        "coveragePercentWithin": [
+          0,
+          100
+        ]
+      }
+    },
+    {
+      "id": "key-item-threshold",
+      "sourceLine": 34,
+      "intent": "key-item sampling selects every exposure at or above the threshold",
+      "input": {
+        "method": "KEY_ITEM",
+        "keyItemThreshold": "250"
+      },
+      "expected": {
+        "selectedRowIds": [
+          "row-02",
+          "row-04",
+          "row-07"
+        ],
+        "selectedAbsoluteTotal": "1650"
+      }
+    },
+    {
+      "id": "random-seed-reproducible",
+      "sourceLine": 43,
+      "intent": "random selection is reproducible from the seed and bounded by the sample size",
+      "input": {
+        "method": "RANDOM",
+        "sampleSize": 4,
+        "seed": 20260925
+      },
+      "expected": {
+        "itemCount": 4,
+        "reproducible": true,
+        "differentSeedChangesSelection": true
+      }
+    },
+    {
+      "id": "random-clamped-to-population",
+      "sourceLine": 60,
+      "intent": "random sampling cannot select more items than the population holds",
+      "input": {
+        "method": "RANDOM",
+        "sampleSize": 99,
+        "seed": 1
+      },
+      "expected": {
+        "itemCount": 10,
+        "coveragePercent": "100"
+      }
+    },
+    {
+      "id": "stratified-key-plus-draw",
+      "sourceLine": 69,
+      "intent": "stratified sampling always includes key items then fills from the seeded remainder",
+      "input": {
+        "method": "STRATIFIED",
+        "keyItemThreshold": "250",
+        "sampleSize": 5,
+        "seed": 42
+      },
+      "expected": {
+        "itemCount": 5,
+        "keyItemIdsPresent": [
+          "row-02",
+          "row-04",
+          "row-07"
+        ],
+        "stratifiedDrawCount": 2,
+        "reproducible": true
+      }
+    },
+    {
+      "id": "zero-rows-excluded",
+      "sourceLine": 85,
+      "intent": "settled and zero rows never inflate coverage",
+      "input": {
+        "method": "KEY_ITEM",
+        "keyItemThreshold": "1000",
+        "extraRows": [
+          [
+            "row-00",
+            "0"
+          ]
+        ]
+      },
+      "expected": {
+        "selectedRowIds": [],
+        "coveragePercent": "0",
+        "populationCount": 10
+      }
+    },
+    {
+      "id": "invalid-plans-rejected",
+      "sourceLine": 92,
+      "intent": "unknown methods, missing thresholds/sizes and duplicate row ids are rejected",
+      "input": {
+        "cases": [
+          {
+            "method": "NOT_A_METHOD"
+          },
+          {
+            "method": "MUS"
+          },
+          {
+            "method": "RANDOM",
+            "sampleSize": 3
+          },
+          {
+            "method": "KEY_ITEM"
+          },
+          {
+            "duplicateRowIds": true
+          }
+        ]
+      },
+      "expected": {
+        "outcome": "argument-error"
+      }
+    },
+    {
+      "id": "negative-exposure-selection",
+      "sourceLine": 108,
+      "intent": "selection uses absolute exposure while signed totals stay signed",
+      "input": {
+        "population": [
+          [
+            "credit-1",
+            "-800"
+          ],
+          [
+            "debit-1",
+            "300"
+          ],
+          [
+            "debit-2",
+            "100"
+          ]
+        ],
+        "method": "KEY_ITEM",
+        "keyItemThreshold": "500"
+      },
+      "expected": {
+        "selectedRowIds": [
+          "credit-1"
+        ],
+        "signedAmount": "-800",
+        "absoluteAmount": "800",
+        "populationSignedTotal": "-400",
+        "populationAbsoluteTotal": "1200"
+      }
+    }
+  ]
+}
