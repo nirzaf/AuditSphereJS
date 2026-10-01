@@ -60,6 +60,13 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       const draft = await create('CLOSED');
       await closePracticePeriod(actorId, engagementId, period.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
       await assert.rejects(postPracticeJournal(actorId, engagementId, draft.id, { expectedVersion: 1, idempotencyKey: randomUUID() }), /open accounting period/);
+      // A caller-controlled search path and fake open period cannot bypass the database guard.
+      await assert.rejects(db.$transaction(async tx => {
+        await tx.$executeRawUnsafe('CREATE TEMP TABLE "PracticePeriod" AS SELECT * FROM public."PracticePeriod"');
+        await tx.$executeRawUnsafe('UPDATE pg_temp."PracticePeriod" SET closed = false');
+        await tx.$executeRawUnsafe('SET LOCAL search_path TO pg_temp, public');
+        await tx.$executeRaw`UPDATE public."PracticeJournal" SET status = 'POSTED', "postedBy" = ${actorId}::uuid, "postedAt" = CURRENT_TIMESTAMP WHERE id = ${draft.id}::uuid`;
+      }), /open accounting period/);
       const foreignFirm = await db.firm.create({ data: { name: 'Other firm' } });
       const foreign = await db.practiceAccount.create({ data: { firmId: foreignFirm.id, code: '100', name: 'Other cash', kind: 'ASSET' } });
       await assert.rejects(db.practiceJournalLine.create({ data: { firmId, journalId: unbalanced.id, accountId: foreign.id, position: 2, debit: '1', credit: '0' } }), /foreign key/i);

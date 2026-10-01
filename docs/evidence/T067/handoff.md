@@ -6,4 +6,6 @@ Draft creation, posting, period closure and exact reversing journals write audit
 
 The default policy supports deferred fees until release and no tax only; selecting another treatment needs an explicit policy implementation. Approval is an authenticated firm-authorized command, not inferred from 50/50 terms. The development-only seed includes the minimal accounts and an explicitly labeled fixture policy. The Practice UI loads the firm chart/balances, creates periods and drafts, posts, closes periods and reverses to a selected period/date.
 
+Additive migration 202610020003 fixes the ledger trigger search paths so temporary relations supplied by a caller cannot replace authoritative period/account/journal tables. A disposable-database test supplies a fake open period and a caller-selected temporary search path; posting to the actual closed period must still fail.
+
 Invoices, payment allocations, credit notes, bank reconciliation, period reopening, monthly P/L, AR aging, chart administration and professional policy acceptance remain unfinished. This foundation is not full T066–T072 completion or C32 parity.
