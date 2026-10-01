@@ -1,4 +1,4 @@
-# Implementation evidence — 2026-10-01
+# Implementation evidence â€” 2026-10-01
 
 The preserved v2.1 CURRENT requirements and the 171-task pack now drive implementation. Requirements bytes and all 82 coverage IDs are verified by `pnpm verify:task -- T001`. User-delegated engineering decisions are recorded in decisions/register.json; this does not fabricate professional certification or credentialed provider acceptance.
 

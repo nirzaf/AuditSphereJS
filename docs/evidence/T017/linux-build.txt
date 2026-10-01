@@ -9,62 +9,61 @@ $ node scripts/build-linux.mjs
 #2 DONE 0.1s
 
 #3 [internal] load .dockerignore
-#3 transferring context: 173B 0.0s done
+#3 transferring context: 173B done
 #3 DONE 0.0s
 
-#4 [internal] load build context
-#4 transferring context: 14.42kB 0.0s done
+#4 [compatibility  1/23] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#4 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.1s done
 #4 DONE 0.1s
 
-#5 [compatibility  1/23] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
-#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.1s done
+#5 [internal] load build context
+#5 transferring context: 15.23kB 0.1s done
 #5 DONE 0.1s
 
 #6 [compatibility  8/23] COPY apps/worker/package.json apps/worker/package.json
 #6 CACHED
 
-#7 [compatibility  2/23] WORKDIR /app
+#7 [compatibility 10/23] COPY packages/contracts/package.json packages/contracts/package.json
 #7 CACHED
 
-#8 [compatibility 15/23] RUN pnpm exec playwright install --with-deps chromium
+#8 [compatibility  4/23] RUN npm install --global pnpm@12.8.1
 #8 CACHED
 
 #9 [compatibility 13/23] COPY packages/observability/package.json packages/observability/package.json
 #9 CACHED
 
-#10 [compatibility 14/23] RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
+#10 [compatibility  5/23] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 #10 CACHED
 
-#11 [compatibility  4/23] RUN npm install --global pnpm@12.8.1
+#11 [compatibility  7/23] COPY apps/web/package.json apps/web/package.json
 #11 CACHED
 
-#12 [compatibility  6/23] COPY apps/api/package.json apps/api/package.json
+#12 [compatibility  3/23] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 #12 CACHED
 
 #13 [compatibility  9/23] COPY packages/server/package.json packages/server/package.json
 #13 CACHED
 
-#14 [compatibility  7/23] COPY apps/web/package.json apps/web/package.json
+#14 [compatibility 12/23] COPY packages/testing/package.json packages/testing/package.json
 #14 CACHED
 
-#15 [compatibility 11/23] COPY packages/config/package.json packages/config/package.json
+#15 [compatibility  2/23] WORKDIR /app
 #15 CACHED
 
-#16 [compatibility  3/23] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#16 [compatibility 11/23] COPY packages/config/package.json packages/config/package.json
 #16 CACHED
 
-#17 [compatibility  5/23] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+#17 [compatibility 14/23] RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 #17 CACHED
 
-#18 [compatibility 10/23] COPY packages/contracts/package.json packages/contracts/package.json
+#18 [compatibility  6/23] COPY apps/api/package.json apps/api/package.json
 #18 CACHED
 
-#19 [compatibility 12/23] COPY packages/testing/package.json packages/testing/package.json
+#19 [compatibility 15/23] RUN pnpm exec playwright install --with-deps chromium
 #19 CACHED
 
 #20 [compatibility 16/23] COPY apps ./apps
-#20 CACHED
+#20 DONE 0.0s
 
 #21 [compatibility 17/23] COPY packages ./packages
 #21 DONE 0.1s
@@ -73,35 +72,35 @@ $ node scripts/build-linux.mjs
 #22 DONE 0.1s
 
 #23 [compatibility 19/23] COPY prisma.config.ts tsconfig*.json angular.json ./
-#23 DONE 0.2s
+#23 DONE 0.1s
 
 #24 [compatibility 20/23] RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build pnpm build
-#24 0.625 $ pnpm build:server && ng build web
-#24 0.676 $ prisma generate && tsc -b
-#24 3.680 Loaded Prisma config from prisma.config.ts.
-#24 3.680 
-#24 3.769 Prisma schema loaded from prisma/schema.prisma.
-#24 4.203 
-#24 4.203 ✔ Generated Prisma Client (7.10.0) to ./packages/server/src/generated/prisma in 288ms
-#24 4.203 
-#24 14.85 ❯ Building...
-#24 23.38 ✔ Building...
-#24 23.39 Initial chunk files | Names                         |  Raw size | Estimated transfer size
-#24 23.39 main.js             | main                          | 248.38 kB |                67.00 kB
-#24 23.39 styles.css          | styles                        |   7.97 kB |                 1.84 kB
-#24 23.39 
-#24 23.39                     | Initial total                 | 256.35 kB |                68.85 kB
-#24 23.39 
-#24 23.39 Lazy chunk files    | Names                         |  Raw size | Estimated transfer size
-#24 23.39 chunk-L3Ayo_av.js   | workspace                     | 766.65 kB |               152.55 kB
-#24 23.39 chunk-DxUoSB3f.js   | portal                        |   1.54 kB |               681 bytes
-#24 23.39 chunk-R3Q4CR2A.js   | BrowserPerformanceMeasurement | 107 bytes |               107 bytes
-#24 23.39 
-#24 23.39 Application bundle generation complete. [8.534 seconds] - 2026-10-01T17:11:42.545Z
-#24 23.39 
-#24 23.39 Output location: /app/dist/web
-#24 23.39 
-#24 DONE 23.6s
+#24 0.386 $ pnpm build:server && ng build web
+#24 0.406 $ prisma generate && tsc -b
+#24 1.448 Loaded Prisma config from prisma.config.ts.
+#24 1.448
+#24 1.484 Prisma schema loaded from prisma/schema.prisma.
+#24 1.672
+#24 1.672 ✔ Generated Prisma Client (7.10.0) to ./packages/server/src/generated/prisma in 127ms
+#24 1.672
+#24 6.942 ❯ Building...
+#24 11.81 ✔ Building...
+#24 11.82 Initial chunk files | Names                         |  Raw size | Estimated transfer size
+#24 11.82 main.js             | main                          | 248.38 kB |                67.00 kB
+#24 11.82 styles.css          | styles                        |   8.15 kB |                 1.87 kB
+#24 11.82
+#24 11.82                     | Initial total                 | 256.53 kB |                68.88 kB
+#24 11.82
+#24 11.82 Lazy chunk files    | Names                         |  Raw size | Estimated transfer size
+#24 11.82 chunk-B3VADoc5.js   | workspace                     | 766.65 kB |               152.60 kB
+#24 11.82 chunk-B4MLK676.js   | portal                        |   1.54 kB |               693 bytes
+#24 11.82 chunk-R3Q4CR2A.js   | BrowserPerformanceMeasurement | 107 bytes |               107 bytes
+#24 11.82
+#24 11.82 Application bundle generation complete. [4.869 seconds] - 2026-10-01T17:28:17.329Z
+#24 11.82
+#24 11.82 Output location: /app/dist/web
+#24 11.82
+#24 DONE 12.0s
 
 #25 [compatibility 21/23] COPY scripts ./scripts
 #25 DONE 0.1s
@@ -114,13 +113,12 @@ $ node scripts/build-linux.mjs
 
 #28 exporting to image
 #28 exporting layers
-#28 exporting layers 1.2s done
-#28 exporting manifest sha256:a9f09e5d0990d5ea58648dc57ad29aa30bbc23f256de5a64f021b0e8bf365202 0.0s done
-#28 exporting config sha256:16c1025a135c849b03251f86fcb0e2bc5697e0b9c058f684c153c1d4bb447cd8 0.0s done
-#28 exporting attestation manifest sha256:4816c361cedfb5743221012b842700ffd4a5d863b2bc94d70f47f163070f0324 0.0s done
-#28 exporting manifest list sha256:b4a7796c083d7faae34209ba7a0c17836edd8f2956fbff3cefeb10a38787fbf4
-#28 exporting manifest list sha256:b4a7796c083d7faae34209ba7a0c17836edd8f2956fbff3cefeb10a38787fbf4 0.0s done
+#28 exporting layers 0.8s done
+#28 exporting manifest sha256:d2c8fa97eed8b82d1b75131ad382acf512ce55a4f41ac3bf3b8558947a943b09 0.0s done
+#28 exporting config sha256:06c216edc825003f21303ec956652ba780f78d87ea8ec16a196c0d5c158007a4 0.0s done
+#28 exporting attestation manifest sha256:07721ea21de9aa9fd56ca06c28fb73e44eb31850de27759b3aaebb1d6d9ccc2e 0.0s done
+#28 exporting manifest list sha256:9dde529d16cf0392c56a071597f6657dfad1ca2fa7ceb30c1ae668663e14e99a 0.0s done
 #28 naming to docker.io/library/auditsphere-local:compatibility done
 #28 unpacking to docker.io/library/auditsphere-local:compatibility
-#28 unpacking to docker.io/library/auditsphere-local:compatibility 48.7s done
-#28 DONE 50.2s
+#28 unpacking to docker.io/library/auditsphere-local:compatibility 0.5s done
+#28 DONE 1.5s

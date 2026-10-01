@@ -10,7 +10,7 @@ test('lazy client layout remains unavailable without portal authentication', asy
 });
 test('STE brand logo and palette are served on desktop and mobile', async ({ page }) => {
   await page.goto('/');
-  const logo = page.getByRole('img', { name: 'STE — Salem Taleb Efaifa, Accounting and Consulting' });
+  const logo = page.getByRole('img', { name: 'STE — Salem Taleb Efaifa, Auditing and Consulting' });
   await expect(logo).toBeVisible();
   await expect.poll(() => logo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBe(256);
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--ste-primary').trim())).toBe('#387CA6');
