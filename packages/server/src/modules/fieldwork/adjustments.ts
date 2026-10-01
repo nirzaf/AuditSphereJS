@@ -100,6 +100,53 @@ export async function reverseAdjustmentJournal(actorId: string, engagementId: st
   });
 }
 
+/**
+ * Derived adjusted balances: the latest published version plus the net effect of every posted
+ * adjustment, grouped by FSLI. This is a projection, not a stored snapshot: drafts and reversed
+ * originals are excluded, and each reversal journal offsets its original.
+ */
+export async function adjustedBalances(actorId: string, engagementId: string) {
+  const engagement = await loadEngagement(engagementId);
+  await requireCapability(db, actorId, 'ENGAGEMENT_READ', scopeOf(engagement));
+  const publication = await db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
+  if (!publication) throw new ConflictException('Publish an accepted balance version before reviewing adjusted balances');
+  const [rows, journals] = await Promise.all([
+    db.publishedBalanceRow.findMany({ where: { publicationId: publication.id }, orderBy: { position: 'asc' } }),
+    db.adjustmentJournal.findMany({ where: { engagementId, status: 'POSTED' }, orderBy: { createdAt: 'asc' }, select: { id: true, reference: true, lines: { select: { fsli: true, debit: true, credit: true } } } }),
+  ]);
+  const amounts = new Map<string, { published: Decimal6; adjustment: Decimal6 }>();
+  const entryFor = (fsli: string) => {
+    let entry = amounts.get(fsli);
+    if (!entry) { entry = { published: Decimal6.zero(), adjustment: Decimal6.zero() }; amounts.set(fsli, entry); }
+    return entry;
+  };
+  for (const row of rows) entryFor(row.fsli).published = entryFor(row.fsli).published.add(Decimal6.from(row.current.toFixed(6)));
+  for (const journal of journals) {
+    for (const line of journal.lines) {
+      const entry = entryFor(line.fsli ?? 'Unmapped');
+      entry.adjustment = entry.adjustment.add(Decimal6.from(line.debit.toFixed(6))).subtract(Decimal6.from(line.credit.toFixed(6)));
+    }
+  }
+  const items = [...amounts.entries()]
+    .map(([fsli, entry]) => ({ fsli, publishedCurrent: entry.published.toFixed(6), adjustmentNet: entry.adjustment.toFixed(6), adjustedCurrent: entry.published.add(entry.adjustment).toFixed(6) }))
+    .sort((left, right) => left.fsli.localeCompare(right.fsli));
+  const total = (selector: (entry: { published: Decimal6; adjustment: Decimal6 }) => Decimal6) => Decimal6.sum([...amounts.values()].map(selector)).toFixed(6);
+  return {
+    engagementId,
+    publicationId: publication.id,
+    publicationSequence: publication.sequence,
+    currency: publication.currency,
+    journalCount: journals.length,
+    includedJournalReferences: journals.map((journal) => journal.reference),
+    items,
+    totals: {
+      publishedCurrent: total((entry) => entry.published),
+      adjustmentNet: total((entry) => entry.adjustment),
+      adjustedCurrent: total((entry) => entry.published.add(entry.adjustment)),
+    },
+  };
+}
+
 export async function listAdjustmentJournals(engagementId: string, options: { status?: string } = {}) {
   await loadEngagement(engagementId);
   const statuses = ['DRAFT', 'POSTED', 'REVERSED'];

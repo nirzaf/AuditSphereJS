@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T19:25:15.436Z",
+  "generatedAt": "2026-10-01T19:30:14.034Z",
   "harness": "scripts/migration/differential.mjs",
   "sourceCommit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
   "boundary": "Expected values are quoted from the pinned source domain tests; the source stack was not executed here. MATCH means the destination calculator agrees with the source test assertion, not that the source produced it in this session.",
