@@ -1,10 +1,10 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
 import { z } from 'zod';
 import { approveMappingSchema, createTaxonomySchema } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
-import { approveImportMapping, approveTaxonomyVersion, createTaxonomyVersion, listTaxonomies } from './taxonomy.js';
+import { approveImportMapping, approveTaxonomyVersion, createTaxonomyVersion, listTaxonomies, suggestMappings } from './taxonomy.js';
 
 @ApiTags('Fieldwork') @ApiBearerAuth() @UseGuards(InternalGuard)
 @Controller('engagements/:engagementId')
@@ -16,4 +16,6 @@ export class TaxonomyController {
   approve(@Param('engagementId') engagementId: string, @Param('taxonomyVersionId') taxonomyVersionId: string, @ReqActor() actorId: string) { return approveTaxonomyVersion(actorId, engagementId, taxonomyVersionId); }
   @Post('imports/:importId/mapping-approval') @ApiBody({ schema: z.toJSONSchema(approveMappingSchema) as any })
   approveMapping(@Param('engagementId') engagementId: string, @Param('importId') importId: string, @ReqActor() actorId: string, @Body() body: unknown) { return approveImportMapping(actorId, engagementId, importId, body); }
+  @Get('imports/:importId/suggestions')
+  suggestions(@Param('engagementId') engagementId: string, @Param('importId') importId: string, @ReqActor() actorId: string, @Query('taxonomyVersionId') taxonomyVersionId?: string) { return suggestMappings(actorId, engagementId, importId, taxonomyVersionId ? { taxonomyVersionId } : {}); }
 }

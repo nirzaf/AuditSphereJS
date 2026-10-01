@@ -20,7 +20,7 @@ export { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
 export { PublicationController } from './modules/fieldwork/publication-controller.js';
 export { selectSample, drawIndexesFrom, samplingMethods } from './modules/fieldwork/sampling.js';
 export { TaxonomyController } from './modules/fieldwork/taxonomy-controller.js';
-export { createTaxonomyVersion, approveTaxonomyVersion, listTaxonomies, approveImportMapping, currentMappingApproval, mappingDigest, taxonomySections } from './modules/fieldwork/taxonomy.js';
+export { createTaxonomyVersion, approveTaxonomyVersion, listTaxonomies, approveImportMapping, currentMappingApproval, suggestMappings, mappingDigest, taxonomySections } from './modules/fieldwork/taxonomy.js';
 export type { SamplingPlan, SamplingOutcome, SampledItem, SamplingPopulationItem } from './modules/fieldwork/sampling.js';
 export { publishBalances, latestPublication, publicationDetail, rowDigest } from './modules/fieldwork/publication.js';
 export { runWorker } from './worker.js';

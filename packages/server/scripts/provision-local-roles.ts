@@ -46,6 +46,9 @@ try {
   await client.query('GRANT SELECT, INSERT, UPDATE ON "StoredObject" TO auditsphere_api');
   await client.query('GRANT SELECT, UPDATE ON "StoredObject" TO auditsphere_worker');
   await client.query('GRANT SELECT ON "StoredObject" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "MappingMemoryEntry" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "MappingMemoryEntry" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "MappingMemoryEntry" TO auditsphere_report');
   await client.query('GRANT SELECT ON "Firm", "Client", "Document", "TbImport", "TbRow", "OutboxEvent" TO auditsphere_worker');
   await client.query('GRANT UPDATE ON "TbImport", "OutboxEvent" TO auditsphere_worker');
   await client.query('GRANT INSERT, UPDATE, DELETE ON "TbRow" TO auditsphere_worker');

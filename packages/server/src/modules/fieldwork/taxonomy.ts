@@ -72,6 +72,43 @@ export async function listTaxonomies(engagementId: string) {
   return db.taxonomyVersion.findMany({ where: { firmId: engagement.firmId }, orderBy: [{ name: 'asc' }, { version: 'desc' }], include: { lines: { orderBy: { sortOrder: 'asc' } } } });
 }
 
+/**
+ * Suggests a taxonomy code for each row from the client's approved-mapping memory. Read-only: it
+ * never writes a mapping, and every suggestion names the approval it came from. A remembered code
+ * that is not in the currently approved taxonomy is reported as unresolved rather than offered.
+ */
+export async function suggestMappings(actorId: string, engagementId: string, importId: string, options: { taxonomyVersionId?: string } = {}) {
+  const engagement = await loadEngagement(engagementId);
+  await requireCapability(db, actorId, 'FIELDWORK_WRITE', firmScope(engagement));
+  const batch = await db.tbImport.findFirst({ where: { id: importId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId } });
+  if (!batch) throw new NotFoundException('Import not found');
+  const taxonomy = options.taxonomyVersionId
+    ? await db.taxonomyVersion.findFirst({ where: { id: options.taxonomyVersionId, firmId: engagement.firmId, status: 'APPROVED' }, include: { lines: true } })
+    : await db.taxonomyVersion.findFirst({ where: { firmId: engagement.firmId, status: 'APPROVED' }, orderBy: { version: 'desc' }, include: { lines: true } });
+  if (!taxonomy) throw new ConflictException('No approved taxonomy version is configured for this firm');
+  const codes = new Set(taxonomy.lines.map((line) => line.code));
+  const [rows, memory] = await Promise.all([
+    db.tbRow.findMany({ where: { importId: batch.id }, orderBy: { position: 'asc' } }),
+    db.mappingMemoryEntry.findMany({ where: { firmId: engagement.firmId, clientId: engagement.clientId } }),
+  ]);
+  const remembered = new Map(memory.map((entry) => [entry.accountCode, entry]));
+  const items = rows.map((row) => {
+    if (row.fsli) return { rowId: row.id, code: row.code, name: row.name, currentFsli: row.fsli, suggestedFsli: null, reason: 'ALREADY_MAPPED' as const, provenance: null };
+    const entry = remembered.get(row.code);
+    if (!entry) return { rowId: row.id, code: row.code, name: row.name, currentFsli: null, suggestedFsli: null, reason: 'NO_MEMORY' as const, provenance: null };
+    const provenance = { memoryEntryId: entry.id, sourceApprovalId: entry.sourceApprovalId, timesApplied: entry.timesApplied, lastApprovedAt: entry.lastApprovedAt };
+    if (!codes.has(entry.taxonomyLineCode)) return { rowId: row.id, code: row.code, name: row.name, currentFsli: null, suggestedFsli: null, reason: 'MEMORY_NOT_IN_TAXONOMY' as const, provenance };
+    return { rowId: row.id, code: row.code, name: row.name, currentFsli: null, suggestedFsli: entry.taxonomyLineCode, reason: 'MEMORY' as const, provenance };
+  });
+  return {
+    importId: batch.id, taxonomyVersionId: taxonomy.id, taxonomyVersion: taxonomy.version,
+    suggested: items.filter((item) => item.reason === 'MEMORY').length,
+    alreadyMapped: items.filter((item) => item.reason === 'ALREADY_MAPPED').length,
+    unresolved: items.filter((item) => item.reason === 'NO_MEMORY' || item.reason === 'MEMORY_NOT_IN_TAXONOMY').length,
+    items,
+  };
+}
+
 export async function currentMappingApproval(engagementId: string, importId: string) {
   const approval = await db.mappingApproval.findFirst({ where: { engagementId, importId }, orderBy: { approvedAt: 'desc' } });
   if (!approval) return null;
@@ -113,6 +150,17 @@ export async function approveImportMapping(actorId: string, engagementId: string
       return { approvalId: existing.id, taxonomyVersionId: taxonomy.id, taxonomyVersion: taxonomy.version, digest, rowCount: existing.rowCount };
     }
     const approval = await tx.mappingApproval.create({ data: { firmId: engagement.firmId, clientId: engagement.clientId, engagementId, importId: batch.id, taxonomyVersionId: taxonomy.id, digest, rowCount: rows.length, approvedBy: actorId } });
+    // Approved mappings become client-scoped memory with the approval as provenance.
+    await tx.$executeRaw`
+      INSERT INTO "MappingMemoryEntry" (id, "firmId", "clientId", "accountCode", "accountName", "taxonomyLineCode", "sourceApprovalId")
+      SELECT gen_random_uuid(), ${engagement.firmId}::uuid, ${engagement.clientId}::uuid, source."code", source."name", source."fsli", ${approval.id}::uuid
+      FROM (SELECT r."code", r."name", r."fsli" FROM "TbRow" r WHERE r."importId" = ${batch.id}::uuid) AS source
+      ON CONFLICT ("firmId", "clientId", "accountCode") DO UPDATE SET
+        "taxonomyLineCode" = EXCLUDED."taxonomyLineCode",
+        "accountName" = EXCLUDED."accountName",
+        "sourceApprovalId" = EXCLUDED."sourceApprovalId",
+        "lastApprovedAt" = now(),
+        "timesApplied" = "MappingMemoryEntry"."timesApplied" + 1`;
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'MAPPING_APPROVED', payload: { approvalId: approval.id, importId: batch.id, taxonomyVersionId: taxonomy.id, digest, rowCount: rows.length } } });
     const result = { approvalId: approval.id, taxonomyVersionId: taxonomy.id, taxonomyVersion: taxonomy.version, digest, rowCount: rows.length };
     await tx.commandReceipt.create({ data: { key: body.idempotencyKey, engagementId, actorId, hash, result } });
