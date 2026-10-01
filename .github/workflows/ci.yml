@@ -23,8 +23,8 @@ jobs:
       - run: pnpm infra:up
       - run: pnpm db:migrate
       - run: pnpm db:roles
-      - run: pnpm db:seed
       - run: pnpm build:server
+      - run: pnpm db:seed
       - run: pnpm exec playwright install --with-deps chromium
       - name: Start compiled local services
         run: |
