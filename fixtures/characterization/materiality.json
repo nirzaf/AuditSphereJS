@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "capability": "C22 materiality and risk",
+  "provenance": {
+    "repository": "nirzaf/AuditSphere",
+    "commit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
+    "sourceFile": "tests/AuditSphereOps.Domain.Tests/PlanningResourcesAndMaterialityTests.cs",
+    "extraction": "Values quoted from the source domain test file at the referenced line. The source tests assert these expectations; they were NOT executed in this workspace, so these fixtures are characterization inputs, not verified source output. The benchmark-derivation line set is a reconstruction that reproduces the quoted benchmark amounts under the source's documented section/tax rules; it is not copied from the source workflow seed."
+  },
+  "cases": [
+    {
+      "id": "revenue-driven-entity",
+      "sourceLine": 120,
+      "intent": "planning materiality, tolerable error and SAD threshold derived from a policy-compliant rate",
+      "input": {
+        "benchmark": "Revenue",
+        "mappedLine": null,
+        "ratePercent": "1",
+        "performancePercent": "75",
+        "sadPercent": "5"
+      },
+      "expected": {
+        "benchmarkAmount": "2000000",
+        "planningMateriality": "20000",
+        "tolerableError": "15000",
+        "sadThreshold": "1000"
+      }
+    },
+    {
+      "id": "benchmark-derivation-from-mapped-tb",
+      "sourceLine": 107,
+      "intent": "benchmarks come from the mapped trial balance, with the tax line excluded from profit before tax",
+      "reconstructedInput": {
+        "lines": [
+          {
+            "sourceAccountCode": "4000",
+            "destinationCode": "REVENUE",
+            "statementSection": "INCOME",
+            "amount": "-2000000"
+          },
+          {
+            "sourceAccountCode": "5000",
+            "destinationCode": "EXPENSES",
+            "statementSection": "EXPENSE",
+            "amount": "1450000"
+          },
+          {
+            "sourceAccountCode": "5100",
+            "destinationCode": "CORPORATE_TAX",
+            "statementSection": "EXPENSE",
+            "amount": "50000"
+          },
+          {
+            "sourceAccountCode": "1000",
+            "destinationCode": "RECEIVABLES",
+            "statementSection": "ASSETS",
+            "amount": "400000"
+          },
+          {
+            "sourceAccountCode": "1100",
+            "destinationCode": "CASH",
+            "statementSection": "ASSETS",
+            "amount": "600000"
+          },
+          {
+            "sourceAccountCode": "2000",
+            "destinationCode": "TRADE_PAYABLES",
+            "statementSection": "LIABILITIES",
+            "amount": "-300000"
+          }
+        ]
+      },
+      "expected": {
+        "revenue": "2000000",
+        "profitBeforeTax": "550000",
+        "totalAssets": "1000000",
+        "netAssets": "700000",
+        "totalExpenses": "1500000",
+        "mappedLineReceivables": "400000"
+      }
+    },
+    {
+      "id": "out-of-policy-rate",
+      "sourceLine": 118,
+      "intent": "a rate outside approved policy is invalid rather than clamped",
+      "input": {
+        "benchmark": "Revenue",
+        "mappedLine": null,
+        "ratePercent": "5",
+        "performancePercent": "75",
+        "sadPercent": "5"
+      },
+      "expected": {
+        "outcome": "invalid",
+        "clamped": false
+      }
+    },
+    {
+      "id": "performance-materiality-out-of-policy",
+      "sourceLine": 165,
+      "intent": "an out-of-range performance materiality percentage is invalid",
+      "input": {
+        "benchmark": "Revenue",
+        "ratePercent": "1",
+        "performancePercent": "80",
+        "sadPercent": "5"
+      },
+      "expected": {
+        "outcome": "invalid"
+      }
+    },
+    {
+      "id": "loss-fails-closed",
+      "sourceLine": 160,
+      "intent": "a loss benchmark is not silently used as a positive base",
+      "input": {
+        "benchmark": "ProfitBeforeTax",
+        "mappedLine": null,
+        "lines": [
+          {
+            "fsli": "INCOME",
+            "amount": "-100"
+          },
+          {
+            "fsli": "EXPENSE",
+            "amount": "150"
+          }
+        ],
+        "ratePercent": "2",
+        "performancePercent": "5",
+        "sadPercent": "5"
+      },
+      "expected": {
+        "derivedBenchmarkAmount": "-50",
+        "outcome": "calculation-error",
+        "defaultToZero": false
+      }
+    },
+    {
+      "id": "risk-band-matrix",
+      "sourceLine": 167,
+      "intent": "risk bands derive from assessed likelihood, impact and flags",
+      "input": {
+        "cases": [
+          {
+            "likelihood": 1,
+            "impact": 2,
+            "fraud": false,
+            "significant": false
+          },
+          {
+            "likelihood": 1,
+            "impact": 3,
+            "fraud": false,
+            "significant": false
+          },
+          {
+            "likelihood": 2,
+            "impact": 2,
+            "fraud": false,
+            "significant": false
+          },
+          {
+            "likelihood": 2,
+            "impact": 3,
+            "fraud": false,
+            "significant": false
+          },
+          {
+            "likelihood": 1,
+            "impact": 1,
+            "fraud": true,
+            "significant": false
+          },
+          {
+            "likelihood": 1,
+            "impact": 1,
+            "fraud": false,
+            "significant": true
+          }
+        ]
+      },
+      "expected": {
+        "bands": [
+          "Green",
+          "Amber",
+          "Amber",
+          "Red",
+          "Red",
+          "Red"
+        ]
+      }
+    }
+  ]
+}

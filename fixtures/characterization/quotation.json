@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "capability": "C05 quotation calculation and approval matrix",
+  "provenance": {
+    "repository": "nirzaf/AuditSphere",
+    "commit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
+    "sourceFile": "tests/AuditSphereOps.Domain.Tests/QuotationCalculatorTests.cs",
+    "extraction": "Values quoted from the source domain test file at the referenced line. Rule kinds use the source constants (DISCOUNT_OVER_PERCENT, NON_STANDARD_TERMS). The source tests assert these expectations; they were NOT executed in this workspace, so these fixtures are characterization inputs, not verified source output."
+  },
+  "cases": [
+    {
+      "id": "fee-breakdown-order",
+      "sourceLine": 17,
+      "intent": "rate × hours, then complexity, then risk premium, then discount",
+      "input": {
+        "currency": "QAR",
+        "lines": [
+          {
+            "role": "Partner",
+            "activity": "Audit",
+            "hours": "10",
+            "ratePerHour": "1000",
+            "rateCardVersionId": "00000000-0000-4000-8000-00000000000a"
+          },
+          {
+            "role": "Manager",
+            "activity": "Audit",
+            "hours": "20",
+            "ratePerHour": "750",
+            "rateCardVersionId": "00000000-0000-4000-8000-00000000000b"
+          }
+        ],
+        "complexityFactor": "1.2",
+        "riskPremiumPercent": "10",
+        "discountPercent": "5"
+      },
+      "expected": {
+        "baseAmount": "25000",
+        "complexityAmount": "5000",
+        "riskPremiumAmount": "3000",
+        "discountAmount": "1650",
+        "fee": "31350"
+      }
+    },
+    {
+      "id": "line-order-invariance",
+      "sourceLine": 28,
+      "intent": "the same lines in reverse order produce the same fee and input hash, while a discount or non-standard term changes the hash",
+      "input": {
+        "currency": "QAR",
+        "lines": [
+          {
+            "role": "Partner",
+            "activity": "Audit",
+            "hours": "10",
+            "ratePerHour": "1000",
+            "rateCardVersionId": "00000000-0000-4000-8000-00000000000a"
+          },
+          {
+            "role": "Manager",
+            "activity": "Audit",
+            "hours": "20",
+            "ratePerHour": "750",
+            "rateCardVersionId": "00000000-0000-4000-8000-00000000000b"
+          }
+        ],
+        "complexityFactor": "1.1",
+        "riskPremiumPercent": "5",
+        "discountPercent": "0",
+        "reversed": true,
+        "note": "Bespoke payment plan"
+      },
+      "expected": {
+        "feeEqualsForwardOrder": true,
+        "inputHashEqualsForwardOrder": true,
+        "hashChangesWithDiscount": true,
+        "hashChangesWithNonStandardTerms": true
+      }
+    },
+    {
+      "id": "per-stage-currency-rounding",
+      "sourceLine": 39,
+      "intent": "every stage rounds to two decimals so no fraction of a minor unit survives",
+      "input": {
+        "currency": "QAR",
+        "lines": [
+          {
+            "role": "Staff",
+            "activity": "Audit",
+            "hours": "3.33",
+            "ratePerHour": "333.33",
+            "rateCardVersionId": "00000000-0000-4000-8000-00000000000a"
+          }
+        ],
+        "complexityFactor": "1.333",
+        "riskPremiumPercent": "7.77",
+        "discountPercent": "3.33"
+      },
+      "expected": {
+        "allAmountsRoundedToMinorUnit": true
+      }
+    },
+    {
+      "id": "out-of-range-factors",
+      "sourceLine": 48,
+      "intent": "out-of-range pricing factors fail closed",
+      "input": {
+        "cases": [
+          {
+            "complexityFactor": "0.4"
+          },
+          {
+            "complexityFactor": "3.1"
+          },
+          {
+            "riskPremiumPercent": "-1"
+          },
+          {
+            "riskPremiumPercent": "101"
+          },
+          {
+            "discountPercent": "-0.5"
+          },
+          {
+            "discountPercent": "100.5"
+          }
+        ]
+      },
+      "expected": {
+        "outcome": "validation-error",
+        "defaultToZero": false
+      }
+    },
+    {
+      "id": "approval-default-threshold",
+      "sourceLine": 75,
+      "intent": "exactly the default threshold is not 'over'",
+      "input": {
+        "configuredRules": [],
+        "discountPercent": "10",
+        "nonStandardTerms": false
+      },
+      "expected": {
+        "requiredRoles": []
+      }
+    },
+    {
+      "id": "approval-configured-bands",
+      "sourceLine": 79,
+      "intent": "configured bands pick the highest exceeded band and an inactive rule does not apply",
+      "input": {
+        "configuredRules": [
+          {
+            "id": "00000000-0000-4000-8000-0000000000a1",
+            "kind": "DISCOUNT_OVER_PERCENT",
+            "thresholdPercent": "5",
+            "requiredRole": "Manager",
+            "active": true
+          },
+          {
+            "id": "00000000-0000-4000-8000-0000000000b1",
+            "kind": "DISCOUNT_OVER_PERCENT",
+            "thresholdPercent": "15",
+            "requiredRole": "Partner",
+            "active": false
+          },
+          {
+            "id": "00000000-0000-4000-8000-0000000000c1",
+            "kind": "NON_STANDARD_TERMS",
+            "requiredRole": "Administrator",
+            "active": true
+          }
+        ],
+        "discountPercent": "20",
+        "nonStandardTerms": false
+      },
+      "expected": {
+        "requiredRoles": [
+          "Manager"
+        ]
+      }
+    }
+  ]
+}
