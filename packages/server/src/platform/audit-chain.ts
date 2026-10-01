@@ -1,7 +1,32 @@
-import { createHash } from 'node:crypto';
+import { createHash, sign, verify, type KeyObject } from 'node:crypto';
 import { db } from './db.js';
 
 export type AuditCheckpoint = { formatVersion: 1; engagementId: string; sequence: string; digest: string };
+export type SignedAuditCheckpoint = AuditCheckpoint & { keyId: string; signedAt: string; signature: string };
+
+function checkpointBytes(checkpoint: Omit<SignedAuditCheckpoint, 'signature'>): Buffer {
+  if (checkpoint.formatVersion !== 1 || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(checkpoint.engagementId)
+    || !/^(0|[1-9]\d*)$/.test(checkpoint.sequence) || !/^[0-9a-f]{64}$/.test(checkpoint.digest)
+    || !/^[A-Za-z0-9_.-]{1,100}$/.test(checkpoint.keyId) || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(checkpoint.signedAt)
+    || new Date(checkpoint.signedAt).toISOString() !== checkpoint.signedAt) throw new Error('Invalid checkpoint manifest');
+  return Buffer.from(JSON.stringify({ formatVersion: 1, engagementId: checkpoint.engagementId, sequence: checkpoint.sequence, digest: checkpoint.digest, keyId: checkpoint.keyId, signedAt: checkpoint.signedAt }));
+}
+/** Caller supplies a separately protected key; this module never generates or stores production keys. */
+export function signAuditCheckpoint(checkpoint: AuditCheckpoint, keyId: string, privateKey: KeyObject, signedAt: Date): SignedAuditCheckpoint {
+  if (privateKey.type !== 'private' || privateKey.asymmetricKeyType !== 'ed25519') throw new Error('An Ed25519 private checkpoint key is required');
+  const manifest = { ...checkpoint, keyId, signedAt: signedAt.toISOString() };
+  return { ...manifest, signature: sign(null, checkpointBytes(manifest), privateKey).toString('base64url') };
+}
+/** The trust store belongs to the verifier, never to the manifest being checked. */
+export function verifySignedAuditCheckpoint(manifest: SignedAuditCheckpoint, trustedKeys: ReadonlyMap<string, KeyObject>): boolean {
+  try {
+    const key = trustedKeys.get(manifest.keyId);
+    if (!key || key.type !== 'public' || key.asymmetricKeyType !== 'ed25519' || !/^[A-Za-z0-9_-]{86}$/.test(manifest.signature)) return false;
+    const signature = Buffer.from(manifest.signature, 'base64url');
+    if (signature.toString('base64url') !== manifest.signature) return false;
+    return verify(null, checkpointBytes(manifest), key, signature);
+  } catch { return false; }
+}
 export type AuditChainRow = { eventId: string; sequence: bigint; formatVersion: number; previousDigest: string; digest: string; canonicalText: string; currentCanonical: string };
 const genesis = '0'.repeat(64);
 export function verifyAuditRecords(rows: readonly AuditChainRow[], checkpoint: AuditCheckpoint): { valid: boolean; reason?: string } {

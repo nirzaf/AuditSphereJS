@@ -12,7 +12,7 @@ const tasks = {
   T019: ['build:server', 'identity'],
   T023: ['build:server', 'money-clock'],
   T024: ['build:server', 'unit-of-work'],
-  T026: ['build:server', 'audit-chain'],
+  T026: ['build:server', 'checkpoint', 'audit-chain'],
   T066: ['build:server', 'practice-ledger'],
   T067: ['build:server', 'practice-ledger'],
   T032: ['build:server', 'storage'],
@@ -27,7 +27,7 @@ for (const step of tasks[id]) {
     if (createHash('sha256').update(bytes).digest('hex') !== record.sha256 || record.coverageIds.length !== 82) throw new Error('Baseline evidence mismatch');
     continue;
   }
-  const filters = { config: 'tests/config.test.ts', storage: 'tests/graph-storage.test.ts', identity: 'packages/server/tests/entra.test.ts', 'money-clock': 'tests/money-clock.test.ts' };
+  const filters = { config: 'tests/config.test.ts', storage: 'tests/graph-storage.test.ts', identity: 'packages/server/tests/entra.test.ts', 'money-clock': 'tests/money-clock.test.ts', checkpoint: 'tests/audit-checkpoint.test.ts' };
   const path = filters[step];
   const integration = { 'unit-of-work': 'tests/unit-of-work.integration.ts', 'audit-chain': 'tests/audit-chain.integration.ts', 'practice-ledger': 'tests/practice-ledger.integration.ts' }[step];
   if (integration && !existsSync(integration)) throw new Error(`Missing intended test: ${integration}`);

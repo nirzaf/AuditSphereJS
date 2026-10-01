@@ -44,6 +44,16 @@ test('audit chains serialize concurrent writes, roll back, and detect event/chec
       await db.$executeRawUnsafe('ALTER TABLE "AuditEvent" ENABLE TRIGGER USER');
       assert.match((await verifyAuditChain(engagementId, checkpoint)).reason ?? '', /Event changed/);
       await assert.rejects(db.$executeRawUnsafe('DELETE FROM "AuditChainRecord"'), /immutable/);
+      const deletionScope = randomUUID();
+      await db.auditEvent.create({ data: { engagementId: deletionScope, actorId, action: 'REMOVAL_TEST', payload: {} } });
+      const deletionCheckpoint = await captureAuditCheckpoint(deletionScope);
+      await db.$executeRawUnsafe('ALTER TABLE "AuditChainRecord" DISABLE TRIGGER USER');
+      await db.$executeRaw`DELETE FROM "AuditChainRecord" WHERE "engagementId" = ${deletionScope}::uuid`;
+      await db.$executeRawUnsafe('ALTER TABLE "AuditChainRecord" ENABLE TRIGGER USER');
+      await db.$executeRawUnsafe('ALTER TABLE "AuditEvent" DISABLE TRIGGER USER');
+      await db.$executeRaw`DELETE FROM "AuditEvent" WHERE "engagementId" = ${deletionScope}::uuid`;
+      await db.$executeRawUnsafe('ALTER TABLE "AuditEvent" ENABLE TRIGGER USER');
+      assert.match((await verifyAuditChain(deletionScope, deletionCheckpoint)).reason ?? '', /missing events/);
     } finally { await db.$disconnect(); }
   } finally { await container.stop(); }
 });
