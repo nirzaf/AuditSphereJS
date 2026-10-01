@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-01T19:14:24.828Z",
+  "generatedAt": "2026-10-01T19:25:22.985Z",
   "sourceCommit": null,
   "counts": {
-    "PARTIAL": 11,
-    "NOT_STARTED": 27
+    "PARTIAL": 12,
+    "NOT_STARTED": 26
   },
   "rows": [
     {
@@ -155,6 +155,34 @@
         "prisma/migrations/202610010017_mapping_memory/migration.sql"
       ],
       "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings now build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). Not implemented: allocation rules, statement layouts/financial packages, and the mapping UI."
+    },
+    {
+      "id": "C15",
+      "capability": "Adjustment journals, plans and eligibility",
+      "destinationOwner": "Fieldwork adjustments",
+      "taskAnchor": "T103-T105; MIG-008",
+      "migEpic": "MIG-008",
+      "symbols": [
+        "AdjustmentJournalService",
+        "AdjustmentPlanService",
+        "AdjustmentEligibilityQuery"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs",
+        "src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs",
+        "src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs"
+      ],
+      "sourceFileCount": 3,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/modules/fieldwork/adjustments.ts",
+        "prisma/migrations/202610010019_adjustment_journals/migration.sql",
+        "tests/adjustments.integration.ts"
+      ],
+      "evidence": "Client audit adjustment journals kept separate from the firm's own ledger: balanced double-entry drafts, posting under a distinct capability with a preparer/poster separation of duties, database-enforced balance and at-least-two-lines at posting, and a posted journal frozen except for one transition to REVERSED via a reversal journal that swaps the sides. Not implemented: adjustment plans, adjusted-balance snapshots, eligibility queries and the differences register."
     },
     {
       "id": "C22",
@@ -673,30 +701,6 @@
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [],
       "evidence": "No statement drill-down or currency review query."
-    },
-    {
-      "id": "C15",
-      "capability": "Adjustment journals, plans and eligibility",
-      "destinationOwner": "Fieldwork adjustments",
-      "taskAnchor": "T103-T105; MIG-008",
-      "migEpic": "MIG-008",
-      "symbols": [
-        "AdjustmentJournalService",
-        "AdjustmentPlanService",
-        "AdjustmentEligibilityQuery"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs",
-        "src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs",
-        "src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs"
-      ],
-      "sourceFileCount": 3,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No adjustment journal/plan/eligibility implementation."
     },
     {
       "id": "C16",

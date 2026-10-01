@@ -114,9 +114,13 @@
       "migEpic": "MIG-009"
     },
     "C15": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No adjustment journal/plan/eligibility implementation.",
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/fieldwork/adjustments.ts",
+        "prisma/migrations/202610010019_adjustment_journals/migration.sql",
+        "tests/adjustments.integration.ts"
+      ],
+      "evidence": "Client audit adjustment journals kept separate from the firm's own ledger: balanced double-entry drafts, posting under a distinct capability with a preparer/poster separation of duties, database-enforced balance and at-least-two-lines at posting, and a posted journal frozen except for one transition to REVERSED via a reversal journal that swaps the sides. Not implemented: adjustment plans, adjusted-balance snapshots, eligibility queries and the differences register.",
       "migEpic": "MIG-008"
     },
     "C16": {

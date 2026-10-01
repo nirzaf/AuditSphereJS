@@ -11,8 +11,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 
 | Status | Capabilities |
 | --- | ---: |
-| NOT_STARTED | 27 |
-| PARTIAL | 11 |
+| NOT_STARTED | 26 |
+| PARTIAL | 12 |
 
 ## Destination status by capability
 
@@ -23,6 +23,7 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C05 | Quotation calculation and tender documents | `src/AuditSphereOps.Application/Practice/CommercialApprovalMatrix.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`<br>`src/AuditSphereOps.Application/Practice/QuotationCalculator.cs`<br>… 1 more | 5 | Commercial quotations / tenders | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-006 |
 | C11 | Trial balance import and multi-period intake | `src/AuditSphereOps.Application/Accounting/Intake/MultiPeriodTrialBalanceService.cs`<br>`src/AuditSphereOps.Application/Accounting/TrialBalanceImportService.cs` | 2 | Fieldwork intake wizard | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-008 |
 | C13 | Mapping memory and approved mappings | `src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs`<br>`src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs` | 2 | Fieldwork mapping workbench / reporting mapping approval | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-009 |
+| C15 | Adjustment journals, plans and eligibility | `src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs`<br>`src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs`<br>`src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs` | 3 | Fieldwork adjustments | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-008 |
 | C22 | Materiality and risk classification | `src/AuditSphereOps.Application/Audit/MaterialityCalculator.cs`<br>`src/AuditSphereOps.Application/Audit/MaterialityEngineService.cs`<br>`src/AuditSphereOps.Application/Audit/RiskBandService.cs` | 3 | Governance materiality and risk | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-003 |
 | C25 | Sampling runs, evidence and movements | `src/AuditSphereOps.Application/Audit/AuditSamplingService.cs`<br>`src/AuditSphereOps.Domain/Audit/AuditSamplingEngine.cs`<br>`src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs`<br>… 1 more | 5 | Fieldwork sampling and physical evidence | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-010 |
 | C26 | Review notes, reviews and completion | `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs` | 1 | Reporting review inbox and SRM | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
@@ -38,7 +39,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C10 | Client accounting profiles, periods, books and restatements | `src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Authorization.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Books.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Capabilities.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Charts.cs`<br>… 6 more | 10 | Fieldwork accounting setup | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-007 |
 | C12 | General ledger import, query and completeness | `src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.GeneralLedger.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.GeneralLedger.cs`<br>`src/AuditSphereOps.Application/Accounting/GeneralLedgerCompletenessHandler.cs`<br>`src/AuditSphereOps.Application/Accounting/GeneralLedgerQuery.cs`<br>… 6 more | 10 | Fieldwork GL explorer | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-008 |
 | C14 | Financial statement drill-down and currency review | `src/AuditSphereOps.Application/Accounting/Intake/FinancialStatementDrillDownQuery.cs`<br>`src/AuditSphereOps.Application/Accounting/Intake/TrialBalanceCurrencyReviewQuery.cs` | 2 | Angular split dashboard | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-009 |
-| C15 | Adjustment journals, plans and eligibility | `src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs`<br>`src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs`<br>`src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs` | 3 | Fieldwork adjustments | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-008 |
 | C16 | Reconciliations, valuations and journal risk analysis | `src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.AnalyticalReview.cs`<br>`src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Authorization.cs`<br>`src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Evidence.cs`<br>`src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.GeneralLedger.cs`<br>… 3 more | 7 | Fieldwork evidence and analytical review | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-010 |
 | C17 | Currency remeasurement and translation | `src/AuditSphereOps.Application/Accounting/CurrencyRemeasurementService.cs`<br>`src/AuditSphereOps.Application/Accounting/CurrencyTranslationService.cs` | 2 | Fieldwork currency workpapers | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-010 |
 | C18 | Consolidation groups, perimeters and runs | `src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Advanced.cs`<br>`src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Authorization.cs`<br>`src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Components.cs`<br>`src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.ExternalPacks.cs`<br>… 7 more | 11 | Fieldwork group consolidation | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-011 |
@@ -108,6 +108,16 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs`, `src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs`
 - Destination files: `packages/contracts/src/index.ts`, `packages/server/src/modules/fieldwork/service.ts`, `packages/server/src/modules/fieldwork/taxonomy.ts`, `prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql`, `prisma/migrations/202610010017_mapping_memory/migration.sql`
 - Evidence / gap: Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings now build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). Not implemented: allocation rules, statement layouts/financial packages, and the mapping UI.
+
+### C15 — Adjustment journals, plans and eligibility
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Fieldwork adjustments
+- Existing task anchor: T103-T105; MIG-008; migration epic: MIG-008
+- Source symbols resolved: `AdjustmentJournalService`, `AdjustmentPlanService`, `AdjustmentEligibilityQuery`
+- Source files: `src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs`, `src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs`, `src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs`
+- Destination files: `packages/server/src/modules/fieldwork/adjustments.ts`, `prisma/migrations/202610010019_adjustment_journals/migration.sql`, `tests/adjustments.integration.ts`
+- Evidence / gap: Client audit adjustment journals kept separate from the firm's own ledger: balanced double-entry drafts, posting under a distinct capability with a preparer/poster separation of duties, database-enforced balance and at-least-two-lines at posting, and a posted journal frozen except for one transition to REVERSED via a reversal journal that swaps the sides. Not implemented: adjustment plans, adjusted-balance snapshots, eligibility queries and the differences register.
 
 ### C22 — Materiality and risk classification
 
@@ -258,16 +268,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Accounting/Intake/FinancialStatementDrillDownQuery.cs`, `src/AuditSphereOps.Application/Accounting/Intake/TrialBalanceCurrencyReviewQuery.cs`
 - Destination files: —
 - Evidence / gap: No statement drill-down or currency review query.
-
-### C15 — Adjustment journals, plans and eligibility
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Fieldwork adjustments
-- Existing task anchor: T103-T105; MIG-008; migration epic: MIG-008
-- Source symbols resolved: `AdjustmentJournalService`, `AdjustmentPlanService`, `AdjustmentEligibilityQuery`
-- Source files: `src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs`, `src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs`, `src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs`
-- Destination files: —
-- Evidence / gap: No adjustment journal/plan/eligibility implementation.
 
 ### C16 — Reconciliations, valuations and journal risk analysis
 
