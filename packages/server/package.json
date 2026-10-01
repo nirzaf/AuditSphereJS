@@ -21,7 +21,7 @@
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "bullmq": "6.3.11",
-    "csv-parse": "6.1.0",
+    "csv-parse": "7.0.2",
     "dotenv": "17.2.3",
     "ioredis": "5.8.2",
     "jose": "6.2.12",
