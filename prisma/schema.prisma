@@ -368,6 +368,21 @@ model StoredObject {
   resolvedAt   DateTime?
   @@index([status, createdAt])
 }
+/// Approved-mapping memory: the last taxonomy code approved for one client's account code.
+/// Written only from an approved mapping, so a suggestion always has provenance.
+model MappingMemoryEntry {
+  id               String   @id @default(uuid()) @db.Uuid
+  firmId           String   @db.Uuid
+  clientId         String   @db.Uuid
+  accountCode      String
+  accountName      String
+  taxonomyLineCode String
+  sourceApprovalId String   @db.Uuid
+  timesApplied     Int      @default(1)
+  lastApprovedAt   DateTime @default(now())
+  @@unique([firmId, clientId, accountCode])
+  @@index([firmId, clientId])
+}
 model AuditEvent {
   id           String   @id @default(uuid()) @db.Uuid
   engagementId String   @db.Uuid
