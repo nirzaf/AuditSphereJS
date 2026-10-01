@@ -4,11 +4,14 @@ import { createHash } from 'node:crypto';
 const id = process.argv.slice(2).find(value => value !== '--');
 const tasks = {
   T001: ['baseline'],
+  T007: ['lint', 'build:server', 'test:integration'],
   T008: ['build:server', 'test:integration'],
   T012: ['build:server', 'config'],
+  T014: ['test:unit', 'test:integration', 'test:e2e'],
   T015: ['lint', 'typecheck', 'test'],
   T019: ['build:server', 'identity'],
   T032: ['build:server', 'storage'],
+  T017: ['verify:all', 'build:linux', 'smoke:linux'],
 };
 if (!tasks[id]) throw new Error(`Task ${id || '(missing)'} has no recorded verification recipe. It cannot be verified.`);
 for (const step of tasks[id]) {
@@ -23,7 +26,10 @@ for (const step of tasks[id]) {
   const path = filters[step];
   if (path && !existsSync(path)) throw new Error(`Missing intended test: ${path}`);
   const args = path ? ['exec', 'vitest', 'run', path] : [step];
-  const result = spawnSync(process.execPath, [process.env.npm_execpath, ...args], { stdio: 'inherit' });
+  const executable = process.env.npm_execpath;
+  if (!executable) throw new Error('Run task verification through pnpm verify:task');
+  const javascript = /\.(?:c?js|mjs)$/i.test(executable);
+  const result = spawnSync(javascript ? process.execPath : executable, javascript ? [executable, ...args] : args, { stdio: 'inherit' });
   if (result.status !== 0) process.exit(result.status || 1);
 }
 console.log(`${id}: recorded checks passed; acceptance review and live-provider evidence are separate.`);

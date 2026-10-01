@@ -1,4 +1,5 @@
 import 'reflect-metadata';
 import 'dotenv/config';
-import { runWorker } from '@auditsphere/server';
+process.env.SERVICE_NAME = 'auditsphere-worker';
+const { runWorker } = await import('@auditsphere/server');
 runWorker().catch(error => { console.error(error); process.exitCode = 1; });

@@ -1,0 +1,1 @@
+Runtime DDL denied; reporting writes and API audit deletion denied by PostgreSQL grants

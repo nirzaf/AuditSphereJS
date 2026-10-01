@@ -4,8 +4,9 @@ import { Controller, Get, Module, Catch, ExceptionFilter, ArgumentsHost, HttpExc
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import helmet from '@fastify/helmet';
 import { FieldworkController, InternalGuard, RuntimeModule, Readiness, readConfiguration } from '@auditsphere/server';
-@Controller('health') class HealthController { constructor(private readonly readiness: Readiness) {} @Get() health() { return { status: 'ok', service: 'auditsphere-api' }; } @Get('ready') ready() { return this.readiness.check(); } }
+@Controller('health') class HealthController { constructor(private readonly readiness: Readiness) {} @Get(['', 'live']) health() { return { status: 'ok', service: 'auditsphere-api' }; } @Get('ready') ready() { return this.readiness.check(); } }
 @Controller('identity') class IdentityController {
   @Get('config') config() {
     if (process.env.AUTH_PROVIDER !== 'entra' && process.env.NODE_ENV !== 'production') return { provider: 'development' };
@@ -17,9 +18,11 @@ import { FieldworkController, InternalGuard, RuntimeModule, Readiness, readConfi
 async function main() {
   const config = readConfiguration();
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ bodyLimit: 16 * 1024 * 1024, logger: true }));
+  await app.register(helmet, { contentSecurityPolicy: config.NODE_ENV === 'production' });
   app.setGlobalPrefix('api/v1'); app.useGlobalFilters(new Errors()); app.enableShutdownHooks();
+  await app.get(Readiness).check();
   app.enableCors({ origin: config.WEB_ORIGIN });
-  SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('AuditSphere').setVersion('0.1').addBearerAuth().build()));
+  if (config.NODE_ENV !== 'production') SwaggerModule.setup('api/docs', app, SwaggerModule.createDocument(app, new DocumentBuilder().setTitle('AuditSphere').setVersion('0.1').addBearerAuth().build()));
   await app.listen(config.PORT, config.HOST);
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

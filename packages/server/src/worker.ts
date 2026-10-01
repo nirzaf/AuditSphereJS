@@ -13,29 +13,44 @@ import { readConfiguration } from './platform/config.js';
 export async function runWorker() {
   readConfiguration();
   const app = await NestFactory.createApplicationContext(WorkerModule); app.enableShutdownHooks(); await app.get(Readiness).check(); await ensureBucket();
-  const u = new URL(process.env.REDIS_URL!); const connection = { host: u.hostname, port: Number(u.port || 6379), password: u.password || undefined };
+  const u = new URL(process.env.REDIS_URL!); const connection = { host: u.hostname, port: Number(u.port || 6379), username: u.username ? decodeURIComponent(u.username) : undefined, password: u.password ? decodeURIComponent(u.password) : undefined, ...(u.protocol === 'rediss:' ? { tls: { servername: u.hostname, rejectUnauthorized: true } } : {}) };
   const queue = new Queue('tb-import', { connection });
   const worker = new Worker('tb-import', async job => {
     const batch = await db.tbImport.findUniqueOrThrow({ where: { id: job.data.importId } });
-    if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) return;
+    if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) { await db.outboxEvent.updateMany({ where: { id: job.id }, data: { completedAt: new Date() } }); return; }
     try {
-      await db.tbImport.update({ where: { id: batch.id }, data: { status: 'PARSING', error: null } });
+      const claimed = await db.tbImport.updateMany({ where: { id: batch.id, status: { in: ['QUEUED', 'PARSING', 'FAILED'] } }, data: { status: 'PARSING', error: null } });
+      if (!claimed.count) return;
       const document = await db.document.findUniqueOrThrow({ where: { id: batch.documentId } });
       const content = await retrieve(document.key);
       if (createHash('sha256').update(content).digest('hex') !== document.sha256) throw new Error('Evidence hash mismatch');
       const rows = parseTrialBalance(content);
       await db.$transaction(async tx => {
+        await tx.$queryRaw`SELECT id FROM "TbImport" WHERE id = ${batch.id}::uuid FOR UPDATE`;
+        const latest = await tx.tbImport.findUniqueOrThrow({ where: { id: batch.id } });
+        if (['MAPPING_REQUIRED', 'FINALIZED'].includes(latest.status)) return;
         await tx.tbRow.deleteMany({ where: { importId: batch.id } });
         for (let i = 0; i < rows.length; i += 1000) await tx.tbRow.createMany({ data: rows.slice(i, i + 1000).map(row => ({ ...row, importId: batch.id })) });
         await tx.tbImport.update({ where: { id: batch.id }, data: { status: 'MAPPING_REQUIRED', rowCount: rows.length } });
+        await tx.outboxEvent.updateMany({ where: { id: job.id }, data: { completedAt: new Date() } });
       }, { timeout: 120_000 });
-    } catch (error) { await db.tbImport.update({ where: { id: batch.id }, data: { status: 'FAILED', error: error instanceof Error ? error.message.slice(0, 500) : 'Import failed' } }); throw error; }
+    } catch (error) {
+      const terminal = job.attemptsMade + 1 >= (job.opts.attempts || 1);
+      await db.$transaction(async tx => {
+        const changed = await tx.tbImport.updateMany({ where: { id: batch.id, status: 'PARSING' }, data: { status: terminal ? 'FAILED' : 'QUEUED', error: error instanceof Error ? error.message.slice(0, 500) : 'Import failed' } });
+        if (terminal && changed.count) await tx.outboxEvent.updateMany({ where: { id: job.id }, data: { completedAt: new Date() } });
+      });
+      throw error;
+    }
   }, { connection, concurrency: 1 });
   worker.on('failed', (job, error) => console.error('Import failed', job?.id, error.message));
   let publishing = false;
   const timer = setInterval(async () => {
     if (publishing) return; publishing = true;
-    try { for (const event of await db.outboxEvent.findMany({ where: { publishedAt: null, type: 'tb.import' }, take: 100 })) {
+    try { for (const event of await db.outboxEvent.findMany({ where: { completedAt: null, type: 'tb.import' }, orderBy: { createdAt: 'asc' }, take: 100 })) {
+      const batch = await db.tbImport.findUnique({ where: { id: (event.payload as { importId: string }).importId } });
+      if (!batch || ['FAILED', 'MAPPING_REQUIRED', 'FINALIZED'].includes(batch.status)) { await db.outboxEvent.update({ where: { id: event.id }, data: { completedAt: new Date() } }); continue; }
+      if (await queue.getJob(event.id)) continue;
       await queue.add('parse', event.payload, { jobId: event.id, attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
       await db.outboxEvent.update({ where: { id: event.id }, data: { publishedAt: new Date() } });
     } } catch (error) { console.error('Outbox retry', error); } finally { publishing = false; }

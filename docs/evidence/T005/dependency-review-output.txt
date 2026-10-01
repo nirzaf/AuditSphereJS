@@ -1,0 +1,60 @@
+@angular/build@22.2.1 | MIT | {"npm":"^6.11.0 || ^7.5.6 || >=8.0.0","node":"^22.22.3 || ^24.15.0 || >=26.0.0","yarn":">= 1.13.0"}
+@angular/cli@22.2.1 | MIT | {"npm":"^6.11.0 || ^7.5.6 || >=8.0.0","node":"^22.22.3 || ^24.15.0 || >=26.0.0","yarn":">= 1.13.0"}
+@angular/common@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@angular/compiler@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@angular/compiler-cli@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@angular/core@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@angular/platform-browser@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@nestjs/cli@12.0.8 | MIT | {"node":">= 20.11"}
+@nestjs/schematics@12.0.6 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@playwright/test@1.58.2 | Apache-2.0 | {"node":">=18"}
+@testcontainers/postgresql@12.2.0 | MIT | {}
+@types/node@24.10.1 | MIT | {}
+@types/pg@8.15.6 | MIT | {}
+angular-eslint@22.5.0 | MIT | {}
+concurrently@10.0.5 | MIT | {"node":">=22"}
+dotenv@17.2.3 | BSD-2-Clause | {"node":">=12"}
+eslint@10.11.0 | MIT | {"node":"^20.19.0 || ^22.13.0 || >=24"}
+jsdom@30.1.1 | MIT | {"node":"^22.22.2 || ^24.15.0 || >=26.0.0"}
+prettier@3.9.9 | MIT | {"node":">=14"}
+prisma@7.10.0 | Apache-2.0 | {"node":"^20.19 || ^22.12 || >=24.0"}
+socket.io-client@4.8.4 | MIT | {"node":">=10.0.0"}
+testcontainers@12.2.0 | MIT | {"node":">= 22.22"}
+tsx@4.23.15 | MIT | {"node":">=18.0.0"}
+typescript@6.0.3 | Apache-2.0 | {"node":">=14.17"}
+typescript-eslint@8.71.0 | MIT | {"node":"^18.18.0 || ^20.9.0 || >=21.1.0"}
+vitest@4.1.11 | MIT | {"node":"^20.0.0 || ^22.0.0 || >=24.0.0"}
+zod@4.6.5 | MIT | {}
+@nestjs/common@12.1.2 | MIT | {}
+@nestjs/core@12.1.2 | MIT | {"node":">= 20"}
+@nestjs/platform-fastify@12.1.2 | MIT | {}
+@nestjs/swagger@12.0.2 | MIT | {"node":"^20.19.0 || >=22.12.0"}
+fastify@5.12.5 | MIT | {}
+@fastify/static@10.1.2 | MIT | {}
+@fastify/helmet@13.1.1 | MIT | {}
+@fastify/cookie@11.1.2 | MIT | {}
+@fastify/csrf-protection@8.0.1 | MIT | {}
+@fastify/rate-limit@11.2.0 | MIT | {}
+reflect-metadata@0.2.2 | Apache-2.0 | {}
+rxjs@7.8.2 | Apache-2.0 | {}
+@angular/cdk@22.2.1 | MIT | {}
+@angular/forms@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@angular/material@22.2.1 | MIT | {}
+@angular/router@22.2.1 | MIT | {"node":"^22.22.3 || ^24.15.0 || >=26.0.0"}
+@azure/msal-browser@5.23.0 | MIT | {"node":">=0.8.0"}
+tslib@2.8.1 | 0BSD | {}
+@aws-sdk/client-s3@3.1000.0 | Apache-2.0 | {"node":">=20.0.0"}
+@nestjs/bullmq@12.0.0 | MIT | {}
+@nestjs/platform-socket.io@12.1.2 | MIT | {}
+@nestjs/websockets@12.1.2 | MIT | {}
+@prisma/adapter-pg@7.10.0 | Apache-2.0 | {}
+@prisma/client@7.10.0 | Apache-2.0 | {"node":"^20.19 || ^22.12 || >=24.0"}
+bullmq@6.3.11 | MIT | {"node":">=14.17.0"}
+csv-parse@7.0.3 | MIT | {}
+ioredis@5.8.2 | MIT | {"node":">=12.22.0"}
+jose@6.2.12 | MIT | {}
+pg@8.16.3 | MIT | {"node":">= 16.0.0"}
+playwright@1.58.2 | Apache-2.0 | {"node":">=18"}
+socket.io@4.8.4 | MIT | {"node":">=10.2.0"}
+openapi-typescript@7.13.0 | MIT | {}
+pnpm@12.8.1 | MIT | {"node":">=18.*"}

@@ -3,8 +3,6 @@ on: [push, pull_request]
 jobs:
   verify:
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://auditsphere:localdev@localhost:5432/auditsphere
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -12,11 +10,29 @@ jobs:
           version: 12.8.1
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 24.21.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm db:generate
-      - run: pnpm verify:affected
-      - run: pnpm build
+      - run: pnpm setup:local
+      - run: pnpm infra:up
+      - run: pnpm db:migrate
+      - run: pnpm db:roles
+      - run: pnpm db:seed
+      - run: pnpm build:server
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm test:e2e
+      - name: Start compiled local services
+        run: |
+          node apps/api/dist/main.js > api.log 2>&1 &
+          node apps/worker/dist/main.js > worker.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:3000/api/v1/health/ready; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - run: pnpm verify:all
+        env:
+          RUN_LIVE_E2E: '1'
+      - run: pnpm contracts:check
+      - run: pnpm audit --audit-level=moderate
+      - run: pnpm build:linux
+      - run: pnpm smoke:linux

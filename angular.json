@@ -15,7 +15,13 @@
             "styles": [
               "apps/web/src/styles.css"
             ],
-            "outputPath": "dist/web"
+            "outputPath": "dist/web",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "apps/web/public"
+              }
+            ]
           },
           "configurations": {
             "development": {
@@ -28,7 +34,8 @@
           "builder": "@angular/build:dev-server",
           "options": {
             "buildTarget": "web:build:development",
-            "proxyConfig": "apps/web/proxy.json"
+            "proxyConfig": "apps/web/proxy.json",
+            "prebundle": false
           }
         },
         "test": {

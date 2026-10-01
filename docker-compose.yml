@@ -3,7 +3,7 @@ services:
     image: postgres:18.6
     environment:
       POSTGRES_USER: auditsphere
-      POSTGRES_PASSWORD: localdev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run pnpm setup:local}
       POSTGRES_DB: auditsphere
     ports: ["127.0.0.1:5432:5432"]
     volumes: ["postgres:/var/lib/postgresql"]
@@ -24,8 +24,8 @@ services:
     image: rustfs/rustfs@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff
     command: /data
     environment:
-      RUSTFS_ACCESS_KEY: auditsphere
-      RUSTFS_SECRET_KEY: localdev-storage
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?Run pnpm setup:local}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?Run pnpm setup:local}
       RUSTFS_CONSOLE_ENABLE: "true"
       RUSTFS_ADDRESS: ":9000"
       RUSTFS_CONSOLE_ADDRESS: ":9001"

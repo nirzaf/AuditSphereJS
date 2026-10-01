@@ -82,6 +82,7 @@ model OutboxEvent {
   type String
   payload Json
   publishedAt DateTime?
+  completedAt DateTime?
   createdAt DateTime @default(now())
 }
 model CommandReceipt {

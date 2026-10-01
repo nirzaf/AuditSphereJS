@@ -4,24 +4,24 @@
   "metrics": [
     {
       "rows": 5000,
-      "uploadMs": 75,
-      "stagedMs": 2219,
-      "mappedMs": 1523,
-      "finalizeMs": 35
+      "uploadMs": 186,
+      "stagedMs": 3426,
+      "mappedMs": 2701,
+      "finalizeMs": 108
     },
     {
       "rows": 25000,
-      "uploadMs": 92,
-      "stagedMs": 6522,
-      "mappedMs": 15253,
-      "finalizeMs": 45
+      "uploadMs": 327,
+      "stagedMs": 8287,
+      "mappedMs": 23251,
+      "finalizeMs": 127
     },
     {
       "rows": 50000,
-      "uploadMs": 197,
-      "stagedMs": 16117,
-      "mappedMs": 33952,
-      "finalizeMs": 46
+      "uploadMs": 744,
+      "stagedMs": 26011,
+      "mappedMs": 62133,
+      "finalizeMs": 124
     }
   ]
 }

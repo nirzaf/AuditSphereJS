@@ -4,19 +4,20 @@ NestJS 12 + Fastify 5 · Angular 22/CDK · PostgreSQL 18 · Prisma 7 · BullMQ 6
 Implementation follows the supplied architecture's first sprint. See docs/IMPLEMENTATION-STATUS.md for the remaining product scope.
 
 ## Run locally
-Use Node 24 and pnpm 10. Docker Desktop must be running.
+Use Node 24 and pnpm 12.8.1. Docker Desktop must be running.
 ```
 pnpm install
-Copy-Item .env.example .env
-# Replace DEV_AUTH_TOKEN with a random local token.
+pnpm setup:local
+# Creates local credentials in ignored .env without printing them.
 pnpm infra:up
 pnpm db:generate
 pnpm db:migrate
+pnpm db:roles
 pnpm db:seed
 pnpm dev
 ```
 Open http://127.0.0.1:4200 and enter your local token. Upload a UTF-8 CSV with headers `code,name,current,prior`; balances are signed decimals and each period must sum to zero before finalization.
-The seed's technical engagement is explicitly a development fixture. Production authentication is not implemented; protected endpoints fail closed in production.
+The seed's technical engagement is explicitly a development fixture. Microsoft Entra API token validation and MSAL browser sign-in are implemented. Production requires tenant configuration and explicitly assigned users; live tenant acceptance is pending.
 API health: http://127.0.0.1:3000/api/v1/health · Swagger: http://127.0.0.1:3000/api/docs
 
 ## Verify
@@ -25,7 +26,7 @@ pnpm verify:affected
 pnpm build
 pnpm test:e2e
 ```
-Object storage uses RustFS with a pinned container digest. Local dependency credentials in `.env.example` are development-only. Services bind to loopback. Never expose this environment publicly.
+Production file storage uses Microsoft Graph with SharePoint evidence libraries and OneDrive working files. RustFS with a pinned digest remains a local development fixture. See docs/architecture/microsoft365-storage.md. Local dependency credentials in `.env.example` are development-only. Services bind to loopback. Never expose this environment publicly.
 
 For live integration checks with the environment running:
 ```
@@ -35,4 +36,4 @@ $env:RUN_LIVE_E2E='1'
 pnpm test:e2e
 ```
 The integration benchmark creates development import fixtures and records timings in docs/benchmarks-local.json.
-The v2.1 CURRENT requirements file is still needed for business acceptance.
+The v2.1 CURRENT source is preserved at docs/requirements/CURRENT.md; tasks and acceptance evidence are tracked under docs/.

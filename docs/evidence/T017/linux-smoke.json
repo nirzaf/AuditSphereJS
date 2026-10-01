@@ -1,0 +1,13 @@
+{
+  "runtime": "v24.21.0",
+  "platform": "linux",
+  "architecture": "x64",
+  "checks": [
+    "compiled Nest DI and PostgreSQL readiness",
+    "PostgreSQL NUMERIC transaction",
+    "Fastify plugins and denied rate limit",
+    "BullMQ job against Redis",
+    "Socket.IO websocket handshake",
+    "Linux Chromium PDF executable"
+  ]
+}

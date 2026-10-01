@@ -1,6 +1,6 @@
 # Task execution ledger
 
-**Initial state:** no task is implemented. Update this file in the working repository as each task is reviewed. Evidence links should point to actual commits, test artifacts and decision approvals. Do not change a task to DONE because it was planned or a file was generated.
+**Reviewed state (2026-10-01):** the repository contains a tested technical foundation and partial Trial Balance slice. Update this file in the working repository as each task is reviewed. Evidence links should point to actual commits, test artifacts and decision approvals. Do not change a task to DONE because it was planned or a file was generated.
 
 | ID | Task | Class | Status | Implementation/test evidence | Reviewer / decision |
 | :--- | :--- | :--- | :--- | :--- | :--- |

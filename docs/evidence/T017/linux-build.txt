@@ -1,0 +1,126 @@
+$ node scripts/build-linux.mjs
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.40kB 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 173B 0.0s done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 14.42kB 0.0s done
+#4 DONE 0.1s
+
+#5 [compatibility  1/23] FROM docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
+#5 resolve docker.io/library/node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 0.1s done
+#5 DONE 0.1s
+
+#6 [compatibility  8/23] COPY apps/worker/package.json apps/worker/package.json
+#6 CACHED
+
+#7 [compatibility  2/23] WORKDIR /app
+#7 CACHED
+
+#8 [compatibility 15/23] RUN pnpm exec playwright install --with-deps chromium
+#8 CACHED
+
+#9 [compatibility 13/23] COPY packages/observability/package.json packages/observability/package.json
+#9 CACHED
+
+#10 [compatibility 14/23] RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
+#10 CACHED
+
+#11 [compatibility  4/23] RUN npm install --global pnpm@12.8.1
+#11 CACHED
+
+#12 [compatibility  6/23] COPY apps/api/package.json apps/api/package.json
+#12 CACHED
+
+#13 [compatibility  9/23] COPY packages/server/package.json packages/server/package.json
+#13 CACHED
+
+#14 [compatibility  7/23] COPY apps/web/package.json apps/web/package.json
+#14 CACHED
+
+#15 [compatibility 11/23] COPY packages/config/package.json packages/config/package.json
+#15 CACHED
+
+#16 [compatibility  3/23] RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+#16 CACHED
+
+#17 [compatibility  5/23] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+#17 CACHED
+
+#18 [compatibility 10/23] COPY packages/contracts/package.json packages/contracts/package.json
+#18 CACHED
+
+#19 [compatibility 12/23] COPY packages/testing/package.json packages/testing/package.json
+#19 CACHED
+
+#20 [compatibility 16/23] COPY apps ./apps
+#20 CACHED
+
+#21 [compatibility 17/23] COPY packages ./packages
+#21 DONE 0.1s
+
+#22 [compatibility 18/23] COPY prisma ./prisma
+#22 DONE 0.1s
+
+#23 [compatibility 19/23] COPY prisma.config.ts tsconfig*.json angular.json ./
+#23 DONE 0.2s
+
+#24 [compatibility 20/23] RUN DATABASE_URL=postgresql://build:build@127.0.0.1:5432/build pnpm build
+#24 0.625 $ pnpm build:server && ng build web
+#24 0.676 $ prisma generate && tsc -b
+#24 3.680 Loaded Prisma config from prisma.config.ts.
+#24 3.680 
+#24 3.769 Prisma schema loaded from prisma/schema.prisma.
+#24 4.203 
+#24 4.203 ✔ Generated Prisma Client (7.10.0) to ./packages/server/src/generated/prisma in 288ms
+#24 4.203 
+#24 14.85 ❯ Building...
+#24 23.38 ✔ Building...
+#24 23.39 Initial chunk files | Names                         |  Raw size | Estimated transfer size
+#24 23.39 main.js             | main                          | 248.38 kB |                67.00 kB
+#24 23.39 styles.css          | styles                        |   7.97 kB |                 1.84 kB
+#24 23.39 
+#24 23.39                     | Initial total                 | 256.35 kB |                68.85 kB
+#24 23.39 
+#24 23.39 Lazy chunk files    | Names                         |  Raw size | Estimated transfer size
+#24 23.39 chunk-L3Ayo_av.js   | workspace                     | 766.65 kB |               152.55 kB
+#24 23.39 chunk-DxUoSB3f.js   | portal                        |   1.54 kB |               681 bytes
+#24 23.39 chunk-R3Q4CR2A.js   | BrowserPerformanceMeasurement | 107 bytes |               107 bytes
+#24 23.39 
+#24 23.39 Application bundle generation complete. [8.534 seconds] - 2026-10-01T17:11:42.545Z
+#24 23.39 
+#24 23.39 Output location: /app/dist/web
+#24 23.39 
+#24 DONE 23.6s
+
+#25 [compatibility 21/23] COPY scripts ./scripts
+#25 DONE 0.1s
+
+#26 [compatibility 22/23] COPY tests ./tests
+#26 DONE 0.1s
+
+#27 [compatibility 23/23] COPY vitest.config.ts eslint.config.mjs ./
+#27 DONE 0.1s
+
+#28 exporting to image
+#28 exporting layers
+#28 exporting layers 1.2s done
+#28 exporting manifest sha256:a9f09e5d0990d5ea58648dc57ad29aa30bbc23f256de5a64f021b0e8bf365202 0.0s done
+#28 exporting config sha256:16c1025a135c849b03251f86fcb0e2bc5697e0b9c058f684c153c1d4bb447cd8 0.0s done
+#28 exporting attestation manifest sha256:4816c361cedfb5743221012b842700ffd4a5d863b2bc94d70f47f163070f0324 0.0s done
+#28 exporting manifest list sha256:b4a7796c083d7faae34209ba7a0c17836edd8f2956fbff3cefeb10a38787fbf4
+#28 exporting manifest list sha256:b4a7796c083d7faae34209ba7a0c17836edd8f2956fbff3cefeb10a38787fbf4 0.0s done
+#28 naming to docker.io/library/auditsphere-local:compatibility done
+#28 unpacking to docker.io/library/auditsphere-local:compatibility
+#28 unpacking to docker.io/library/auditsphere-local:compatibility 48.7s done
+#28 DONE 50.2s

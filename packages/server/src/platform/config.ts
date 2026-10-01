@@ -1,7 +1,7 @@
 import { z } from 'zod';
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  DATABASE_URL: z.url(), REDIS_URL: z.url(),
+  DATABASE_URL: z.url().refine(value => URL.canParse(value) && ['postgres:', 'postgresql:'].includes(new URL(value).protocol)), REDIS_URL: z.url().refine(value => URL.canParse(value) && ['redis:', 'rediss:'].includes(new URL(value).protocol)),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   DEV_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
@@ -14,7 +14,10 @@ export function readConfiguration(env = process.env) {
   const parsed = schema.safeParse(env);
   if (!parsed.success) throw new Error(`Invalid configuration keys: ${parsed.error.issues.map(i => i.path.join('.')).join(', ')}`);
   const config = parsed.data;
+  if (config.DEV_AUTH_ENABLED === 'true' && (!env.DEV_AUTH_TOKEN || env.DEV_AUTH_TOKEN.startsWith('replace-'))) throw new Error('Development authentication requires a generated local token');
   if (config.NODE_ENV === 'production') {
+    const database = new URL(config.DATABASE_URL);
+    if (database.searchParams.has('sslmode') && database.searchParams.get('sslmode') !== 'verify-full') throw new Error('Production database TLS must verify the server certificate');
     if (config.DEV_AUTH_ENABLED === 'true' || env.DEV_AUTH_TOKEN) throw new Error('Development authentication is forbidden in production');
     if (config.AUTH_PROVIDER !== 'entra' || config.STORAGE_PROVIDER !== 'graph') throw new Error('Production requires Entra identity and Graph storage');
     if (new URL(config.WEB_ORIGIN).protocol !== 'https:') throw new Error('Production WEB_ORIGIN requires HTTPS');

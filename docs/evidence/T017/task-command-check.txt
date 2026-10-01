@@ -1,0 +1,31 @@
+Module and browser import boundaries passed
+
+✔ Generated Prisma Client (7.10.0) to .\packages\server\src\generated\prisma in 92ms
+
+> Building...
+√ Building...
+Initial chunk files | Names                         |  Raw size | Estimated transfer size
+main.js             | main                          | 248.38 kB |                67.00 kB
+styles.css          | styles                        |   7.97 kB |                 1.84 kB
+
+                    | Initial total                 | 256.35 kB |                68.85 kB
+
+Lazy chunk files    | Names                         |  Raw size | Estimated transfer size
+chunk-L3Ayo_av.js   | workspace                     | 766.65 kB |               152.55 kB
+chunk-DxUoSB3f.js   | portal                        |   1.54 kB |               681 bytes
+chunk-R3Q4CR2A.js   | BrowserPerformanceMeasurement | 107 bytes |               107 bytes
+
+Application bundle generation complete. [4.894 seconds] - 2026-10-01T17:04:23.045Z
+
+Output location: C:\Users\DELL\repos\AuditSphereJS\dist\web
+
+
+ RUN  v4.1.11 C:/Users/DELL/repos/AuditSphereJS
+
+
+ Test Files  5 passed (5)
+      Tests  15 passed (15)
+   Start at  20:04:23
+   Duration  2.99s (transform 662ms, setup 0ms, import 2.91s, tests 640ms, environment 1ms)
+
+T015: recorded checks passed; acceptance review and live-provider evidence are separate.

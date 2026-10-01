@@ -1,0 +1,9 @@
+✔ empty disposable PostgreSQL 18.6 database migrates and round-trips exact NUMERIC (38705.694ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 44053.2265

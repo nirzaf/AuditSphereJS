@@ -1,0 +1,226 @@
+{
+  "advisories": {
+    "1120422": {
+      "findings": [
+        {
+          "version": "1.8.3",
+          "paths": [
+            ".>concurrently>shell-quote"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1120422,
+      "title": "shell-quote quote() does not escape newlines in object .op values",
+      "module_name": "shell-quote",
+      "vulnerable_versions": ">=1.1.0 <=1.8.3",
+      "patched_versions": ">=1.8.4",
+      "severity": "critical",
+      "cwe": "CWE-77, CWE-78",
+      "github_advisory_id": "GHSA-w7jw-789q-3m8p",
+      "url": "https://github.com/advisories/GHSA-w7jw-789q-3m8p"
+    },
+    "1120680": {
+      "findings": [
+        {
+          "version": "0.27.7",
+          "paths": [
+            ".>tsx>esbuild",
+            ".>vitest>vite>tsx>esbuild",
+            ".>vitest>@vitest/mocker>vite>tsx>esbuild",
+            ".>@angular/build>@vitejs/plugin-basic-ssl>vite>tsx>esbuild",
+            ".>@angular/build>vite>tsx>esbuild",
+            ".>@angular/build>vitest>vite>tsx>esbuild",
+            ".>@angular/build>vitest>@vitest/mocker>vite>tsx>esbuild"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1120680,
+      "title": "esbuild allows arbitrary file read when running the development server on Windows",
+      "module_name": "esbuild",
+      "vulnerable_versions": ">=0.27.3 <0.28.1",
+      "patched_versions": ">=0.28.1",
+      "severity": "low",
+      "cwe": "CWE-22",
+      "github_advisory_id": "GHSA-g7r4-m6w7-qqqr",
+      "url": "https://github.com/advisories/GHSA-g7r4-m6w7-qqqr"
+    },
+    "1123944": {
+      "findings": [
+        {
+          "version": "1.8.3",
+          "paths": [
+            ".>concurrently>shell-quote"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1123944,
+      "title": "shell-quote: Quadratic-complexity Denial of Service in `parse()` (CWE-407)",
+      "module_name": "shell-quote",
+      "vulnerable_versions": "<=1.8.4",
+      "patched_versions": ">=1.9.0",
+      "severity": "high",
+      "cwe": "CWE-407",
+      "github_advisory_id": "GHSA-395f-4hp3-45gv",
+      "url": "https://github.com/advisories/GHSA-395f-4hp3-45gv"
+    },
+    "1145093": {
+      "findings": [
+        {
+          "version": "7.1.5",
+          "paths": [
+            "packages__server>@prisma/client>prisma>@prisma/config>deepmerge-ts",
+            ".>prisma>@prisma/config>deepmerge-ts"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1145093,
+      "title": "DeepmergeTS has stack exhaustion when merging recursive object graphs",
+      "module_name": "deepmerge-ts",
+      "vulnerable_versions": "<8.0.0",
+      "patched_versions": ">=8.0.0",
+      "severity": "high",
+      "cwe": "CWE-674",
+      "github_advisory_id": "GHSA-ggr8-5vv4-36mx",
+      "url": "https://github.com/advisories/GHSA-ggr8-5vv4-36mx"
+    },
+    "1153173": {
+      "findings": [
+        {
+          "version": "3.15.3",
+          "paths": [
+            "packages__server>@prisma/client>prisma>mysql2",
+            ".>prisma>mysql2"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1153173,
+      "title": "MySQL2: Auth Plugin Downgrade to mysql_clear_password Leaks Plaintext Credentials",
+      "module_name": "mysql2",
+      "vulnerable_versions": "<3.22.0",
+      "patched_versions": ">=3.22.0",
+      "severity": "high",
+      "cwe": "CWE-522",
+      "github_advisory_id": "GHSA-3f6p-5ww8-9rcr",
+      "url": "https://github.com/advisories/GHSA-3f6p-5ww8-9rcr"
+    },
+    "1158532": {
+      "findings": [
+        {
+          "version": "3.15.3",
+          "paths": [
+            "packages__server>@prisma/client>prisma>mysql2",
+            ".>prisma>mysql2"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1158532,
+      "title": "MySQL2: Unbounded zlib inflate in compressed MySQL protocol handler allows decompression-bomb DoS",
+      "module_name": "mysql2",
+      "vulnerable_versions": "<=3.23.0",
+      "patched_versions": ">=3.23.1",
+      "severity": "moderate",
+      "cwe": "CWE-409",
+      "github_advisory_id": "GHSA-rgwj-5xj2-c3m3",
+      "url": "https://github.com/advisories/GHSA-rgwj-5xj2-c3m3"
+    },
+    "1193670": {
+      "findings": [
+        {
+          "version": "6.1.0",
+          "paths": [
+            "packages__server>csv-parse"
+          ],
+          "dev": false,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1193670,
+      "title": "node-csv: Prototype replacement still reachable via columns path",
+      "module_name": "csv-parse",
+      "vulnerable_versions": "<7.0.2",
+      "patched_versions": ">=7.0.2",
+      "severity": "moderate",
+      "cwe": "CWE-1321",
+      "github_advisory_id": "GHSA-8cw4-87c7-c6xx",
+      "url": "https://github.com/advisories/GHSA-8cw4-87c7-c6xx"
+    },
+    "1193683": {
+      "findings": [
+        {
+          "version": "4.1.0",
+          "paths": [
+            ".>vitest",
+            ".>@angular/build>vitest"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1193683,
+      "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+      "module_name": "vitest",
+      "vulnerable_versions": ">=2.1.0 <4.1.11",
+      "patched_versions": ">=4.1.11",
+      "severity": "moderate",
+      "cwe": "CWE-22",
+      "github_advisory_id": "GHSA-82fw-gwwq-j7x9",
+      "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9"
+    },
+    "1193684": {
+      "findings": [
+        {
+          "version": "4.1.0",
+          "paths": [
+            ".>vitest>@vitest/mocker",
+            ".>@angular/build>vitest>@vitest/mocker"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1193684,
+      "title": "Vitest: Path Traversal / Arbitrary File Read via @vitest/mocker Redirect Mock",
+      "module_name": "@vitest/mocker",
+      "vulnerable_versions": ">=2.1.0 <4.1.11",
+      "patched_versions": ">=4.1.11",
+      "severity": "moderate",
+      "cwe": "CWE-22",
+      "github_advisory_id": "GHSA-82fw-gwwq-j7x9",
+      "url": "https://github.com/advisories/GHSA-82fw-gwwq-j7x9"
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 1,
+      "moderate": 4,
+      "high": 3,
+      "critical": 1
+    },
+    "dependencies": 267,
+    "devDependencies": 755,
+    "optionalDependencies": 189,
+    "totalDependencies": 1047
+  }
+}

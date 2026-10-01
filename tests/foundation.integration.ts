@@ -13,3 +13,13 @@ test('compiled ESM API and worker dependency injection uses real PostgreSQL', ()
   `], { encoding: 'utf8', cwd: 'apps/api', timeout: 30_000, env: { ...process.env, DOTENV_CONFIG_PATH: '../../.env' } });
   assert.match(output, /compiled DI ready/);
 });
+test('compiled integration detects a missing Nest injection token', () => {
+  const output = execFileSync(process.execPath, ['--input-type=module', '-e', `
+    import 'reflect-metadata';
+    import { NestFactory } from '@nestjs/core';
+    import { RuntimeModule } from '@auditsphere/server';
+    try { await NestFactory.createApplicationContext({module:RuntimeModule,providers:[{provide:'broken',inject:['missing-token'],useFactory:value=>value}]},{logger:false,abortOnError:false}); throw new Error('Broken DI accepted'); }
+    catch(error) { if(!String(error).includes('missing-token')) throw error; console.log('missing injection token detected'); }
+  `], { encoding: 'utf8', cwd: 'apps/api', timeout: 30_000, env: { ...process.env, DOTENV_CONFIG_PATH: '../../.env' } });
+  assert.match(output, /missing injection token detected/);
+});

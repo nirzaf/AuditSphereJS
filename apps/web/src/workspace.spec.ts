@@ -19,7 +19,7 @@ it('prevents paging away from unsaved mappings and discards explicitly', async (
 it('hides development token entry when Microsoft identity is selected', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ provider: 'entra' }))));
   const fixture = TestBed.createComponent(Workspace);
-  fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
+  fixture.detectChanges(); await vi.waitFor(() => expect(fixture.componentInstance.identityProvider()).toBe('entra')); fixture.detectChanges();
   expect(fixture.nativeElement.querySelector('#token')).toBeNull();
   expect(fixture.nativeElement.textContent).toContain('Sign in with Microsoft');
   fixture.destroy();
