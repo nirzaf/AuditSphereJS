@@ -12,6 +12,16 @@ function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   if (!value.success) throw new BadRequestException(value.error.issues);
   return value.data;
 }
+function practiceFailure(error: unknown): never {
+  const message = error instanceof Error ? error.message : '';
+  for (const guard of ['Approved firm posting policy is required', 'Posting date must belong to an open accounting period', 'Practice journal must contain balanced nonzero double-entry lines', 'Inactive or nonposting accounts cannot post', 'Reversal lines must exactly invert the original', 'Accounting periods must not overlap', 'Period identity and closed periods are immutable']) {
+    if (message.includes(guard)) throw new ConflictException(guard);
+  }
+  const code = error && typeof error === 'object' ? (error as { code?: string }).code : undefined;
+  if (code === 'P2002') throw new ConflictException('The account code, journal reference, policy or operation identifier already exists');
+  if (code === 'P2003') throw new BadRequestException('Referenced accounting records must belong to this firm');
+  throw error;
+}
 async function firmScope(tx: TransactionClient, actorId: string, engagementId: string, capability: Capability) {
   const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
   if (!engagement) throw new NotFoundException('Engagement not found');
@@ -36,14 +46,7 @@ async function command<T>(actorId: string, engagementId: string, capability: Cap
     await tx.auditEvent.create({ data: { engagementId, actorId, action: operation, payload: { firmId, result } } });
     await tx.commandReceipt.create({ data: { key: body.idempotencyKey, engagementId, actorId, hash, result } });
     return result;
-  }).catch(error => {
-    // Translate reviewed database business guards without exposing SQL, arguments or identities.
-    const message = error instanceof Error ? error.message : '';
-    for (const guard of ['Approved firm posting policy is required', 'Posting date must belong to an open accounting period', 'Practice journal must contain balanced nonzero double-entry lines', 'Inactive or nonposting accounts cannot post', 'Reversal lines must exactly invert the original']) {
-      if (message.includes(guard)) throw new ConflictException(guard);
-    }
-    throw error;
-  });
+  }).catch(practiceFailure);
 }
 export async function approveFirmPostingPolicy(actorId: string, engagementId: string, input: unknown) {
   const body = parse(z.object({ policyVersion: z.string().trim().min(1).max(80), revenueTreatment: z.literal('DEFERRED_UNTIL_RELEASE'), taxTreatment: z.literal('NO_TAX'), idempotencyKey: z.uuid() }), input);
@@ -57,7 +60,7 @@ export async function createPracticeAccount(actorId: string, engagementId: strin
     const account = await tx.practiceAccount.create({ data: { ...body, firmId } });
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'PRACTICE_ACCOUNT_CREATED', payload: { accountId: account.id, firmId } } });
     return account;
-  });
+  }).catch(practiceFailure);
 }
 export async function createPracticePeriod(actorId: string, engagementId: string, input: unknown) {
   const body = parse(practicePeriodSchema, input);
@@ -67,7 +70,7 @@ export async function createPracticePeriod(actorId: string, engagementId: string
     const period = await tx.practicePeriod.create({ data: { firmId, startsOn: AccountingDate.fromISO(body.startsOn).startOfUtcDay(), endsOn: AccountingDate.fromISO(body.endsOn).startOfUtcDay() } });
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'PRACTICE_PERIOD_CREATED', payload: { periodId: period.id, firmId } } });
     return period;
-  });
+  }).catch(practiceFailure);
 }
 export async function createPracticeJournal(actorId: string, engagementId: string, input: unknown) {
   const body = parse(practiceJournalSchema, input);

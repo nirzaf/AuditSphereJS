@@ -25,9 +25,10 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       await assert.rejects(createPracticeAccount(actorId, engagementId, { code: '100', name: 'Cash', kind: 'ASSET' }), /firm-wide/);
       for (const capability of ['PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_READ']) await db.roleGrant.create({ data: { userId: actorId, capability, firmId, grantedBy: actorId } });
       const cash = await createPracticeAccount(actorId, engagementId, { code: '100', name: 'Cash', kind: 'ASSET' });
+      await assert.rejects(createPracticeAccount(actorId, engagementId, { code: '100', name: 'Duplicate cash', kind: 'ASSET' }), (error: any) => error.getStatus?.() === 409 && /already exists/.test(error.message));
       const rent = await createPracticeAccount(actorId, engagementId, { code: '500', name: 'Rent', kind: 'EXPENSE' });
       const period = await createPracticePeriod(actorId, engagementId, { startsOn: '2026-01-01', endsOn: '2026-12-31' });
-      await assert.rejects(createPracticePeriod(actorId, engagementId, { startsOn: '2026-06-01', endsOn: '2027-05-31' }), /overlap/);
+      await assert.rejects(createPracticePeriod(actorId, engagementId, { startsOn: '2026-06-01', endsOn: '2027-05-31' }), (error: any) => error.getStatus?.() === 409 && /overlap/.test(error.message));
       const create = (reference: string, debit = '0.30', credit = '0.30') => createPracticeJournal(actorId, engagementId, { periodId: period.id, accountingDate: '2026-10-02', reference, memo: 'Rent payment', idempotencyKey: randomUUID(), lines: [{ accountId: rent.id, debit, credit: '0' }, { accountId: cash.id, debit: '0', credit }] });
       const unbalanced = await create('BAD', '0.31', '0.30');
       await assert.rejects(postPracticeJournal(actorId, engagementId, unbalanced.id, { expectedVersion: 1, idempotencyKey: randomUUID() }), /Approved firm posting policy/);
