@@ -9,6 +9,8 @@ export { MaterialityController } from './modules/governance/materiality-controll
 export { calculateMaterialityAssessment, approveMaterialityAssessment, latestMaterialityAssessment, listMaterialityAssessments } from './modules/governance/materiality-service.js';
 export { RiskController } from './modules/governance/risk-controller.js';
 export { createRisk, assessRiskBand, clearRiskBand, assignRiskOwner, currentRisks, riskStaffingRanks } from './modules/governance/risk-service.js';
+export { ReviewNoteController } from './modules/reporting/review-notes-controller.js';
+export { raiseReviewNote, resolveReviewNote, listReviewNotes, reviewSummary } from './modules/reporting/review-notes.js';
 export { Decimal6, roundHalfEvenDiv } from './platform/decimal6.js';
 export { calculateQuotation, validateQuotation, quotationInputHash, requiredApprovals, commercialRuleKinds, defaultDiscountThresholdPercent, defaultApprovalRole, quotationCurrencyScale, minimumComplexity, maximumComplexity, maximumPercent, maximumQuotationLines, maximumHoursPerLine } from './modules/commercial/quotation.js';
 export type { QuotationPricingInput, QuotationPricingResult, QuotationLineInput, QuotationLineResult, CommercialApprovalRule, RequiredApproval } from './modules/commercial/quotation.js';

@@ -7,7 +7,7 @@ export const finalizeSchema = z.object({ expectedVersion: z.number().int().posit
 export const moneySchema = z.string().regex(/^-?\d{1,22}(\.\d{1,6})?$/);
 /** Capability vocabulary evaluated against a firm/client/engagement scope. Local grants are
  *  never Microsoft directory authority and never infer one from the other. */
-export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','LIFECYCLE_COMMAND'] as const;
+export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','LIFECYCLE_COMMAND'] as const;
 export const capabilitySchema = z.enum(capabilities);
 /** Publishing binds one immutable accounting version to one exact finalized import version. */
 export const publishSchema = z.object({ importId: z.uuid(), expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
@@ -44,6 +44,9 @@ export const clearRiskSchema = z.object({ note: z.string().trim().min(1).max(1_0
 /** Staffing ranks rise with responsibility; a band sets the minimum rank that may own its response. */
 export const staffingLevelNames = ['StaffAssociate', 'SeniorAuditor', 'AuditManager', 'EngagementPartner'] as const;
 export const assignRiskOwnerSchema = z.object({ ownerUserId: z.uuid(), ownerStaffingLevel: z.enum(staffingLevelNames) });
+/** A review note is anchored to a workpackage reference and resolved with a stated resolution. */
+export const raiseReviewNoteSchema = z.object({ workpackage: z.string().trim().min(1).max(200), body: z.string().trim().min(1).max(4_000) });
+export const resolveReviewNoteSchema = z.object({ resolution: z.string().trim().min(1).max(4_000) });
 export const lifecycleCommands = ['START_FIELDWORK','SUBMIT_FOR_REVIEW','RETURN_FOR_REWORK'] as const;
 export const lifecycleCommandSchema = z.object({
   command: z.enum(lifecycleCommands),
