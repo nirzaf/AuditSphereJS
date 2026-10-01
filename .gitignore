@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+dist/
+build/
+out/
+.angular/
+.nest-cache/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Coverage / test
+coverage/
+.nyc_output/
+
+# Uploads / temp
+uploads/
+tmp/
+temp/
+
+# Redis / DB dumps
+*.rdb
+*.sqlite
