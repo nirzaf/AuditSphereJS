@@ -45,6 +45,7 @@ model Engagement {
   risks RiskItem[]
   storedObjects StoredObject[]
   reviewNotes ReviewNote[]
+  adjustmentJournals AdjustmentJournal[]
   @@unique([firmId, clientId, id])
 }
 model User {
@@ -401,6 +402,40 @@ model ReviewNote {
   resolution   String?
   resolvedAt   DateTime?
   @@index([engagementId, status])
+}
+/// A client audit adjustment. Drafts are editable; a posted journal is immutable and is corrected
+/// only by a reversal journal. This is the client's book, never the firm's own ledger.
+model AdjustmentJournal {
+  id                String                  @id @default(uuid()) @db.Uuid
+  firmId            String                  @db.Uuid
+  clientId          String                  @db.Uuid
+  engagementId      String                  @db.Uuid
+  engagement        Engagement              @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  reference         String
+  memo              String
+  status            String                  @default("DRAFT")
+  version           Int                     @default(1)
+  createdBy         String                  @db.Uuid
+  createdAt         DateTime                @default(now())
+  postedBy          String?                 @db.Uuid
+  postedAt          DateTime?
+  reversesJournalId String?                 @unique @db.Uuid
+  reverses          AdjustmentJournal?      @relation("AdjustmentReversal", fields: [reversesJournalId], references: [id])
+  reversedBy        AdjustmentJournal?      @relation("AdjustmentReversal")
+  lines             AdjustmentJournalLine[]
+  @@unique([engagementId, reference])
+  @@index([engagementId, createdAt])
+}
+model AdjustmentJournalLine {
+  id          String            @id @default(uuid()) @db.Uuid
+  journalId   String            @db.Uuid
+  journal     AdjustmentJournal @relation(fields: [journalId], references: [id])
+  position    Int
+  accountCode String
+  fsli        String?
+  debit       Decimal           @default(0) @db.Decimal(28, 6)
+  credit      Decimal           @default(0) @db.Decimal(28, 6)
+  @@unique([journalId, position])
 }
 model AuditEvent {
   id           String   @id @default(uuid()) @db.Uuid
