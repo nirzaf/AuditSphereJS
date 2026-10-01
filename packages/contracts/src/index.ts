@@ -7,7 +7,7 @@ export const finalizeSchema = z.object({ expectedVersion: z.number().int().posit
 export const moneySchema = z.string().regex(/^-?\d{1,22}(\.\d{1,6})?$/);
 /** Capability vocabulary evaluated against a firm/client/engagement scope. Local grants are
  *  never Microsoft directory authority and never infer one from the other. */
-export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','LIFECYCLE_COMMAND'] as const;
+export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND'] as const;
 export const capabilitySchema = z.enum(capabilities);
 /** Publishing binds one immutable accounting version to one exact finalized import version. */
 export const publishSchema = z.object({ importId: z.uuid(), expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
@@ -47,6 +47,20 @@ export const assignRiskOwnerSchema = z.object({ ownerUserId: z.uuid(), ownerStaf
 /** A review note is anchored to a workpackage reference and resolved with a stated resolution. */
 export const raiseReviewNoteSchema = z.object({ workpackage: z.string().trim().min(1).max(200), body: z.string().trim().min(1).max(4_000) });
 export const resolveReviewNoteSchema = z.object({ resolution: z.string().trim().min(1).max(4_000) });
+/** A client audit adjustment: balanced double-entry lines, never the firm's own ledger. */
+export const adjustmentLineSchema = z.object({
+  accountCode: z.string().trim().min(1).max(80),
+  fsli: z.string().trim().min(1).max(120).optional(),
+  debit: moneySchema.default('0'),
+  credit: moneySchema.default('0'),
+});
+export const createAdjustmentJournalSchema = z.object({
+  reference: z.string().trim().min(1).max(60),
+  memo: z.string().trim().min(1).max(500),
+  lines: z.array(adjustmentLineSchema).min(2).max(500),
+});
+export const postAdjustmentJournalSchema = z.object({ expectedVersion: z.number().int().positive() });
+export const reverseAdjustmentJournalSchema = z.object({ expectedVersion: z.number().int().positive() });
 export const lifecycleCommands = ['START_FIELDWORK','SUBMIT_FOR_REVIEW','RETURN_FOR_REWORK'] as const;
 export const lifecycleCommandSchema = z.object({
   command: z.enum(lifecycleCommands),

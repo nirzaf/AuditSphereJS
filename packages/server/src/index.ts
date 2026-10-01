@@ -18,6 +18,8 @@ export type { MappedBenchmarkLine, MaterialityFigures, RiskBand, MaterialityBenc
 export type { Capability, Scope } from './platform/authorization.js';
 export { parseTrialBalance } from './modules/fieldwork/parser.js';
 export { upload } from './modules/fieldwork/service.js';
+export { AdjustmentController } from './modules/fieldwork/adjustments-controller.js';
+export { createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, listAdjustmentJournals, adjustmentJournalDetail } from './modules/fieldwork/adjustments.js';
 export { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
 export { PublicationController } from './modules/fieldwork/publication-controller.js';
 export { selectSample, drawIndexesFrom, samplingMethods } from './modules/fieldwork/sampling.js';

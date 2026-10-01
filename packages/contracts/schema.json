@@ -414,5 +414,93 @@
       "resolution"
     ],
     "additionalProperties": false
+  },
+  "adjustment": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "reference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 60
+      },
+      "memo": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "lines": {
+        "minItems": 2,
+        "maxItems": 500,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "accountCode": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "fsli": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "debit": {
+              "default": "0",
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "credit": {
+              "default": "0",
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            }
+          },
+          "required": [
+            "accountCode",
+            "debit",
+            "credit"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "reference",
+      "memo",
+      "lines"
+    ],
+    "additionalProperties": false
+  },
+  "adjustmentPost": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "expectedVersion": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      }
+    },
+    "required": [
+      "expectedVersion"
+    ],
+    "additionalProperties": false
+  },
+  "adjustmentReverse": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "expectedVersion": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      }
+    },
+    "required": [
+      "expectedVersion"
+    ],
+    "additionalProperties": false
   }
 }
