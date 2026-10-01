@@ -111,7 +111,7 @@
 | T105 | [Track unadjusted differences and significant estimates](../tasks/08-fieldwork/T105-differences-register.md) | CORE | NOT_STARTED | — | — |
 | T106 | [Submit a complete version-bound workpackage for review](../tasks/08-fieldwork/T106-submit-workprogram.md) | CORE | NOT_STARTED | — | — |
 | T107 | [Implement the reviewer inbox and version-aware inspection](../tasks/09-review/T107-review-inbox.md) | CORE | NOT_STARTED | — | — |
-| T108 | [Implement inline review notes and resolution lifecycle](../tasks/09-review/T108-review-notes.md) | CORE | IN_REVIEW | `ReviewNote` with `REVIEW_RAISE`/`REVIEW_RESOLVE`, refused self-review, a single OPEN→RESOLVED transition and a frozen resolved note; the database also rejects a self-resolved row (`tests/review-notes.integration.ts`). Remaining: revision-aware anchoring and the UI. | Migration C26-01 record |
+| T108 | [Implement inline review notes and resolution lifecycle](../tasks/09-review/T108-review-notes.md) | CORE | IN_PROGRESS | [Atomic note/audit writes and scoped workflow guards](../evidence/T108/transaction-hardening.md); single OPEN→RESOLVED transition, no self-review and immutable resolution proven in PostgreSQL | Response/reopen history, assigned preparer, severity, anchors and workprogram gates pending |
 | T109 | [Return workpackages with mandatory comments and reassignment](../tasks/09-review/T109-rework.md) | CORE | NOT_STARTED | — | — |
 | T110 | [Clear completed workprograms without self-review or stale evidence](../tasks/09-review/T110-manager-clearance.md) | CORE | NOT_STARTED | — | — |
 | T111 | [Implement all required third-party confirmation categories](../tasks/09-review/T111-confirmation-register.md) | CORE | NOT_STARTED | — | — |
@@ -159,7 +159,7 @@
 | T153 | [Implement staff lookup or synchronization without privilege escalation](../tasks/13-microsoft365/T153-m365-directory.md) | OPTIONAL | NOT_STARTED | — | — |
 | T154 | [Implement optional SharePoint workspace provisioning behind storage boundaries](../tasks/13-microsoft365/T154-m365-sharepoint.md) | OPTIONAL | NOT_STARTED | — | — |
 | T155 | [Implement optional Graph change notifications and reconciliation](../tasks/13-microsoft365/T155-m365-webhooks.md) | OPTIONAL | NOT_STARTED | — | — |
-| T156 | [Run tenant-consent, throttling and revocation integration tests](../tasks/13-microsoft365/T156-m365-release-gate.md) | OPTIONAL | NOT_STARTED | — | — |
+| T156 | [Run tenant-consent, throttling and revocation integration tests](../tasks/13-microsoft365/T156-m365-release-gate.md) | OPTIONAL | IN_PROGRESS | [Live storage evidence](../evidence/T156/tenant-readiness.md) | SPA login, expiry, consent revocation and throttling pending |
 | T157 | [Run the complete source lifecycle through real application boundaries](../tasks/14-production/T157-full-journey.md) | GATE | NOT_STARTED | — | — |
 | T158 | [Review authentication, object access and output security end-to-end](../tasks/14-production/T158-security-review.md) | GATE | NOT_STARTED | — | — |
 | T159 | [Measure full-stack load and resource budgets](../tasks/14-production/T159-load-tests.md) | GATE | NOT_STARTED | — | — |

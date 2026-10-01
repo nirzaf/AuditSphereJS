@@ -1,0 +1,36 @@
+{
+  "testsPassed": 2,
+  "testsSkipped": 0,
+  "testsFailed": 0,
+  "provider": "Microsoft Graph live tenant",
+  "results": [
+    {
+      "runId": "7f391f60-b155-4a49-863a-8b5279ec897e",
+      "checkedAt": "2026-10-01T22:19:01.044Z",
+      "provider": "SHAREPOINT",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 131,
+      "sha256": "3f34efe163d7b7ae7fad5a854079b22a016aa8f589d61d9f5dba01c265f2d0e8",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "41f804d3cf8de198b48210d79e711ad774ba1441abd9396297593e3c64fcb0ae",
+      "fixtureRetained": true,
+      "limitations": [
+        "Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance"
+      ]
+    },
+    {
+      "runId": "7f391f60-b155-4a49-863a-8b5279ec897e",
+      "checkedAt": "2026-10-01T22:19:09.076Z",
+      "provider": "ONEDRIVE",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 129,
+      "sha256": "acc5ea80cfe6c79767ba827a6daa676632e878b1e2516eb0c32ef2573c60e963",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "e96a67d79e19f4f35e209e01ae0d42c923e27afb6b7c91470559e66d5ee59a9a",
+      "fixtureRetained": true,
+      "limitations": [
+        "Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance"
+      ]
+    }
+  ]
+}

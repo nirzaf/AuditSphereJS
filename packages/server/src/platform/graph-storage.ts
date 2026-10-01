@@ -70,6 +70,20 @@ export class GraphStorage {
     const version = await metadata.json() as { id?: string; size?: number };
     if (version.id !== parsed.versionId || version.size !== parsed.sizeBytes) throw new Error('Stored evidence version identity or size was changed outside AuditSphere');
     let response = await this.request(`${base}/content`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'manual', signal: AbortSignal.timeout(30_000) });
+    const itemBase = `${graph}/drives/${encode(parsed.driveId)}/items/${encode(parsed.itemId)}`;
+    let currentVersionDownload = false;
+    if (response.status === 400) {
+      // Graph cannot download the current version through /versions/.../content.
+      // Use the current-item endpoint only while both the version and upload
+      // eTag still match; historical references must never fall back blindly.
+      const latestResponse = await this.request(`${itemBase}/versions?$top=1&$select=id`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000) });
+      if (!latestResponse.ok) throw new Error(`Graph current version lookup failed (${latestResponse.status})`);
+      const latest = (await latestResponse.json() as { value?: Array<{ id?: string }> }).value?.[0];
+      if (latest?.id !== parsed.versionId) throw new Error('Historical evidence version cannot use current content');
+      await this.verifyCurrentItem(itemBase, token, parsed);
+      response = await this.request(`${itemBase}/content`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'manual', signal: AbortSignal.timeout(30_000) });
+      currentVersionDownload = true;
+    }
     if (response.status === 302) {
       const location = response.headers.get('location');
       if (!location) throw new Error('Missing Graph download location');
@@ -82,7 +96,14 @@ export class GraphStorage {
     const body = Buffer.from(await response.arrayBuffer());
     if (sha(body) !== parsed.sha256) throw new Error('Stored evidence failed SHA-256 verification');
     if (body.byteLength !== parsed.sizeBytes) throw new Error('Stored evidence size does not match its version identity');
+    if (currentVersionDownload) await this.verifyCurrentItem(itemBase, token, parsed);
     return body;
+  }
+  private async verifyCurrentItem(itemBase: string, token: string, reference: GraphReference) {
+    const response = await this.request(`${itemBase}?$select=id,eTag,size`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000) });
+    if (!response.ok) throw new Error(`Graph current item lookup failed (${response.status})`);
+    const current = await response.json() as { id?: string; eTag?: string; size?: number };
+    if (current.id !== reference.itemId || current.eTag !== reference.eTag || current.size !== reference.sizeBytes) throw new Error('Current evidence identity changed during version download');
   }
 }
 

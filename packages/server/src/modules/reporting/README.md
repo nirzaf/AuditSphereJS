@@ -8,7 +8,7 @@ Consumed events: none.
 Allowed dependencies: platform services (db, authorization) and shared browser-safe contracts.
 Forbidden dependencies: another module internals or owned-table mutations.
 State transitions: a note is OPEN then RESOLVED exactly once, by a different user holding `REVIEW_RESOLVE`; a resolved note is immutable and notes are never deleted.
-Critical invariants: scoped authorization re-checked before the write, no self-review, one transition per note, append-only audit, and a resolved note frozen by database trigger plus check constraints.
+Critical invariants: lock the engagement and re-check scoped authorization inside the write transaction; only planning, fieldwork and review states allow edits. Persist each note transition and its audit atomically. No self-review, one transition per note, append-only audit, and a resolved note frozen by database trigger plus check constraints.
 Relevant tests: tests/review-notes.integration.ts; broader reporting acceptance still pending.
 
 Functional source: docs/requirements/CURRENT.md (unchanged v2.1). Decision defaults: docs/decisions/register.json. Production evidence and task completion remain separate from this module scaffold.

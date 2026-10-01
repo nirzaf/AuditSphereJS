@@ -65,6 +65,22 @@ test('review notes need explicit authority, forbid self-review and freeze once r
       const summary = await reviewSummary(engagementId);
       assert.deepEqual({ open: summary.open, resolved: summary.resolved, total: summary.total }, { open: 1, resolved: 1, total: 2 });
 
+      // Audit failure must roll back the note and chain head in the same command.
+      const head = await db.auditChainHead.findUniqueOrThrow({ where: { engagementId } });
+      await db.$executeRawUnsafe(`CREATE FUNCTION test_reject_review_audit() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.action = 'REVIEW_NOTE_RAISED' THEN RAISE EXCEPTION 'Injected review audit failure'; END IF; RETURN NEW; END $$`);
+      await db.$executeRawUnsafe(`CREATE TRIGGER test_reject_review_audit BEFORE INSERT ON "AuditEvent" FOR EACH ROW EXECUTE FUNCTION test_reject_review_audit()`);
+      await assert.rejects(raiseReviewNote(authorId, engagementId, { workpackage: 'AUDIT:ROLLBACK', body: 'This note must not survive a failed audit write' }), /Injected review audit failure/);
+      assert.equal(await db.reviewNote.count({ where: { engagementId } }), 2);
+      assert.deepEqual(await db.auditChainHead.findUniqueOrThrow({ where: { engagementId } }), head);
+      await db.$executeRawUnsafe(`DROP TRIGGER test_reject_review_audit ON "AuditEvent"`);
+      await db.$executeRawUnsafe(`DROP FUNCTION test_reject_review_audit()`);
+
+      await db.roleGrant.updateMany({ where: { userId: authorId, capability: 'REVIEW_RAISE' }, data: { revokedAt: new Date(), revokedBy: reviewerId, reason: 'Integration revocation fixture' } });
+      await assert.rejects(raiseReviewNote(authorId, engagementId, { workpackage: 'AUDIT:REVOKED', body: 'Revoked authority' }), /not granted/);
+      await db.engagement.update({ where: { id: engagementId }, data: { state: 'DELIVERABLE_RELEASE' } });
+      await assert.rejects(raiseReviewNote(bothId, engagementId, { workpackage: 'AUDIT:LATE', body: 'Late edit' }), /cannot change outside/);
+      await assert.rejects(resolveReviewNote(reviewerId, engagementId, selfNote.noteId, { resolution: 'Late resolution' }), /cannot change outside/);
+
       console.log('review notes authority, self-review refusal and freeze enforced');
     } finally { await db.$disconnect(); }
   } finally { await container.stop(); }

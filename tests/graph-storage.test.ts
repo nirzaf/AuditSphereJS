@@ -6,6 +6,38 @@ const evidence = { driveId: 'sp', folderId: 'evidence' };
 const reference = (fields: Record<string, unknown>) => 'graph:' + Buffer.from(JSON.stringify(fields)).toString('base64url');
 
 describe('Graph evidence storage', () => {
+  it('downloads the current version only with unchanged identity and rejects races or historical fallback', async () => {
+    let currentEtag = 'v1';
+    let latestId = '1.0';
+    let raceAfterDownload = false;
+    let currentDownloads = 0;
+    const request = (async (url, init) => {
+      const target = String(url);
+      if (target.includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
+      if (init?.method === 'PUT') return Response.json({ id: 'file', eTag: 'v1' });
+      if (target.includes('/versions?')) return Response.json({ value: [{ id: latestId, size: 5 }] });
+      if (target.endsWith('/versions/1.0')) return Response.json({ id: '1.0', size: 5 });
+      if (target.endsWith('/versions/1.0/content')) return Response.json({ error: { code: 'invalidRequest' } }, { status: 400 });
+      if (target.includes('/items/file?$select=')) return Response.json({ id: 'file', eTag: currentEtag, size: 5 });
+      if (target.endsWith('/items/file/content')) {
+        currentDownloads++;
+        if (raceAfterDownload) currentEtag = 'v2';
+        return new Response('bytes');
+      }
+      throw new Error('Unexpected request');
+    }) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+    const ref = await storage.put(evidence, 'current.txt', Buffer.from('bytes'));
+    expect((await storage.get(evidence, ref)).toString()).toBe('bytes');
+    currentEtag = 'v2';
+    await expect(storage.get(evidence, ref)).rejects.toThrow('Current evidence identity changed');
+    expect(currentDownloads).toBe(2);
+    currentEtag = 'v1'; latestId = '2.0';
+    await expect(storage.get(evidence, ref)).rejects.toThrow('Historical evidence version');
+    expect(currentDownloads).toBe(2);
+    latestId = '1.0'; raceAfterDownload = true;
+    await expect(storage.get(evidence, ref)).rejects.toThrow('Current evidence identity changed');
+  });
   it('writes into the bound client repository using the immutable provider version', async () => {
     const calls: Array<{ url: string; init?: RequestInit }> = [];
     const request = (async (url, init) => {
