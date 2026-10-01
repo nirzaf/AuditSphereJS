@@ -33,3 +33,9 @@ Keep this guide and root `AGENTS.md` aligned when the Angular version, MCP start
 ## Executed verification
 
 On 2026-10-02, the CLI MCP server identified one Angular 22 `web` application with build/serve/test targets, returned its best-practice guide, and completed `run_target` for build and test with structured status `success`. The Angular test target discovered and passed 2 tests. `pnpm verify:affected` passed boundaries, server/test typechecks, Angular build and 60 unit tests; lint and `git diff --check` passed. No browser accessibility scan or full best-practice migration was performed in this setup pass.
+
+## Module UI implementation - 2026-10-02
+
+The five-module shell now exposes 36 workspaces with signal state/inputs, native control flow, typed metadata-driven FormRecord controls, scoped protected fetches and shared Zod command contracts. Stable reactive forms were selected for this dynamic field catalog; this does not close the Signal Forms migration. The legacy Trial Balance/Practice components still have template-driven forms and broad API view models. New screens provide labelled inputs, inline validation, keyboard controls, live status/errors, responsive forms and contained table/tab scrolling. Automated mobile containment is verified at 390 px; a full assistive-technology/AXE audit remains pending.
+
+The expanded Angular test target has 10 tests, including draft scope/reset, decimal string submission, authorization failure, stale response rejection and journal version binding. The explicit Vitest package aliases fix resolution of shared chunks in this pnpm monorepo. API-intercepted browser tests are presentation evidence only.

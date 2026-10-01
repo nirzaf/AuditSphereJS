@@ -1,24 +1,64 @@
-import { Component, signal, computed, OnDestroy } from '@angular/core';
+import { Component, signal, computed, OnDestroy, inject, ElementRef, afterRenderEffect } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Practice } from './practice';
+import { ModuleWorkspace } from './module-workspace';
+import { modules, screensFor } from './module-catalog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { fslis, TrialBalanceRow } from '@auditsphere/contracts';
 import { identityConfiguration, signIn, currentAccessToken } from './identity';
 // Standalone is the default in Angular v20+; setting it explicitly is unnecessary.
-@Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule, Practice], templateUrl: './workspace.html' })
+@Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule, ModuleWorkspace], templateUrl: './workspace.html' })
 export class Workspace implements OnDestroy {
   readonly identityProvider = signal<'loading' | 'entra' | 'development'>('loading');
   engagementId = '00000000-0000-4000-8000-000000000002';
-  constructor() { void identityConfiguration().then(config => this.identityProvider.set(config.provider)).catch(() => this.message.set('Identity configuration is unavailable.')); }
-  readonly modules = ['Commercial','Governance','Fieldwork','Reporting','Practice'];
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly router = inject(Router, { optional: true });
+  private readonly route = inject(ActivatedRoute, { optional: true });
+  private navigation?: { unsubscribe(): void };
+  constructor() {
+    afterRenderEffect({ mixedReadWrite: () => {
+      this.screenId(); this.active();
+      for (const selector of ['.workspace-tabs', 'nav[aria-label="Business modules"]']) {
+        const container = this.host.nativeElement.querySelector<HTMLElement>(selector);
+        const selected = container?.querySelector<HTMLElement>('[aria-current="page"]');
+        if (!container || !selected) continue;
+        const bounds = container.getBoundingClientRect(); const item = selected.getBoundingClientRect();
+        if (item.left < bounds.left) container.scrollLeft += item.left - bounds.left;
+        else if (item.right > bounds.right) container.scrollLeft += item.right - bounds.right;
+      }
+    } });
+    this.navigation = this.route?.queryParamMap.subscribe(params => {
+      if (this.dirty()) {
+        if (params.get('module') !== this.active() || params.get('view') !== this.screenId()) {
+          this.message.set('Save or discard mappings before changing workspaces.');
+          void this.router?.navigate([], {queryParams:{module:this.active(),view:this.screenId()},replaceUrl:true});
+        }
+        return;
+      }
+      const module = modules.find(value => value === params.get('module')) ?? 'Fieldwork';
+      const screen = screensFor(module).find(value => value.id === params.get('view')) ?? screensFor(module)[0];
+      this.active.set(module); this.screenId.set(screen.id);
+    });
+    void identityConfiguration().then(config => this.identityProvider.set(config.provider)).catch(() => this.message.set('Identity configuration is unavailable.'));
+  }
+  readonly modules = modules;
+  readonly screenId = signal('trial-balance');
+  readonly screenList = computed(() => screensFor(this.active()));
+  readonly summaryTypes = ['Balance sheet','Profit & loss'];
   readonly fslis = fslis; readonly rows = signal<TrialBalanceRow[]>([]); readonly imports = signal<any[]>([]); readonly summary = signal<any[]>([]);
-  readonly message = signal('Connect your local environment to begin the Trial Balance validation slice.'); readonly busy = signal(false); readonly batch = signal<any>(null);
+  readonly message = signal('Select an engagement and connect to load authorized records.'); readonly busy = signal(false); readonly batch = signal<any>(null);
   readonly changes = signal<Record<string, { rowId: string; expectedVersion: number; fsli: string }>>({});
   readonly dirty = computed(() => Object.keys(this.changes()).length);
   token = ''; search = ''; offset = 0; total = signal(0); active = signal('Fieldwork');
   get base() { return `/api/v1/engagements/${encodeURIComponent(this.engagementId)}/imports`; }
   private timer = setInterval(() => { if (this.batch() && ['QUEUED','PARSING'].includes(this.batch().status)) void this.run(() => this.load(this.batch().id)); }, 2000);
-  ngOnDestroy() { clearInterval(this.timer); }
+  ngOnDestroy() { clearInterval(this.timer); this.navigation?.unsubscribe(); }
+  navigate(module: string, view?: string) {
+    if (this.dirty()) { this.message.set('Save or discard mappings before changing workspaces.'); return; }
+    const selected = screensFor(module).find(screen => screen.id === view) ?? screensFor(module)[0];
+    this.active.set(module); this.screenId.set(selected.id);
+    void this.router?.navigate([], { queryParams: { module, view: selected.id } });
+  }
   async api(path: string, method = 'GET', body?: unknown): Promise<any> {
     if (this.identityProvider() === 'entra') this.token = await currentAccessToken();
     const response = await fetch(this.base + path, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
@@ -36,4 +76,3 @@ export class Workspace implements OnDestroy {
   page(delta: number) { if (this.dirty()) { this.message.set('Save or discard changes before changing pages.'); return; } this.offset = Math.max(0, this.offset + delta); void this.run(() => this.load(this.batch().id)); }
   filter() { this.offset = 0; if (!this.dirty() && this.batch()) void this.run(() => this.load(this.batch().id)); }
 }
-

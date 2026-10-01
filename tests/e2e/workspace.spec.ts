@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async ({page}) => { await page.route('**/api/v1/identity/config', route => route.fulfill({json:{provider:'development'}})); });
 test('Practice exposes a firm ledger workspace without granting access from navigation', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Practice' }).click();
@@ -25,4 +26,4 @@ test('STE brand logo and palette are served on desktop and mobile', async ({ pag
   await expect(logo).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });
-test('fieldwork shell and module navigation', async ({ page }) => { await page.goto('/'); await expect(page.getByRole('heading', {name:'Trial Balance workspace'})).toBeVisible(); await page.getByRole('button', {name:'Commercial'}).click(); await expect(page.getByRole('heading', {name:'Commercial',exact:true})).toBeVisible(); await page.getByRole('button', {name:'Open Fieldwork workspace'}).click(); await expect(page.getByLabel('Local development access token')).toBeVisible(); });
+test('fieldwork shell and module navigation', async ({ page }) => { await page.goto('/'); await expect(page.getByRole('heading', {name:'Trial Balance workspace'})).toBeVisible(); await page.getByRole('button', {name:'Commercial'}).click(); await expect(page.getByRole('heading', {name:'Lead pipeline',exact:true})).toBeVisible(); await page.getByRole('button', {name:'Fieldwork',exact:true}).click(); await expect(page.getByLabel('Local development access token')).toBeVisible(); });
