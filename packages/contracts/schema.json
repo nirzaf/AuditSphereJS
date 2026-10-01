@@ -88,5 +88,295 @@
       "expectedVersion"
     ],
     "additionalProperties": false
+  },
+  "lifecycle": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "command": {
+        "type": "string",
+        "enum": [
+          "START_FIELDWORK",
+          "SUBMIT_FOR_REVIEW",
+          "RETURN_FOR_REWORK"
+        ]
+      },
+      "expectedVersion": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "idempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      }
+    },
+    "required": [
+      "command",
+      "expectedVersion",
+      "idempotencyKey"
+    ],
+    "additionalProperties": false
+  },
+  "publish": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "importId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "expectedVersion": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "idempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    },
+    "required": [
+      "importId",
+      "expectedVersion",
+      "idempotencyKey"
+    ],
+    "additionalProperties": false
+  },
+  "mappingApproval": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "taxonomyVersionId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "idempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    },
+    "required": [
+      "idempotencyKey"
+    ],
+    "additionalProperties": false
+  },
+  "taxonomy": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+      },
+      "lines": {
+        "minItems": 1,
+        "maxItems": 2000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "label": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "statementSection": {
+              "type": "string",
+              "enum": [
+                "INCOME",
+                "EXPENSE",
+                "ASSETS",
+                "LIABILITIES",
+                "EQUITY"
+              ]
+            },
+            "sortOrder": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10000
+            }
+          },
+          "required": [
+            "code",
+            "label",
+            "statementSection",
+            "sortOrder"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "name",
+      "lines"
+    ],
+    "additionalProperties": false
+  },
+  "materiality": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "benchmarkKind": {
+        "type": "string",
+        "enum": [
+          "REVENUE",
+          "PROFIT_BEFORE_TAX",
+          "TOTAL_ASSETS",
+          "NET_ASSETS",
+          "TOTAL_EXPENSES",
+          "MAPPED_LINE"
+        ]
+      },
+      "destinationCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+      },
+      "ratePercent": {
+        "type": "string",
+        "pattern": "^-?\\d{1,3}(\\.\\d{1,4})?$"
+      },
+      "performancePercent": {
+        "type": "string",
+        "pattern": "^-?\\d{1,3}(\\.\\d{1,4})?$"
+      },
+      "trivialPercent": {
+        "type": "string",
+        "pattern": "^-?\\d{1,3}(\\.\\d{1,4})?$"
+      },
+      "idempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    },
+    "required": [
+      "benchmarkKind",
+      "ratePercent",
+      "performancePercent",
+      "trivialPercent",
+      "idempotencyKey"
+    ],
+    "additionalProperties": false
+  },
+  "materialityApproval": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "idempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    },
+    "required": [
+      "idempotencyKey"
+    ],
+    "additionalProperties": false
+  },
+  "risk": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 300
+      },
+      "description": {
+        "type": "string",
+        "maxLength": 2000
+      }
+    },
+    "required": [
+      "title"
+    ],
+    "additionalProperties": false
+  },
+  "riskAssessment": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "likelihood": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3
+      },
+      "magnitude": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 3
+      },
+      "significant": {
+        "type": "boolean"
+      },
+      "fraudRisk": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "likelihood",
+      "magnitude",
+      "significant",
+      "fraudRisk"
+    ],
+    "additionalProperties": false
+  },
+  "riskClearance": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "note": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1000
+      }
+    },
+    "required": [
+      "note"
+    ],
+    "additionalProperties": false
+  },
+  "riskOwner": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "ownerUserId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "ownerStaffingLevel": {
+        "type": "string",
+        "enum": [
+          "StaffAssociate",
+          "SeniorAuditor",
+          "AuditManager",
+          "EngagementPartner"
+        ]
+      }
+    },
+    "required": [
+      "ownerUserId",
+      "ownerStaffingLevel"
+    ],
+    "additionalProperties": false
   }
 }

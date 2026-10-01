@@ -5,7 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from '@fastify/helmet';
-import { FieldworkController, InternalGuard, RuntimeModule, Readiness, readConfiguration } from '@auditsphere/server';
+import { FieldworkController, GovernanceController, PublicationController, TaxonomyController, MaterialityController, RiskController, InternalGuard, RuntimeModule, Readiness, readConfiguration } from '@auditsphere/server';
 @Controller('health') class HealthController { constructor(private readonly readiness: Readiness) {} @Get(['', 'live']) health() { return { status: 'ok', service: 'auditsphere-api' }; } @Get('ready') ready() { return this.readiness.check(); } }
 @Controller('identity') class IdentityController {
   @Get('config') config() {
@@ -14,7 +14,7 @@ import { FieldworkController, InternalGuard, RuntimeModule, Readiness, readConfi
   }
 }
 @Catch() class Errors implements ExceptionFilter { catch(error: unknown, host: ArgumentsHost) { const status = error instanceof HttpException ? error.getStatus() : 500; const req = host.switchToHttp().getRequest(); host.switchToHttp().getResponse().status(status).send({ error: { code: status, message: status === 500 ? 'Internal server error' : (error as HttpException).getResponse(), correlationId: req.id } }); if (status === 500) console.error(error); } }
-@Module({ imports: [RuntimeModule], controllers: [HealthController, IdentityController, FieldworkController], providers: [InternalGuard] }) class AppModule {}
+@Module({ imports: [RuntimeModule], controllers: [HealthController, IdentityController, FieldworkController, PublicationController, TaxonomyController, MaterialityController, RiskController, GovernanceController], providers: [InternalGuard] }) class AppModule {}
 async function main() {
   const config = readConfiguration();
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter({ bodyLimit: 16 * 1024 * 1024, logger: true }));
