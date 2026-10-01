@@ -20,7 +20,7 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri });
-    const { db, createTaxonomyVersion, approveTaxonomyVersion, approveImportMapping, currentMappingApproval, mappingDigest } = await import('@auditsphere/server');
+    const { db, createTaxonomyVersion, approveTaxonomyVersion, approveImportMapping, currentMappingApproval, suggestMappings, mappingDigest } = await import('@auditsphere/server');
     try {
       await db.firm.create({ data: { id: firmId, name: 'Taxonomy firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Taxonomy client' } });
@@ -76,9 +76,45 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
 
       // Approving against a different taxonomy version records a new approval and becomes current.
       await db.tbRow.updateMany({ where: { importId, code: '100' }, data: { fsli: 'Cash and equivalents' } });
-      const v1Approval = await approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v1.id, idempotencyKey: randomUUID() }) as { taxonomyVersion: number };
+      const v1Approval = await approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v1.id, idempotencyKey: randomUUID() }) as { taxonomyVersion: number; approvalId: string };
       assert.equal(v1Approval.taxonomyVersion, 1);
       assert.ok(await currentMappingApproval(engagementId, importId));
+
+      // Approved mappings become client-scoped memory with the approval as provenance.
+      assert.equal(await db.mappingMemoryEntry.count({ where: { firmId, clientId } }), 2);
+
+      // A later import is offered those remembered codes, each naming its source approval.
+      const secondImportId = '18181818-1818-4818-8818-181818181818';
+      await db.tbImport.create({ data: { id: secondImportId, firmId, clientId, engagementId, documentId, sha256: 'e'.repeat(64), status: 'MAPPING_REQUIRED' } });
+      await db.tbRow.createMany({ data: [
+        { importId: secondImportId, position: 0, code: '100', name: 'Cash', fsli: null, current: '1.000000', prior: '0.000000' },
+        { importId: secondImportId, position: 1, code: '400', name: 'Revenue', fsli: null, current: '-1.000000', prior: '0.000000' },
+        { importId: secondImportId, position: 2, code: '999', name: 'Unexplained', fsli: null, current: '0.000000', prior: '0.000000' },
+      ] });
+      const suggestions = await suggestMappings(actorId, engagementId, secondImportId) as { suggested: number; unresolved: number; alreadyMapped: number; items: Array<{ code: string; suggestedFsli: string | null; reason: string; provenance: { sourceApprovalId: string; timesApplied: number } | null }> };
+      assert.equal(suggestions.suggested, 2);
+      assert.equal(suggestions.unresolved, 1);
+      assert.equal(suggestions.alreadyMapped, 0);
+      const cash = suggestions.items.find((item) => item.code === '100')!;
+      assert.equal(cash.suggestedFsli, 'Cash and equivalents');
+      assert.equal(cash.reason, 'MEMORY');
+      assert.equal(cash.provenance?.sourceApprovalId, v1Approval.approvalId);
+      assert.ok((cash.provenance?.timesApplied ?? 0) >= 1);
+      assert.equal(suggestions.items.find((item) => item.code === '999')!.reason, 'NO_MEMORY');
+      // A user without the fieldwork capability cannot read suggestions.
+      await assert.rejects(suggestMappings(outsiderId, engagementId, secondImportId), /not granted/i);
+
+      // A remembered code that is no longer in the approved taxonomy is reported, not offered.
+      await db.mappingMemoryEntry.update({ where: { firmId_clientId_accountCode: { firmId, clientId, accountCode: '400' } }, data: { taxonomyLineCode: 'Retired code' } });
+      const afterRetirement = await suggestMappings(actorId, engagementId, secondImportId) as { suggested: number; unresolved: number; items: Array<{ code: string; suggestedFsli: string | null; reason: string }> };
+      assert.equal(afterRetirement.suggested, 1);
+      assert.equal(afterRetirement.items.find((item) => item.code === '400')!.reason, 'MEMORY_NOT_IN_TAXONOMY');
+      assert.equal(afterRetirement.items.find((item) => item.code === '400')!.suggestedFsli, null);
+      // Already-mapped rows are reported as such rather than suggested again.
+      await db.tbRow.updateMany({ where: { importId: secondImportId, code: '400' }, data: { fsli: 'Revenue' } });
+      const withMapped = await suggestMappings(actorId, engagementId, secondImportId) as { alreadyMapped: number; items: Array<{ code: string; reason: string }> };
+      assert.equal(withMapped.alreadyMapped, 1);
+      assert.equal(withMapped.items.find((item) => item.code === '400')!.reason, 'ALREADY_MAPPED');
 
       // Approvals are append-only and the digest is order-independent.
       await assert.rejects(db.$executeRaw`UPDATE "MappingApproval" SET digest = repeat('0', 64) WHERE "importId" = ${importId}::uuid`, /append-only/);
