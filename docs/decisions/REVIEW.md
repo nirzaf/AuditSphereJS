@@ -1,6 +1,6 @@
 # Reviewable policy proposals
 
-All D01–D12 remain **PENDING**. These proposals preserve the source conflicts and do not approve or silently change CURRENT. Professional, financial, signing and records decisions need the named accountable owner and approval evidence. No policy-dependent production gate may activate until that evidence exists.
+This table preserves the original proposals. The user subsequently delegated engineering defaults to Codex; `register.json` records that disposition. Direct user decisions supersede proposals. In particular, [D08](D08-image-signature.md) now selects image signature and seal without a signing provider. Professional methodology and production records acceptance still require actual evidence; the proposals themselves are not that evidence.
 
 | Decision | Proposed wording for owner review | Still required |
 | --- | --- | --- |

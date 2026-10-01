@@ -13,8 +13,8 @@ describe('Graph evidence storage', () => {
       calls.push({ url: target, init });
       if (target.includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
       if (init?.method === 'PUT') return Response.json({ id: 'file', eTag: 'v1' });
-      if (target.includes('/versions?')) return Response.json({ value: [{ id: '1.0', eTag: 'v1', size: 5 }] });
-      if (target.endsWith('/versions/1.0')) return Response.json({ eTag: 'v1' });
+      if (target.includes('/versions?')) return Response.json({ value: [{ id: '1.0', size: 5 }] });
+      if (target.endsWith('/versions/1.0')) return Response.json({ id: '1.0', size: 5 });
       if (target.endsWith('/versions/1.0/content')) return new Response(null, { status: 302, headers: { location: 'https://tenant.sharepoint.com/download' } });
       if (target === 'https://tenant.sharepoint.com/download') return new Response('bytes');
       return Response.json({});
@@ -24,6 +24,8 @@ describe('Graph evidence storage', () => {
     expect(calls.some((call) => call.url.includes('/drives/sp/items/evidence:/unique.pdf:/content'))).toBe(true);
     const decoded = decodeGraphReference(ref);
     expect(decoded.versionId).toBe('1.0');
+    expect(decoded.eTag).toBe('v1');
+    expect(calls.find((call) => call.url.includes('/versions?'))?.url).not.toContain('eTag');
     expect(decoded.sizeBytes).toBe(5);
     expect((await storage.get(evidence, ref)).toString()).toBe('bytes');
     expect(calls.some((call) => call.url.endsWith('/versions/1.0/content'))).toBe(true);
@@ -33,24 +35,28 @@ describe('Graph evidence storage', () => {
   });
 
   it('keeps an accepted version readable after the current item changes, and rejects substitution', async () => {
-    let versionETag = 'v1';
+    let versionSize = 5;
     let content = 'bytes';
     const request = (async (url, init) => {
       const target = String(url);
       if (target.includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
       if (init?.method === 'PUT') return Response.json({ id: 'file', eTag: 'v9' });
-      if (target.includes('/versions?')) return Response.json({ value: [{ id: '1.0', eTag: 'v1', size: 5 }] });
-      if (target.endsWith('/versions/1.0')) return Response.json({ eTag: versionETag });
+      if (target.includes('/versions?')) return Response.json({ value: [{ id: '1.0', size: 5 }] });
+      if (target.endsWith('/versions/1.0')) return Response.json({ id: '1.0', size: versionSize });
       if (target.endsWith('/versions/1.0/content')) return new Response(content);
       return Response.json({});
     }) as typeof fetch;
     const storage = new GraphStorage(config, request);
     const ref = await storage.put(evidence, 'evidence.csv', Buffer.from('bytes'));
-    versionETag = 'v2';
+    expect(decodeGraphReference(ref).eTag).toBe('v9');
+    versionSize = 6;
     await expect(storage.get(evidence, ref)).rejects.toThrow('changed outside');
-    versionETag = 'v1';
+    versionSize = 5;
     content = 'yyyyy';
     await expect(storage.get(evidence, ref)).rejects.toThrow('SHA-256');
+    // A same-size external edit that wins the lookup race must fail at put,
+    // before a successful reference can enter the application's database.
+    await expect(storage.put(evidence, 'raced.csv', Buffer.from('bytes'))).rejects.toThrow('SHA-256');
   });
 
   it('rejects a foreign repository, an incomplete reference and an upload without a version identity', async () => {
@@ -65,7 +71,7 @@ describe('Graph evidence storage', () => {
       return Response.json({});
     }) as typeof fetch);
     await expect(storage.put(evidence, '../evil.pdf', Buffer.from('bytes'))).rejects.toThrow('Invalid storage filename');
-    await expect(storage.put(evidence, 'unique.pdf', Buffer.from('bytes'))).rejects.toThrow('no immutable version identity');
+    await expect(storage.put(evidence, 'unique.pdf', Buffer.from('bytes'))).rejects.toThrow('no matching immutable version identity');
     const foreign = reference({ driveId: 'other', itemId: 'x', versionId: '1', eTag: 'v', sha256: '0'.repeat(64), sizeBytes: 1 });
     await expect(storage.get(evidence, foreign)).rejects.toThrow('does not belong to this client repository');
   });

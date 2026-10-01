@@ -12,6 +12,8 @@
 
 Implement the approved assurance level: visible signature/seal plus a verifiable certificate-backed signature when required.
 
+**Superseding user decision (2026-10-02):** implement partner signature artwork and firm seal with version-bound partner approval; no Microsoft 365 eSignature or certificate-backed PDF signing is required. See [D08](../../decisions/D08-image-signature.md). Preserve the source wording below for traceability. The cryptographic-signature checklist applies only if that assurance is subsequently requested; the selected scope must instead prove exact artifact SHA-256 binding, authorized partner identity, immutable approval/artwork versions and rejected byte substitution. T126 remains unfinished until that workflow is implemented and tested.
+
 ## Required context and prerequisites
 
 Read [root agent rules](../../AGENTS.md), this task, the owning module README when it exists, and the exact relevant source ranges in [the preserved CURRENT requirements](../../sources/requirements-current.md). Do not load every task into the agent context.

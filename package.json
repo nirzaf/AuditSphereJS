@@ -15,6 +15,7 @@
     "typecheck": "pnpm build:server && tsc -p tsconfig.tests.json --noEmit && ng build web",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:m365:storage:live": "node --import tsx --test tests/live/m365-storage.acceptance.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",

@@ -93,7 +93,11 @@
     "ambiguity": "Signature/seal PNG appearance is mentioned alongside digitally signed certified PDF.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "signingMethod": "PARTNER_IMAGE_AND_FIRM_SEAL",
+    "assurance": "IMAGE_WITH_VERSION_BOUND_PARTNER_APPROVAL",
+    "supersedingEvidence": "2026-10-02 user: use just image signature no need M365 eSignature. See docs/decisions/D08-image-signature.md.",
+    "liveSigningProviderAcceptance": "NOT_APPLICABLE_BY_USER_INSTRUCTION"
   },
   {
     "id": "D09",

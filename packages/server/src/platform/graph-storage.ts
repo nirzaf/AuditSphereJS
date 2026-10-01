@@ -46,13 +46,19 @@ export class GraphStorage {
     });
     if (!response.ok) throw new Error(`Graph upload failed (${response.status})`);
     const item = await response.json() as { id?: string; eTag?: string };
-    if (!item.id) throw new Error('Graph upload returned no item identity');
-    const versions = await this.request(`${graph}/drives/${encode(repository.driveId)}/items/${encode(item.id)}/versions?$top=1&$select=id,eTag,size`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000) });
+    if (!item.id || !item.eTag) throw new Error('Graph upload returned no item identity');
+    // driveItemVersion exposes id and size, but has no eTag property. The upload
+    // driveItem eTag is retained as provenance, never compared with a version.
+    const versions = await this.request(`${graph}/drives/${encode(repository.driveId)}/items/${encode(item.id)}/versions?$top=1&$select=id,size`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000) });
     if (!versions.ok) throw new Error(`Graph version lookup failed (${versions.status})`);
-    const latest = (await versions.json() as { value?: Array<{ id?: string; eTag?: string; size?: number }> }).value?.[0];
-    if (!latest?.id || !latest.eTag) throw new Error('Graph returned no immutable version identity');
-    const reference: GraphReference = { driveId: repository.driveId, itemId: item.id, versionId: latest.id, eTag: latest.eTag, sha256: sha(body), sizeBytes: body.byteLength };
-    return encodeReference(reference);
+    const latest = (await versions.json() as { value?: Array<{ id?: string; size?: number }> }).value?.[0];
+    if (!latest?.id || latest.size !== body.byteLength) throw new Error('Graph returned no matching immutable version identity');
+    const reference: GraphReference = { driveId: repository.driveId, itemId: item.id, versionId: latest.id, eTag: item.eTag, sha256: sha(body), sizeBytes: body.byteLength };
+    const encoded = encodeReference(reference);
+    // A competing external edit can become the newest version between upload
+    // and lookup. Verify its exact bytes before accepting the evidence identity.
+    await this.get(repository, encoded);
+    return encoded;
   }
   async get(repository: GraphRepository, reference: string): Promise<Buffer> {
     const parsed = decodeGraphReference(reference);
@@ -61,7 +67,8 @@ export class GraphStorage {
     const token = await this.accessToken();
     const metadata = await this.request(base, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000) });
     if (!metadata.ok) throw new Error(`Graph version metadata failed (${metadata.status})`);
-    if ((await metadata.json() as { eTag?: string }).eTag !== parsed.eTag) throw new Error('Stored evidence version was changed outside AuditSphere');
+    const version = await metadata.json() as { id?: string; size?: number };
+    if (version.id !== parsed.versionId || version.size !== parsed.sizeBytes) throw new Error('Stored evidence version identity or size was changed outside AuditSphere');
     let response = await this.request(`${base}/content`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'manual', signal: AbortSignal.timeout(30_000) });
     if (response.status === 302) {
       const location = response.headers.get('location');
