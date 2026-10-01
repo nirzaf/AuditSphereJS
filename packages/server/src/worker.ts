@@ -1,0 +1,45 @@
+import 'reflect-metadata';
+import 'dotenv/config';
+import { Module } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { Queue, Worker } from 'bullmq';
+import { db } from './platform/db.js';
+import { ensureBucket, retrieve } from './platform/storage.js';
+import { parseTrialBalance } from './modules/fieldwork/parser.js';
+import { createHash } from 'node:crypto';
+import { RuntimeModule, Readiness } from './platform/runtime.js';
+import { readConfiguration } from './platform/config.js';
+@Module({ imports: [RuntimeModule] }) class WorkerModule {}
+export async function runWorker() {
+  readConfiguration();
+  const app = await NestFactory.createApplicationContext(WorkerModule); app.enableShutdownHooks(); await app.get(Readiness).check(); await ensureBucket();
+  const u = new URL(process.env.REDIS_URL!); const connection = { host: u.hostname, port: Number(u.port || 6379), password: u.password || undefined };
+  const queue = new Queue('tb-import', { connection });
+  const worker = new Worker('tb-import', async job => {
+    const batch = await db.tbImport.findUniqueOrThrow({ where: { id: job.data.importId } });
+    if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) return;
+    try {
+      await db.tbImport.update({ where: { id: batch.id }, data: { status: 'PARSING', error: null } });
+      const document = await db.document.findUniqueOrThrow({ where: { id: batch.documentId } });
+      const content = await retrieve(document.key);
+      if (createHash('sha256').update(content).digest('hex') !== document.sha256) throw new Error('Evidence hash mismatch');
+      const rows = parseTrialBalance(content);
+      await db.$transaction(async tx => {
+        await tx.tbRow.deleteMany({ where: { importId: batch.id } });
+        for (let i = 0; i < rows.length; i += 1000) await tx.tbRow.createMany({ data: rows.slice(i, i + 1000).map(row => ({ ...row, importId: batch.id })) });
+        await tx.tbImport.update({ where: { id: batch.id }, data: { status: 'MAPPING_REQUIRED', rowCount: rows.length } });
+      }, { timeout: 120_000 });
+    } catch (error) { await db.tbImport.update({ where: { id: batch.id }, data: { status: 'FAILED', error: error instanceof Error ? error.message.slice(0, 500) : 'Import failed' } }); throw error; }
+  }, { connection, concurrency: 1 });
+  worker.on('failed', (job, error) => console.error('Import failed', job?.id, error.message));
+  let publishing = false;
+  const timer = setInterval(async () => {
+    if (publishing) return; publishing = true;
+    try { for (const event of await db.outboxEvent.findMany({ where: { publishedAt: null, type: 'tb.import' }, take: 100 })) {
+      await queue.add('parse', event.payload, { jobId: event.id, attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
+      await db.outboxEvent.update({ where: { id: event.id }, data: { publishedAt: new Date() } });
+    } } catch (error) { console.error('Outbox retry', error); } finally { publishing = false; }
+  }, 1000);
+  const shutdown = async () => { clearInterval(timer); await worker.close(); await queue.close(); await db.$disconnect(); await app.close(); };
+  process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
+}

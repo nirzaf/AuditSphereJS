@@ -1,0 +1,36 @@
+packages:
+  - apps/*
+  - packages/*
+strictPeerDependencies: true
+engineStrict: true
+saveExact: true
+allowBuilds:
+  esbuild: true
+  '@nestjs/core': true
+  '@prisma/engines': true
+  prisma: true
+  '@parcel/watcher': true
+  lmdb: true
+  msgpackr-extract: true
+  '@scarf/scarf': false
+  cpu-features: false
+  ssh2: false
+  protobufjs: false
+# Exact reviewed versions captured in docs/evidence/T005/registry-metadata.json.
+minimumReleaseAgeExclude:
+  - '@angular-devkit/architect@0.2202.1'
+  - '@angular-devkit/core@22.2.1'
+  - '@angular-devkit/schematics@22.2.1'
+  - '@angular/build@22.2.1'
+  - '@angular/cli@22.2.1'
+  - '@angular/common@22.2.1'
+  - '@angular/compiler-cli@22.2.1'
+  - '@angular/compiler@22.2.1'
+  - '@angular/core@22.2.1'
+  - '@angular/forms@22.2.1'
+  - '@angular/platform-browser@22.2.1'
+  - '@schematics/angular@22.2.1'
+  - '@smithy/core@3.35.1'
+  - 'bullmq@6.3.11'
+  - '@angular/router@22.2.1'
+

@@ -1,0 +1,11 @@
+{
+  "name": "@auditsphere/worker",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "dependencies": {
+    "@auditsphere/server": "workspace:*",
+    "reflect-metadata": "0.2.2",
+    "dotenv": "17.2.3"
+  }
+}

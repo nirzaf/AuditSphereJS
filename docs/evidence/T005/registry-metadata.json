@@ -1,0 +1,1721 @@
+{
+  "capturedDate": "2026-10-01",
+  "target": "Node 24 LTS / Linux amd64; local host Windows Node 24.19.0",
+  "prismaDecision": "Prisma registry latest is an 8 RC. Keep exact stable CLI/client/adapter 7.10.0; no GA assertion.",
+  "rows": [
+    {
+      "name": "@angular/cdk",
+      "version": "22.2.1",
+      "engines": {},
+      "peers": {
+        "rxjs": "^6.5.3 || ^7.4.0",
+        "@angular/core": "^22.0.0 || ^23.0.0",
+        "@angular/forms": "^22.0.0 || ^23.0.0",
+        "@angular/common": "^22.0.0 || ^23.0.0",
+        "@angular/platform-browser": "^22.0.0 || ^23.0.0"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-0vjlqYBbLif1EwHhKz2r4thTDvtRI2CKi2js9TzPRD0n4VlFUnAXaaW47s5TCCObIoYun6Bo1zZ0uPgwb+qEMw==",
+      "published": "2026-09-30T08:09:33.422Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fcdk/22.2.1",
+      "repository": "git+https://github.com/angular/components.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/common",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "rxjs": "^6.5.3 || ^7.4.0",
+        "@angular/core": "22.2.1"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-OqBH3EY4i8e3PvnYDugZGipSs1HWs2ZrqoClndKtFDS9mQULSSuLoxjG9nF1J/c+yUqhuyZlHjkXWS0n32pEfw==",
+      "published": "2026-09-30T18:37:18.989Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fcommon/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/compiler",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-KRSz0c/T5eEiFa+F1l9OppAebJj9pT8kU3ArBMlxR3v/vzhpCfuQsFVQ4xEFC7dEm3zZIdv9ASKAP6ocNC4D/Q==",
+      "published": "2026-09-30T18:37:22.607Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fcompiler/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/core",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "rxjs": "^6.5.3 || ^7.4.0",
+        "zone.js": "~0.15.0 || ~0.16.0",
+        "@angular/compiler": "22.2.1"
+      },
+      "peerMeta": {
+        "zone.js": {
+          "optional": true
+        },
+        "@angular/compiler": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-a8WlYTRiaMPz1KvLE5xjeWrLyZUuQX8bh6Ak7zajUci9iWsTUQefschjSwP1WKlin3JhM3XjmsTEDyZvSLIfRg==",
+      "published": "2026-09-30T18:37:32.189Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fcore/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/forms",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "rxjs": "^6.5.3 || ^7.4.0",
+        "@angular/core": "22.2.1",
+        "@angular/common": "22.2.1",
+        "@angular/platform-browser": "22.2.1"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-xHM+PhrvYDJ+edPxh6PWhkE99tXWbsMcxdXCWF6QcyByX+bsW2rVlNZ7dumOsUle9MYa8Yj0lZFACUWbwFw+4w==",
+      "published": "2026-09-30T18:38:37.838Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fforms/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/platform-browser",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "@angular/core": "22.2.1",
+        "@angular/common": "22.2.1",
+        "@angular/animations": "22.2.1"
+      },
+      "peerMeta": {
+        "@angular/animations": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-KQ3oguemaSqyNP00yqEvPouY7NC4Lji+6S8yfjaWaUZjSth/GckpeP/Fo9HtMqd04y6MZ6lEb2hbQtTqFcSdEQ==",
+      "published": "2026-09-30T18:35:37.712Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fplatform-browser/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@aws-sdk/client-s3",
+      "version": "3.1000.0",
+      "engines": {
+        "node": ">=20.0.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-7kPy33qNGq3NfwHC0412T6LDK1bp4+eiPzetX0sVd9cpTSXuQDKpoOFnB0Njj6uZjJDcLS3n2OeyarwwgkQ0Ow==",
+      "published": "2026-02-27T20:07:15.332Z",
+      "source": "https://registry.npmjs.org/%40aws-sdk%2Fclient-s3/3.1000.0",
+      "repository": "git+https://github.com/aws/aws-sdk-js-v3.git",
+      "scripts": {
+        "test": "yarn g:vitest run",
+        "build": "concurrently 'yarn:build:types' 'yarn:build:es' && yarn build:cjs",
+        "clean": "premove dist-cjs dist-es dist-types tsconfig.cjs.tsbuildinfo tsconfig.es.tsbuildinfo tsconfig.types.tsbuildinfo",
+        "build:es": "tsc -p tsconfig.es.json",
+        "test:e2e": "yarn g:vitest run -c vitest.config.e2e.mts && yarn test:browser",
+        "build:cjs": "node ../../scripts/compilation/inline client-s3",
+        "test:index": "tsc --noEmit ./test/index-types.ts && node ./test/index-objects.spec.mjs",
+        "test:watch": "yarn g:vitest watch",
+        "build:types": "tsc -p tsconfig.types.json",
+        "extract:docs": "api-extractor run --local",
+        "test:browser": "node ./test/browser-build/esbuild && yarn g:vitest run -c vitest.config.browser.mts",
+        "test:e2e:watch": "yarn g:vitest watch -c vitest.config.e2e.mts",
+        "generate:client": "node ../../scripts/generate-clients/single-service --solo s3",
+        "test:integration": "yarn g:vitest run -c vitest.config.integ.mts",
+        "build:include:deps": "yarn g:turbo run build -F=\"$npm_package_name\"",
+        "test:browser:watch": "node ./test/browser-build/esbuild && yarn g:vitest watch -c vitest.config.browser.mts",
+        "build:types:downlevel": "downlevel-dts dist-types dist-types/ts3.4",
+        "test:integration:watch": "yarn g:vitest watch -c vitest.config.integ.mts"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@fastify/static",
+      "version": "10.1.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-G/g18cG9tLutT/OVyN1AIsHIl9L1UwmJ+S3dkyhVpplIx0nEMicd7RGQ+uJLyhKKF4a3tTcQydccn3Mop1fX+Q==",
+      "published": "2026-07-22T09:44:04.396Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fstatic/10.1.2",
+      "repository": "git+https://github.com/fastify/fastify-static.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "example": "node example/server.js",
+        "coverage": "c8 --reporter html borp --coverage --check-coverage --lines 100",
+        "lint:fix": "eslint --fix",
+        "test:unit": "borp -C --check-coverage --lines 100",
+        "test:typescript": "tstyche",
+        "example:benchmark": "node example/server-benchmark.js"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@nestjs/common",
+      "version": "12.1.2",
+      "engines": {},
+      "peers": {
+        "rxjs": "^7.1.0",
+        "class-validator": ">=0.13.2",
+        "reflect-metadata": "^0.1.12 || ^0.2.0",
+        "class-transformer": ">=0.4.1"
+      },
+      "peerMeta": {
+        "class-validator": {
+          "optional": true
+        },
+        "class-transformer": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-e2tvLcEaG18sJy5IXrdSLv0ZBpR5djWxypCLkLuMAEFCvVPYL1lEIhvAMBkarlg+ZA8tbZN40J0tFurUl9NpdA==",
+      "published": "2026-09-30T09:05:54.345Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fcommon/12.1.2",
+      "repository": "git+https://github.com/nestjs/nest.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@nestjs/core",
+      "version": "12.1.2",
+      "engines": {
+        "node": ">= 20"
+      },
+      "peers": {
+        "rxjs": "^7.1.0",
+        "@nestjs/common": "^12.0.0",
+        "reflect-metadata": "^0.1.12 || ^0.2.0",
+        "@nestjs/websockets": "^12.0.0",
+        "@nestjs/microservices": "^12.0.0",
+        "@nestjs/platform-express": "^12.0.0"
+      },
+      "peerMeta": {
+        "@nestjs/websockets": {
+          "optional": true
+        },
+        "@nestjs/microservices": {
+          "optional": true
+        },
+        "@nestjs/platform-express": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-ieNRDv6P6dLsF/wMz9IUjwnyQbj7/Oluq1FXe3Xhje7TFSKPprLc83QniA2I6tjkr7YVDosdL2Dj7CVv9kU8og==",
+      "published": "2026-09-30T09:06:56.995Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fcore/12.1.2",
+      "repository": "git+https://github.com/nestjs/nest.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@nestjs/platform-fastify",
+      "version": "12.1.2",
+      "engines": {},
+      "peers": {
+        "@nestjs/core": "^12.0.0",
+        "@fastify/view": "^10.0.0 || ^11.0.0 || ^12.0.0",
+        "@nestjs/common": "^12.0.0",
+        "@fastify/static": "^10.1.2",
+        "@fastify/multipart": "^10.1.0"
+      },
+      "peerMeta": {
+        "@fastify/view": {
+          "optional": true
+        },
+        "@fastify/static": {
+          "optional": true
+        },
+        "@fastify/multipart": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-368wP4jqPp2D8Uyw6RXrURAfeDDSMNjx5dBxmOW4IgbCu8+tgUllamc6k/w2Wy7xp+E9bmbwyxb9SpYXh9z2CA==",
+      "published": "2026-09-30T09:05:52.387Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fplatform-fastify/12.1.2",
+      "repository": "git+https://github.com/nestjs/nest.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@nestjs/swagger",
+      "version": "12.0.2",
+      "engines": {
+        "node": "^20.19.0 || >=22.12.0"
+      },
+      "peers": {
+        "typescript": "^5.5.0 || ^6.0.0",
+        "@nestjs/core": "^12.0.0",
+        "@nestjs/common": "^12.0.0",
+        "@fastify/static": "^8.0.0 || ^9.0.0 || ^10.0.0",
+        "class-validator": "*",
+        "reflect-metadata": "^0.1.12 || ^0.2.0",
+        "class-transformer": "*"
+      },
+      "peerMeta": {
+        "typescript": {
+          "optional": true
+        },
+        "@fastify/static": {
+          "optional": true
+        },
+        "class-validator": {
+          "optional": true
+        },
+        "class-transformer": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-/IDj6o2k1wqZybhIkMaJp58YNrAos/4TwTf3zBn/j1flKpMb5Tyfbj9sP6rpLucQ7PzHHu7n4ucmeHWEisfn6A==",
+      "published": "2026-09-23T06:48:09.775Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fswagger/12.0.2",
+      "repository": "git+https://github.com/nestjs/swagger.git",
+      "scripts": {
+        "lint": "oxlint lib/",
+        "test": "vitest run",
+        "build": "tsc -p tsconfig.build.json",
+        "start": "nest start",
+        "format": "prettier \"lib/**/*.ts\" --write",
+        "prepare": "npm run build",
+        "release": "release-it",
+        "test:dev": "vitest",
+        "test:e2e": "vitest run --config vitest.e2e.config.mts",
+        "start:dev": "nest start --watch",
+        "prerelease": "npm run build",
+        "publish:npm": "npm publish --access public",
+        "start:debug": "nest start --watch --debug",
+        "publish:next": "npm publish --access public --tag next",
+        "prepublish:npm": "npm run build",
+        "prepublish:next": "npm run build",
+        "---manual-tests---": ""
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@prisma/adapter-pg",
+      "version": "7.10.0",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-N7nwSor0HO1Kz6xBv0TPAjAPysKK0fac6p4fVN3ensLOuzc/83Fgmln5k92eK/cvzqdkSR/2kkAqlbcdwVrwpw==",
+      "published": "2026-08-25T12:40:21.714Z",
+      "source": "https://registry.npmjs.org/%40prisma%2Fadapter-pg/7.10.0",
+      "repository": "https://github.com/prisma/prisma.git",
+      "scripts": {
+        "dev": "DEV=true tsx helpers/build.ts",
+        "test": "vitest run",
+        "build": "tsx helpers/build.ts"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@prisma/client",
+      "version": "7.10.0",
+      "engines": {
+        "node": "^20.19 || ^22.12 || >=24.0"
+      },
+      "peers": {
+        "prisma": "*",
+        "typescript": ">=5.4.0"
+      },
+      "peerMeta": {
+        "prisma": {
+          "optional": true
+        },
+        "typescript": {
+          "optional": true
+        }
+      },
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-Ubw/QS9JGIBSBUsyxAUQuK/Jcu0Tsva7le7QbLd91Kix9yJvYDdj5QkwgEbbZniH80dd+sziQcALPc+HnvQC8Q==",
+      "published": "2026-08-25T12:54:34.412Z",
+      "source": "https://registry.npmjs.org/%40prisma%2Fclient/7.10.0",
+      "repository": "https://github.com/prisma/prisma.git",
+      "scripts": {
+        "dev": "DEV=true tsx helpers/build.ts",
+        "test": "dotenv -e ../../.db.env -- jest --silent",
+        "build": "tsx helpers/build.ts",
+        "new-test": "tsx ./helpers/new-test/new-test.ts",
+        "test:e2e": "dotenv -e ../../.db.env -- tsx tests/e2e/_utils/run.ts",
+        "test-notypes": "dotenv -e ../../.db.env -- jest --testPathIgnorePatterns src/__tests__/types/types.test.ts",
+        "test:functional": "dotenv -e ../../.db.env -- tsx helpers/functional-test/run-tests.ts",
+        "test:functional:code": "dotenv -e ../../.db.env -- tsx helpers/functional-test/run-tests.ts --no-types",
+        "test:functional:types": "dotenv -e ../../.db.env -- tsx helpers/functional-test/run-tests.ts --types-only",
+        "test:functional:client": "pnpm run test:functional --client-runtime client"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "bullmq",
+      "version": "6.3.11",
+      "engines": {
+        "node": ">=14.17.0"
+      },
+      "peers": {
+        "pg": ">=8.0.0",
+        "redis": ">=5.0.0",
+        "ioredis": ">=5.0.0",
+        "bullmq-otel": ">=2.0.0"
+      },
+      "peerMeta": {
+        "pg": {
+          "optional": true
+        },
+        "redis": {
+          "optional": true
+        },
+        "ioredis": {
+          "optional": true
+        },
+        "bullmq-otel": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-ylSY3FYil6E9IjqVtT+WHcZvS1rgTZ0L3Aev62u45NXQFe+H37a1AuC3WDATR7ScNDet1Ah8MnP3lf8XaUbPUw==",
+      "published": "2026-10-01T01:58:07.395Z",
+      "source": "https://registry.npmjs.org/bullmq/6.3.11",
+      "repository": "git+https://github.com/taskforcesh/bullmq.git",
+      "scripts": {
+        "tsc": "tsc",
+        "docs": "typedoc --excludeExternals --excludeProtected --excludePrivate --readme none src/index.ts",
+        "lint": "eslint .",
+        "test": "vitest run --no-file-parallelism",
+        "build": "npm run clean:dist && npm run pretest && npm run tsc:all && npm run copy:main:type && npm run clean:temp:files && npm run copy:lua && npm run copy:includes:lua && npm run copy:sql",
+        "dc:up": "docker-compose -f docker-compose.yml up -d",
+        "dc:down": "docker-compose -f docker-compose.yml down",
+        "dry-run": "npm publish --dry-run",
+        "prepare": "husky",
+        "pretest": "npm run clean:scripts && npm run generate:raw:scripts && npm run transform:commands && npm run circular:references",
+        "tsc:all": "tsc && tsc -p tsconfig-cjs.json",
+        "copy:lua": "cpx \"./src/commands/*.lua\" ./dist/cjs/commands && cpx \"./src/commands/*.lua\" ./dist/esm/commands",
+        "copy:sql": "cpx \"./src/postgres/migrations/*.sql\" ./dist/cjs/postgres/migrations && cpx \"./src/postgres/migrations/*.sql\" ./dist/esm/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dist/cjs/postgres/commands && cpx \"./src/postgres/commands/*.sql\" ./dist/esm/postgres/commands",
+        "coverage": "vitest run --no-file-parallelism --coverage --config vitest.coverage.config.ts",
+        "docs:api": "yarn docs:json && typedoc --includeVersion --excludeExternals --excludeProtected --excludePrivate --readme ./README.md --entryPointStrategy merge --out ./docs/gitbook/public/api $(find ./apiVersions -maxdepth 1 -name 'v*.json' | sort -r)",
+        "docs:dev": "yarn docs:api && vitepress dev docs",
+        "prettier": "prettier **/*.ts --write",
+        "test:bun": "bun node_modules/vitest/dist/cli.js run --no-file-parallelism --config vitest.bun.config.ts",
+        "docs:json": "mkdir -p ./apiVersions && yarn pretest && typedoc --excludeExternals --excludeProtected --excludePrivate --readme none src/index.ts --json ./apiVersions/v6.json --name v6",
+        "clean:dist": "rimraf dist",
+        "docs:build": "yarn docs:api && vitepress build docs",
+        "eslint:fix": "eslint . --fix",
+        "test:smoke": "vitest run --no-file-parallelism --bail=1 tests/async_fifo_queue.test.ts tests/script_loader.test.ts tests/scripts.test.ts tests/child-pool.test.ts tests/bulk.test.ts tests/queue.test.ts",
+        "test:types": "tsc --emitDeclarationOnly --incremental false --outDir dist/type-tests && tsc -p tsconfig.type-tests.json",
+        "test:watch": "vitest --watch",
+        "lint:staged": "lint-staged",
+        "test:vitest": "vitest run --no-file-parallelism",
+        "copy:lua:php": "rm -f ./php/src/commands/*.lua && cpx \"./rawScripts/*.lua\" ./php/src/commands",
+        "docs:preview": "vitepress preview docs",
+        "pretty:quick": "pretty-quick --staged",
+        "test:ioredis": "vitest run --no-file-parallelism --config vitest.ioredis.config.ts",
+        "clean:scripts": "rimraf rawScripts src/scripts",
+        "copy:lua:rust": "rm -f ./rust/src/commands/*.lua && cpx \"./rawScripts/*.lua\" ./rust/src/commands",
+        "test:postgres": "vitest run --config vitest.postgres.config.ts",
+        "copy:main:type": "cpx \"./dist/esm/classes/main.d.ts\" ./dist/cjs/classes && cpx \"./dist/esm/classes/main-worker.d.ts\" ./dist/cjs/classes",
+        "prepublishOnly": "npm run build",
+        "test:bun:smoke": "bun test --timeout 20000 tests/bun-redis.test.ts tests/bun-adapter-suite.test.ts",
+        "test:vitest:ui": "vitest --ui",
+        "copy:lua:dotnet": "rm -f ./dotnet/src/BullMQ/Commands/*.lua && cpx \"./rawScripts/*.lua\" ./dotnet/src/BullMQ/Commands",
+        "copy:lua:elixir": "rm -f ./elixir/priv/scripts/*.lua && cpx \"./rawScripts/*.lua\" ./elixir/priv/scripts",
+        "copy:lua:python": "rm -f ./python/bullmq/commands/*.lua && cpx \"./rawScripts/*.lua\" ./python/bullmq/commands",
+        "copy:sql:dotnet": "rm -f ./dotnet/src/BullMQ/Postgres/migrations/*.sql ./dotnet/src/BullMQ/Postgres/commands/*.sql && cpx \"./src/postgres/migrations/*.sql\" ./dotnet/src/BullMQ/Postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./dotnet/src/BullMQ/Postgres/commands",
+        "copy:sql:elixir": "rm -f ./elixir/priv/postgres/migrations/*.sql ./elixir/priv/postgres/commands/*.sql && cpx \"./src/postgres/migrations/*.sql\" ./elixir/priv/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./elixir/priv/postgres/commands",
+        "copy:sql:python": "rm -f ./python/bullmq/postgres/migrations/*.sql ./python/bullmq/postgres/commands/*.sql && cpx \"./src/postgres/migrations/*.sql\" ./python/bullmq/postgres/migrations && cpx \"./src/postgres/commands/*.sql\" ./python/bullmq/postgres/commands",
+        "test:node-redis": "vitest run --no-file-parallelism --config vitest.node-redis.config.ts",
+        "clean:temp:files": "rimraf dist/cjs/bullmq.d.ts dist/esm/bullmq.d.ts dist/tsdoc-metadata.json",
+        "semantic-release": "semantic-release",
+        "copy:includes:lua": "cpx \"./src/commands/includes/*.lua\" ./dist/cjs/commands/includes && cpx \"./src/commands/includes/*.lua\" ./dist/esm/commands/includes",
+        "test:valkey-glide": "vitest run --no-file-parallelism --config vitest.valkey-glide.config.ts",
+        "test:vitest:watch": "vitest",
+        "transform:commands": "node ./scripts/commandTransform.js ./rawScripts ./src/scripts",
+        "circular:references": "madge --circular --extensions ts ./src",
+        "test:postgres:smoke": "vitest run --no-file-parallelism --config vitest.postgres.smoke.config.ts",
+        "generate:raw:scripts": "ts-node --project tsconfig-cjs.json scripts/generateRawScripts.ts",
+        "semantic-release:debug": "semantic-release --no-ci --dry-run --debug",
+        "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
+        "test:adapter-conformance": "vitest run --no-file-parallelism --config vitest.adapter-conformance.config.ts"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "csv-parse",
+      "version": "6.1.0",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-CEE+jwpgLn+MmtCpVcPtiCZpVtB6Z2OKPTr34pycYYoL7sxdOkXDdQ4lRiw6ioC0q6BLqhc6cKweCVvral8yhw==",
+      "published": "2025-07-16T18:42:20.965Z",
+      "source": "https://registry.npmjs.org/csv-parse/6.1.0",
+      "repository": "https://github.com/adaltas/node-csv.git",
+      "scripts": {
+        "test": "mocha 'test/**/*.{js,ts}'",
+        "build": "npm run build:rollup && npm run build:ts",
+        "lint:ts": "tsc --noEmit true",
+        "build:ts": "cp lib/index.d.ts dist/cjs/index.d.cts && cp lib/sync.d.ts dist/cjs/sync.d.cts && cp lib/*.ts dist/esm",
+        "lint:fix": "eslint --fix",
+        "lint:check": "eslint",
+        "preversion": "npm run build && git add dist",
+        "test:legacy": "mocha --ignore test/api.web_stream.js --ignore test/api.web_stream.ts --ignore test/api.stream.finished.ts --ignore test/api.stream.iterator.ts 'test/**/*.{js,ts}'",
+        "build:rollup": "npx rollup -c",
+        "postbuild:ts": "find dist/cjs -name '*.d.cts' -exec sh -c \"sed -i \"s/\\.js'/\\.cjs'/g\" {} || sed -i '' \"s/\\.js'/\\.cjs'/g\" {}\" \\;"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "dotenv",
+      "version": "17.2.3",
+      "engines": {
+        "node": ">=12"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "BSD-2-Clause",
+      "deprecated": null,
+      "integrity": "sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==",
+      "published": "2025-09-29T23:22:21.569Z",
+      "source": "https://registry.npmjs.org/dotenv/17.2.3",
+      "repository": "git://github.com/motdotla/dotenv.git",
+      "scripts": {
+        "lint": "standard",
+        "test": "tap run tests/**/*.js --allow-empty-coverage --disable-coverage --timeout=60000",
+        "pretest": "npm run lint && npm run dts-check",
+        "release": "standard-version",
+        "dts-check": "tsc --project tests/types/tsconfig.json",
+        "prerelease": "npm test",
+        "test:coverage": "tap run tests/**/*.js --show-full-coverage --timeout=60000 --coverage-report=text --coverage-report=lcov"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "fastify",
+      "version": "5.12.5",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-OB2k1dlxs5/NAABqeKV2FUHkSD2BbENsCak8yULVcymn3fHIPDVa9TI3SDnJSWYSllZmSYuZXy2gTnsT+Sut1A==",
+      "published": "2026-09-16T07:37:06.302Z",
+      "source": "https://registry.npmjs.org/fastify/5.12.5",
+      "repository": "git+https://github.com/fastify/fastify.git",
+      "scripts": {
+        "lint": "npm run lint:eslint",
+        "test": "npm run lint && npm run unit && npm run test:types",
+        "unit": "borp",
+        "bench": "branchcmp -r 2 -g -s \"npm run benchmark\"",
+        "citgm": "borp --reporter=@jsumners/line-reporter --coverage --check-coverage --concurrency=1",
+        "test:ci": "npm run unit && npm run test:types",
+        "coverage": "c8 --reporter html borp --reporter=@jsumners/line-reporter",
+        "lint:fix": "eslint --fix",
+        "benchmark": "concurrently -k -s first \"node ./examples/benchmark/simple.js\" \"autocannon -c 100 -d 30 -p 10 localhost:3000/\"",
+        "test:types": "tstyche",
+        "test:watch": "npm run unit -- --watch --coverage-report=none --reporter=terse",
+        "lint:eslint": "eslint",
+        "test:report": "npm run lint && npm run unit:report && npm run test:types",
+        "unit:report": "c8 --reporter html borp --reporter=@jsumners/line-reporter",
+        "lint:markdown": "markdownlint-cli2",
+        "prepublishOnly": "cross-env PREPUBLISH=true borp --reporter=@jsumners/line-reporter && npm run test:validator:integrity && npm run build:sync-version",
+        "benchmark:parser": "concurrently -k -s first \"node ./examples/benchmark/parser.js\" \"autocannon -c 100 -d 30 -p 10 -i ./examples/benchmark/body.json -H \"content-type:application/jsoff\" -m POST localhost:3000/\"",
+        "build:validation": "node build/build-error-serializer.js && node build/build-validation.js",
+        "build:sync-version": "node build/sync-version.js",
+        "benchmark:parser:error": "concurrently -k -s first \"node ./examples/benchmark/parser.js\" \"autocannon -c 100 -d 30 -p 10 -i ./examples/benchmark/body.json -H \"content-type:application/jsoff\" -H \"content-length:123\" -m POST localhost:3000/\"",
+        "test:validator:integrity": "npm run build:validation && git diff --quiet --ignore-all-space --ignore-blank-lines --ignore-cr-at-eol lib/error-serializer.js && git diff --quiet --ignore-all-space --ignore-blank-lines --ignore-cr-at-eol lib/config-validator.js",
+        "coverage:ci-check-coverage": "borp --reporter=@jsumners/line-reporter --coverage --check-coverage --lines 100"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "ioredis",
+      "version": "5.8.2",
+      "engines": {
+        "node": ">=12.22.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-C6uC+kleiIMmjViJINWk80sOQw5lEzse1ZmvD+S/s8p8CWapftSaC+kocGTx6xrbrJ4WmYQGC08ffHLr6ToR6Q==",
+      "published": "2025-10-21T13:33:08.781Z",
+      "source": "https://registry.npmjs.org/ioredis/5.8.2",
+      "repository": "git://github.com/luin/ioredis.git",
+      "scripts": {
+        "docs": "npx typedoc --logLevel Error --excludeExternals --excludeProtected --excludePrivate --readme none lib/index.ts",
+        "lint": "eslint --ext .js,.ts ./lib",
+        "test": "npm run test:js && npm run test:tsd",
+        "build": "rm -rf built && tsc",
+        "format": "prettier --write \"{,!(node_modules)/**/}*.{js,ts}\"",
+        "test:js": "TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test mocha --no-experimental-strip-types \"test/helpers/*.ts\" \"test/unit/**/*.ts\" \"test/functional/**/*.ts\"",
+        "test:cov": "nyc npm run test:js",
+        "test:tsd": "npm run build && tsd",
+        "docker:setup": "docker compose -f test/docker-compose.yml up -d --wait",
+        "format-check": "prettier --check \"{,!(node_modules)/**/}*.{js,ts}\"",
+        "test:cluster": "TS_NODE_TRANSPILE_ONLY=true NODE_ENV=test mocha --no-experimental-strip-types \"test/cluster/**/*.ts\"",
+        "prepublishOnly": "npm run build",
+        "docker:teardown": "docker compose -f test/docker-compose.yml down --volumes --remove-orphans",
+        "semantic-release": "semantic-release"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "pg",
+      "version": "8.16.3",
+      "engines": {
+        "node": ">= 16.0.0"
+      },
+      "peers": {
+        "pg-native": ">=3.0.1"
+      },
+      "peerMeta": {
+        "pg-native": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-enxc1h0jA/aq5oSDMvqyW3q89ra6XIIDZgCX9vkMrnz5DFTw/Ny3Li2lFQ+pt3L6MCgm/5o2o8HW9hiJji+xvw==",
+      "published": "2025-06-27T14:52:44.894Z",
+      "source": "https://registry.npmjs.org/pg/8.16.3",
+      "repository": "git://github.com/brianc/node-postgres.git",
+      "scripts": {
+        "test": "make test-all"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "reflect-metadata",
+      "version": "0.2.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==",
+      "published": "2024-03-29T01:38:46.117Z",
+      "source": "https://registry.npmjs.org/reflect-metadata/0.2.2",
+      "repository": "git+https://github.com/rbuckton/reflect-metadata.git",
+      "scripts": {
+        "prepublishOnly": "gulp prepublish",
+        "build": "gulp build",
+        "test": "gulp test",
+        "start": "gulp start"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "rxjs",
+      "version": "7.8.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==",
+      "published": "2025-02-22T03:00:42.711Z",
+      "source": "https://registry.npmjs.org/rxjs/7.8.2",
+      "repository": "git+https://github.com/reactivex/rxjs.git",
+      "scripts": {
+        "lint": "npm-run-all --parallel lint_*",
+        "test": "cross-env TS_NODE_PROJECT=tsconfig.mocha.json mocha --config spec/support/.mocharc.js \"spec/**/*-spec.ts\"",
+        "watch": "nodemon -w \"src/\" -w \"spec/\" -e ts -x npm test",
+        "compile": "tsc -b ./src/tsconfig.cjs.json ./src/tsconfig.cjs.spec.json ./src/tsconfig.esm.json ./src/tsconfig.esm5.json ./src/tsconfig.esm5.rollup.json ./src/tsconfig.types.json ./src/tsconfig.types.spec.json ./spec/tsconfig.json",
+        "dtslint": "tsc -b ./src/tsconfig.types.json && tslint -c spec-dtslint/tslint.json -p spec-dtslint/tsconfig.json \"spec-dtslint/**/*.ts\"",
+        "lint_src": "tslint -c tslint.json -p src/tsconfig.base.json \"src/**/*.ts\"",
+        "test:esm": "node spec/module-test-spec.mjs",
+        "changelog": "npx conventional-changelog-cli -p angular -i CHANGELOG.md -s",
+        "lint_spec": "tslint -c spec/tslint.json -p spec/tsconfig.json \"spec/**/*.ts\"",
+        "build:clean": "shx rm -rf ./dist",
+        "test:import": "ts-node ./integration/import/runner.ts",
+        "build:global": "node ./tools/make-umd-bundle.js && node ./tools/make-closure-core.js",
+        "publish_docs": "./publish_docs.sh",
+        "test:browser": "echo \"Browser test is not working currently\" && exit -1 && npm-run-all build:spec:browser && opn spec/support/mocha-browser-runner.html",
+        "build:package": "npm-run-all build:clean compile build:global && node ./tools/prepare-package.js && node ./tools/generate-alias.js",
+        "test:circular": "dependency-cruiser --validate .dependency-cruiser.json -x \"^node_modules\" dist/esm5",
+        "test:systemjs": "node integration/systemjs/systemjs-compatibility-spec.js",
+        "watch:dtslint": "nodemon -w \"src/\" -w \"spec-dtslint/\" -e ts -x npm run dtslint",
+        "prepublishOnly": "npm run build:package && npm run lint && npm run test && npm run test:circular && npm run dtslint && npm run test:side-effects",
+        "test:side-effects": "check-side-effects --test integration/side-effects/side-effects.json",
+        "build:spec:browser": "echo \"Browser test is not working currently\" && exit -1 && webpack --config spec/support/webpack.mocha.config.js",
+        "test:side-effects:update": "npm run test:side-effects -- --update"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "zod",
+      "version": "4.6.5",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==",
+      "published": "2026-09-13T23:25:14.644Z",
+      "source": "https://registry.npmjs.org/zod/4.6.5",
+      "repository": "git+https://github.com/colinhacks/zod.git",
+      "scripts": {
+        "test": "nub exec --node vitest run",
+        "build": "nub exec --node zshy --project tsconfig.build.json",
+        "clean": "git clean -xdf . -e node_modules",
+        "postbuild": "nub ../../scripts/write-stub-package-jsons.ts && nub exec --node biome check --write .",
+        "test:watch": "nub exec --node vitest",
+        "prepublishOnly": "nub ../../scripts/check-versions.ts"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/build",
+      "version": "22.2.1",
+      "engines": {
+        "npm": "^6.11.0 || ^7.5.6 || >=8.0.0",
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
+        "yarn": ">= 1.13.0"
+      },
+      "peers": {
+        "less": "^4.2.0",
+        "karma": "^6.4.0",
+        "tslib": "^2.3.0",
+        "rollup": "^4.0.0",
+        "vitest": "^4.0.8 || ^5.0.0",
+        "postcss": "^8.4.0",
+        "ng-packagr": "^22.0.0",
+        "typescript": ">=6.0 <6.1",
+        "tailwindcss": "^2.0.0 || ^3.0.0 || ^4.0.0",
+        "@angular/ssr": "^22.2.1",
+        "@angular/core": "^22.0.0",
+        "@angular/compiler": "^22.0.0",
+        "@angular/localize": "^22.0.0",
+        "@angular/compiler-cli": "^22.0.0",
+        "@angular/service-worker": "^22.0.0",
+        "istanbul-lib-instrument": "^6.0.0",
+        "@angular/platform-server": "^22.0.0",
+        "@angular/platform-browser": "^22.0.0"
+      },
+      "peerMeta": {
+        "less": {
+          "optional": true
+        },
+        "karma": {
+          "optional": true
+        },
+        "rollup": {
+          "optional": true
+        },
+        "vitest": {
+          "optional": true
+        },
+        "postcss": {
+          "optional": true
+        },
+        "ng-packagr": {
+          "optional": true
+        },
+        "tailwindcss": {
+          "optional": true
+        },
+        "@angular/ssr": {
+          "optional": true
+        },
+        "@angular/core": {
+          "optional": true
+        },
+        "@angular/localize": {
+          "optional": true
+        },
+        "@angular/service-worker": {
+          "optional": true
+        },
+        "istanbul-lib-instrument": {
+          "optional": true
+        },
+        "@angular/platform-server": {
+          "optional": true
+        },
+        "@angular/platform-browser": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-VA8EkK5Y6sJbBFyn2x5jzd3KByh29DDpI7n6hucT0sK6YkMJEvsojPUWet9ifwF3OL+ZrGvxYlAHyZGKVlqw0g==",
+      "published": "2026-10-01T13:26:23.279Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fbuild/22.2.1",
+      "repository": "git+https://github.com/angular/angular-cli.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/cli",
+      "version": "22.2.1",
+      "engines": {
+        "npm": "^6.11.0 || ^7.5.6 || >=8.0.0",
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0",
+        "yarn": ">= 1.13.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-tKMP68SZP+A9YCSRg0c+2e/+yWp7qiFrjCuQAomHK7owNaxHnLigAbra+8QA4xmWHoGaQk89NMmUPyA1BsBp8w==",
+      "published": "2026-10-01T13:28:30.262Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fcli/22.2.1",
+      "repository": "git+https://github.com/angular/angular-cli.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@angular/compiler-cli",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "typescript": ">=6.0 <6.1",
+        "@angular/compiler": "22.2.1"
+      },
+      "peerMeta": {
+        "typescript": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-Nh8sCBl0JF6x+H7/1hemY76JeTRC66EfMULT4B3ryF9srRSLYc6X6RfPRtYvrIyjgr6h3jZgrNHlV76wiJaOcA==",
+      "published": "2026-09-30T18:36:55.331Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fcompiler-cli/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@playwright/test",
+      "version": "1.58.2",
+      "engines": {
+        "node": ">=18"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-akea+6bHYBBfA9uQqSYmlJXn61cTa+jbO87xVLCWbTqbWadRVmhxlXATaOjOgcBaWU4ePo0wB41KMFv3o35IXA==",
+      "published": "2026-02-06T16:42:52.725Z",
+      "source": "https://registry.npmjs.org/%40playwright%2Ftest/1.58.2",
+      "repository": "git+https://github.com/microsoft/playwright.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@types/node",
+      "version": "24.10.1",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-GNWcUTRBgIRJD5zj+Tq0fKOJ5XZajIiBroOF0yvj2bSU1WvNdYS/dn9UxwsujGW4JX06dnHyjV2y9rRaybH0iQ==",
+      "published": "2025-11-11T23:33:15.303Z",
+      "source": "https://registry.npmjs.org/%40types%2Fnode/24.10.1",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@types/pg",
+      "version": "8.15.6",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-NoaMtzhxOrubeL/7UZuNTrejB4MPAJ0RpxZqXQf2qXuVlTPuG6Y8p4u9dKRaue4yjmC7ZhzVO2/Yyyn25znrPQ==",
+      "published": "2025-10-27T23:32:24.778Z",
+      "source": "https://registry.npmjs.org/%40types%2Fpg/8.15.6",
+      "repository": "https://github.com/DefinitelyTyped/DefinitelyTyped.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "concurrently",
+      "version": "9.2.1",
+      "engines": {
+        "node": ">=18"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-fsfrO0MxV64Znoy8/l1vVIjjHa29SZyyqPgQBwhiDcaW8wJc2W3XWVOGx4M3oJBnv/zdUZIIp1gDeS98GzP8Ng==",
+      "published": "2025-08-25T09:50:49.138Z",
+      "source": "https://registry.npmjs.org/concurrently/9.2.1",
+      "repository": "git+https://github.com/open-cli-tools/concurrently.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "vitest --project unit",
+        "build": "tsc --build",
+        "clean": "tsc --build --clean",
+        "format": "prettier --check '**/*.{json,y?(a)ml,md}'",
+        "lint:fix": "pnpm run lint --fix",
+        "postbuild": "chmod +x dist/bin/concurrently.js",
+        "format:fix": "pnpm run format --write",
+        "test:smoke": "vitest run --project smoke",
+        "report-coverage": "cat coverage/lcov.info | coveralls"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "prisma",
+      "version": "7.10.0",
+      "engines": {
+        "node": "^20.19 || ^22.12 || >=24.0"
+      },
+      "peers": {
+        "typescript": ">=5.4.0",
+        "better-sqlite3": ">=9.0.0"
+      },
+      "peerMeta": {
+        "typescript": {
+          "optional": true
+        },
+        "better-sqlite3": {
+          "optional": true
+        }
+      },
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-o0ornyJOWgygVAzGCpr8PdXV8EJLHyVGDDUr/voBQt8Azzw8cYTByzzPGcA/m4tCkPcnJA8raEOv2CslsKhPEw==",
+      "published": "2026-08-25T12:47:51.307Z",
+      "source": "https://registry.npmjs.org/prisma/7.10.0",
+      "repository": "https://github.com/prisma/prisma.git",
+      "scripts": {
+        "pm": "tsx src/bin.ts platform --early-access",
+        "dev": "DEV=true tsx helpers/build.ts",
+        "tsc": "tsc -d -p tsconfig.build.json",
+        "test": "dotenv -e ../../.db.env -- tsx helpers/run-tests.ts",
+        "build": "tsx helpers/build.ts",
+        "prisma": "tsx src/bin.ts",
+        "platform": "tsx src/bin.ts platform --early-access",
+        "preinstall": "node scripts/preinstall-entry.js",
+        "test:platform": "dotenv -e ../../.db.env -- tsx helpers/run-tests.ts src/platform",
+        "generate-api-client": "openapi-typescript https://api.prisma.io/v1/doc --output ./src/management-api/openapi.d.ts && prettier --write ./src/management-api/openapi.d.ts"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "tsx",
+      "version": "4.21.0",
+      "engines": {
+        "node": ">=18.0.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-5C1sg4USs1lfG0GFb2RLXsdpXqBSEhAaA/0kPL01wxzpMqLILNxIxIOKiILz+cdg/pLnOUxFYOR5yhHU666wbw==",
+      "published": "2025-11-30T15:56:09.488Z",
+      "source": "https://registry.npmjs.org/tsx/4.21.0",
+      "repository": "git+https://github.com/privatenumber/tsx.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "typescript",
+      "version": "6.0.3",
+      "engines": {
+        "node": ">=14.17"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==",
+      "published": "2026-04-16T23:38:27.905Z",
+      "source": "https://registry.npmjs.org/typescript/6.0.3",
+      "repository": "git+https://github.com/microsoft/TypeScript.git",
+      "scripts": {
+        "gulp": "hereby",
+        "knip": "hereby knip",
+        "lint": "hereby lint",
+        "test": "hereby runtests-parallel --light=false",
+        "build": "npm run build:compiler && npm run build:tests",
+        "clean": "hereby clean",
+        "format": "dprint fmt",
+        "build:tests": "hereby tests",
+        "setup-hooks": "node scripts/link-hooks.mjs",
+        "build:compiler": "hereby local",
+        "test:eslint-rules": "hereby run-eslint-rules-tests",
+        "build:tests:notypecheck": "hereby tests --no-typecheck"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "vitest",
+      "version": "4.1.0",
+      "engines": {
+        "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
+      },
+      "peers": {
+        "vite": "^6.0.0 || ^7.0.0 || ^8.0.0-0",
+        "jsdom": "*",
+        "happy-dom": "*",
+        "@vitest/ui": "4.1.0",
+        "@types/node": "^20.0.0 || ^22.0.0 || >=24.0.0",
+        "@edge-runtime/vm": "*",
+        "@opentelemetry/api": "^1.9.0",
+        "@vitest/browser-preview": "4.1.0",
+        "@vitest/browser-playwright": "4.1.0",
+        "@vitest/browser-webdriverio": "4.1.0"
+      },
+      "peerMeta": {
+        "vite": {
+          "optional": false
+        },
+        "jsdom": {
+          "optional": true
+        },
+        "happy-dom": {
+          "optional": true
+        },
+        "@vitest/ui": {
+          "optional": true
+        },
+        "@types/node": {
+          "optional": true
+        },
+        "@edge-runtime/vm": {
+          "optional": true
+        },
+        "@opentelemetry/api": {
+          "optional": true
+        },
+        "@vitest/browser-preview": {
+          "optional": true
+        },
+        "@vitest/browser-playwright": {
+          "optional": true
+        },
+        "@vitest/browser-webdriverio": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-YbDrMF9jM2Lqc++2530UourxZHmkKLxrs4+mYhEwqWS97WJ7wOYEkcr+QfRgJ3PW9wz3odRijLZjHEaRLTNbqw==",
+      "published": "2026-03-12T14:06:30.610Z",
+      "source": "https://registry.npmjs.org/vitest/4.1.0",
+      "repository": "git+https://github.com/vitest-dev/vitest.git",
+      "scripts": {
+        "dev": "NODE_OPTIONS=\"--max-old-space-size=8192\" rollup -c --watch -m inline",
+        "build": "premove dist && rollup -c"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@nestjs/cli",
+      "version": "12.0.8",
+      "engines": {
+        "node": ">= 20.11"
+      },
+      "peers": {
+        "webpack": "^5.105.4",
+        "@swc/cli": "^0.8.0",
+        "@swc/core": "^1.15.18",
+        "ts-loader": "^9.5.4",
+        "@rspack/core": "^1.7.7 || ^2.1.10",
+        "webpack-node-externals": "^3.0.0",
+        "tsconfig-paths-webpack-plugin": "^4.2.0",
+        "fork-ts-checker-webpack-plugin": "^9.1.0"
+      },
+      "peerMeta": {
+        "webpack": {
+          "optional": true
+        },
+        "@swc/cli": {
+          "optional": true
+        },
+        "@swc/core": {
+          "optional": true
+        },
+        "ts-loader": {
+          "optional": true
+        },
+        "@rspack/core": {
+          "optional": true
+        },
+        "webpack-node-externals": {
+          "optional": true
+        },
+        "tsconfig-paths-webpack-plugin": {
+          "optional": true
+        },
+        "fork-ts-checker-webpack-plugin": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-iqm+KXb8cnpnlD4hMBf1w2/4i1GSs0DCLI7oyP4MTmwf9KmjTG1SpAjkl/D+kKuUToycBrMF4+eSwyPVdTMGKQ==",
+      "published": "2026-09-28T09:00:30.289Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fcli/12.0.8",
+      "repository": "git+https://github.com/nestjs/nest-cli.git",
+      "scripts": {
+        "lint": "oxlint lib/ commands/ actions/",
+        "test": "vitest run",
+        "build": "tsc",
+        "clean": "node tools/clean.js",
+        "start": "node bin/nest.js",
+        "format": "prettier --write \"**/*.ts\"",
+        "prepack": "npm run build",
+        "prepare": "husky && node tools/postinstall.cjs",
+        "release": "release-it",
+        "test:dev": "npm run clean && vitest --watch",
+        "test:e2e": "vitest run -c vitest.e2e.config.ts",
+        "prerelease": "npm run build",
+        "publish:npm": "npm publish --access public",
+        "publish:next": "npm publish --access public --tag next",
+        "prepublish:npm": "npm run build",
+        "prepublish:next": "npm run build"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@nestjs/schematics",
+      "version": "12.0.6",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "prettier": "^3.0.0",
+        "typescript": ">=6.0.0"
+      },
+      "peerMeta": {
+        "prettier": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-2OG0BUhGPJqVvWFhiy+7oaQa4VQUvTS9Dw8YRfvweznl4KS3YyZrdPi4cVGuRAThoEIsbdfguZzSOv1+t8U1tg==",
+      "published": "2026-09-28T08:58:58.032Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fschematics/12.0.6",
+      "repository": "git+https://github.com/nestjs/schematics.git",
+      "scripts": {
+        "lint": "oxlint --ignore-pattern 'src/**/files/**' --ignore-pattern 'src/**/workspace/**' src/ test/",
+        "test": "npm run clean && NODE_ENV=test NODE_OPTIONS=\"--require tsx/cjs\" vitest run",
+        "build": "rm -rf dist *.tsbuildinfo && tsc -b tsconfig.lib.json",
+        "clean": "del 'src/**/*.{js,d.ts,js.map,d.ts.map}' '!src/**/files/**' '!src/**/workspace/**' '!src/**/*.schema.d.ts'",
+        "prepare": "husky",
+        "release": "release-it",
+        "copy:lib": "cpx 'src/lib/**/{files,workspace}/**/*.*' dist/lib && cpx 'src/lib/**/{files,workspace}/**/.!(gitignore)' dist/lib",
+        "test:dev": "NODE_ENV=test NODE_OPTIONS=\"--require tsx/cjs\" vitest",
+        "postbuild": "npm run copy:collection && npm run copy:lib",
+        "typecheck": "tsc -b tsconfig.json",
+        "prerelease": "npm run build",
+        "publish:npm": "npm publish --access public",
+        "publish:next": "npm publish --access public --tag next",
+        "prepublish:npm": "npm run build",
+        "copy:collection": "cpx src/collection.json dist && cpx 'src/lib/**/schema.json' dist/lib",
+        "prepublish:next": "npm run build"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@nestjs/bullmq",
+      "version": "12.0.0",
+      "engines": {},
+      "peers": {
+        "bullmq": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0",
+        "@nestjs/core": "^10.0.0 || ^11.0.0 || ^12.0.0",
+        "@nestjs/common": "^10.0.0 || ^11.0.0 || ^12.0.0"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-8aOL+TA2W6BgWVeNroofk4CDJrutPt8m+Kp5oghwOUHF73mSPDWTS2vPssuF8IrBq8g195JnKAc2Tu1OdQidLQ==",
+      "published": "2026-08-27T07:44:13.039Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fbullmq/12.0.0",
+      "repository": "git+https://github.com/nestjs/bull.git",
+      "scripts": {
+        "test": "vitest run",
+        "test:dev": "vitest",
+        "test:e2e": "vitest run --config vitest.config.e2e.mts",
+        "test:e2e:dev": "vitest --config vitest.config.e2e.mts"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@nestjs/websockets",
+      "version": "12.1.2",
+      "engines": {},
+      "peers": {
+        "rxjs": "^7.1.0",
+        "@nestjs/core": "^12.0.0",
+        "@nestjs/common": "^12.0.0",
+        "reflect-metadata": "^0.1.12 || ^0.2.0",
+        "@nestjs/platform-socket.io": "^12.0.0"
+      },
+      "peerMeta": {
+        "@nestjs/platform-socket.io": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-iW+97/cYLP1OrEhZKGwT+BW2q79fnfAUJ/mcyaPgcR/ZA9UwvoDw7eN/rv3bE5NaCSOOZl74+hSGRyR1sBd0HA==",
+      "published": "2026-09-30T09:10:29.543Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fwebsockets/12.1.2",
+      "repository": "git+https://github.com/nestjs/nest.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@nestjs/platform-socket.io",
+      "version": "12.1.2",
+      "engines": {},
+      "peers": {
+        "rxjs": "^7.1.0",
+        "@nestjs/common": "^12.0.0",
+        "@nestjs/websockets": "^12.0.0"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-t9hQmeukhUx/wJMjYOBcN3rG9TywtuIZV+2+yjELiYib5ekwOT3gjGVSe3fqgXqZJJrpUxvS+o93OQGzB6BOUQ==",
+      "published": "2026-09-30T09:05:32.123Z",
+      "source": "https://registry.npmjs.org/%40nestjs%2Fplatform-socket.io/12.1.2",
+      "repository": "git+https://github.com/nestjs/nest.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@angular/router",
+      "version": "22.2.1",
+      "engines": {
+        "node": "^22.22.3 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "rxjs": "^6.5.3 || ^7.4.0",
+        "@angular/core": "22.2.1",
+        "@angular/common": "22.2.1",
+        "@angular/platform-browser": "22.2.1"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-HJfJ4yA1znKd9YFtbDOJfKmD12x0PhS7LkmYdWlJRu2WkQZRBVrdGKdmbvV5UvrqCRllVWKpzw1TIZJM69rlcw==",
+      "published": "2026-09-30T18:37:00.101Z",
+      "source": "https://registry.npmjs.org/%40angular%2Frouter/22.2.1",
+      "repository": "git+https://github.com/angular/angular.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@angular/material",
+      "version": "22.2.1",
+      "engines": {},
+      "peers": {
+        "rxjs": "^6.5.3 || ^7.4.0",
+        "@angular/cdk": "22.2.1",
+        "@angular/core": "^22.0.0 || ^23.0.0",
+        "@angular/forms": "^22.0.0 || ^23.0.0",
+        "@angular/common": "^22.0.0 || ^23.0.0",
+        "@angular/platform-browser": "^22.0.0 || ^23.0.0"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-qw+/aJBV4lqqoJgv1VBWbMBVnE7431SX0Mew1j7PO+s1UcTushbG7CIAEo1hwmRq3kyo4Qqch8+uzFq4R631HQ==",
+      "published": "2026-09-30T08:14:26.488Z",
+      "source": "https://registry.npmjs.org/%40angular%2Fmaterial/22.2.1",
+      "repository": "git+https://github.com/angular/components.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "tslib",
+      "version": "2.8.1",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "0BSD",
+      "deprecated": null,
+      "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+      "published": "2024-10-31T22:42:48.624Z",
+      "source": "https://registry.npmjs.org/tslib/2.8.1",
+      "repository": "git+https://github.com/Microsoft/tslib.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "socket.io",
+      "version": "4.8.4",
+      "engines": {
+        "node": ">=10.2.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-9ZV9zg8vN8hO3Y25DhR7nUkJ1VDnBhq5O/JrXhFT9s6+F0gqytSASTHVfCFc2mJXaTfARroErplXlzFWwETZqQ==",
+      "published": "2026-09-25T08:51:53.015Z",
+      "source": "https://registry.npmjs.org/socket.io/4.8.4",
+      "repository": "git+https://github.com/socketio/socket.io.git",
+      "scripts": {
+        "test": "npm run format:check && npm run compile && npm run test:types && npm run test:unit",
+        "compile": "rimraf ./dist && tsc",
+        "prepack": "npm run compile",
+        "test:unit": "nyc mocha --import=tsx --reporter spec --slow 200 --bail --timeout 10000 test/index.ts",
+        "format:fix": "prettier --write \"lib/**/*.ts\" \"test/**/*.ts\"",
+        "test:types": "exit 0",
+        "format:check": "prettier --check \"lib/**/*.ts\" \"test/**/*.ts\""
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "socket.io-client",
+      "version": "4.8.4",
+      "engines": {
+        "node": ">=10.0.0"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-7wjKAvVXYOJsbmUgkWbnhPD4bFpkqrUR0++XOjpGFmqDqsqV1CI93VTraeExLxpjxEqrWgFoSRZu1ihjLWfkAA==",
+      "published": "2026-09-25T08:35:02.910Z",
+      "source": "https://registry.npmjs.org/socket.io-client/4.8.4",
+      "repository": "git+https://github.com/socketio/socket.io.git",
+      "scripts": {
+        "test": "npm run format:check && npm run compile && if test \"$BROWSERS\" = \"1\" ; then npm run test:browser; else npm run test:node; fi",
+        "build": "rollup -c support/rollup.config.umd.js && rollup -c support/rollup.config.esm.js && rollup -c support/rollup.config.umd.msgpack.js",
+        "compile": "rimraf ./build && tsc && tsc -p tsconfig.esm.json && ./postcompile.sh",
+        "prepack": "npm run compile",
+        "test:node": "mocha --import=tsx --require test/support/hooks.ts --exit test/index.ts",
+        "format:fix": "prettier --write \"*.js\" \"lib/**/*.ts\" \"test/**/*.ts\" \"support/**/*.js\"",
+        "test:types": "exit 0",
+        "bundle-size": "node support/bundle-size.js",
+        "format:check": "prettier --check \"*.js\" \"lib/**/*.ts\" \"test/**/*.ts\" \"support/**/*.js\"",
+        "test:browser": "ts-node test/browser-runner.ts"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "playwright",
+      "version": "1.58.2",
+      "engines": {
+        "node": ">=18"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-vA30H8Nvkq/cPBnNw4Q8TWz1EJyqgpuinBcHET0YVJVFldr8JDNiU9LaWAE1KqSkRYazuaBhTpB5ZzShOezQ6A==",
+      "published": "2026-02-06T16:42:40.029Z",
+      "source": "https://registry.npmjs.org/playwright/1.58.2",
+      "repository": "git+https://github.com/microsoft/playwright.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "jsdom",
+      "version": "30.1.1",
+      "engines": {
+        "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
+      },
+      "peers": {
+        "canvas": "^3.2.3"
+      },
+      "peerMeta": {
+        "canvas": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-FahmoPK5vbPc+jxV1iErMHmAZypCZ942NHF4+qqaWAuvaKKTBZxawnmAtrbGWLU7MtlxfqIP0qw6aSI+aWGtLg==",
+      "published": "2026-09-22T02:07:00.270Z",
+      "source": "https://registry.npmjs.org/jsdom/30.1.1",
+      "repository": "git+https://github.com/jsdom/jsdom.git",
+      "scripts": {
+        "lint": "eslint --cache",
+        "test": "npm-run-all --continue-on-error test:*",
+        "prepare": "wireit",
+        "pretest": "npm run prepare && npm run wpt:init",
+        "test:api": "mocha test/api/",
+        "test:wpt": "mocha test/web-platform-tests/run-wpts.js",
+        "wpt:init": "git submodule update --init --recursive",
+        "benchmark": "node ./benchmark/runner",
+        "wpt:reset": "rm -rf ./test/web-platform-tests/tests && npm run wpt:init",
+        "test:tuwpt": "mocha test/web-platform-tests/run-tuwpts.js",
+        "wpt:update": "git submodule update --init --recursive --remote && cd test/web-platform-tests/tests && python wpt.py manifest --path ../wpt-manifest.json",
+        "benchmark:compare": "node ./benchmark/compare",
+        "test:tuwpt:browser": "node scripts/verify-tuwpts-in-browser.js",
+        "prepare:convert-idl": "wireit",
+        "test:to-port-to-wpts": "mocha test/to-port-to-wpts/ && mocha test/to-port-to-wpts/level1/ && mocha test/to-port-to-wpts/level2/ && mocha test/to-port-to-wpts/level3/",
+        "prepare:generate-event-sets": "wireit",
+        "prepare:generate-js-globals": "wireit",
+        "prepare:generate-css-style-properties": "wireit"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "testcontainers",
+      "version": "12.2.0",
+      "engines": {
+        "node": ">= 22.22"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-Pd0c2eU0DdIuK+Pb3c+vmBUdKjDLgxZmPecQGESFAKyn5LTqSaSw8l7htfMlLwabb/QsUILe6XkxMJw8Ly/ThA==",
+      "published": "2026-09-28T15:46:04.029Z",
+      "source": "https://registry.npmjs.org/testcontainers/12.2.0",
+      "repository": "git+https://github.com/testcontainers/testcontainers-node.git",
+      "scripts": {
+        "build": "tsc --project tsconfig.build.json",
+        "prepack": "shx cp ../../README.md . && shx cp ../../LICENSE .",
+        "prebuild": "node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" > src/version.ts"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@testcontainers/postgresql",
+      "version": "12.2.0",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-14oNBbKdqIkWTiw8XwP6YqWnuBebiij8m4fF03WTSHvNt5FfvQpGTLwIV3p07UpDnqWRFvY50YFzbiYdB+SWuA==",
+      "published": "2026-09-28T15:47:58.386Z",
+      "source": "https://registry.npmjs.org/%40testcontainers%2Fpostgresql/12.2.0",
+      "repository": "git+https://github.com/testcontainers/testcontainers-node.git",
+      "scripts": {
+        "build": "tsc --project tsconfig.build.json",
+        "prepack": "shx cp ../../../README.md . && shx cp ../../../LICENSE ."
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "eslint",
+      "version": "10.11.0",
+      "engines": {
+        "node": "^20.19.0 || ^22.13.0 || >=24"
+      },
+      "peers": {
+        "jiti": "*"
+      },
+      "peerMeta": {
+        "jiti": {
+          "optional": true
+        }
+      },
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-P7a6UEEqb9G95MYAtqkmsTbVXIYyzIfl6NGOIJk162PaahFxFyeGcrlXYFSiagECg4sEm8IseJdZBKR3rx6MsQ==",
+      "published": "2026-09-18T20:15:36.485Z",
+      "source": "https://registry.npmjs.org/eslint/10.11.0",
+      "repository": "git+https://github.com/eslint/eslint.git",
+      "scripts": {
+        "fmt": "prettier --write .",
+        "lint": "node Makefile.js lint",
+        "test": "node Makefile.js test",
+        "lint:fix": "node Makefile.js lint -- fix",
+        "test:cli": "mocha",
+        "fmt:check": "prettier --check .",
+        "test:fuzz": "node Makefile.js fuzz",
+        "test:pnpm": "cd tests/pnpm && node check.js && pnpm install && pnpm exec tsc",
+        "build:site": "node Makefile.js gensite",
+        "lint:types": "attw --pack",
+        "test:types": "tsc -p tests/lib/types/tsconfig.json && npm run test:types --workspaces --if-present",
+        "lint:unused": "knip",
+        "test:emfile": "node tools/check-emfile-handling.js",
+        "build:readme": "node tools/update-readme.js",
+        "lint:docs:js": "node Makefile.js lintDocsJS",
+        "test:browser": "node Makefile.js cypress",
+        "build:webpack": "node Makefile.js webpack",
+        "test:ecosystem": "node tools/test-ecosystem/index.mjs",
+        "test:types:5.3": "npx -p typescript@5.3 -y -- tsc -p tsconfig.types-legacy.json",
+        "test:types:5.x": "npx -p typescript@5.x -y -- tsc -p tsconfig.types.json",
+        "test:types:7.x": "npx -p @typescript/native-preview@latest -y -- tsgo -p tsconfig.types.json",
+        "test:types:all": "npm run test:types && npm run test:types:5.3 && npm run test:types:5.x && npm run test:types:7.x",
+        "lint:rule-types": "node tools/update-rule-type-headers.js --check",
+        "release:publish": "node Makefile.js publishRelease",
+        "lint:fix:docs:js": "node Makefile.js lintDocsJS -- fix",
+        "test:performance": "node Makefile.js perf",
+        "build:rules-index": "node Makefile.js generateRuleIndexPage",
+        "release:generate:rc": "node Makefile.js generatePrerelease -- rc",
+        "release:generate:beta": "node Makefile.js generatePrerelease -- beta",
+        "test:ecosystem:update": "node tools/test-ecosystem/update.mjs",
+        "release:generate:alpha": "node Makefile.js generatePrerelease -- alpha",
+        "build:docs:update-links": "node tools/fetch-docs-links.js",
+        "lint:docs:rule-examples": "node Makefile.js checkRuleExamples",
+        "release:generate:latest": "node Makefile.js generateRelease -- latest",
+        "release:generate:maintenance": "node Makefile.js generateRelease -- maintenance"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "angular-eslint",
+      "version": "22.5.0",
+      "engines": {},
+      "peers": {
+        "eslint": "^9.0.0 || ^10.0.0",
+        "typescript": "*",
+        "typescript-eslint": "^8.0.0"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-qDJVh/YLYiZ7k2qZCBGsmfO+qSiHcdyQp1UFdm3eHHc3YRNlW/Xvj1wp1oDKxuHSE//aqmbVFHlkcqdwJyymdg==",
+      "published": "2026-09-07T19:41:01.315Z",
+      "source": "https://registry.npmjs.org/angular-eslint/22.5.0",
+      "repository": "https://github.com/angular-eslint/angular-eslint.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "typescript-eslint",
+      "version": "8.71.0",
+      "engines": {
+        "node": "^18.18.0 || ^20.9.0 || >=21.1.0"
+      },
+      "peers": {
+        "eslint": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "typescript": ">=4.8.4 <6.1.0"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-fBdHYiqQ14RW6mOMXD14Svn82ZsCYAoQSzGRzyEjR59S5A2Krh/l7fGTOQ7iCr8gGy/mHVXtEF7s5fgjEdV0Pw==",
+      "published": "2026-09-28T17:12:00.356Z",
+      "source": "https://registry.npmjs.org/typescript-eslint/8.71.0",
+      "repository": "https://github.com/typescript-eslint/typescript-eslint.git",
+      "scripts": {
+        "lint": "pnpm -w exec nx lint",
+        "test": "pnpm -w exec nx test",
+        "build": "pnpm exec nx build",
+        "clean": "rimraf dist/ coverage/",
+        "format": "pnpm -w run format",
+        "typecheck": "pnpm -w exec nx typecheck",
+        "attw-check": "pnpm -w exec nx attw-check",
+        "typecheck:tsgo": "pnpm -w exec nx typecheck:tsgo"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "prettier",
+      "version": "3.9.9",
+      "engines": {
+        "node": ">=14"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==",
+      "published": "2026-09-23T06:31:34.693Z",
+      "source": "https://registry.npmjs.org/prettier/3.9.9",
+      "repository": "git+https://github.com/prettier/prettier.git",
+      "scripts": {},
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/helmet",
+      "version": "13.1.1",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-bSat5DTq8geASv8G6P0KW1UbltZ+xGD/zyd9S72pT7ogAHehcsWL85GdjMRCjDsExJvaEvgEZ52qU/2HXirVCw==",
+      "published": "2026-08-19T10:02:18.430Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fhelmet/13.1.1",
+      "repository": "git+https://github.com/fastify/fastify-helmet.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/cookie",
+      "version": "11.1.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-Dtrpk/YOGUsbRMvP/8ZqPpwnMRv0qSqodFdoQ2B589Obc7jw4s4Qla+cV72Bsm7WsZJnqlYFX/i7uSBq0xzg6g==",
+      "published": "2026-07-15T21:29:27.207Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fcookie/11.1.2",
+      "repository": "git+https://github.com/fastify/fastify-cookie.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "coverage": "npm run test:unit -- --coverage-report=html",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche",
+        "test:unit:verbose": "npm run test:unit -- -Rspec"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/csrf-protection",
+      "version": "8.0.1",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-NMK+TKyuWCmRJPwSiAVTQwKoeDspWRhoBgYtumJJy0PBZxjgcUAn1eCO8r5N/z0pgDMcMfy5HjxowXpOxwTWyw==",
+      "published": "2026-08-02T10:27:37.495Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fcsrf-protection/8.0.1",
+      "repository": "git+https://github.com/fastify/csrf-protection.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/rate-limit",
+      "version": "11.2.0",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-X7osJd4XSvMoejYrnJkSZYYjY1eNYoBqhjlzf1RakC2204qExFqZFTKj5+T7VuzA/iUI9Z3UoSqQRkB2HpG0oQ==",
+      "published": "2026-07-29T14:38:39.112Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Frate-limit/11.2.0",
+      "repository": "git+https://github.com/fastify/fastify-rate-limit.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "redis": "docker run -p 6379:6379 --name rate-limit-redis -d --rm redis",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "openapi-typescript",
+      "version": "7.13.0",
+      "engines": {},
+      "peers": {
+        "typescript": "^5.x"
+      },
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-EFP392gcqXS7ntPvbhBzbF8TyBA+baIYEm791Hy5YkjDYKTnk/Tn5OQeKm5BIZvJihpp8Zzr4hzx0Irde1LNGQ==",
+      "published": "2026-02-11T16:02:25.378Z",
+      "source": "https://registry.npmjs.org/openapi-typescript/7.13.0",
+      "repository": "git+https://github.com/openapi-ts/openapi-typescript.git",
+      "scripts": {
+        "dev": "tsc -p tsconfig.build.json --watch",
+        "lint": "pnpm run lint:js && pnpm run lint:ts",
+        "test": "pnpm run test:js && pnpm run test:examples && pnpm run test:exports",
+        "build": "unbuild",
+        "format": "biome format . --write",
+        "lint:js": "biome check .",
+        "lint:ts": "tsc --noEmit",
+        "test:js": "vitest run",
+        "version": "pnpm run build",
+        "prepublish": "pnpm run build",
+        "test:exports": "pnpm run build && attw --pack .",
+        "test:examples": "tsc -p tsconfig.examples.json --noEmit",
+        "update:examples": "pnpm run build && pnpm run download:schemas && vite-node ./scripts/update-examples.ts",
+        "download:schemas": "vite-node ./scripts/download-schemas.ts"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "pnpm",
+      "version": "12.8.1",
+      "engines": {
+        "node": ">=18.*"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-9kupB1B/XOr+BsjTjmBS0BeURFgOwSed3Vv8EctIqoomRLZlmOB+dh2oSHKp/FfV+QK4f6SdAkGY1VhhKqu+RQ==",
+      "published": "2026-09-28T17:38:17.288Z",
+      "source": "https://registry.npmjs.org/pnpm/12.8.1",
+      "repository": "https://github.com/pnpm/pnpm",
+      "scripts": {
+        "preinstall": "node install.js",
+        "postinstall": "node install.js",
+        "bundle-node-gyp": "node scripts/bundle-node-gyp.mjs"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    }
+  ]
+}

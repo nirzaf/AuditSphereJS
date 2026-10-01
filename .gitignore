@@ -39,3 +39,8 @@ temp/
 # Redis / DB dumps
 *.rdb
 *.sqlite
+
+playwright-report/
+test-results/
+__pycache__/
+packages/server/src/generated/

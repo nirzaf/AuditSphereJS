@@ -1,0 +1,1 @@
+Follow the root ../AGENTS.md. Task definitions and execution ledger are under docs/tasks and docs/guides. User decisions recorded in docs/decisions take precedence over earlier pending defaults; do not fabricate external acceptance evidence.

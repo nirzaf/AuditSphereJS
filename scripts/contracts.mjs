@@ -1,0 +1,11 @@
+import { readFileSync, writeFileSync } from 'node:fs';
+import { z } from 'zod';
+import { uploadSchema, mappingSchema, finalizeSchema } from '@auditsphere/contracts';
+const mode = process.argv[2];
+if (!['generate', 'check'].includes(mode)) throw new Error('Expected generate or check');
+const schemas = { upload: z.toJSONSchema(uploadSchema), mappings: z.toJSONSchema(mappingSchema), finalize: z.toJSONSchema(finalizeSchema) };
+const output = JSON.stringify(schemas, null, 2) + '\n';
+const path = 'packages/contracts/schema.json';
+if (mode === 'generate') writeFileSync(path, output);
+else if (readFileSync(path, 'utf8') !== output) throw new Error('Contract schema drift: run pnpm contracts:generate');
+console.log(`Contract schemas ${mode === 'check' ? 'match runtime definitions' : 'generated'}`);

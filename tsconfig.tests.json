@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.server.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "noEmit": true
+  },
+  "include": [
+    "tests/**/*.ts",
+    "packages/server/tests/**/*.ts",
+    "scripts/**/*.ts",
+    "prisma/seed.ts"
+  ]
+}

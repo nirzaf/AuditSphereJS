@@ -1,0 +1,63 @@
+{
+  "name": "auditsphere",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.8.1",
+  "engines": {
+    "node": ">=24.15.0 <25"
+  },
+  "scripts": {
+    "dev": "pnpm build:server && concurrently -n compile,api,worker,web \"tsc -b --watch\" \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:web\"",
+    "dev:api": "node --watch apps/api/dist/main.js",
+    "dev:worker": "node --watch apps/worker/dist/main.js",
+    "dev:web": "ng serve web --host 127.0.0.1 --port 4200",
+    "build": "pnpm build:server && ng build web",
+    "typecheck": "pnpm build:server && tsc -p tsconfig.tests.json --noEmit && ng build web",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "infra:up": "docker compose up -d --wait",
+    "verify:affected": "pnpm boundaries && pnpm typecheck && pnpm test",
+    "boundaries": "node scripts/check-boundaries.mjs",
+    "build:server": "prisma generate && tsc -b",
+    "test:unit": "vitest run && ng test web --watch=false",
+    "test:integration": "node --import tsx --test tests/foundation.integration.ts",
+    "lint": "eslint . && pnpm boundaries",
+    "verify:task": "node scripts/verify-task.mjs",
+    "verify:all": "pnpm lint && pnpm typecheck && pnpm test:unit && pnpm test:integration && pnpm test:e2e",
+    "dependencies:check": "node scripts/dependency-evidence.mjs",
+    "contracts:generate": "node scripts/contracts.mjs generate",
+    "contracts:check": "node scripts/contracts.mjs check"
+  },
+  "dependencies": {
+    "@auditsphere/contracts": "workspace:*",
+    "@auditsphere/server": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "6.0.3",
+    "@types/node": "24.10.1",
+    "@types/pg": "8.15.6",
+    "prisma": "7.10.0",
+    "vitest": "4.1.0",
+    "@angular/cli": "22.2.1",
+    "@angular/build": "22.2.1",
+    "@angular/compiler-cli": "22.2.1",
+    "@playwright/test": "1.58.2",
+    "concurrently": "9.2.1",
+    "tsx": "4.21.0",
+    "@nestjs/cli": "12.0.8",
+    "@nestjs/schematics": "12.0.6",
+    "jsdom": "30.1.1",
+    "testcontainers": "12.2.0",
+    "@testcontainers/postgresql": "12.2.0",
+    "eslint": "10.11.0",
+    "angular-eslint": "22.5.0",
+    "typescript-eslint": "8.71.0",
+    "prettier": "3.9.9",
+    "socket.io-client": "4.8.4",
+    "dotenv": "17.2.3",
+    "zod": "4.6.5"
+  }
+}

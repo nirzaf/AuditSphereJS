@@ -1,0 +1,92 @@
+{
+  "upload": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "filename": {
+        "type": "string",
+        "maxLength": 200,
+        "pattern": "^[^/\\\\]+\\.csv$"
+      },
+      "csv": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 15000000
+      }
+    },
+    "required": [
+      "filename",
+      "csv"
+    ],
+    "additionalProperties": false
+  },
+  "mappings": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "idempotencyKey": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "changes": {
+        "minItems": 1,
+        "maxItems": 500,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "rowId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "expectedVersion": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "fsli": {
+              "type": "string",
+              "enum": [
+                "Cash and equivalents",
+                "Trade receivables",
+                "Property and equipment",
+                "Trade payables",
+                "Equity",
+                "Revenue",
+                "Operating expenses"
+              ]
+            }
+          },
+          "required": [
+            "rowId",
+            "expectedVersion",
+            "fsli"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "idempotencyKey",
+      "changes"
+    ],
+    "additionalProperties": false
+  },
+  "finalize": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "expectedVersion": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      }
+    },
+    "required": [
+      "expectedVersion"
+    ],
+    "additionalProperties": false
+  }
+}

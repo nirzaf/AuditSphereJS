@@ -1,0 +1,27 @@
+import 'dotenv/config';
+import { test, expect } from '@playwright/test';
+test('live CSV import, mapping and finalized summary', async ({ page }) => {
+  test.skip(!process.env.RUN_LIVE_E2E, 'Requires seeded PostgreSQL, Redis, RustFS and worker');
+  const errors: string[] = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto('/');
+  await page.getByLabel('Local development access token').fill(process.env.DEV_AUTH_TOKEN!);
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await expect(page.getByRole('status')).toContainText('Connected');
+  const csv = `code,name,current,prior\n100,Cash ${crypto.randomUUID()},1000.10,900.10\n200,Equity,-1000.10,-900.10`;
+  await page.locator('#csv').setInputFiles({ name: 'browser-fixture.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+  await expect(page.locator('.metrics .status')).toHaveText('MAPPING_REQUIRED', { timeout: 30000 });
+  await page.getByLabel('FSLI for 100', { exact: true }).selectOption('Cash and equivalents');
+  await page.getByLabel('FSLI for 200', { exact: true }).selectOption('Equity');
+  await page.getByRole('button', { name: 'Save 2 mappings' }).click();
+  await expect(page.getByRole('status')).toContainText('Mappings saved');
+  await page.getByRole('button', { name: 'Finalize', exact: true }).click();
+  await expect(page.locator('.metrics .status')).toHaveText('FINALIZED');
+  await expect(page.getByLabel('FSLI for 100', { exact: true })).toBeDisabled();
+  expect(errors).toEqual([]);
+  await page.setViewportSize({ width: 1440, height: 1100 });
+  await page.screenshot({ path: 'docs/workspace-preview.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole('heading', { name: 'Trial Balance workspace' })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});

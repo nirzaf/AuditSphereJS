@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client"
+  output = "../packages/server/src/generated/prisma"
+  moduleFormat = "esm"
+}
+datasource db {
+  provider = "postgresql"
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique
+  role String
+  tenantId String? @db.Uuid
+  entraObjectId String? @db.Uuid
+  @@unique([tenantId, entraObjectId])
+  memberships Membership[]
+}
+model Membership {
+  userId String @db.Uuid
+  engagementId String @db.Uuid
+  user User @relation(fields: [userId], references: [id])
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+  @@id([userId, engagementId])
+}
+model Engagement {
+  id String @id @default(uuid()) @db.Uuid
+  name String
+  clientId String @db.Uuid
+  currency String @default("QAR")
+  state String @default("LEAD_INGESTION")
+  version Int @default(1)
+  memberships Membership[]
+  imports TbImport[]
+}
+model Document {
+  id String @id @default(uuid()) @db.Uuid
+  engagementId String @db.Uuid
+  key String @unique
+  sha256 String
+  filename String
+  version Int @default(1)
+  createdAt DateTime @default(now())
+}
+model TbImport {
+  id String @id @default(uuid()) @db.Uuid
+  engagementId String @db.Uuid
+  engagement Engagement @relation(fields: [engagementId], references: [id])
+  documentId String @db.Uuid
+  sha256 String
+  status String @default("QUEUED")
+  error String?
+  rowCount Int @default(0)
+  version Int @default(1)
+  rows TbRow[]
+  createdAt DateTime @default(now())
+  @@unique([engagementId, sha256])
+}
+model TbRow {
+  id String @id @default(uuid()) @db.Uuid
+  importId String @db.Uuid
+  batch TbImport @relation(fields: [importId], references: [id])
+  position Int
+  code String
+  name String
+  current Decimal @db.Decimal(20, 2)
+  prior Decimal @db.Decimal(20, 2)
+  fsli String?
+  version Int @default(1)
+  @@unique([importId, code])
+  @@index([importId, position])
+}
+model AuditEvent {
+  id String @id @default(uuid()) @db.Uuid
+  engagementId String @db.Uuid
+  actorId String @db.Uuid
+  action String
+  payload Json
+  createdAt DateTime @default(now())
+}
+model OutboxEvent {
+  id String @id @default(uuid()) @db.Uuid
+  type String
+  payload Json
+  publishedAt DateTime?
+  createdAt DateTime @default(now())
+}
+model CommandReceipt {
+  key String @id @db.Uuid
+  engagementId String @db.Uuid
+  actorId String @db.Uuid
+  hash String
+  result Json
+}

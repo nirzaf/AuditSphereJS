@@ -1,0 +1,2 @@
+import { test, expect } from '@playwright/test';
+test('fieldwork shell and module navigation', async ({ page }) => { await page.goto('/'); await expect(page.getByRole('heading', {name:'Trial Balance workspace'})).toBeVisible(); await page.getByRole('button', {name:'Commercial'}).click(); await expect(page.getByRole('heading', {name:'Commercial',exact:true})).toBeVisible(); await page.getByRole('button', {name:'Open Fieldwork workspace'}).click(); await expect(page.getByLabel('Local development access token')).toBeVisible(); });

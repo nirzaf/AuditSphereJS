@@ -1,0 +1,35 @@
+{
+  "name": "@auditsphere/server",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@auditsphere/contracts": "workspace:*",
+    "@aws-sdk/client-s3": "3.1000.0",
+    "@nestjs/bullmq": "12.0.0",
+    "@nestjs/common": "12.1.2",
+    "@nestjs/core": "12.1.2",
+    "@nestjs/platform-socket.io": "12.1.2",
+    "@nestjs/swagger": "12.0.2",
+    "@nestjs/websockets": "12.1.2",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "bullmq": "6.3.11",
+    "csv-parse": "6.1.0",
+    "dotenv": "17.2.3",
+    "ioredis": "5.8.2",
+    "jose": "6.2.12",
+    "pg": "8.16.3",
+    "playwright": "1.58.2",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "socket.io": "4.8.4",
+    "zod": "4.6.5"
+  }
+}

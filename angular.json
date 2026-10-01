@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "projects": {
+    "web": {
+      "projectType": "application",
+      "root": "apps/web",
+      "sourceRoot": "apps/web/src",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "apps/web/src/main.ts",
+            "tsConfig": "apps/web/tsconfig.json",
+            "index": "apps/web/src/index.html",
+            "styles": [
+              "apps/web/src/styles.css"
+            ],
+            "outputPath": "dist/web"
+          },
+          "configurations": {
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "web:build:development",
+            "proxyConfig": "apps/web/proxy.json"
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "apps/web/tsconfig.spec.json",
+            "watch": false
+          }
+        }
+      }
+    }
+  }
+}

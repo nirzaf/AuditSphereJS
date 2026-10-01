@@ -1,0 +1,86 @@
+# T035 — Prove a constrained HTML-to-PDF worker on the target image
+
+| Field | Value |
+| :--- | :--- |
+| Initial status | `NOT_STARTED` |
+| Execution class | `CORE` |
+| Phase | 03-platform — Durable jobs, documents and realtime |
+| Owner area | `documents` |
+| Completion unit | One focused, reviewable change and its evidence |
+
+## Outcome
+
+Use one reviewed Chromium renderer through Playwright or the selected equivalent, with exact browser/image matching.
+
+## Required context and prerequisites
+
+Read [root agent rules](../../AGENTS.md), this task, the owning module README when it exists, and the exact relevant source ranges in [the preserved CURRENT requirements](../../sources/requirements-current.md). Do not load every task into the agent context.
+
+- [T031 — Configure BullMQ workers for reliable retries and shutdown](T031-queue-runtime.md)
+- [T032 — Implement private object storage and immutable document versions](T032-storage-metadata.md)
+- [T004 — Approve signature, archival and engagement-type policies](../00-readiness/T004-records-decisions.md)
+
+A dependency must be `DONE`, or an optional/conditional dependency must have an explicitly approved `NOT_APPLICABLE` disposition. All domain implementation also requires [the executable compatibility gate](../01-foundation/T017-compatibility-smoke.md) to pass. Policy-dependent behavior stays blocked until its applicable decisions are approved.
+
+## Source requirements
+
+- **R010** — Brief quotation and 50/50 payment terms; source lines `399-401`.
+- **R011** — Comprehensive proposal with all five content blocks; source lines `402-407`.
+- **R014** — Engagement-type letter templates; source lines `415-419`.
+- **R019** — Automatic receipt and dispatch; source lines `427-427`.
+- **R065** — D1 report and audited financial statements; source lines `541-542`.
+- **R066** — D2 deficiency-impact-recommendation management letter; source lines `543-543`.
+- **R067** — D3 LOR export, management signing and re-upload; source lines `544-544`.
+- **R068** — D4 correspondence and confirmation trail; source lines `545-545`.
+- **R069** — D5 remaining 50% fee note; source lines `546-546`.
+
+These are coverage identifiers added by this pack; they do not alter the source specification. Review [policy/source conflicts](../../guides/05-decisions-and-source-conflicts.md) when wording overlaps.
+
+## Scope and implementation boundary
+
+**Allowed areas:** packages/server/src/platform/documents and storage; apps/worker/ composition; metadata migrations; tests
+
+**Non-goals:** No overwriting evidence versions, untrusted executable templates or public storage credentials.
+
+Use existing owned records/contracts first. Add a migration or public endpoint only when the task steps require it; record the exact files in the handoff.
+
+**Dependency focus:** Playwright/Chromium or approved renderer; no duplicate PDF runtime
+
+Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
+
+**Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
+
+## Implementation checklist
+
+- [ ] Use one reviewed Chromium renderer through Playwright or the selected equivalent, with exact browser/image matching.
+- [ ] Render only trusted versioned templates and escaped structured data; deny arbitrary remote URLs and local-file/network access.
+- [ ] Set page/resource/time limits and package approved fonts without relying on host fonts.
+- [ ] Produce an immutable document version and retain renderer/template/data snapshot identities.
+
+## Acceptance criteria and required tests
+
+- [ ] **AC1:** Golden quotation and multi-page report fixtures render without missing fonts or truncated sections.
+- [ ] **AC2:** An injected external-resource URL cannot access metadata/internal services.
+- [ ] **AC3:** Renderer failure cannot mark a document ready.
+
+Test real/emulated storage behavior, boundary failures and immutable hash/version references; provider-specific assurance requires real-provider evidence.
+
+Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
+
+## Failure, rollback and recovery
+
+Fail without a partial successful business state. Keep committed history and evidence immutable; return a clear error or a durable recoverable operation. Source/code rollback does not undo database migrations, financial postings, signed files or external side effects. Any production data repair is a separately authorized operation.
+
+## Verification and handoff
+
+Once [the verification command contract](../01-foundation/T015-commands.md) exists, run the exact task check:
+
+```bash
+pnpm verify:task -- T035
+```
+
+Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
+
+Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
+
+**Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
