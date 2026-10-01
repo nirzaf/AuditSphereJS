@@ -6,89 +6,390 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
-model User {
-  id String @id @default(uuid()) @db.Uuid
-  email String @unique
-  role String
-  tenantId String? @db.Uuid
-  entraObjectId String? @db.Uuid
-  @@unique([tenantId, entraObjectId])
+/// Firm is the top ownership boundary. Firm data must never be visible across firms.
+model Firm {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  createdAt DateTime @default(now())
+  clients   Client[]
+}
+/// Client belongs to exactly one firm. Ids are only unique inside their firm so child
+/// records can carry a composite (firmId, clientId) reference and the database itself
+/// rejects cross-firm relationships.
+model Client {
+  id          String       @id @default(uuid()) @db.Uuid
+  firmId      String       @db.Uuid
+  name        String
+  createdAt   DateTime     @default(now())
+  firm        Firm         @relation(fields: [firmId], references: [id])
+  engagements Engagement[]
+  @@unique([firmId, id])
+}
+/// Engagement is scoped to a firm and one of that firm's clients. The composite foreign
+/// key means an engagement cannot point at another firm's client.
+model Engagement {
+  id          String       @id @default(uuid()) @db.Uuid
+  firmId      String       @db.Uuid
+  clientId    String       @db.Uuid
+  name        String
+  currency    String       @default("QAR")
+  state       String       @default("LEAD_INGESTION")
+  version     Int          @default(1)
+  client      Client       @relation(fields: [firmId, clientId], references: [firmId, id])
   memberships Membership[]
+  imports     TbImport[]
+  transitions EngagementTransition[]
+  publications BalancePublication[]
+  mappingApprovals MappingApproval[]
+  materialityAssessments MaterialityAssessment[]
+  risks RiskItem[]
+  storedObjects StoredObject[]
+  @@unique([firmId, clientId, id])
+}
+model User {
+  id            String       @id @default(uuid()) @db.Uuid
+  email         String       @unique
+  role          String
+  tenantId      String?      @db.Uuid
+  entraObjectId String?      @db.Uuid
+  memberships   Membership[]
+  grants        RoleGrant[]
+  @@unique([tenantId, entraObjectId])
+}
+/// A capability granted to a user over a scope and valid only inside its window.
+/// Grants are historical: revocation sets revokedAt and never deletes the row. A revoked or
+/// expired grant never authorizes, and scope is checked again inside every write transaction.
+model RoleGrant {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @db.Uuid
+  user         User      @relation(fields: [userId], references: [id])
+  capability   String
+  firmId       String?   @db.Uuid
+  clientId     String?   @db.Uuid
+  engagementId String?   @db.Uuid
+  grantedBy    String    @db.Uuid
+  grantedAt    DateTime  @default(now())
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+  revokedBy    String?   @db.Uuid
+  reason       String?
+  @@index([userId, capability])
+  @@index([engagementId])
 }
 model Membership {
-  userId String @db.Uuid
-  engagementId String @db.Uuid
-  user User @relation(fields: [userId], references: [id])
-  engagement Engagement @relation(fields: [engagementId], references: [id])
+  userId       String     @db.Uuid
+  engagementId String     @db.Uuid
+  user         User       @relation(fields: [userId], references: [id])
+  engagement   Engagement @relation(fields: [engagementId], references: [id])
   @@id([userId, engagementId])
 }
-model Engagement {
-  id String @id @default(uuid()) @db.Uuid
-  name String
-  clientId String @db.Uuid
-  currency String @default("QAR")
-  state String @default("LEAD_INGESTION")
-  version Int @default(1)
-  memberships Membership[]
-  imports TbImport[]
-}
 model Document {
-  id String @id @default(uuid()) @db.Uuid
-  engagementId String @db.Uuid
-  key String @unique
-  sha256 String
-  filename String
-  version Int @default(1)
-  createdAt DateTime @default(now())
+  id           String            @id @default(uuid()) @db.Uuid
+  engagementId String            @db.Uuid
+  key          String            @unique
+  sha256       String
+  filename     String
+  version      Int               @default(1)
+  createdAt    DateTime          @default(now())
+  versions     DocumentVersion[]
+  storedObjects StoredObject[]
 }
+/// Binds one client to one provider repository. Replaces the previous single global
+/// drive/folder configuration so evidence cannot be written into another client's site.
+model ClientRepository {
+  id        String    @id @default(uuid()) @db.Uuid
+  firmId    String    @db.Uuid
+  clientId  String    @db.Uuid
+  purpose   String
+  provider  String
+  driveId   String
+  folderId  String
+  createdAt DateTime  @default(now())
+  retiredAt DateTime?
+  @@unique([firmId, clientId, purpose, provider])
+  @@index([clientId, purpose])
+}
+/// The immutable provider identity of one stored document byte-for-byte. Append-only: a
+/// provider change creates a new version row and never rewrites the previous identity.
+model DocumentVersion {
+  id         String   @id @default(uuid()) @db.Uuid
+  documentId String   @db.Uuid
+  document   Document @relation(fields: [documentId], references: [id])
+  provider   String
+  driveId    String
+  itemId     String
+  versionId  String
+  eTag       String
+  sha256     String
+  sizeBytes  Int
+  createdBy  String   @db.Uuid
+  createdAt  DateTime @default(now())
+  @@unique([documentId, versionId])
+  @@index([driveId, itemId])
+}
+/// TbImport carries the engagement's firm/client scope so a staged dataset cannot be
+/// attached to another firm's engagement, even by a caller that knows a foreign id.
 model TbImport {
-  id String @id @default(uuid()) @db.Uuid
-  engagementId String @db.Uuid
-  engagement Engagement @relation(fields: [engagementId], references: [id])
-  documentId String @db.Uuid
-  sha256 String
-  status String @default("QUEUED")
-  error String?
-  rowCount Int @default(0)
-  version Int @default(1)
-  rows TbRow[]
-  createdAt DateTime @default(now())
+  id           String     @id @default(uuid()) @db.Uuid
+  firmId       String     @db.Uuid
+  clientId     String     @db.Uuid
+  engagementId String     @db.Uuid
+  engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  documentId   String     @db.Uuid
+  sha256       String
+  status       String     @default("QUEUED")
+  error        String?
+  rowCount     Int        @default(0)
+  version      Int        @default(1)
+  rows         TbRow[]
+  mappingApprovals MappingApproval[]
+  createdAt    DateTime   @default(now())
   @@unique([engagementId, sha256])
+  @@index([firmId, clientId, engagementId])
 }
 model TbRow {
-  id String @id @default(uuid()) @db.Uuid
-  importId String @db.Uuid
-  batch TbImport @relation(fields: [importId], references: [id])
+  id       String   @id @default(uuid()) @db.Uuid
+  importId String   @db.Uuid
+  batch    TbImport @relation(fields: [importId], references: [id])
   position Int
-  code String
-  name String
-  current Decimal @db.Decimal(20, 2)
-  prior Decimal @db.Decimal(20, 2)
-  fsli String?
-  version Int @default(1)
+  code     String
+  name     String
+  current  Decimal  @db.Decimal(28, 6)
+  prior    Decimal  @db.Decimal(28, 6)
+  fsli     String?
+  version  Int      @default(1)
   @@unique([importId, code])
   @@index([importId, position])
 }
+/// An immutable, accepted accounting version published from exactly one finalized import.
+/// Downstream planning and statements consume a publication; a FINALIZED staging import is not
+/// itself an accepted dataset.
+model BalancePublication {
+  id           String                @id @default(uuid()) @db.Uuid
+  firmId       String                @db.Uuid
+  clientId     String                @db.Uuid
+  engagementId String                @db.Uuid
+  engagement   Engagement            @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  importId     String                @unique @db.Uuid
+  mappingApprovalId String?          @db.Uuid
+  mappingApproval MappingApproval?   @relation(fields: [mappingApprovalId], references: [id], onDelete: Restrict)
+  sequence     Int
+  currency     String
+  rowCount     Int
+  digest       String
+  publishedBy  String                @db.Uuid
+  publishedAt  DateTime              @default(now())
+  rows         PublishedBalanceRow[]
+  materialityAssessments MaterialityAssessment[]
+  @@unique([engagementId, sequence])
+  @@index([engagementId, publishedAt])
+}
+/// The exact published balances. Immutable once written; PostgreSQL rejects update and delete.
+model PublishedBalanceRow {
+  id            String             @id @default(uuid()) @db.Uuid
+  publicationId String             @db.Uuid
+  publication   BalancePublication @relation(fields: [publicationId], references: [id])
+  position      Int
+  code          String
+  name          String
+  fsli          String
+  current       Decimal            @db.Decimal(28, 6)
+  prior         Decimal            @db.Decimal(28, 6)
+  @@unique([publicationId, code])
+  @@index([publicationId, position])
+}
+/// Append-only lifecycle history. Every guarded command writes exactly one row in the same
+/// transaction as the state change; PostgreSQL rejects later mutation of this table.
+model EngagementTransition {
+  id           String     @id @default(uuid()) @db.Uuid
+  engagementId String     @db.Uuid
+  engagement   Engagement @relation(fields: [engagementId], references: [id])
+  command      String
+  fromState    String
+  toState      String
+  actorId      String     @db.Uuid
+  reason       String?
+  evidence     Json
+  version      Int
+  createdAt    DateTime   @default(now())
+  @@index([engagementId, createdAt])
+}
+/// A firm's versioned mapping taxonomy. An approved version is immutable: a change is a new
+/// version, never an edit, so historical mappings keep their meaning.
+model TaxonomyVersion {
+  id                String           @id @default(uuid()) @db.Uuid
+  firmId            String           @db.Uuid
+  name              String
+  version           Int
+  status            String           @default("DRAFT")
+  createdBy         String           @db.Uuid
+  createdAt         DateTime         @default(now())
+  approvedBy        String?          @db.Uuid
+  approvedAt        DateTime?
+  lines             TaxonomyLine[]
+  mappingApprovals  MappingApproval[]
+  materialityAssessments MaterialityAssessment[]
+  @@unique([firmId, name, version])
+  @@index([firmId, status])
+}
+/// One taxonomy line. The code is the value stored on mapped trial-balance rows; the statement
+/// section is what benchmark derivation uses.
+model TaxonomyLine {
+  id                String          @id @default(uuid()) @db.Uuid
+  taxonomyVersionId String          @db.Uuid
+  taxonomyVersion   TaxonomyVersion @relation(fields: [taxonomyVersionId], references: [id])
+  code              String
+  label             String
+  statementSection  String
+  sortOrder         Int
+  @@unique([taxonomyVersionId, code])
+  @@index([taxonomyVersionId, sortOrder])
+}
+/// The approval that binds one import's mapping to an exact taxonomy version. The digest covers
+/// the mapped rows, so any later row change makes the approval stale.
+model MappingApproval {
+  id                String          @id @default(uuid()) @db.Uuid
+  firmId            String          @db.Uuid
+  clientId          String          @db.Uuid
+  engagementId      String          @db.Uuid
+  engagement        Engagement      @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  importId          String          @db.Uuid
+  importBatch       TbImport        @relation(fields: [importId], references: [id])
+  taxonomyVersionId String          @db.Uuid
+  taxonomyVersion   TaxonomyVersion @relation(fields: [taxonomyVersionId], references: [id])
+  digest            String
+  rowCount          Int
+  approvedBy        String          @db.Uuid
+  approvedAt        DateTime        @default(now())
+  publications      BalancePublication[]
+  @@unique([importId, taxonomyVersionId])
+  @@index([engagementId, approvedAt])
+}
+/// One append-only planning-materiality calculation bound to an exact published accounting version
+/// and taxonomy version. A newer publication makes it stale; an approved assessment is frozen.
+model MaterialityAssessment {
+  id                  String             @id @default(uuid()) @db.Uuid
+  firmId              String             @db.Uuid
+  clientId            String             @db.Uuid
+  engagementId        String             @db.Uuid
+  engagement          Engagement         @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  publicationId       String             @db.Uuid
+  publication         BalancePublication @relation(fields: [publicationId], references: [id])
+  taxonomyVersionId   String             @db.Uuid
+  taxonomyVersion     TaxonomyVersion    @relation(fields: [taxonomyVersionId], references: [id])
+  benchmarkKind       String
+  destinationCode     String?
+  sourceLineCount     Int
+  currency            String
+  benchmarkAmount     Decimal            @db.Decimal(28, 6)
+  planningMateriality Decimal            @db.Decimal(28, 6)
+  tolerableError      Decimal            @db.Decimal(28, 6)
+  sadThreshold        Decimal            @db.Decimal(28, 6)
+  ratePercent         Decimal            @db.Decimal(28, 6)
+  performancePercent  Decimal            @db.Decimal(28, 6)
+  trivialPercent      Decimal            @db.Decimal(28, 6)
+  policyVersion       String
+  inputHash           String
+  status              String             @default("DRAFT")
+  calculatedBy        String             @db.Uuid
+  calculatedAt        DateTime           @default(now())
+  approvedBy          String?            @db.Uuid
+  approvedAt          DateTime?
+  @@index([engagementId, calculatedAt])
+}
+/// One engagement risk. Its band is an append-only assessment series; the newest is current.
+model RiskItem {
+  id           String              @id @default(uuid()) @db.Uuid
+  firmId       String              @db.Uuid
+  clientId     String              @db.Uuid
+  engagementId String              @db.Uuid
+  engagement   Engagement          @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  title        String
+  description  String?
+  createdBy    String              @db.Uuid
+  createdAt    DateTime            @default(now())
+  assessments  RiskBandAssessment[]
+  assignments  RiskOwnerAssignment[]
+  @@index([engagementId, createdAt])
+}
+/// Append-only band assessment. The database rejects a band that does not follow from its inputs.
+model RiskBandAssessment {
+  id          String                @id @default(uuid()) @db.Uuid
+  riskId      String                @db.Uuid
+  risk        RiskItem              @relation(fields: [riskId], references: [id])
+  likelihood  Int
+  magnitude   Int
+  significant Boolean
+  fraudRisk   Boolean
+  band        String
+  ruleVersion String
+  assessedBy  String                @db.Uuid
+  assessedAt  DateTime              @default(now())
+  clearances  RiskPartnerClearance[]
+  assignments RiskOwnerAssignment[]
+  @@index([riskId, assessedAt])
+}
+/// Who responds to a risk, bound to the exact band assessment and the owner's staffing rank. Append-only.
+model RiskOwnerAssignment {
+  id                 String             @id @default(uuid()) @db.Uuid
+  riskId             String             @db.Uuid
+  risk               RiskItem           @relation(fields: [riskId], references: [id])
+  assessmentId       String             @db.Uuid
+  assessment         RiskBandAssessment @relation(fields: [assessmentId], references: [id])
+  ownerUserId        String             @db.Uuid
+  ownerStaffingLevel String
+  assignedBy         String             @db.Uuid
+  assignedAt         DateTime           @default(now())
+  @@index([riskId, assignedAt])
+}
+/// Mandatory Partner clearance of one exact red band assessment. Append-only.
+model RiskPartnerClearance {
+  id           String             @id @default(uuid()) @db.Uuid
+  assessmentId String             @unique @db.Uuid
+  assessment   RiskBandAssessment @relation(fields: [assessmentId], references: [id])
+  partnerId    String             @db.Uuid
+  note         String
+  clearedAt    DateTime           @default(now())
+}
+/// Tracks every object the application asks storage to write, so a duplicate or interrupted
+/// upload leaves a record instead of untracked bytes. Referenced objects are the evidence;
+/// pending/duplicate ones are cleaned only after a grace period and never when they are evidence.
+model StoredObject {
+  id           String    @id @default(uuid()) @db.Uuid
+  engagementId String    @db.Uuid
+  engagement   Engagement @relation(fields: [engagementId], references: [id])
+  key          String    @unique
+  reference    String?
+  sha256       String
+  status       String    @default("PENDING")
+  documentId   String?   @db.Uuid
+  document     Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  resolvedAt   DateTime?
+  @@index([status, createdAt])
+}
 model AuditEvent {
-  id String @id @default(uuid()) @db.Uuid
-  engagementId String @db.Uuid
-  actorId String @db.Uuid
-  action String
-  payload Json
-  createdAt DateTime @default(now())
+  id           String   @id @default(uuid()) @db.Uuid
+  engagementId String   @db.Uuid
+  actorId      String   @db.Uuid
+  action       String
+  payload      Json
+  createdAt    DateTime @default(now())
 }
 model OutboxEvent {
-  id String @id @default(uuid()) @db.Uuid
-  type String
-  payload Json
+  id          String    @id @default(uuid()) @db.Uuid
+  type        String
+  payload     Json
   publishedAt DateTime?
-  completedAt DateTime?
-  createdAt DateTime @default(now())
+  /// completedAt is an instant; migration 202610010004 created it as timestamptz. Matching the
+  /// database here removes schema drift without altering stored values.
+  completedAt DateTime? @db.Timestamptz
+  createdAt   DateTime  @default(now())
 }
 model CommandReceipt {
-  key String @id @db.Uuid
-  engagementId String @db.Uuid
-  actorId String @db.Uuid
-  hash String
-  result Json
+  key          String   @id @db.Uuid
+  engagementId String   @db.Uuid
+  actorId      String   @db.Uuid
+  hash         String
+  result       Json
 }
