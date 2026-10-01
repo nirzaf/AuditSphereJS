@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T18:51:45.225Z",
+  "generatedAt": "2026-10-01T19:11:50.474Z",
   "sourceCommit": null,
   "counts": {
     "PARTIAL": 10,
@@ -122,9 +122,11 @@
         "packages/server/src/modules/fieldwork/parser.ts",
         "packages/server/src/worker.ts",
         "packages/server/src/modules/fieldwork/publication.ts",
-        "prisma/migrations/202610010009_balance_publication/migration.sql"
+        "packages/server/src/modules/fieldwork/uploads.ts",
+        "prisma/migrations/202610010009_balance_publication/migration.sql",
+        "prisma/migrations/202610010016_stored_object_tracking/migration.sql"
       ],
-      "evidence": "Bounded CSV upload to staging with sha256 duplicate detection, PG outbox, BullMQ parsing, transactional set-based mapping and zero-sum finalization. Monetary columns are numeric(28,6) with a six-decimal contract. A finalized import now publishes an immutable accepted balance version bound to that exact import version, with capability, state, completeness and zero-sum checks. Not implemented: XLSX, multi-period/entity intake, sealed source acceptance and currency-aware publication."
+      "evidence": "Bounded CSV upload to staging with sha256 duplicate detection, PG outbox, BullMQ parsing, transactional set-based mapping and zero-sum finalization. Monetary columns are numeric(28,6) with a six-decimal contract. A finalized import now publishes an immutable accepted balance version bound to that exact import version, with capability, state, completeness and zero-sum checks. Concurrent identical uploads now coalesce into one authoritative import, every stored object is tracked before its bytes exist, and a grace-period sweep removes only unreferenced objects while durable Graph evidence is reported for review. Not implemented: XLSX, multi-period/entity intake, sealed source acceptance and currency-aware publication."
     },
     {
       "id": "C13",
@@ -149,9 +151,10 @@
         "packages/contracts/src/index.ts",
         "packages/server/src/modules/fieldwork/service.ts",
         "packages/server/src/modules/fieldwork/taxonomy.ts",
-        "prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql"
+        "prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql",
+        "prisma/migrations/202610010017_mapping_memory/migration.sql"
       ],
-      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Not implemented: mapping memory/suggestions, allocations, and the mapping approval UI."
+      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings now build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). Not implemented: allocation rules, statement layouts/financial packages, and the mapping UI."
     },
     {
       "id": "C22",

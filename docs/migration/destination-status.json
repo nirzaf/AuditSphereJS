@@ -101,9 +101,10 @@
         "packages/contracts/src/index.ts",
         "packages/server/src/modules/fieldwork/service.ts",
         "packages/server/src/modules/fieldwork/taxonomy.ts",
-        "prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql"
+        "prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql",
+        "prisma/migrations/202610010017_mapping_memory/migration.sql"
       ],
-      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Not implemented: mapping memory/suggestions, allocations, and the mapping approval UI.",
+      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings now build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). Not implemented: allocation rules, statement layouts/financial packages, and the mapping UI.",
       "migEpic": "MIG-009"
     },
     "C14": {
