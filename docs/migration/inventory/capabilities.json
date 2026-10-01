@@ -1,0 +1,1295 @@
+{
+  "generatedAt": "2026-10-01T17:47:49.897Z",
+  "capabilitySummary": {
+    "Abstractions": {
+      "files": 1,
+      "types": [
+        "ActorContext"
+      ]
+    },
+    "Acceptance": {
+      "files": 5,
+      "types": [
+        "ChecklistItem",
+        "RecordAcceptanceDecisionRequest",
+        "ChecklistQuestion",
+        "CreateEngagementDraftRequest",
+        "QuestionnaireSeed"
+      ]
+    },
+    "Accounting": {
+      "files": 71,
+      "types": [
+        "AdjustedBalanceRowDto",
+        "AcceptSourceRevisionRequest",
+        "AdjustmentEligibilityRow",
+        "AdjustmentJournalService",
+        "SourceReconciliationService",
+        "AcquisitionAccountingInput",
+        "AdvancedStatementLine",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingReconciliationRequest",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingProfileRequest",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ClientGroupRequest",
+        "ConsolidationComponentBalance",
+        "TranslationLineDto",
+        "MonetaryRemeasurementResult",
+        "CurrencyRemeasurementItemRequest",
+        "ExchangeRateSetRequest",
+        "FinancialPackageBuildHandler",
+        "FinancialPackageOfficeArtifact",
+        "FinancialPackageRenderHandler",
+        "FinancialPackageReviewRequest",
+        "FinancialStatementCalculator",
+        "FinancialStatementService",
+        "FinancialStatementService",
+        "FinancialStatementService",
+        "FinancialStatementService",
+        "MappingAllocationInput",
+        "GeneralLedgerCompletenessHandler",
+        "GeneralLedgerLineFilter",
+        "DrillDownProcedure",
+        "MappedStatementLine",
+        "MappingMemoryStatuses",
+        "MultiPeriodPreviewPeriod",
+        "AppliedRate",
+        "PackageManifestArtifactDto",
+        "that",
+        "so",
+        "StatementLayoutDraftRequest",
+        "ApprovedStatementSections",
+        "TbImportRow",
+        "ParsedCsvFile",
+        "TrialBalanceDatasetDto",
+        "TrialBalanceImportContext",
+        "TrialBalanceValidationHandler",
+        "TrialBalanceXlsxImporter"
+      ]
+    },
+    "Audit": {
+      "files": 26,
+      "types": [
+        "AuditAreaProcedureRow",
+        "VarianceInvestigationRequest",
+        "ConfirmationBatchRequest",
+        "OpeningBalanceVerificationRequest",
+        "CreateMaterialityRequest",
+        "AuditProgramCatalogItem",
+        "AuditProgramVersionSummary",
+        "PublishAuditProgramRequest",
+        "CutOffTestRequest",
+        "AuditScheduleSourceBindingValue",
+        "EngagementProcedureView",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "RunSamplingRequest",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "ScheduleRowInput",
+        "MappedBenchmarkLine",
+        "CalculateMaterialityRequest",
+        "AddReviewNoteRequest",
+        "AssessRiskBandRequest"
+      ]
+    },
+    "Completion": {
+      "files": 11,
+      "types": [
+        "DeliverableSignature",
+        "BundleView",
+        "DeliverableView",
+        "OpinionFsliOption",
+        "SignedLetterView",
+        "AuditDeliverableService",
+        "ReleaseCheckpointPayload",
+        "RecordReleaseCheckpointRequest",
+        "LocalAppendOnlyCheckpointStore",
+        "ReleaseSafetyOptions",
+        "CreateReleaseCandidateRequest"
+      ]
+    },
+    "Diagnostics": {
+      "files": 2,
+      "types": [
+        "AuditDiagnostics",
+        "TelemetryEndpoint"
+      ]
+    },
+    "Documents": {
+      "files": 9,
+      "types": [
+        "FirstSignInStatus",
+        "ClientSitePolicy",
+        "CaptureDocumentSnapshotRequest",
+        "EngagementWorkspaceProvisioningHandler",
+        "PbcProviderReceipt",
+        "PbcMailPlan",
+        "SelectedSiteLocation",
+        "CreatePbcRequestRequest",
+        "IPendingOperationDiscovery"
+      ]
+    },
+    "Microsoft365": {
+      "files": 14,
+      "types": [
+        "ProgressStates",
+        "DirectoryCapabilityVerificationService",
+        "DirectoryCandidate",
+        "CreateTenantUserRequest",
+        "DirectoryUserBindingService",
+        "ChangeGroupMembershipRequest",
+        "FolderTemplatePurposes",
+        "SetupClaim",
+        "Microsoft365SetupProgress",
+        "SelectedSiteBoundaryObservation",
+        "ConsentingAdministrator",
+        "TenantAdministrationOptions",
+        "TenantConnectionSnapshot",
+        "TenantConsentStart"
+      ]
+    },
+    "Operations": {
+      "files": 3,
+      "types": [
+        "IAuditSphereDbContext",
+        "OperationDispatcher",
+        "OperationRecoveryRequest"
+      ]
+    },
+    "Practice": {
+      "files": 20,
+      "types": [
+        "AutomaticFeeInvoicePolicy",
+        "CreateBillingAccountRequest",
+        "RequiredApproval",
+        "DocumentTable",
+        "SaveCommercialProfileRequest",
+        "CommercialDocumentService",
+        "CommercialMailDeliveryHandler",
+        "ContractTimeValue",
+        "FeeAgreementView",
+        "FirmFinanceSnapshot",
+        "LibraryHit",
+        "CreateFirmAccountRequest",
+        "CreateLeadRequest",
+        "PracticeLeadListItem",
+        "CreateTaskRequest",
+        "QuotationLineInput",
+        "QuotationHoursLine",
+        "ResourceWeekCell",
+        "SaveStaffProfileRequest",
+        "AssignStaffRequest"
+      ]
+    },
+    "Records": {
+      "files": 3,
+      "types": [
+        "ActivityKinds",
+        "FileFreezeView",
+        "CreateRecordsProfileRequest"
+      ]
+    },
+    "Reviews": {
+      "files": 1,
+      "types": [
+        "CreateApprovalRequest"
+      ]
+    },
+    "Search": {
+      "files": 1,
+      "types": [
+        "or"
+      ]
+    },
+    "Security": {
+      "files": 7,
+      "types": [
+        "Authorization",
+        "AuthorizationRequest",
+        "FirmAdministrationSnapshot",
+        "EnsureStaffUserRequest",
+        "RoleAssignmentRequest",
+        "RoleGrantExpiry",
+        "UserAccessRow"
+      ]
+    }
+  },
+  "capabilitySurfaces": [
+    {
+      "capability": "Abstractions",
+      "name": "ActorContext",
+      "file": "src/AuditSphereOps.Application/Abstractions/Boundaries.cs",
+      "bytes": 1688
+    },
+    {
+      "capability": "Acceptance",
+      "name": "ChecklistItem",
+      "file": "src/AuditSphereOps.Application/Acceptance/AcceptanceChecklistService.cs",
+      "bytes": 14758
+    },
+    {
+      "capability": "Acceptance",
+      "name": "RecordAcceptanceDecisionRequest",
+      "file": "src/AuditSphereOps.Application/Acceptance/AcceptanceDecisionService.cs",
+      "bytes": 7867
+    },
+    {
+      "capability": "Acceptance",
+      "name": "ChecklistQuestion",
+      "file": "src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs",
+      "bytes": 3805
+    },
+    {
+      "capability": "Acceptance",
+      "name": "CreateEngagementDraftRequest",
+      "file": "src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs",
+      "bytes": 7879
+    },
+    {
+      "capability": "Acceptance",
+      "name": "QuestionnaireSeed",
+      "file": "src/AuditSphereOps.Application/Acceptance/QuestionnaireSeed.cs",
+      "bytes": 28610
+    },
+    {
+      "capability": "Accounting",
+      "name": "AdjustedBalanceRowDto",
+      "file": "src/AuditSphereOps.Application/Accounting/AccountingReadQueries.cs",
+      "bytes": 6904
+    },
+    {
+      "capability": "Accounting",
+      "name": "AcceptSourceRevisionRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/AccountingSourceAcceptanceService.cs",
+      "bytes": 7705
+    },
+    {
+      "capability": "Accounting",
+      "name": "AdjustmentEligibilityRow",
+      "file": "src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs",
+      "bytes": 4916
+    },
+    {
+      "capability": "Accounting",
+      "name": "AdjustmentJournalService",
+      "file": "src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs",
+      "bytes": 28467
+    },
+    {
+      "capability": "Accounting",
+      "name": "SourceReconciliationService",
+      "file": "src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs",
+      "bytes": 12534
+    },
+    {
+      "capability": "Accounting",
+      "name": "AcquisitionAccountingInput",
+      "file": "src/AuditSphereOps.Application/Accounting/AdvancedConsolidationCalculator.cs",
+      "bytes": 13710
+    },
+    {
+      "capability": "Accounting",
+      "name": "AdvancedStatementLine",
+      "file": "src/AuditSphereOps.Application/Accounting/AdvancedConsolidationExecutionCalculator.cs",
+      "bytes": 16677
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.AnalyticalReview.cs",
+      "bytes": 12450
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Authorization.cs",
+      "bytes": 714
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Evidence.cs",
+      "bytes": 16284
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.GeneralLedger.cs",
+      "bytes": 23643
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.JournalRisk.cs",
+      "bytes": 7550
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Reconciliation.cs",
+      "bytes": 30617
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingAnalysisService",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Valuations.cs",
+      "bytes": 17240
+    },
+    {
+      "capability": "Accounting",
+      "name": "AccountingReconciliationRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisServiceContracts.cs",
+      "bytes": 6278
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Authorization.cs",
+      "bytes": 1667
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Books.cs",
+      "bytes": 2685
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Capabilities.cs",
+      "bytes": 6279
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Charts.cs",
+      "bytes": 20007
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.GeneralLedger.cs",
+      "bytes": 31025
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.OpeningBalances.cs",
+      "bytes": 4985
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Periods.cs",
+      "bytes": 13937
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Profiles.cs",
+      "bytes": 4375
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Restatements.cs",
+      "bytes": 7245
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingService",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Taxonomy.cs",
+      "bytes": 10738
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientAccountingProfileRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingServiceContracts.cs",
+      "bytes": 5738
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Advanced.cs",
+      "bytes": 39303
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Authorization.cs",
+      "bytes": 2174
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Components.cs",
+      "bytes": 15599
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.ExternalPacks.cs",
+      "bytes": 21208
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Groups.cs",
+      "bytes": 5600
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Intercompany.cs",
+      "bytes": 8923
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Journals.cs",
+      "bytes": 10831
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Ownership.cs",
+      "bytes": 5495
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Reports.cs",
+      "bytes": 4280
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Runs.cs",
+      "bytes": 22038
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationService",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Scopes.cs",
+      "bytes": 14010
+    },
+    {
+      "capability": "Accounting",
+      "name": "ClientGroupRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationServiceContracts.cs",
+      "bytes": 4802
+    },
+    {
+      "capability": "Accounting",
+      "name": "ConsolidationComponentBalance",
+      "file": "src/AuditSphereOps.Application/Accounting/ConsolidationCalculator.cs",
+      "bytes": 9539
+    },
+    {
+      "capability": "Accounting",
+      "name": "TranslationLineDto",
+      "file": "src/AuditSphereOps.Application/Accounting/ConsolidationQuery.cs",
+      "bytes": 10086
+    },
+    {
+      "capability": "Accounting",
+      "name": "MonetaryRemeasurementResult",
+      "file": "src/AuditSphereOps.Application/Accounting/CurrencyOperationCalculators.cs",
+      "bytes": 18187
+    },
+    {
+      "capability": "Accounting",
+      "name": "CurrencyRemeasurementItemRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/CurrencyRemeasurementService.cs",
+      "bytes": 23045
+    },
+    {
+      "capability": "Accounting",
+      "name": "ExchangeRateSetRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/CurrencyTranslationService.cs",
+      "bytes": 30621
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialPackageBuildHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialPackageBuildHandler.cs",
+      "bytes": 5825
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialPackageOfficeArtifact",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialPackageOfficeRenderer.cs",
+      "bytes": 10712
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialPackageRenderHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialPackageRenderHandler.cs",
+      "bytes": 5374
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialPackageReviewRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialPackageReviewService.cs",
+      "bytes": 21173
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialStatementCalculator",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialStatementCalculator.cs",
+      "bytes": 7372
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialStatementService",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Authorization.cs",
+      "bytes": 1836
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialStatementService",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Mapping.cs",
+      "bytes": 13328
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialStatementService",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Package.cs",
+      "bytes": 40309
+    },
+    {
+      "capability": "Accounting",
+      "name": "FinancialStatementService",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Render.cs",
+      "bytes": 16310
+    },
+    {
+      "capability": "Accounting",
+      "name": "MappingAllocationInput",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementServiceContracts.cs",
+      "bytes": 3039
+    },
+    {
+      "capability": "Accounting",
+      "name": "GeneralLedgerCompletenessHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/GeneralLedgerCompletenessHandler.cs",
+      "bytes": 9350
+    },
+    {
+      "capability": "Accounting",
+      "name": "GeneralLedgerLineFilter",
+      "file": "src/AuditSphereOps.Application/Accounting/GeneralLedgerQuery.cs",
+      "bytes": 8865
+    },
+    {
+      "capability": "Accounting",
+      "name": "DrillDownProcedure",
+      "file": "src/AuditSphereOps.Application/Accounting/Intake/FinancialStatementDrillDownQuery.cs",
+      "bytes": 6503
+    },
+    {
+      "capability": "Accounting",
+      "name": "MappedStatementLine",
+      "file": "src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs",
+      "bytes": 3219
+    },
+    {
+      "capability": "Accounting",
+      "name": "MappingMemoryStatuses",
+      "file": "src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs",
+      "bytes": 5759
+    },
+    {
+      "capability": "Accounting",
+      "name": "MultiPeriodPreviewPeriod",
+      "file": "src/AuditSphereOps.Application/Accounting/Intake/MultiPeriodTrialBalanceService.cs",
+      "bytes": 8885
+    },
+    {
+      "capability": "Accounting",
+      "name": "AppliedRate",
+      "file": "src/AuditSphereOps.Application/Accounting/Intake/TrialBalanceCurrencyReviewQuery.cs",
+      "bytes": 7516
+    },
+    {
+      "capability": "Accounting",
+      "name": "PackageManifestArtifactDto",
+      "file": "src/AuditSphereOps.Application/Accounting/PackageManifestQuery.cs",
+      "bytes": 3554
+    },
+    {
+      "capability": "Accounting",
+      "name": "that",
+      "file": "src/AuditSphereOps.Application/Accounting/PackageSealService.cs",
+      "bytes": 10716
+    },
+    {
+      "capability": "Accounting",
+      "name": "so",
+      "file": "src/AuditSphereOps.Application/Accounting/PeriodCloseReadinessQuery.cs",
+      "bytes": 5753
+    },
+    {
+      "capability": "Accounting",
+      "name": "StatementLayoutDraftRequest",
+      "file": "src/AuditSphereOps.Application/Accounting/StatementLayoutService.cs",
+      "bytes": 14800
+    },
+    {
+      "capability": "Accounting",
+      "name": "ApprovedStatementSections",
+      "file": "src/AuditSphereOps.Application/Accounting/TranslationInputResolution.cs",
+      "bytes": 8518
+    },
+    {
+      "capability": "Accounting",
+      "name": "TbImportRow",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceCalculator.cs",
+      "bytes": 2573
+    },
+    {
+      "capability": "Accounting",
+      "name": "ParsedCsvFile",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceCsvImporter.cs",
+      "bytes": 9663
+    },
+    {
+      "capability": "Accounting",
+      "name": "TrialBalanceDatasetDto",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceDatasetQuery.cs",
+      "bytes": 9230
+    },
+    {
+      "capability": "Accounting",
+      "name": "TrialBalanceImportContext",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceImportService.cs",
+      "bytes": 19059
+    },
+    {
+      "capability": "Accounting",
+      "name": "TrialBalanceValidationHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceValidationHandler.cs",
+      "bytes": 7368
+    },
+    {
+      "capability": "Accounting",
+      "name": "TrialBalanceXlsxImporter",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceXlsxImporter.cs",
+      "bytes": 12987
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditAreaProcedureRow",
+      "file": "src/AuditSphereOps.Application/Audit/AuditAreaSummaryQuery.cs",
+      "bytes": 9975
+    },
+    {
+      "capability": "Audit",
+      "name": "VarianceInvestigationRequest",
+      "file": "src/AuditSphereOps.Application/Audit/AuditCompletionService.cs",
+      "bytes": 19095
+    },
+    {
+      "capability": "Audit",
+      "name": "ConfirmationBatchRequest",
+      "file": "src/AuditSphereOps.Application/Audit/AuditConfirmationBatchService.cs",
+      "bytes": 11306
+    },
+    {
+      "capability": "Audit",
+      "name": "OpeningBalanceVerificationRequest",
+      "file": "src/AuditSphereOps.Application/Audit/AuditPlanningCompletionService.cs",
+      "bytes": 11380
+    },
+    {
+      "capability": "Audit",
+      "name": "CreateMaterialityRequest",
+      "file": "src/AuditSphereOps.Application/Audit/AuditPlanningService.cs",
+      "bytes": 51739
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditProgramCatalogItem",
+      "file": "src/AuditSphereOps.Application/Audit/AuditProgramCatalog.cs",
+      "bytes": 18687
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditProgramVersionSummary",
+      "file": "src/AuditSphereOps.Application/Audit/AuditProgramLibraryQuery.cs",
+      "bytes": 7946
+    },
+    {
+      "capability": "Audit",
+      "name": "PublishAuditProgramRequest",
+      "file": "src/AuditSphereOps.Application/Audit/AuditProgramService.cs",
+      "bytes": 24340
+    },
+    {
+      "capability": "Audit",
+      "name": "CutOffTestRequest",
+      "file": "src/AuditSphereOps.Application/Audit/AuditSamplingService.cs",
+      "bytes": 13698
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditScheduleSourceBindingValue",
+      "file": "src/AuditSphereOps.Application/Audit/AuditScheduleSourceBindingService.cs",
+      "bytes": 8453
+    },
+    {
+      "capability": "Audit",
+      "name": "EngagementProcedureView",
+      "file": "src/AuditSphereOps.Application/Audit/EngagementAuditProgramQuery.cs",
+      "bytes": 6621
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.AreaAssessments.cs",
+      "bytes": 6202
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Authorization.cs",
+      "bytes": 4967
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.BankReconciliations.cs",
+      "bytes": 10837
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Completion.cs",
+      "bytes": 7351
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Confirmations.cs",
+      "bytes": 15334
+    },
+    {
+      "capability": "Audit",
+      "name": "RunSamplingRequest",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Connections.cs",
+      "bytes": 26684
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Differences.cs",
+      "bytes": 23313
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.ItemTests.cs",
+      "bytes": 6070
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Schedules.cs",
+      "bytes": 8791
+    },
+    {
+      "capability": "Audit",
+      "name": "AuditFieldworkService",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Selections.cs",
+      "bytes": 8175
+    },
+    {
+      "capability": "Audit",
+      "name": "ScheduleRowInput",
+      "file": "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkServiceContracts.cs",
+      "bytes": 6581
+    },
+    {
+      "capability": "Audit",
+      "name": "MappedBenchmarkLine",
+      "file": "src/AuditSphereOps.Application/Audit/MaterialityCalculator.cs",
+      "bytes": 7462
+    },
+    {
+      "capability": "Audit",
+      "name": "CalculateMaterialityRequest",
+      "file": "src/AuditSphereOps.Application/Audit/MaterialityEngineService.cs",
+      "bytes": 12115
+    },
+    {
+      "capability": "Audit",
+      "name": "AddReviewNoteRequest",
+      "file": "src/AuditSphereOps.Application/Audit/ReviewNotesService.cs",
+      "bytes": 9508
+    },
+    {
+      "capability": "Audit",
+      "name": "AssessRiskBandRequest",
+      "file": "src/AuditSphereOps.Application/Audit/RiskBandService.cs",
+      "bytes": 11569
+    },
+    {
+      "capability": "Completion",
+      "name": "DeliverableSignature",
+      "file": "src/AuditSphereOps.Application/Completion/AuditDeliverableRenderer.cs",
+      "bytes": 11190
+    },
+    {
+      "capability": "Completion",
+      "name": "BundleView",
+      "file": "src/AuditSphereOps.Application/Completion/AuditDeliverableService.Bundle.cs",
+      "bytes": 20580
+    },
+    {
+      "capability": "Completion",
+      "name": "DeliverableView",
+      "file": "src/AuditSphereOps.Application/Completion/AuditDeliverableService.cs",
+      "bytes": 53986
+    },
+    {
+      "capability": "Completion",
+      "name": "OpinionFsliOption",
+      "file": "src/AuditSphereOps.Application/Completion/AuditDeliverableService.OpinionAreas.cs",
+      "bytes": 1177
+    },
+    {
+      "capability": "Completion",
+      "name": "SignedLetterView",
+      "file": "src/AuditSphereOps.Application/Completion/AuditDeliverableService.Representations.cs",
+      "bytes": 10976
+    },
+    {
+      "capability": "Completion",
+      "name": "AuditDeliverableService",
+      "file": "src/AuditSphereOps.Application/Completion/AuditDeliverableService.Seal.cs",
+      "bytes": 2190
+    },
+    {
+      "capability": "Completion",
+      "name": "ReleaseCheckpointPayload",
+      "file": "src/AuditSphereOps.Application/Completion/ReleaseCheckpointHandler.cs",
+      "bytes": 7563
+    },
+    {
+      "capability": "Completion",
+      "name": "RecordReleaseCheckpointRequest",
+      "file": "src/AuditSphereOps.Application/Completion/ReleaseCheckpointService.cs",
+      "bytes": 4632
+    },
+    {
+      "capability": "Completion",
+      "name": "LocalAppendOnlyCheckpointStore",
+      "file": "src/AuditSphereOps.Application/Completion/ReleaseCheckpointStore.cs",
+      "bytes": 4897
+    },
+    {
+      "capability": "Completion",
+      "name": "ReleaseSafetyOptions",
+      "file": "src/AuditSphereOps.Application/Completion/ReleaseSafetyOptions.cs",
+      "bytes": 1054
+    },
+    {
+      "capability": "Completion",
+      "name": "CreateReleaseCandidateRequest",
+      "file": "src/AuditSphereOps.Application/Completion/ReleaseService.cs",
+      "bytes": 22422
+    },
+    {
+      "capability": "Diagnostics",
+      "name": "AuditDiagnostics",
+      "file": "src/AuditSphereOps.Application/Diagnostics/AuditDiagnostics.cs",
+      "bytes": 2845
+    },
+    {
+      "capability": "Diagnostics",
+      "name": "TelemetryEndpoint",
+      "file": "src/AuditSphereOps.Application/Diagnostics/TelemetryEndpoint.cs",
+      "bytes": 748
+    },
+    {
+      "capability": "Documents",
+      "name": "FirstSignInStatus",
+      "file": "src/AuditSphereOps.Application/Documents/ClientPortalService.cs",
+      "bytes": 19432
+    },
+    {
+      "capability": "Documents",
+      "name": "ClientSitePolicy",
+      "file": "src/AuditSphereOps.Application/Documents/ClientSharePointSites.cs",
+      "bytes": 22115
+    },
+    {
+      "capability": "Documents",
+      "name": "CaptureDocumentSnapshotRequest",
+      "file": "src/AuditSphereOps.Application/Documents/DocumentSnapshotService.cs",
+      "bytes": 4164
+    },
+    {
+      "capability": "Documents",
+      "name": "EngagementWorkspaceProvisioningHandler",
+      "file": "src/AuditSphereOps.Application/Documents/EngagementWorkspaceProvisioning.cs",
+      "bytes": 15518
+    },
+    {
+      "capability": "Documents",
+      "name": "PbcProviderReceipt",
+      "file": "src/AuditSphereOps.Application/Documents/PbcDocumentTransferHandler.cs",
+      "bytes": 17934
+    },
+    {
+      "capability": "Documents",
+      "name": "PbcMailPlan",
+      "file": "src/AuditSphereOps.Application/Documents/PbcMailDeliveryHandler.cs",
+      "bytes": 5062
+    },
+    {
+      "capability": "Documents",
+      "name": "SelectedSiteLocation",
+      "file": "src/AuditSphereOps.Application/Documents/PbcRepositoryProvisioning.cs",
+      "bytes": 23834
+    },
+    {
+      "capability": "Documents",
+      "name": "CreatePbcRequestRequest",
+      "file": "src/AuditSphereOps.Application/Documents/PbcService.cs",
+      "bytes": 38735
+    },
+    {
+      "capability": "Documents",
+      "name": "IPendingOperationDiscovery",
+      "file": "src/AuditSphereOps.Application/Documents/PbcTransferDiscovery.cs",
+      "bytes": 3356
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "ProgressStates",
+      "file": "src/AuditSphereOps.Application/Microsoft365/AdministrationOverviewQuery.cs",
+      "bytes": 19363
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "DirectoryCapabilityVerificationService",
+      "file": "src/AuditSphereOps.Application/Microsoft365/DirectoryCapabilityVerificationService.cs",
+      "bytes": 4532
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "DirectoryCandidate",
+      "file": "src/AuditSphereOps.Application/Microsoft365/DirectoryDiscoveryService.cs",
+      "bytes": 5876
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "CreateTenantUserRequest",
+      "file": "src/AuditSphereOps.Application/Microsoft365/DirectoryProvisioningService.cs",
+      "bytes": 36661
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "DirectoryUserBindingService",
+      "file": "src/AuditSphereOps.Application/Microsoft365/DirectoryUserBindingService.cs",
+      "bytes": 4912
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "ChangeGroupMembershipRequest",
+      "file": "src/AuditSphereOps.Application/Microsoft365/ManagedGroupService.cs",
+      "bytes": 12781
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "FolderTemplatePurposes",
+      "file": "src/AuditSphereOps.Application/Microsoft365/Microsoft365ConfigurationService.cs",
+      "bytes": 29166
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "SetupClaim",
+      "file": "src/AuditSphereOps.Application/Microsoft365/Microsoft365OnboardingService.cs",
+      "bytes": 14416
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "Microsoft365SetupProgress",
+      "file": "src/AuditSphereOps.Application/Microsoft365/Microsoft365SetupProgressQuery.cs",
+      "bytes": 3752
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "SelectedSiteBoundaryObservation",
+      "file": "src/AuditSphereOps.Application/Microsoft365/SelectedSiteBoundaryVerificationService.cs",
+      "bytes": 7490
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "ConsentingAdministrator",
+      "file": "src/AuditSphereOps.Application/Microsoft365/TenantAdministrationProviders.cs",
+      "bytes": 8475
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "TenantAdministrationOptions",
+      "file": "src/AuditSphereOps.Application/Microsoft365/TenantCapabilityService.cs",
+      "bytes": 11880
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "TenantConnectionSnapshot",
+      "file": "src/AuditSphereOps.Application/Microsoft365/TenantConnectionQuery.cs",
+      "bytes": 3223
+    },
+    {
+      "capability": "Microsoft365",
+      "name": "TenantConsentStart",
+      "file": "src/AuditSphereOps.Application/Microsoft365/TenantConsentService.cs",
+      "bytes": 14778
+    },
+    {
+      "capability": "Operations",
+      "name": "IAuditSphereDbContext",
+      "file": "src/AuditSphereOps.Application/Operations/Contracts.cs",
+      "bytes": 24304
+    },
+    {
+      "capability": "Operations",
+      "name": "OperationDispatcher",
+      "file": "src/AuditSphereOps.Application/Operations/OperationDispatcher.cs",
+      "bytes": 6307
+    },
+    {
+      "capability": "Operations",
+      "name": "OperationRecoveryRequest",
+      "file": "src/AuditSphereOps.Application/Operations/OperationRecoveryService.cs",
+      "bytes": 14696
+    },
+    {
+      "capability": "Practice",
+      "name": "AutomaticFeeInvoicePolicy",
+      "file": "src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs",
+      "bytes": 10322
+    },
+    {
+      "capability": "Practice",
+      "name": "CreateBillingAccountRequest",
+      "file": "src/AuditSphereOps.Application/Practice/BillingService.cs",
+      "bytes": 33398
+    },
+    {
+      "capability": "Practice",
+      "name": "RequiredApproval",
+      "file": "src/AuditSphereOps.Application/Practice/CommercialApprovalMatrix.cs",
+      "bytes": 2336
+    },
+    {
+      "capability": "Practice",
+      "name": "DocumentTable",
+      "file": "src/AuditSphereOps.Application/Practice/CommercialDocumentRenderer.cs",
+      "bytes": 7115
+    },
+    {
+      "capability": "Practice",
+      "name": "SaveCommercialProfileRequest",
+      "file": "src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs",
+      "bytes": 21098
+    },
+    {
+      "capability": "Practice",
+      "name": "CommercialDocumentService",
+      "file": "src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs",
+      "bytes": 5510
+    },
+    {
+      "capability": "Practice",
+      "name": "CommercialMailDeliveryHandler",
+      "file": "src/AuditSphereOps.Application/Practice/CommercialMailDeliveryHandler.cs",
+      "bytes": 5126
+    },
+    {
+      "capability": "Practice",
+      "name": "ContractTimeValue",
+      "file": "src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs",
+      "bytes": 968
+    },
+    {
+      "capability": "Practice",
+      "name": "FeeAgreementView",
+      "file": "src/AuditSphereOps.Application/Practice/FeeAgreementService.cs",
+      "bytes": 25471
+    },
+    {
+      "capability": "Practice",
+      "name": "FirmFinanceSnapshot",
+      "file": "src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs",
+      "bytes": 2237
+    },
+    {
+      "capability": "Practice",
+      "name": "LibraryHit",
+      "file": "src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs",
+      "bytes": 38724
+    },
+    {
+      "capability": "Practice",
+      "name": "CreateFirmAccountRequest",
+      "file": "src/AuditSphereOps.Application/Practice/LedgerService.cs",
+      "bytes": 28765
+    },
+    {
+      "capability": "Practice",
+      "name": "CreateLeadRequest",
+      "file": "src/AuditSphereOps.Application/Practice/PracticeCrmService.cs",
+      "bytes": 30202
+    },
+    {
+      "capability": "Practice",
+      "name": "PracticeLeadListItem",
+      "file": "src/AuditSphereOps.Application/Practice/PracticeLeadQuery.cs",
+      "bytes": 1800
+    },
+    {
+      "capability": "Practice",
+      "name": "CreateTaskRequest",
+      "file": "src/AuditSphereOps.Application/Practice/PracticeTimeService.cs",
+      "bytes": 43982
+    },
+    {
+      "capability": "Practice",
+      "name": "QuotationLineInput",
+      "file": "src/AuditSphereOps.Application/Practice/QuotationCalculator.cs",
+      "bytes": 5711
+    },
+    {
+      "capability": "Practice",
+      "name": "QuotationHoursLine",
+      "file": "src/AuditSphereOps.Application/Practice/QuotationService.cs",
+      "bytes": 17612
+    },
+    {
+      "capability": "Practice",
+      "name": "ResourceWeekCell",
+      "file": "src/AuditSphereOps.Application/Practice/ResourceGridCalculator.cs",
+      "bytes": 2533
+    },
+    {
+      "capability": "Practice",
+      "name": "SaveStaffProfileRequest",
+      "file": "src/AuditSphereOps.Application/Practice/ResourcePlanningService.cs",
+      "bytes": 12277
+    },
+    {
+      "capability": "Practice",
+      "name": "AssignStaffRequest",
+      "file": "src/AuditSphereOps.Application/Practice/StaffingService.cs",
+      "bytes": 11664
+    },
+    {
+      "capability": "Records",
+      "name": "ActivityKinds",
+      "file": "src/AuditSphereOps.Application/Records/EngagementActivityQuery.cs",
+      "bytes": 11555
+    },
+    {
+      "capability": "Records",
+      "name": "FileFreezeView",
+      "file": "src/AuditSphereOps.Application/Records/FileFreezeService.cs",
+      "bytes": 13964
+    },
+    {
+      "capability": "Records",
+      "name": "CreateRecordsProfileRequest",
+      "file": "src/AuditSphereOps.Application/Records/RecordsArchiveService.cs",
+      "bytes": 76960
+    },
+    {
+      "capability": "Reviews",
+      "name": "CreateApprovalRequest",
+      "file": "src/AuditSphereOps.Application/Reviews/ApprovalService.cs",
+      "bytes": 13789
+    },
+    {
+      "capability": "Search",
+      "name": "or",
+      "file": "src/AuditSphereOps.Application/Search/GlobalSearchQuery.cs",
+      "bytes": 13508
+    },
+    {
+      "capability": "Security",
+      "name": "Authorization",
+      "file": "src/AuditSphereOps.Application/Security/Authorization.cs",
+      "bytes": 1167
+    },
+    {
+      "capability": "Security",
+      "name": "AuthorizationRequest",
+      "file": "src/AuditSphereOps.Application/Security/AuthorizationDecision.cs",
+      "bytes": 8115
+    },
+    {
+      "capability": "Security",
+      "name": "FirmAdministrationSnapshot",
+      "file": "src/AuditSphereOps.Application/Security/FirmAdministrationQuery.cs",
+      "bytes": 5292
+    },
+    {
+      "capability": "Security",
+      "name": "EnsureStaffUserRequest",
+      "file": "src/AuditSphereOps.Application/Security/RoleAdministrationService.cs",
+      "bytes": 23546
+    },
+    {
+      "capability": "Security",
+      "name": "RoleAssignmentRequest",
+      "file": "src/AuditSphereOps.Application/Security/RoleAssignmentService.cs",
+      "bytes": 21650
+    },
+    {
+      "capability": "Security",
+      "name": "RoleGrantExpiry",
+      "file": "src/AuditSphereOps.Application/Security/RoleGrantExpiry.cs",
+      "bytes": 1666
+    },
+    {
+      "capability": "Security",
+      "name": "UserAccessRow",
+      "file": "src/AuditSphereOps.Application/Security/UserAccessWorkspaceQuery.cs",
+      "bytes": 8483
+    }
+  ]
+}

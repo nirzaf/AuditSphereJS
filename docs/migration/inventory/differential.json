@@ -1,0 +1,387 @@
+{
+  "generatedAt": "2026-10-01T18:57:30.481Z",
+  "harness": "scripts/migration/differential.mjs",
+  "sourceCommit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
+  "boundary": "Expected values are quoted from the pinned source domain tests; the source stack was not executed here. MATCH means the destination calculator agrees with the source test assertion, not that the source produced it in this session.",
+  "totals": {
+    "checks": 46,
+    "matched": 46,
+    "differences": 0,
+    "destinationAbsentFamilies": 0,
+    "notYetExtracted": [
+      "C17 currency remeasurement and translation",
+      "C18/C19 consolidation"
+    ]
+  },
+  "results": [
+    {
+      "fixture": "materiality",
+      "case": "revenue-driven-entity",
+      "check": "planningMateriality",
+      "expected": "20000",
+      "actual": "20000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "revenue-driven-entity",
+      "check": "tolerableError",
+      "expected": "15000",
+      "actual": "15000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "revenue-driven-entity",
+      "check": "sadThreshold",
+      "expected": "1000",
+      "actual": "1000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "revenue-driven-entity",
+      "check": "policyAccepted",
+      "expected": "null",
+      "actual": "null",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "benchmark-derivation-from-mapped-tb",
+      "check": "derive:REVENUE",
+      "expected": "2000000",
+      "actual": "2000000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "benchmark-derivation-from-mapped-tb",
+      "check": "derive:PROFIT_BEFORE_TAX",
+      "expected": "550000",
+      "actual": "550000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "benchmark-derivation-from-mapped-tb",
+      "check": "derive:TOTAL_ASSETS",
+      "expected": "1000000",
+      "actual": "1000000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "benchmark-derivation-from-mapped-tb",
+      "check": "derive:NET_ASSETS",
+      "expected": "700000",
+      "actual": "700000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "benchmark-derivation-from-mapped-tb",
+      "check": "derive:TOTAL_EXPENSES",
+      "expected": "1500000",
+      "actual": "1500000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "benchmark-derivation-from-mapped-tb",
+      "check": "derive:MAPPED_LINE",
+      "expected": "400000",
+      "actual": "400000.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "out-of-policy-rate",
+      "check": "rejected",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "loss-fails-closed",
+      "check": "derivedBenchmark",
+      "expected": "-50",
+      "actual": "-50.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "loss-fails-closed",
+      "check": "failsClosed",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "materiality",
+      "case": "risk-band-matrix",
+      "check": "bands",
+      "expected": "Green,Amber,Amber,Red,Red,Red",
+      "actual": "Green,Amber,Amber,Red,Red,Red",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "population-stats",
+      "check": "populationCount",
+      "expected": 10,
+      "actual": 10,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "population-stats",
+      "check": "populationAbsoluteTotal",
+      "expected": "2140",
+      "actual": "2140.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "population-stats",
+      "check": "uniqueSelections",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "key-item-threshold",
+      "check": "selectedRowIds",
+      "expected": "row-02,row-04,row-07",
+      "actual": "row-02,row-04,row-07",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "key-item-threshold",
+      "check": "selectedAbsoluteTotal",
+      "expected": "1650",
+      "actual": "1650.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "random-seed-reproducible",
+      "check": "itemCount",
+      "expected": 4,
+      "actual": 4,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "random-seed-reproducible",
+      "check": "reproducible",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "random-seed-reproducible",
+      "check": "differentSeedChangesSelection",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "random-clamped-to-population",
+      "check": "itemCount",
+      "expected": 10,
+      "actual": 10,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "random-clamped-to-population",
+      "check": "coveragePercent",
+      "expected": "100",
+      "actual": "100.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "stratified-key-plus-draw",
+      "check": "itemCount",
+      "expected": 5,
+      "actual": 5,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "stratified-key-plus-draw",
+      "check": "keyItemsPresent",
+      "expected": "row-02,row-04,row-07",
+      "actual": "row-02,row-04,row-07",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "stratified-key-plus-draw",
+      "check": "stratifiedDrawCount",
+      "expected": 2,
+      "actual": 2,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "zero-rows-excluded",
+      "check": "selectedRowIds",
+      "expected": "",
+      "actual": "",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "zero-rows-excluded",
+      "check": "coveragePercent",
+      "expected": "0",
+      "actual": "0.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "zero-rows-excluded",
+      "check": "populationCount",
+      "expected": 10,
+      "actual": 10,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "negative-exposure-selection",
+      "check": "selectedRowIds",
+      "expected": "credit-1",
+      "actual": "credit-1",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "negative-exposure-selection",
+      "check": "populationSignedTotal",
+      "expected": "-400",
+      "actual": "-400.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "sampling",
+      "case": "negative-exposure-selection",
+      "check": "populationAbsoluteTotal",
+      "expected": "1200",
+      "actual": "1200.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "fee-breakdown-order",
+      "check": "baseAmount",
+      "expected": "25000",
+      "actual": "25000.00",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "fee-breakdown-order",
+      "check": "complexityAmount",
+      "expected": "5000",
+      "actual": "5000.00",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "fee-breakdown-order",
+      "check": "riskPremiumAmount",
+      "expected": "3000",
+      "actual": "3000.00",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "fee-breakdown-order",
+      "check": "discountAmount",
+      "expected": "1650",
+      "actual": "1650.00",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "fee-breakdown-order",
+      "check": "fee",
+      "expected": "31350",
+      "actual": "31350.00",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "line-order-invariance",
+      "check": "feeEqualsForwardOrder",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "line-order-invariance",
+      "check": "inputHashEqualsForwardOrder",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "line-order-invariance",
+      "check": "hashChangesWithDiscount",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "line-order-invariance",
+      "check": "hashChangesWithNonStandardTerms",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "per-stage-currency-rounding",
+      "check": "allAmountsRoundedToMinorUnit",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "out-of-range-factors",
+      "check": "rejectedCount",
+      "expected": 6,
+      "actual": 6,
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "approval-default-threshold",
+      "check": "requiredRoles",
+      "expected": "",
+      "actual": "",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "quotation",
+      "case": "approval-configured-bands",
+      "check": "requiredRoles",
+      "expected": "Manager",
+      "actual": "Manager",
+      "outcome": "MATCH"
+    }
+  ],
+  "absent": []
+}

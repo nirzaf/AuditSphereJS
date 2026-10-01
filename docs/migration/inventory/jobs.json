@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-10-01T17:47:49.897Z",
+  "jobs": [
+    {
+      "type": "FinancialPackageBuildHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialPackageBuildHandler.cs",
+      "line": 13
+    },
+    {
+      "type": "FinancialPackageRenderHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/FinancialPackageRenderHandler.cs",
+      "line": 13
+    },
+    {
+      "type": "GeneralLedgerCompletenessHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/GeneralLedgerCompletenessHandler.cs",
+      "line": 12
+    },
+    {
+      "type": "TrialBalanceValidationHandler",
+      "file": "src/AuditSphereOps.Application/Accounting/TrialBalanceValidationHandler.cs",
+      "line": 11
+    },
+    {
+      "type": "ReleaseCheckpointHandler",
+      "file": "src/AuditSphereOps.Application/Completion/ReleaseCheckpointHandler.cs",
+      "line": 21
+    },
+    {
+      "type": "ClientSharePointSiteHandler",
+      "file": "src/AuditSphereOps.Application/Documents/ClientSharePointSites.cs",
+      "line": 83
+    },
+    {
+      "type": "EngagementWorkspaceProvisioningHandler",
+      "file": "src/AuditSphereOps.Application/Documents/EngagementWorkspaceProvisioning.cs",
+      "line": 28
+    },
+    {
+      "type": "PbcDocumentTransferHandler",
+      "file": "src/AuditSphereOps.Application/Documents/PbcDocumentTransferHandler.cs",
+      "line": 50
+    },
+    {
+      "type": "PbcMailDeliveryHandler",
+      "file": "src/AuditSphereOps.Application/Documents/PbcMailDeliveryHandler.cs",
+      "line": 17
+    },
+    {
+      "type": "OperationDispatcher",
+      "file": "src/AuditSphereOps.Application/Operations/OperationDispatcher.cs",
+      "line": 8
+    },
+    {
+      "type": "AutomaticFeeInvoiceHandler",
+      "file": "src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs",
+      "line": 17
+    },
+    {
+      "type": "CommercialMailDeliveryHandler",
+      "file": "src/AuditSphereOps.Application/Practice/CommercialMailDeliveryHandler.cs",
+      "line": 16
+    },
+    {
+      "type": "FileFreezeHandler",
+      "file": "src/AuditSphereOps.Application/Records/FileFreezeService.cs",
+      "line": 154
+    },
+    {
+      "type": "Worker",
+      "file": "src/AuditSphereOps.Worker/Worker.cs",
+      "line": 9
+    }
+  ]
+}

@@ -1,0 +1,274 @@
+{
+  "generatedAt": "2026-10-01T17:47:49.897Z",
+  "generator": "scripts/migration/inventory.mjs",
+  "extractionMethod": "textual (regex) over pinned C#/Razor/SQL; not compiler-verified",
+  "sourceRoot": "tmp/AuditSphere",
+  "sourceCommit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
+  "sourceWorktreeClean": true,
+  "counts": {
+    "csFiles": 510,
+    "razorFiles": 88,
+    "testFiles": 138,
+    "sqlFiles": 0,
+    "docFiles": 123,
+    "dbSets": 210,
+    "tableBindings": 152,
+    "migrationFiles": 124,
+    "createdTables": 252,
+    "razorRoutes": 59,
+    "jobSurfaces": 14
+  },
+  "projectCounts": {
+    "AuditSphereOps.Application": 174,
+    "AuditSphereOps.Domain": 32,
+    "AuditSphereOps.Infrastructure": 291,
+    "AuditSphereOps.Web": 11,
+    "AuditSphereOps.Worker": 2
+  },
+  "capabilitySummary": {
+    "Abstractions": {
+      "files": 1,
+      "types": [
+        "ActorContext"
+      ]
+    },
+    "Acceptance": {
+      "files": 5,
+      "types": [
+        "ChecklistItem",
+        "RecordAcceptanceDecisionRequest",
+        "ChecklistQuestion",
+        "CreateEngagementDraftRequest",
+        "QuestionnaireSeed"
+      ]
+    },
+    "Accounting": {
+      "files": 71,
+      "types": [
+        "AdjustedBalanceRowDto",
+        "AcceptSourceRevisionRequest",
+        "AdjustmentEligibilityRow",
+        "AdjustmentJournalService",
+        "SourceReconciliationService",
+        "AcquisitionAccountingInput",
+        "AdvancedStatementLine",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingAnalysisService",
+        "AccountingReconciliationRequest",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingService",
+        "ClientAccountingProfileRequest",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ConsolidationService",
+        "ClientGroupRequest",
+        "ConsolidationComponentBalance",
+        "TranslationLineDto",
+        "MonetaryRemeasurementResult",
+        "CurrencyRemeasurementItemRequest",
+        "ExchangeRateSetRequest",
+        "FinancialPackageBuildHandler",
+        "FinancialPackageOfficeArtifact",
+        "FinancialPackageRenderHandler",
+        "FinancialPackageReviewRequest",
+        "FinancialStatementCalculator",
+        "FinancialStatementService",
+        "FinancialStatementService",
+        "FinancialStatementService",
+        "FinancialStatementService",
+        "MappingAllocationInput",
+        "GeneralLedgerCompletenessHandler",
+        "GeneralLedgerLineFilter",
+        "DrillDownProcedure",
+        "MappedStatementLine",
+        "MappingMemoryStatuses",
+        "MultiPeriodPreviewPeriod",
+        "AppliedRate",
+        "PackageManifestArtifactDto",
+        "that",
+        "so",
+        "StatementLayoutDraftRequest",
+        "ApprovedStatementSections",
+        "TbImportRow",
+        "ParsedCsvFile",
+        "TrialBalanceDatasetDto",
+        "TrialBalanceImportContext",
+        "TrialBalanceValidationHandler",
+        "TrialBalanceXlsxImporter"
+      ]
+    },
+    "Audit": {
+      "files": 26,
+      "types": [
+        "AuditAreaProcedureRow",
+        "VarianceInvestigationRequest",
+        "ConfirmationBatchRequest",
+        "OpeningBalanceVerificationRequest",
+        "CreateMaterialityRequest",
+        "AuditProgramCatalogItem",
+        "AuditProgramVersionSummary",
+        "PublishAuditProgramRequest",
+        "CutOffTestRequest",
+        "AuditScheduleSourceBindingValue",
+        "EngagementProcedureView",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "RunSamplingRequest",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "AuditFieldworkService",
+        "ScheduleRowInput",
+        "MappedBenchmarkLine",
+        "CalculateMaterialityRequest",
+        "AddReviewNoteRequest",
+        "AssessRiskBandRequest"
+      ]
+    },
+    "Completion": {
+      "files": 11,
+      "types": [
+        "DeliverableSignature",
+        "BundleView",
+        "DeliverableView",
+        "OpinionFsliOption",
+        "SignedLetterView",
+        "AuditDeliverableService",
+        "ReleaseCheckpointPayload",
+        "RecordReleaseCheckpointRequest",
+        "LocalAppendOnlyCheckpointStore",
+        "ReleaseSafetyOptions",
+        "CreateReleaseCandidateRequest"
+      ]
+    },
+    "Diagnostics": {
+      "files": 2,
+      "types": [
+        "AuditDiagnostics",
+        "TelemetryEndpoint"
+      ]
+    },
+    "Documents": {
+      "files": 9,
+      "types": [
+        "FirstSignInStatus",
+        "ClientSitePolicy",
+        "CaptureDocumentSnapshotRequest",
+        "EngagementWorkspaceProvisioningHandler",
+        "PbcProviderReceipt",
+        "PbcMailPlan",
+        "SelectedSiteLocation",
+        "CreatePbcRequestRequest",
+        "IPendingOperationDiscovery"
+      ]
+    },
+    "Microsoft365": {
+      "files": 14,
+      "types": [
+        "ProgressStates",
+        "DirectoryCapabilityVerificationService",
+        "DirectoryCandidate",
+        "CreateTenantUserRequest",
+        "DirectoryUserBindingService",
+        "ChangeGroupMembershipRequest",
+        "FolderTemplatePurposes",
+        "SetupClaim",
+        "Microsoft365SetupProgress",
+        "SelectedSiteBoundaryObservation",
+        "ConsentingAdministrator",
+        "TenantAdministrationOptions",
+        "TenantConnectionSnapshot",
+        "TenantConsentStart"
+      ]
+    },
+    "Operations": {
+      "files": 3,
+      "types": [
+        "IAuditSphereDbContext",
+        "OperationDispatcher",
+        "OperationRecoveryRequest"
+      ]
+    },
+    "Practice": {
+      "files": 20,
+      "types": [
+        "AutomaticFeeInvoicePolicy",
+        "CreateBillingAccountRequest",
+        "RequiredApproval",
+        "DocumentTable",
+        "SaveCommercialProfileRequest",
+        "CommercialDocumentService",
+        "CommercialMailDeliveryHandler",
+        "ContractTimeValue",
+        "FeeAgreementView",
+        "FirmFinanceSnapshot",
+        "LibraryHit",
+        "CreateFirmAccountRequest",
+        "CreateLeadRequest",
+        "PracticeLeadListItem",
+        "CreateTaskRequest",
+        "QuotationLineInput",
+        "QuotationHoursLine",
+        "ResourceWeekCell",
+        "SaveStaffProfileRequest",
+        "AssignStaffRequest"
+      ]
+    },
+    "Records": {
+      "files": 3,
+      "types": [
+        "ActivityKinds",
+        "FileFreezeView",
+        "CreateRecordsProfileRequest"
+      ]
+    },
+    "Reviews": {
+      "files": 1,
+      "types": [
+        "CreateApprovalRequest"
+      ]
+    },
+    "Search": {
+      "files": 1,
+      "types": [
+        "or"
+      ]
+    },
+    "Security": {
+      "files": 7,
+      "types": [
+        "Authorization",
+        "AuthorizationRequest",
+        "FirmAdministrationSnapshot",
+        "EnsureStaffUserRequest",
+        "RoleAssignmentRequest",
+        "RoleGrantExpiry",
+        "UserAccessRow"
+      ]
+    }
+  }
+}

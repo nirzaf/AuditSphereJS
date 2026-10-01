@@ -1,0 +1,359 @@
+{
+  "generatedAt": "2026-10-01T17:47:49.897Z",
+  "routes": [
+    {
+      "route": "/auth/access-not-assigned",
+      "component": "AccessNotAssigned.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccessNotAssigned.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/evidence",
+      "component": "AccountingEvidence.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccountingEvidence.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/periods/{PeriodId:guid}",
+      "component": "AccountingPeriod.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccountingPeriod.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/mappings",
+      "component": "AccountingRecords.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccountingRecords.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/journals",
+      "component": "AccountingRecords.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccountingRecords.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/accounting/differences",
+      "component": "AccountingRecords.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccountingRecords.razor",
+      "line": 3
+    },
+    {
+      "route": "/app/accounting",
+      "component": "AccountingWorkspace.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AccountingWorkspace.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/administration",
+      "component": "Administration.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Administration.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/consolidation/advanced/{ScopeId:guid}",
+      "component": "AdvancedConsolidationWorkflow.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AdvancedConsolidationWorkflow.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/assessments/{Id:guid}/decision",
+      "component": "AssessmentDecision.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AssessmentDecision.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/assessments/{Id:guid}",
+      "component": "AssessmentDetail.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AssessmentDetail.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/clients/{ClientId:guid}/assessment",
+      "component": "AssessmentDetail.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AssessmentDetail.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}/audit-fieldwork",
+      "component": "AuditFieldwork.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AuditFieldwork.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/audit/plans/{Id:guid}",
+      "component": "AuditPlan.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AuditPlan.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}/audit-plan",
+      "component": "AuditPlan.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AuditPlan.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/audit/populations/{Id:guid}",
+      "component": "AuditPopulation.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AuditPopulation.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/audit/library",
+      "component": "AuditProgramLibraryPage.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/AuditProgramLibraryPage.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/clients/{ClientId:guid}",
+      "component": "ClientDetail.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ClientDetail.razor",
+      "line": 1
+    },
+    {
+      "route": "/portal/accounting/packages/{PackageId:guid}",
+      "component": "ClientFinancialPackage.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ClientFinancialPackage.razor",
+      "line": 1
+    },
+    {
+      "route": "/portal/requests/{RequestId:guid}",
+      "component": "ClientPbcRequest.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ClientPbcRequest.razor",
+      "line": 1
+    },
+    {
+      "route": "/portal",
+      "component": "ClientPortal.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ClientPortal.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/practice/commercial-settings",
+      "component": "CommercialSettings.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/CommercialSettings.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/completion/{Id:guid}",
+      "component": "Completion.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Completion.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}/completion",
+      "component": "Completion.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Completion.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/consolidation",
+      "component": "Consolidation.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Consolidation.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/remeasurement",
+      "component": "CurrencyRemeasurement.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/CurrencyRemeasurement.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}",
+      "component": "EngagementDetail.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/EngagementDetail.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/finance",
+      "component": "Finance.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Finance.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/packages/{PackageId:guid}",
+      "component": "FinancialPackage.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/FinancialPackage.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/reviews",
+      "component": "FinancialPackageReviews.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/FinancialPackageReviews.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/findings/{Id:guid}",
+      "component": "Finding.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Finding.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/finance/books",
+      "component": "FirmBooks.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/FirmBooks.razor",
+      "line": 1
+    },
+    {
+      "route": "/",
+      "component": "Home.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Home.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/practice/invoices/{InvoiceId:guid}",
+      "component": "InvoiceDetail.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/InvoiceDetail.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/journals/{JournalId:guid}",
+      "component": "Journals.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Journals.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/practice/leads",
+      "component": "Leads.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Leads.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/mappings/{MappingId:guid}",
+      "component": "Mapping.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Mapping.razor",
+      "line": 1
+    },
+    {
+      "route": "/setup/microsoft365",
+      "component": "Microsoft365Setup.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Microsoft365Setup.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/administration/microsoft365",
+      "component": "Microsoft365Setup.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Microsoft365Setup.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/operations",
+      "component": "Operations.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Operations.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}/pbc",
+      "component": "PbcRequests.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/PbcRequests.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/restatements",
+      "component": "PeriodRestatements.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/PeriodRestatements.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/accounting/rollforward",
+      "component": "PeriodRollforward.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/PeriodRollforward.razor",
+      "line": 1
+    },
+    {
+      "route": "/app",
+      "component": "Portfolio.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Portfolio.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/overview",
+      "component": "Portfolio.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Portfolio.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/practice/analytics",
+      "component": "PracticeAnalytics.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/PracticeAnalytics.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/practice/time",
+      "component": "PracticeTime.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/PracticeTime.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/administration/project-progress",
+      "component": "ProjectProgress.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ProjectProgress.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/practice/proposals/{Id:guid}",
+      "component": "ProposalDetail.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ProposalDetail.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/records/archives/{Id:guid}",
+      "component": "RecordsArchive.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/RecordsArchive.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/releases/{CandidateId:guid}",
+      "component": "Release.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Release.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/practice/resources",
+      "component": "ResourcePlanning.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ResourcePlanning.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/reviews/{Id:guid}",
+      "component": "ReviewPoint.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/ReviewPoint.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}/statements",
+      "component": "StatementDrillDown.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/StatementDrillDown.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/library",
+      "component": "TechnicalLibrary.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/TechnicalLibrary.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/library/{DocumentId:guid}",
+      "component": "TechnicalLibrary.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/TechnicalLibrary.razor",
+      "line": 2
+    },
+    {
+      "route": "/app/administration/microsoft365/tenant-connection",
+      "component": "TenantConnection.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/TenantConnection.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/engagements/{EngagementId:guid}/tb-intake",
+      "component": "TrialBalanceIntake.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/TrialBalanceIntake.razor",
+      "line": 1
+    },
+    {
+      "route": "/app/audit/workpapers/{Id:guid}",
+      "component": "Workpaper.razor",
+      "file": "src/AuditSphereOps.Web/Components/Pages/Workpaper.razor",
+      "line": 1
+    }
+  ]
+}

@@ -1,0 +1,972 @@
+{
+  "generatedAt": "2026-10-01T17:47:22.243Z",
+  "generator": "scripts/migration/capability-map.mjs",
+  "sourceRoot": "",
+  "note": "Symbol resolution is textual. Unresolved symbols are preserved so the parity matrix reports gaps instead of hiding them.",
+  "destinationStatus": "See docs/migration/02-capability-parity-matrix.md; destination status is maintained separately from this source extraction.",
+  "rows": [
+    {
+      "id": "C01",
+      "name": "Local identity, role grants and access workspace",
+      "destinationOwner": "Platform authorization / governance administration",
+      "taskAnchor": "T018-T021, T151; MIG-004",
+      "resolvedSymbols": {
+        "RoleAssignmentService": [
+          "src/AuditSphereOps.Application/Security/RoleAssignmentService.cs"
+        ],
+        "RoleGrantExpiry": [
+          "src/AuditSphereOps.Application/Security/RoleGrantExpiry.cs"
+        ],
+        "UserAccessWorkspaceQuery": [
+          "src/AuditSphereOps.Application/Security/UserAccessWorkspaceQuery.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 3
+    },
+    {
+      "id": "C02",
+      "name": "Microsoft tenant consent and capability verification",
+      "destinationOwner": "Platform Microsoft adapters / governance administration",
+      "taskAnchor": "T149-T156; MIG-012",
+      "resolvedSymbols": {
+        "TenantConsentService": [
+          "src/AuditSphereOps.Application/Microsoft365/TenantConsentService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C03",
+      "name": "Client SharePoint site provisioning",
+      "destinationOwner": "Platform site-provisioning workers / site status UI",
+      "taskAnchor": "T064, T154, T156; MIG-012",
+      "resolvedSymbols": {
+        "SharePointClientSiteProvider": [
+          "src/AuditSphereOps.Infrastructure/Providers/SharePointClientSiteProvider.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Application/Documents/ClientPortalService.cs",
+        "src/AuditSphereOps.Application/Documents/ClientSharePointSites.cs",
+        "src/AuditSphereOps.Application/Documents/DocumentSnapshotService.cs",
+        "src/AuditSphereOps.Application/Documents/EngagementWorkspaceProvisioning.cs",
+        "src/AuditSphereOps.Application/Documents/PbcDocumentTransferHandler.cs",
+        "src/AuditSphereOps.Application/Documents/PbcMailDeliveryHandler.cs",
+        "src/AuditSphereOps.Application/Documents/PbcRepositoryProvisioning.cs",
+        "src/AuditSphereOps.Application/Documents/PbcService.cs",
+        "src/AuditSphereOps.Application/Documents/PbcTransferDiscovery.cs"
+      ],
+      "sourceFileCount": 10
+    },
+    {
+      "id": "C04",
+      "name": "Practice CRM, leads and client portfolio",
+      "destinationOwner": "Commercial CRM / portfolio",
+      "taskAnchor": "T052-T055",
+      "resolvedSymbols": {
+        "PracticeCrmService": [
+          "src/AuditSphereOps.Application/Practice/PracticeCrmService.cs"
+        ],
+        "PracticeLeadQuery": [
+          "src/AuditSphereOps.Application/Practice/PracticeLeadQuery.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C05",
+      "name": "Quotation calculation and tender documents",
+      "destinationOwner": "Commercial quotations / tenders",
+      "taskAnchor": "T060-T062; MIG-006",
+      "resolvedSymbols": {
+        "QuotationCalculator": [
+          "src/AuditSphereOps.Application/Practice/QuotationCalculator.cs"
+        ],
+        "CommercialApprovalMatrix": [
+          "src/AuditSphereOps.Application/Practice/CommercialApprovalMatrix.cs"
+        ],
+        "QuotationService": [
+          "src/AuditSphereOps.Application/Practice/QuotationService.cs"
+        ],
+        "CommercialDocumentService": [
+          "src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs",
+          "src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 5
+    },
+    {
+      "id": "C06",
+      "name": "Acceptance, continuance and activation",
+      "destinationOwner": "Governance acceptance and lifecycle",
+      "taskAnchor": "T056-T059, T063, T073",
+      "resolvedSymbols": {
+        "AcceptanceRules": [
+          "src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs"
+        ],
+        "EngagementLifecycleService": [
+          "src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C07",
+      "name": "Fee agreements and automatic fee invoices",
+      "destinationOwner": "Commercial fee agreement / practice invoicing",
+      "taskAnchor": "T065, T069-T072, T125; MIG-006",
+      "resolvedSymbols": {
+        "FeeAgreementService": [
+          "src/AuditSphereOps.Application/Practice/FeeAgreementService.cs"
+        ],
+        "AutomaticFeeInvoiceHandler": [
+          "src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs"
+        ],
+        "AutomaticFeeInvoicePolicy": [
+          "src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs"
+        ],
+        "CommercialDocumentService": [
+          "src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs",
+          "src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 4
+    },
+    {
+      "id": "C08",
+      "name": "Client portal, first sign-in and delegation",
+      "destinationOwner": "Governance client access / Angular portal",
+      "taskAnchor": "T020, T073-T077",
+      "resolvedSymbols": {
+        "ClientPortalService": [
+          "src/AuditSphereOps.Application/Documents/ClientPortalService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C09",
+      "name": "PBC requests, upload intents and communications",
+      "destinationOwner": "Platform document pipeline / fieldwork PBC",
+      "taskAnchor": "T032-T034, T074-T077, T094",
+      "resolvedSymbols": {
+        "PbcService": [
+          "src/AuditSphereOps.Application/Documents/PbcService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C10",
+      "name": "Client accounting profiles, periods, books and restatements",
+      "destinationOwner": "Fieldwork accounting setup",
+      "taskAnchor": "T018, T023; MIG-007",
+      "resolvedSymbols": {
+        "ClientAccountingService": [
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Authorization.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Books.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Capabilities.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Charts.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.GeneralLedger.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.OpeningBalances.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Periods.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Profiles.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Restatements.cs",
+          "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Taxonomy.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 10
+    },
+    {
+      "id": "C11",
+      "name": "Trial balance import and multi-period intake",
+      "destinationOwner": "Fieldwork intake wizard",
+      "taskAnchor": "T043-T045, T078-T081; MIG-008",
+      "resolvedSymbols": {
+        "TrialBalanceImportService": [
+          "src/AuditSphereOps.Application/Accounting/TrialBalanceImportService.cs"
+        ],
+        "MultiPeriodTrialBalanceService": [
+          "src/AuditSphereOps.Application/Accounting/Intake/MultiPeriodTrialBalanceService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C12",
+      "name": "General ledger import, query and completeness",
+      "destinationOwner": "Fieldwork GL explorer",
+      "taskAnchor": "T079; MIG-008",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.GeneralLedger.cs",
+        "src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.GeneralLedger.cs",
+        "src/AuditSphereOps.Application/Accounting/GeneralLedgerCompletenessHandler.cs",
+        "src/AuditSphereOps.Application/Accounting/GeneralLedgerQuery.cs",
+        "src/AuditSphereOps.Domain/Accounting/ClientAccounting.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920193246_GeneralLedgerCompletenessBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920204413_GeneralLedgerStreamingImport.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921064940_PreserveGeneralLedgerServiceDate.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921072319_ReconcileGeneralLedgerOpeningMovement.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924095236_BindCurrencyRemeasurementToGeneralLedger.cs"
+      ],
+      "sourceFileCount": 10
+    },
+    {
+      "id": "C13",
+      "name": "Mapping memory and approved mappings",
+      "destinationOwner": "Fieldwork mapping workbench / reporting mapping approval",
+      "taskAnchor": "T046-T050, T080-T082; MIG-009",
+      "resolvedSymbols": {
+        "MappingMemoryService": [
+          "src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs"
+        ],
+        "MappedTrialBalanceSource": [
+          "src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C14",
+      "name": "Financial statement drill-down and currency review",
+      "destinationOwner": "Angular split dashboard",
+      "taskAnchor": "T082",
+      "resolvedSymbols": {
+        "FinancialStatementDrillDownQuery": [
+          "src/AuditSphereOps.Application/Accounting/Intake/FinancialStatementDrillDownQuery.cs"
+        ],
+        "TrialBalanceCurrencyReviewQuery": [
+          "src/AuditSphereOps.Application/Accounting/Intake/TrialBalanceCurrencyReviewQuery.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C15",
+      "name": "Adjustment journals, plans and eligibility",
+      "destinationOwner": "Fieldwork adjustments",
+      "taskAnchor": "T103-T105; MIG-008",
+      "resolvedSymbols": {
+        "AdjustmentJournalService": [
+          "src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs"
+        ],
+        "AdjustmentPlanService": [
+          "src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs"
+        ],
+        "AdjustmentEligibilityQuery": [
+          "src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 3
+    },
+    {
+      "id": "C16",
+      "name": "Reconciliations, valuations and journal risk analysis",
+      "destinationOwner": "Fieldwork evidence and analytical review",
+      "taskAnchor": "T096, T105; MIG-010",
+      "resolvedSymbols": {
+        "AccountingAnalysisService": [
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.AnalyticalReview.cs",
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Authorization.cs",
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Evidence.cs",
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.GeneralLedger.cs",
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.JournalRisk.cs",
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Reconciliation.cs",
+          "src/AuditSphereOps.Application/Accounting/Analysis/AccountingAnalysisService.Valuations.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 7
+    },
+    {
+      "id": "C17",
+      "name": "Currency remeasurement and translation",
+      "destinationOwner": "Fieldwork currency workpapers",
+      "taskAnchor": "MIG-010",
+      "resolvedSymbols": {
+        "CurrencyRemeasurementService": [
+          "src/AuditSphereOps.Application/Accounting/CurrencyRemeasurementService.cs"
+        ],
+        "CurrencyTranslationService": [
+          "src/AuditSphereOps.Application/Accounting/CurrencyTranslationService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C18",
+      "name": "Consolidation groups, perimeters and runs",
+      "destinationOwner": "Fieldwork group consolidation",
+      "taskAnchor": "MIG-011",
+      "resolvedSymbols": {
+        "ConsolidationService": [
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Advanced.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Authorization.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Components.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.ExternalPacks.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Groups.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Intercompany.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Journals.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Ownership.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Reports.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Runs.cs",
+          "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Scopes.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 11
+    },
+    {
+      "id": "C19",
+      "name": "Advanced consolidation calculators and reports",
+      "destinationOwner": "Fieldwork advanced consolidation",
+      "taskAnchor": "MIG-011",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Application/Accounting/AdvancedConsolidationCalculator.cs",
+        "src/AuditSphereOps.Application/Accounting/AdvancedConsolidationExecutionCalculator.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Advanced.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Authorization.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Components.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.ExternalPacks.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Groups.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Intercompany.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Journals.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Ownership.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Reports.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Runs.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationService.Scopes.cs",
+        "src/AuditSphereOps.Application/Accounting/Consolidation/ConsolidationServiceContracts.cs",
+        "src/AuditSphereOps.Application/Accounting/ConsolidationCalculator.cs",
+        "src/AuditSphereOps.Application/Accounting/ConsolidationQuery.cs",
+        "src/AuditSphereOps.Domain/Accounting/ClientAccounting.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Consolidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920173839_ClientAccountingAndConsolidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921004233_PinGroupRevisionToConsolidationScope.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921011913_AddConsolidationRollForwardLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922104120_AdvancedConsolidationMethodSchedules.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922125309_AdvancedConsolidationExecution.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192946_AddConsolidationJournalReturnReason.cs"
+      ],
+      "sourceFileCount": 24
+    },
+    {
+      "id": "C20",
+      "name": "Financial statements, packages, review and seal",
+      "destinationOwner": "Reporting statement and package workspaces",
+      "taskAnchor": "T119, T127-T128; MIG-009",
+      "resolvedSymbols": {
+        "FinancialStatementService": [
+          "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Authorization.cs",
+          "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Mapping.cs",
+          "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Package.cs",
+          "src/AuditSphereOps.Application/Accounting/FinancialStatements/FinancialStatementService.Render.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 4
+    },
+    {
+      "id": "C21",
+      "name": "Staffing, resource planning and grid calculation",
+      "destinationOwner": "Governance staffing and availability",
+      "taskAnchor": "T083-T084, T139, T142",
+      "resolvedSymbols": {
+        "StaffingService": [
+          "src/AuditSphereOps.Application/Practice/StaffingService.cs"
+        ],
+        "ResourcePlanningService": [
+          "src/AuditSphereOps.Application/Practice/ResourcePlanningService.cs"
+        ],
+        "ResourceGridCalculator": [
+          "src/AuditSphereOps.Application/Practice/ResourceGridCalculator.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 3
+    },
+    {
+      "id": "C22",
+      "name": "Materiality and risk classification",
+      "destinationOwner": "Governance materiality and risk",
+      "taskAnchor": "T085-T089",
+      "resolvedSymbols": {
+        "MaterialityCalculator": [
+          "src/AuditSphereOps.Application/Audit/MaterialityCalculator.cs"
+        ],
+        "MaterialityEngineService": [
+          "src/AuditSphereOps.Application/Audit/MaterialityEngineService.cs"
+        ],
+        "RiskBandService": [
+          "src/AuditSphereOps.Application/Audit/RiskBandService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 3
+    },
+    {
+      "id": "C23",
+      "name": "Audit planning and program library",
+      "destinationOwner": "Governance/audit planning",
+      "taskAnchor": "T090-T093",
+      "resolvedSymbols": {
+        "AuditPlanningService": [
+          "src/AuditSphereOps.Application/Audit/AuditPlanningService.cs"
+        ],
+        "AuditProgramService": [
+          "src/AuditSphereOps.Application/Audit/AuditProgramService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C24",
+      "name": "Fieldwork schedules, tests and area assessments",
+      "destinationOwner": "Fieldwork procedure workspaces",
+      "taskAnchor": "T092, T096-T106",
+      "resolvedSymbols": {
+        "AuditFieldworkService": [
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.AreaAssessments.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Authorization.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.BankReconciliations.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Completion.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Confirmations.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Connections.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Differences.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.ItemTests.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Schedules.cs",
+          "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Selections.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 10
+    },
+    {
+      "id": "C25",
+      "name": "Sampling runs, evidence and movements",
+      "destinationOwner": "Fieldwork sampling and physical evidence",
+      "taskAnchor": "T094-T102",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Application/Audit/AuditSamplingService.cs",
+        "src/AuditSphereOps.Domain/Audit/AuditSamplingEngine.cs",
+        "src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930013221_FieldworkConnectionsSamplingEvidenceAndPhysicalIndex.cs"
+      ],
+      "sourceFileCount": 5
+    },
+    {
+      "id": "C26",
+      "name": "Review notes, reviews and completion",
+      "destinationOwner": "Reporting review inbox and SRM",
+      "taskAnchor": "T107-T117",
+      "resolvedSymbols": {
+        "ReviewNotesService": [
+          "src/AuditSphereOps.Application/Audit/ReviewNotesService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C27",
+      "name": "Confirmations and holding documents",
+      "destinationOwner": "Fieldwork confirmations / reporting completion gates",
+      "taskAnchor": "T111-T113",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Application/Audit/AuditConfirmationBatchService.cs",
+        "src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Confirmations.cs",
+        "src/AuditSphereOps.Domain/Audit/Fieldwork.cs",
+        "src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs"
+      ],
+      "sourceFileCount": 4
+    },
+    {
+      "id": "C28",
+      "name": "Opinions, signatures, representations and bundles",
+      "destinationOwner": "Reporting opinions and signed deliverables",
+      "taskAnchor": "T118-T130; MIG-013",
+      "resolvedSymbols": {
+        "AuditDeliverableService": [
+          "src/AuditSphereOps.Application/Completion/AuditDeliverableService.Bundle.cs",
+          "src/AuditSphereOps.Application/Completion/AuditDeliverableService.cs",
+          "src/AuditSphereOps.Application/Completion/AuditDeliverableService.OpinionAreas.cs",
+          "src/AuditSphereOps.Application/Completion/AuditDeliverableService.Representations.cs",
+          "src/AuditSphereOps.Application/Completion/AuditDeliverableService.Seal.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 5
+    },
+    {
+      "id": "C29",
+      "name": "Freeze, amendments and document locks",
+      "destinationOwner": "Reporting records and operations",
+      "taskAnchor": "T131-T138; MIG-014",
+      "resolvedSymbols": {
+        "FileFreezeService": [
+          "src/AuditSphereOps.Application/Records/FileFreezeService.cs"
+        ],
+        "DocumentLock": [
+          "src/AuditSphereOps.Domain/Records/FileFreeze.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C30",
+      "name": "Records archive, checkpoints and release evidence",
+      "destinationOwner": "Reporting archive and regulator export",
+      "taskAnchor": "T132-T136; MIG-014",
+      "resolvedSymbols": {
+        "RecordsArchiveService": [
+          "src/AuditSphereOps.Application/Records/RecordsArchiveService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C31",
+      "name": "Practice time, budgets and rate cards",
+      "destinationOwner": "Practice timesheets and budgets",
+      "taskAnchor": "T139-T143",
+      "resolvedSymbols": {
+        "PracticeTimeService": [
+          "src/AuditSphereOps.Application/Practice/PracticeTimeService.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C32",
+      "name": "Firm billing, ledger and finance queries",
+      "destinationOwner": "Practice finance and firm books",
+      "taskAnchor": "T066-T072, T125, T144-T148; MIG-006",
+      "resolvedSymbols": {
+        "BillingService": [
+          "src/AuditSphereOps.Application/Practice/BillingService.cs"
+        ],
+        "LedgerService": [
+          "src/AuditSphereOps.Application/Practice/LedgerService.cs"
+        ],
+        "FirmFinanceQuery": [
+          "src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 3
+    },
+    {
+      "id": "C33",
+      "name": "Practice analytics and contract contribution",
+      "destinationOwner": "Practice analytics",
+      "taskAnchor": "T143, T148; MIG-015",
+      "resolvedSymbols": {
+        "PracticeAnalyticsQuery": [
+          "src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs"
+        ],
+        "ContractContributionCalculator": [
+          "src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 2
+    },
+    {
+      "id": "C34",
+      "name": "Technical library and published document versions",
+      "destinationOwner": "Practice technical library",
+      "taskAnchor": "MIG-015",
+      "resolvedSymbols": {
+        "TechnicalLibraryService": [
+          "src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C35",
+      "name": "Global staff search",
+      "destinationOwner": "Shared staff search",
+      "taskAnchor": "MIG-015",
+      "resolvedSymbols": {
+        "GlobalSearchQuery": [
+          "src/AuditSphereOps.Application/Search/GlobalSearchQuery.cs"
+        ]
+      },
+      "unresolvedSymbols": [],
+      "familyFiles": [],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C36",
+      "name": "Operations hosts, workers and scoped operations UI",
+      "destinationOwner": "Platform operations and job status",
+      "taskAnchor": "T030-T041, T160; MIG-005",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Application/Operations/Contracts.cs",
+        "src/AuditSphereOps.Application/Operations/OperationDispatcher.cs",
+        "src/AuditSphereOps.Application/Operations/OperationRecoveryService.cs",
+        "src/AuditSphereOps.Worker/Program.cs",
+        "src/AuditSphereOps.Worker/Worker.cs"
+      ],
+      "sourceFileCount": 5
+    },
+    {
+      "id": "C37",
+      "name": "API downloads, drafts, upload helpers and route guards",
+      "destinationOwner": "Angular/API contract layer",
+      "taskAnchor": "T022, T029, T034, T048, T157-T158; MIG-003",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Domain/Documents/Pbc.cs"
+      ],
+      "sourceFileCount": 1
+    },
+    {
+      "id": "C38",
+      "name": "Migrations, database checks, triggers and indexes",
+      "destinationOwner": "Prisma migrations plus reviewed PostgreSQL SQL",
+      "taskAnchor": "T011, T018, T025-T027, T163-T164; MIG-001, MIG-002, MIG-017",
+      "resolvedSymbols": {},
+      "unresolvedSymbols": [],
+      "familyFiles": [
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Accounting.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AdjustmentBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Audit.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AuditDeliverables.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.ClientAccounting.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.ClientAccountingSchedules.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.ClientPortal.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.ClientSharePointSites.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Commercial.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Completion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Consolidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Documents.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Fieldwork.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.FieldworkConnections.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.FileFreeze.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.FinancialStatements.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.FirmOperations.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Microsoft365.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Operations.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Pbc.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Practice.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.ResourcePlanning.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Reviews.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.ScopedEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Security.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917073959_InitialCreate.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917073959_InitialCreate.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917075145_TrialBalanceValidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917075145_TrialBalanceValidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917091412_AccountingIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917091412_AccountingIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917104422_DurableOutbox.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260917104422_DurableOutbox.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918041428_AuthorizationIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918041428_AuthorizationIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918083524_AdjustmentSourceBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918083524_AdjustmentSourceBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918093347_PracticeCrmWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918093347_PracticeCrmWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918095500_CrmSafetyInvariants.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918095500_CrmSafetyInvariants.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918111815_PracticeTimeBudgetWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918111815_PracticeTimeBudgetWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918115026_BillingArtifactWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918115026_BillingArtifactWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918121512_FirmLedgerWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918121512_FirmLedgerWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918125731_DocumentSnapshotIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918125731_DocumentSnapshotIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918131715_ApprovalApplicabilityWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918131715_ApprovalApplicabilityWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918133707_ReleaseGateWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918133707_ReleaseGateWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918161647_MappingAndFinancialStatementWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918161647_MappingAndFinancialStatementWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918170054_SupplementaryFinancialInformation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918170054_SupplementaryFinancialInformation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918173327_PbcUploadWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918173327_PbcUploadWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918175205_PbcUploadCapability.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918175205_PbcUploadCapability.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918184938_PbcTrustedCompletion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918184938_PbcTrustedCompletion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918194920_OperatorRecoveryWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918194920_OperatorRecoveryWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918232054_CoreEntityCatalogAndQuestionnaireExtensions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918232054_CoreEntityCatalogAndQuestionnaireExtensions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918235000_AuditPlanningAndFirmPostingExtensions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260918235000_AuditPlanningAndFirmPostingExtensions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919005220_AuditPlanningScopeIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919005220_AuditPlanningScopeIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919111301_ReleaseEvidenceAndCheckpoints.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919111301_ReleaseEvidenceAndCheckpoints.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919123339_RecordsArchiveWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919123339_RecordsArchiveWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919124558_ArchiveProtectionObservation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919124558_ArchiveProtectionObservation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919130133_RepositoryBindingAndCapabilities.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919130133_RepositoryBindingAndCapabilities.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919130821_RecoverySessionQuarantine.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919130821_RecoverySessionQuarantine.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919134031_ArchiveStructuredExports.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919134031_ArchiveStructuredExports.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919134442_RecordsActionEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919134442_RecordsActionEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919203959_ArchiveVersionLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260919203959_ArchiveVersionLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920102142_WorkpaperDraftsAndTrialBalanceSealing.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920102142_WorkpaperDraftsAndTrialBalanceSealing.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920140141_AuditProgramExecutionWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920140141_AuditProgramExecutionWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920142129_AuditFieldworkEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920142129_AuditFieldworkEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920145407_AuditResponseReviewAndItemGeneration.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920145407_AuditResponseReviewAndItemGeneration.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920163240_AccountingClientSourceIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920163240_AccountingClientSourceIntegrity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920173839_ClientAccountingAndConsolidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920173839_ClientAccountingAndConsolidation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920173922_AccountingJournalLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920173922_AccountingJournalLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920180958_AccountingEvidenceReviewMetadata.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920180958_AccountingEvidenceReviewMetadata.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920182812_FinancialPackageComparativeEquity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920182812_FinancialPackageComparativeEquity.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920185001_ClientPeriodRestatement.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920185001_ClientPeriodRestatement.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920191216_TrialBalanceProfilesAndBatches.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920191216_TrialBalanceProfilesAndBatches.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920193246_GeneralLedgerCompletenessBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920193246_GeneralLedgerCompletenessBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920195800_FinancialPackageReviewDecisions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920195800_FinancialPackageReviewDecisions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920204413_GeneralLedgerStreamingImport.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920204413_GeneralLedgerStreamingImport.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920213841_FinancialPackageReleaseTarget.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920213841_FinancialPackageReleaseTarget.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920220712_BindValuationEvidenceToSource.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920220712_BindValuationEvidenceToSource.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920221642_BindSpecialistEvidenceToGeneration.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920221642_BindSpecialistEvidenceToGeneration.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920222544_AddAssetScheduleMethodology.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920222544_AddAssetScheduleMethodology.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920223757_AddTypedSpecialistAreaInputs.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920223757_AddTypedSpecialistAreaInputs.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920225424_LinkAccountingEvidenceToAuditResults.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920225424_LinkAccountingEvidenceToAuditResults.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920230951_ClientPeriodAmendmentLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260920230951_ClientPeriodAmendmentLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921002125_EnableForeignOperationTranslation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921002125_EnableForeignOperationTranslation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921004233_PinGroupRevisionToConsolidationScope.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921004233_PinGroupRevisionToConsolidationScope.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921011913_AddConsolidationRollForwardLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921011913_AddConsolidationRollForwardLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921020828_AddIntercompanyEliminationLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921020828_AddIntercompanyEliminationLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921042350_BindTrialBalanceToReportingContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921042350_BindTrialBalanceToReportingContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921044830_BindFinancialPackagesToReportingContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921044830_BindFinancialPackagesToReportingContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921050545_BindAdjustmentJournalsToReportingContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921050545_BindAdjustmentJournalsToReportingContext.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921052800_ClientAccountingDimensionDefinitions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921052800_ClientAccountingDimensionDefinitions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921064940_PreserveGeneralLedgerServiceDate.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921064940_PreserveGeneralLedgerServiceDate.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921072319_ReconcileGeneralLedgerOpeningMovement.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921072319_ReconcileGeneralLedgerOpeningMovement.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921082006_AnalyticalReviewLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921082006_AnalyticalReviewLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921085029_LinkValuationDifferencesToAdjustments.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921085029_LinkValuationDifferencesToAdjustments.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921090305_PreserveAnalyticalReviewConclusion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921090305_PreserveAnalyticalReviewConclusion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921092708_PersistFinancialPackageArtifacts.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921092708_PersistFinancialPackageArtifacts.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921102055_AddReconciliationAgingEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921102055_AddReconciliationAgingEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921113403_AddAuditDifferenceEvaluationMetadata.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921113403_AddAuditDifferenceEvaluationMetadata.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921120505_AddAuditBankReconciliationWorkbench.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921120505_AddAuditBankReconciliationWorkbench.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921123852_CancelDurableOperationDisposition.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921123852_CancelDurableOperationDisposition.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921134007_IntercompanyMatchReviewModes.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921134007_IntercompanyMatchReviewModes.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921134648_ReportingTaxonomyOverlays.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921134648_ReportingTaxonomyOverlays.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921144026_ExternalComponentPackWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921144026_ExternalComponentPackWorkflow.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921144550_ExternalComponentPackCompatibilityBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921144550_ExternalComponentPackCompatibilityBridge.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921150321_BindMappingsToClientCharts.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921150321_BindMappingsToClientCharts.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921200850_WorkflowTaskPeriodDeadline.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921200850_WorkflowTaskPeriodDeadline.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921202738_AccountingCapabilityServiceRoute.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921202738_AccountingCapabilityServiceRoute.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921203135_TranslationAdjustmentLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921203135_TranslationAdjustmentLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921204723_AddExchangeRateSetEffectiveRange.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921204723_AddExchangeRateSetEffectiveRange.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921212202_ResolveScheduleControlSource.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260921212202_ResolveScheduleControlSource.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922071325_QuarantineLegacyAccountingBackfill.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922071325_QuarantineLegacyAccountingBackfill.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922081017_PbcClientCommunicationThread.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922081017_PbcClientCommunicationThread.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922083103_EnableLiveMailProviderAuthority.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922083103_EnableLiveMailProviderAuthority.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922104120_AdvancedConsolidationMethodSchedules.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922104120_AdvancedConsolidationMethodSchedules.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922112303_Microsoft365OnboardingControlPlane.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922112303_Microsoft365OnboardingControlPlane.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922113337_AcceptanceDecisionPersistenceAndClientWorkspace.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922113337_AcceptanceDecisionPersistenceAndClientWorkspace.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922114018_RoleGrantChangeEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922114018_RoleGrantChangeEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922115824_BindM365VerificationRevisions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922115824_BindM365VerificationRevisions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922125309_AdvancedConsolidationExecution.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922125309_AdvancedConsolidationExecution.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922134534_M365UserAccessInvitations.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922134534_M365UserAccessInvitations.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922140527_M365InvitationEvidenceAction.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260922140527_M365InvitationEvidenceAction.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260923145244_ProposalPreparedByAttribution.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260923145244_ProposalPreparedByAttribution.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924042437_MaterialityApprovalEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924042437_MaterialityApprovalEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924062848_CurrencyTranslationCalculationVersion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924062848_CurrencyTranslationCalculationVersion.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924070028_AddCurrencyRemeasurementWorkpaper.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924070028_AddCurrencyRemeasurementWorkpaper.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924095236_BindCurrencyRemeasurementToGeneralLedger.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924095236_BindCurrencyRemeasurementToGeneralLedger.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924183248_AddPackageCashFlowNonCashAndFxEffect.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924183248_AddPackageCashFlowNonCashAndFxEffect.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192211_AddReconciliationProofEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192211_AddReconciliationProofEvidence.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192538_AddJournalTechnicalStatesAndReturnReason.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192538_AddJournalTechnicalStatesAndReturnReason.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192753_AddRestatementChangeType.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192753_AddRestatementChangeType.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192946_AddConsolidationJournalReturnReason.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924192946_AddConsolidationJournalReturnReason.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924214008_AddSourceAcceptanceAndValidationIssues.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924214008_AddSourceAcceptanceAndValidationIssues.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924220554_AddReconciliationRevisionLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924220554_AddReconciliationRevisionLineage.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924234235_AddAuditScheduleAcceptedSourceBinding.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260924234235_AddAuditScheduleAcceptedSourceBinding.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925003605_AddOpeningBalanceVerification.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925003605_AddOpeningBalanceVerification.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925010649_AddAuditCompletionRecords.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925010649_AddAuditCompletionRecords.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925080249_AddStatementLayoutVersions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925080249_AddStatementLayoutVersions.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925081717_AddFinancialPackageSeal.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925081717_AddFinancialPackageSeal.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260928103836_TenantConsentAttempt.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260928103836_TenantConsentAttempt.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260928124122_M365TenantAdministration.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260928124122_M365TenantAdministration.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260929221858_CommercialQuotationsAndFeeAgreements.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260929221858_CommercialQuotationsAndFeeAgreements.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260929225216_AcceptancePathsEvidenceAndActivation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260929225216_AcceptancePathsEvidenceAndActivation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260929235833_ClientPortalOnboardingAndDelegation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260929235833_ClientPortalOnboardingAndDelegation.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930002500_ResourcePlanningMaterialityEngineAndRiskBands.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930002500_ResourcePlanningMaterialityEngineAndRiskBands.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930013221_FieldworkConnectionsSamplingEvidenceAndPhysicalIndex.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930013221_FieldworkConnectionsSamplingEvidenceAndPhysicalIndex.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930014648_ReviewNotesDeliverablesOpinionsAndSignatures.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930014648_ReviewNotesDeliverablesOpinionsAndSignatures.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930015812_ScheduledFileFreezeAndDocumentLocks.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930015812_ScheduledFileFreezeAndDocumentLocks.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930020740_TechnicalLibraryAnalyticsAndFirmExpenses.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930020740_TechnicalLibraryAnalyticsAndFirmExpenses.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001125254_ClientSharePointSites.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001125254_ClientSharePointSites.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001132814_ClientSiteRolloutBoundary.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001132814_ClientSiteRolloutBoundary.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001135143_CommercialTenderChapters.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001135143_CommercialTenderChapters.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001150815_SteDeliverableAssembly.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/20261001150815_SteDeliverableAssembly.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/AuditSphereDbContextModelSnapshot.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/Migrations/AuditSphereDbContextModelSnapshot.cs",
+        "src/AuditSphereOps.Infrastructure/Persistence/PostgresOperationStore.cs"
+      ],
+      "sourceFileCount": 151
+    }
+  ]
+}
