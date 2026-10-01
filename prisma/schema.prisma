@@ -44,6 +44,7 @@ model Engagement {
   materialityAssessments MaterialityAssessment[]
   risks RiskItem[]
   storedObjects StoredObject[]
+  reviewNotes ReviewNote[]
   @@unique([firmId, clientId, id])
 }
 model User {
@@ -382,6 +383,24 @@ model MappingMemoryEntry {
   lastApprovedAt   DateTime @default(now())
   @@unique([firmId, clientId, accountCode])
   @@index([firmId, clientId])
+}
+/// A reviewer's anchored note on a workpackage. Raising needs REVIEW_RAISE; resolving needs
+/// REVIEW_RESOLVE and can never be done by the person who raised it. A resolved note is frozen.
+model ReviewNote {
+  id           String    @id @default(uuid()) @db.Uuid
+  firmId       String    @db.Uuid
+  clientId     String    @db.Uuid
+  engagementId String    @db.Uuid
+  engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  workpackage  String
+  body         String
+  status       String    @default("OPEN")
+  raisedBy     String    @db.Uuid
+  raisedAt     DateTime  @default(now())
+  resolvedBy   String?   @db.Uuid
+  resolution   String?
+  resolvedAt   DateTime?
+  @@index([engagementId, status])
 }
 model AuditEvent {
   id           String   @id @default(uuid()) @db.Uuid

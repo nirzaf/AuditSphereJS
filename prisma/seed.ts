@@ -12,7 +12,7 @@ async function main() {
   await db.membership.upsert({ where: { userId_engagementId: { userId: fixtureUser, engagementId: id } }, create: { userId: fixtureUser, engagementId: id }, update: {} });
   // Explicit, engagement-scoped development grants. Nothing is granted implicitly by membership
   // or by the legacy 'PREPARER' role string.
-  for (const capability of ['ENGAGEMENT_READ', 'FIELDWORK_WRITE', 'FIELDWORK_FINALIZE', 'TB_PUBLISH', 'MAPPING_APPROVE', 'TAXONOMY_MANAGE', 'MATERIALITY_MANAGE', 'MATERIALITY_APPROVE', 'RISK_MANAGE', 'RISK_PARTNER_CLEAR', 'LIFECYCLE_COMMAND'] as const) {
+  for (const capability of ['ENGAGEMENT_READ', 'FIELDWORK_WRITE', 'FIELDWORK_FINALIZE', 'TB_PUBLISH', 'MAPPING_APPROVE', 'TAXONOMY_MANAGE', 'MATERIALITY_MANAGE', 'MATERIALITY_APPROVE', 'RISK_MANAGE', 'RISK_PARTNER_CLEAR', 'REVIEW_RAISE', 'REVIEW_RESOLVE', 'LIFECYCLE_COMMAND'] as const) {
     const existing = await db.roleGrant.findFirst({ where: { userId: fixtureUser, capability, engagementId: id, revokedAt: null } });
     if (!existing) await db.roleGrant.create({ data: { userId: fixtureUser, capability, firmId, clientId, engagementId: id, grantedBy: fixtureUser, reason: 'Development fixture grant' } });
   }
