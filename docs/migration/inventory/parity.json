@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-01T19:11:50.474Z",
+  "generatedAt": "2026-10-01T19:14:24.828Z",
   "sourceCommit": null,
   "counts": {
-    "PARTIAL": 10,
-    "NOT_STARTED": 28
+    "PARTIAL": 11,
+    "NOT_STARTED": 27
   },
   "rows": [
     {
@@ -214,6 +214,30 @@
         "tests/sampling.test.ts"
       ],
       "evidence": "Deterministic engine ported from the source with the same fixed splitmix64 generator: MUS interval crossing, key-item threshold, seeded random draw, stratified key-item-plus-draw, zero-exposure exclusion, absolute-exposure selection with signed totals and a six-decimal coverage percentage. docs/migration/03-differential-report.md reports 33/33 checks matched overall. Not implemented: persisted immutable populations and execution records, physical evidence movements and procedure conclusions."
+    },
+    {
+      "id": "C26",
+      "capability": "Review notes, reviews and completion",
+      "destinationOwner": "Reporting review inbox and SRM",
+      "taskAnchor": "T107-T117",
+      "migEpic": "MIG-005",
+      "symbols": [
+        "ReviewNotesService"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Audit/ReviewNotesService.cs"
+      ],
+      "sourceFileCount": 1,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/modules/reporting/review-notes.ts",
+        "prisma/migrations/202610010018_review_notes/migration.sql",
+        "tests/review-notes.integration.ts"
+      ],
+      "evidence": "Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances."
     },
     {
       "id": "C36",
@@ -890,26 +914,6 @@
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [],
       "evidence": "No fieldwork schedules, item tests or area assessments."
-    },
-    {
-      "id": "C26",
-      "capability": "Review notes, reviews and completion",
-      "destinationOwner": "Reporting review inbox and SRM",
-      "taskAnchor": "T107-T117",
-      "migEpic": "-",
-      "symbols": [
-        "ReviewNotesService"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Audit/ReviewNotesService.cs"
-      ],
-      "sourceFileCount": 1,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No review notes/SRM."
     },
     {
       "id": "C27",

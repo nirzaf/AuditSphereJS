@@ -11,8 +11,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 
 | Status | Capabilities |
 | --- | ---: |
-| NOT_STARTED | 28 |
-| PARTIAL | 10 |
+| NOT_STARTED | 27 |
+| PARTIAL | 11 |
 
 ## Destination status by capability
 
@@ -25,6 +25,7 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C13 | Mapping memory and approved mappings | `src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs`<br>`src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs` | 2 | Fieldwork mapping workbench / reporting mapping approval | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-009 |
 | C22 | Materiality and risk classification | `src/AuditSphereOps.Application/Audit/MaterialityCalculator.cs`<br>`src/AuditSphereOps.Application/Audit/MaterialityEngineService.cs`<br>`src/AuditSphereOps.Application/Audit/RiskBandService.cs` | 3 | Governance materiality and risk | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-003 |
 | C25 | Sampling runs, evidence and movements | `src/AuditSphereOps.Application/Audit/AuditSamplingService.cs`<br>`src/AuditSphereOps.Domain/Audit/AuditSamplingEngine.cs`<br>`src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs`<br>… 1 more | 5 | Fieldwork sampling and physical evidence | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-010 |
+| C26 | Review notes, reviews and completion | `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs` | 1 | Reporting review inbox and SRM | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
 | C36 | Operations hosts, workers and scoped operations UI | `src/AuditSphereOps.Application/Operations/Contracts.cs`<br>`src/AuditSphereOps.Application/Operations/OperationDispatcher.cs`<br>`src/AuditSphereOps.Application/Operations/OperationRecoveryService.cs`<br>`src/AuditSphereOps.Worker/Program.cs`<br>… 1 more | 5 | Platform operations and job status | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
 | C37 | API downloads, drafts, upload helpers and route guards | `src/AuditSphereOps.Domain/Documents/Pbc.cs` | 1 | Angular/API contract layer | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-003 |
 | C38 | Migrations, database checks, triggers and indexes | `src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Accounting.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AdjustmentBridge.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Audit.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AuditDeliverables.cs`<br>… 147 more | 151 | Prisma migrations plus reviewed PostgreSQL SQL | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-001, MIG-002, MIG-017 |
@@ -46,7 +47,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C21 | Staffing, resource planning and grid calculation | `src/AuditSphereOps.Application/Practice/ResourceGridCalculator.cs`<br>`src/AuditSphereOps.Application/Practice/ResourcePlanningService.cs`<br>`src/AuditSphereOps.Application/Practice/StaffingService.cs` | 3 | Governance staffing and availability | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C23 | Audit planning and program library | `src/AuditSphereOps.Application/Audit/AuditPlanningService.cs`<br>`src/AuditSphereOps.Application/Audit/AuditProgramService.cs` | 2 | Governance/audit planning | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C24 | Fieldwork schedules, tests and area assessments | `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.AreaAssessments.cs`<br>`src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Authorization.cs`<br>`src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.BankReconciliations.cs`<br>`src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Completion.cs`<br>… 6 more | 10 | Fieldwork procedure workspaces | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
-| C26 | Review notes, reviews and completion | `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs` | 1 | Reporting review inbox and SRM | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C27 | Confirmations and holding documents | `src/AuditSphereOps.Application/Audit/AuditConfirmationBatchService.cs`<br>`src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Confirmations.cs`<br>`src/AuditSphereOps.Domain/Audit/Fieldwork.cs`<br>`src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs` | 4 | Fieldwork confirmations / reporting completion gates | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C28 | Opinions, signatures, representations and bundles | `src/AuditSphereOps.Application/Completion/AuditDeliverableService.Bundle.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.OpinionAreas.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.Representations.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.Seal.cs`<br>… 1 more | 5 | Reporting opinions and signed deliverables | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-013 |
 | C29 | Freeze, amendments and document locks | `src/AuditSphereOps.Application/Records/FileFreezeService.cs`<br>`src/AuditSphereOps.Domain/Records/FileFreeze.cs` | 2 | Reporting records and operations | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-014 |
@@ -128,6 +128,16 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Audit/AuditSamplingService.cs`, `src/AuditSphereOps.Domain/Audit/AuditSamplingEngine.cs`, `src/AuditSphereOps.Domain/Audit/FieldworkConnections.cs`, `src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260925000301_AddAuditSamplingCutOffAndSubsequentMatch.cs`, `src/AuditSphereOps.Infrastructure/Persistence/Migrations/20260930013221_FieldworkConnectionsSamplingEvidenceAndPhysicalIndex.cs`
 - Destination files: `packages/server/src/modules/fieldwork/sampling.ts`, `tests/sampling.test.ts`
 - Evidence / gap: Deterministic engine ported from the source with the same fixed splitmix64 generator: MUS interval crossing, key-item threshold, seeded random draw, stratified key-item-plus-draw, zero-exposure exclusion, absolute-exposure selection with signed totals and a six-decimal coverage percentage. docs/migration/03-differential-report.md reports 33/33 checks matched overall. Not implemented: persisted immutable populations and execution records, physical evidence movements and procedure conclusions.
+
+### C26 — Review notes, reviews and completion
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Reporting review inbox and SRM
+- Existing task anchor: T107-T117; migration epic: MIG-005
+- Source symbols resolved: `ReviewNotesService`
+- Source files: `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs`
+- Destination files: `packages/server/src/modules/reporting/review-notes.ts`, `prisma/migrations/202610010018_review_notes/migration.sql`, `tests/review-notes.integration.ts`
+- Evidence / gap: Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances.
 
 ### C36 — Operations hosts, workers and scoped operations UI
 
@@ -338,16 +348,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.AreaAssessments.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Authorization.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.BankReconciliations.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Completion.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Confirmations.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Connections.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Differences.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.ItemTests.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Schedules.cs`, `src/AuditSphereOps.Application/Audit/Fieldwork/AuditFieldworkService.Selections.cs`
 - Destination files: —
 - Evidence / gap: No fieldwork schedules, item tests or area assessments.
-
-### C26 — Review notes, reviews and completion
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Reporting review inbox and SRM
-- Existing task anchor: T107-T117; migration epic: -
-- Source symbols resolved: `ReviewNotesService`
-- Source files: `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs`
-- Destination files: —
-- Evidence / gap: No review notes/SRM.
 
 ### C27 — Confirmations and holding documents
 

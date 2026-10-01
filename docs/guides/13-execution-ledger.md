@@ -111,7 +111,7 @@
 | T105 | [Track unadjusted differences and significant estimates](../tasks/08-fieldwork/T105-differences-register.md) | CORE | NOT_STARTED | — | — |
 | T106 | [Submit a complete version-bound workpackage for review](../tasks/08-fieldwork/T106-submit-workprogram.md) | CORE | NOT_STARTED | — | — |
 | T107 | [Implement the reviewer inbox and version-aware inspection](../tasks/09-review/T107-review-inbox.md) | CORE | NOT_STARTED | — | — |
-| T108 | [Implement inline review notes and resolution lifecycle](../tasks/09-review/T108-review-notes.md) | CORE | NOT_STARTED | — | — |
+| T108 | [Implement inline review notes and resolution lifecycle](../tasks/09-review/T108-review-notes.md) | CORE | IN_REVIEW | `ReviewNote` with `REVIEW_RAISE`/`REVIEW_RESOLVE`, refused self-review, a single OPEN→RESOLVED transition and a frozen resolved note; the database also rejects a self-resolved row (`tests/review-notes.integration.ts`). Remaining: revision-aware anchoring and the UI. | Migration C26-01 record |
 | T109 | [Return workpackages with mandatory comments and reassignment](../tasks/09-review/T109-rework.md) | CORE | NOT_STARTED | — | — |
 | T110 | [Clear completed workprograms without self-review or stale evidence](../tasks/09-review/T110-manager-clearance.md) | CORE | NOT_STARTED | — | — |
 | T111 | [Implement all required third-party confirmation categories](../tasks/09-review/T111-confirmation-register.md) | CORE | NOT_STARTED | — | — |

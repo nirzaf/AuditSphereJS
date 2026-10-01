@@ -193,10 +193,14 @@
       "migEpic": "MIG-010"
     },
     "C26": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No review notes/SRM.",
-      "migEpic": "-"
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/reporting/review-notes.ts",
+        "prisma/migrations/202610010018_review_notes/migration.sql",
+        "tests/review-notes.integration.ts"
+      ],
+      "evidence": "Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances.",
+      "migEpic": "MIG-005"
     },
     "C27": {
       "status": "NOT_STARTED",
