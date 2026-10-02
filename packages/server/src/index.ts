@@ -30,7 +30,7 @@ export { calculateQuotation, validateQuotation, quotationInputHash, requiredAppr
 export type { QuotationPricingInput, QuotationPricingResult, QuotationLineInput, QuotationLineResult, CommercialApprovalRule, RequiredApproval } from './modules/commercial/quotation.js';
 export type { MappedBenchmarkLine, MaterialityFigures, RiskBand, MaterialityBenchmark } from './modules/governance/materiality.js';
 export type { Capability, Scope } from './platform/authorization.js';
-export { parseTrialBalance } from './modules/fieldwork/parser.js';
+export { parseTrialBalance, parseTrialBalanceStream, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
 export { upload } from './modules/fieldwork/service.js';
 export { AdjustmentController } from './modules/fieldwork/adjustments-controller.js';
 export { createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, listAdjustmentJournals, adjustmentJournalDetail, adjustedBalances } from './modules/fieldwork/adjustments.js';

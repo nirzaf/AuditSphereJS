@@ -7,7 +7,7 @@ import { db } from './platform/db.js';
 import { ensureBucket, retrieve } from './platform/storage.js';
 import { resolveClientRepository } from './platform/repository.js';
 import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
-import { parseTrialBalance } from './modules/fieldwork/parser.js';
+import { parseTrialBalanceStream, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
 import { importWhere, parseImportJob, parseImportOutboxId } from './modules/fieldwork/import-job.js';
 import { createHash } from 'node:crypto';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
@@ -36,15 +36,16 @@ export async function runWorker() {
       const repository = document.key.startsWith('graph:') ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence') : undefined;
       const content = await retrieve(document.key, repository);
       if (createHash('sha256').update(content).digest('hex') !== document.sha256) throw new Error('Evidence hash mismatch');
-      const rows = parseTrialBalance(content);
       await db.$transaction(async tx => {
         await tx.$queryRaw`SELECT id FROM "TbImport" WHERE id = ${batch.id}::uuid AND "firmId" = ${scope.firmId}::uuid AND "clientId" = ${scope.clientId}::uuid AND "engagementId" = ${scope.engagementId}::uuid FOR UPDATE`;
         const latest = await tx.tbImport.findFirst({ where });
         if (!latest) throw new Error('Scoped trial-balance import not found');
         if (['MAPPING_REQUIRED', 'FINALIZED'].includes(latest.status)) return;
         await tx.tbRow.deleteMany({ where: { importId: batch.id } });
-        for (let i = 0; i < rows.length; i += 1000) await tx.tbRow.createMany({ data: rows.slice(i, i + 1000).map(row => ({ ...row, importId: batch.id })) });
-        await tx.tbImport.updateMany({ where, data: { status: 'MAPPING_REQUIRED', rowCount: rows.length } });
+        const rowCount = await writeTrialBalanceChunks(parseTrialBalanceStream(content), async chunk => {
+          await tx.tbRow.createMany({ data: chunk.map(value => ({ ...value, importId: batch.id })) });
+        });
+        await tx.tbImport.updateMany({ where, data: { status: 'MAPPING_REQUIRED', rowCount } });
         await tx.outboxEvent.updateMany({ where: outboxWhere, data: { completedAt: new Date() } });
       }, { timeout: 120_000 });
     } catch (error) {

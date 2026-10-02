@@ -2,7 +2,7 @@
 
 | Field | Value |
 | :--- | :--- |
-| Initial status | `NOT_STARTED` |
+| Current status | `IN_REVIEW` |
 | Execution class | `CORE` |
 | Phase | 04-tb-proof — Trial Balance technical proof |
 | Owner area | `fieldwork` |
@@ -43,18 +43,18 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Use the approved streaming CSV parser with explicit encoding, delimiter, header and quoted-value rules.
-- [ ] Preserve account codes as strings including leading zeroes; parse monetary strings through the shared decimal policy.
-- [ ] Process bounded chunks with cancel/progress checkpoints and error rows carrying source line numbers.
-- [ ] Reject unexpected columns/formula-like export hazards according to format policy without evaluating spreadsheet expressions.
+- [x] Use the existing `csv-parse` stream parser with explicit UTF-8/BOM, comma, header and quoted-value rules.
+- [x] Preserve account codes as strings including leading zeroes; parse monetary strings through the shared decimal policy.
+- [ ] Process bounded chunks with cancellation/progress checkpoints and durable error rows carrying source line numbers. Streaming validation, 1,000-row transactional writes and source-line errors are implemented; cancellation/progress checkpoints and durable row-error records remain open.
+- [ ] Reject unexpected columns and resolve formula-like export hazards according to approved format policy without evaluating spreadsheet expressions. Unexpected/duplicate/missing columns are rejected; export policy remains unresolved.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Quoted commas, BOM, CRLF and leading-zero accounts import correctly.
-- [ ] **AC2:** Memory stays bounded for the 50k fixture.
-- [ ] **AC3:** Malformed numerics cannot silently become zero or NaN.
+- [x] **AC1 (unit evidence):** Quoted commas, BOM, CRLF and leading-zero accounts parse correctly.
+- [x] **AC2 (unit evidence):** A 50k fixture is consumed as an async row stream without materializing a complete row array. The source payload and duplicate-code set remain bounded but resident.
+- [x] **AC3 (unit evidence):** Malformed numerics reject with source-line context; no fallback to zero or NaN.
 
-Run relevant deterministic rule tests, real PostgreSQL race/lineage tests and the affected browser/editor flow.
+Focused deterministic parser evidence is recorded in `docs/evidence/T044/handoff.md`. Real PostgreSQL worker/race/lineage tests and the affected browser/editor flow remain outstanding, as do prerequisite T043, T031 and T017 acceptance gates.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 
