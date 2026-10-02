@@ -1,6 +1,6 @@
 # T017 hosted compatibility recheck
 
-**Review state:** IN_REVIEW. The compatibility execution passed; prerequisite T016 remains in review because GitHub `main` has no required-PR/status-check rules.
+**Review state:** DONE. The compatibility execution passed; T016 is complete under the user's explicit direct-push policy. GitHub `main` has no required-PR/status-check rules, and none are claimed.
 
 **Source commit:** `ba46d5db5efc5bc1fff184b97c672208c4e761cb`
 

@@ -47,7 +47,7 @@ export async function upload(engagementId: string, actorId: string, input: unkno
       const document = await tx.document.create({ data: { engagementId, key: reference, sha256, filename: body.filename } });
       const batch = await tx.tbImport.create({ data: { firmId: engagement.firmId, clientId: engagement.clientId, engagementId, sha256, documentId: document.id } });
       await tx.storedObject.update({ where: { key }, data: { status: 'REFERENCED', documentId: document.id, resolvedAt: new Date() } });
-      await tx.outboxEvent.create({ data: { type: 'tb.import', payload: { importId: batch.id } } });
+      await tx.outboxEvent.create({ data: { type: 'tb.import', payload: { importId: batch.id, ...scopeOf(engagement) } } });
       await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_UPLOADED', payload: { importId: batch.id, sha256 } } });
       return batch;
     });

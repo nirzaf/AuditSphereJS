@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_REVIEW` |
+| Current status | `DONE` |
 | Execution class | `GATE` |
 | Phase | 01-foundation — Workspace and executable foundation |
 | Owner area | `gate` |
@@ -74,6 +74,6 @@ Before that script exists, record the actual available compile/test/review comma
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
-Evidence: [hosted compatibility run](../../evidence/T017/hosted-run-2026-10-02.md). Technical compatibility checks pass, but this gate remains `IN_REVIEW` while prerequisite T016 awaits repository branch-rule configuration and review.
+Evidence: [hosted compatibility run](../../evidence/T017/hosted-run-2026-10-02.md). Technical compatibility checks pass. T016 is complete under the user's explicitly selected direct-push policy; branch protection is not configured and is not represented as a control.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

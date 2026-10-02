@@ -34,6 +34,19 @@ test('empty disposable PostgreSQL 18.6 database migrates, keeps monetary precisi
       const importId = '22222222-2222-4222-8222-222222222222';
       const documentId = '33333333-3333-4333-8333-333333333333';
       await db.engagement.create({ data: { id: engagementId, firmId: firmA, clientId: clientA, name: 'precision', state: 'FIELDWORK_EXECUTION' } });
+      const memberA = '44444444-4444-4444-8444-444444444444';
+      const memberB = '55555555-5555-4555-8555-555555555555';
+      await db.user.createMany({ data: [
+        { id: memberA, email: 'scope-a@example.test', role: 'PREPARER' },
+        { id: memberB, email: 'scope-b@example.test', role: 'PREPARER' },
+      ] });
+      await db.membership.create({ data: { userId: memberA, firmId: firmA, clientId: clientA, engagementId } });
+      await assert.rejects(
+        db.$executeRaw`INSERT INTO "Membership" ("userId","firmId","clientId","engagementId") VALUES (${memberB}::uuid, ${firmB}::uuid, ${clientB}::uuid, ${engagementId}::uuid)`,
+        /foreign key/i,
+        'membership cannot assign another firm/client scope to an engagement',
+      );
+      assert.equal(await db.membership.count({ where: { userId: memberA, firmId: firmA, clientId: clientA, engagementId } }), 1);
       await db.document.create({ data: { id: documentId, engagementId, key: 'precision/dataset.csv', sha256: digest, filename: 'dataset.csv' } });
       await db.tbImport.create({ data: { id: importId, firmId: firmA, clientId: clientA, engagementId, documentId, sha256: digest } });
       await db.tbRow.create({ data: { importId, position: 0, code: '1000', name: 'Cash', current: '123456789.123456', prior: '0.000001' } });

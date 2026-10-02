@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_PROGRESS` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `identity` |
@@ -45,16 +46,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Model one firm boundary initially with explicit firm_id on tenant-owned roots, client entities and engagement membership.
-- [ ] Use composite ownership keys/foreign keys where cross-client references could be created; UUID unpredictability is not authorization.
-- [ ] Provide scoped query helpers for API and worker use cases without an unscoped bypass.
+- [x] Model one firm boundary initially with explicit firm_id on tenant-owned roots, client entities and engagement membership. Membership now stores firm/client/engagement keys and PostgreSQL checks the complete tuple.
+- [x] Use composite ownership keys/foreign keys where cross-client references could be created; UUID unpredictability is not authorization. Membership and staged imports have negative cross-scope database fixtures.
+- [x] Provide scoped query helpers for API and worker use cases without an unscoped bypass. Trial-balance outbox and queue jobs now carry the full scope tuple and every worker import lookup/update uses it.
 - [ ] Add cross-firm, cross-client and cross-engagement negative fixtures.
 
 ## Acceptance criteria and required tests
 
 - [ ] **AC1:** A valid UUID from another engagement cannot be read or attached.
-- [ ] **AC2:** Worker queries require an explicit authorized scope.
-- [ ] **AC3:** No artificial per-file quota is added.
+- [x] **AC2:** Worker queries require an explicit authorized scope.
+- [x] **AC3:** No artificial per-file quota is added.
 
 Test valid/invalid/expired credentials and cross-firm/client/engagement access through actual API boundaries.
 
@@ -77,3 +78,5 @@ Before that script exists, record the actual available compile/test/review comma
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
+
+Current handoff: [T018 scoped membership and worker jobs](../../evidence/T018/handoff.md). API-boundary cross-engagement read/attach tests and a reviewed production identity map remain open; this task is not accepted yet.

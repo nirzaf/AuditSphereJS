@@ -1,6 +1,6 @@
 # T016 CI and supply-chain handoff
 
-**Review state:** IN_REVIEW (implementation and automated checks pass; repository branch rules remain an external gate)
+**Review state:** DONE under the user's direct-push policy (implementation and automated checks pass; branch protection is not configured)
 
 **Code commit:** `ba46d5db5efc5bc1fff184b97c672208c4e761cb`
 
@@ -20,6 +20,6 @@
 
 The dependency/license/version inventory and recorded advisory review remain in [T005 evidence](../T005/). The lockfile and image identities are source-controlled; published web assets carry a SHA-256 manifest.
 
-## Remaining gate
+## Repository policy
 
-Read-only GitHub inspection found no `main` branch protection and no repository rulesets. Therefore required PR checks and the prohibition on direct default-branch pushes are not proven. Do not mark T016 `DONE` until that repository policy is configured and verified. This has not been changed because doing so would alter the user's existing direct-push workflow.
+Read-only GitHub inspection found no `main` branch protection and no repository rulesets. On 2026-10-02, the user explicitly chose to keep direct pushes. That instruction supersedes T016's planned no-direct-push policy for this repository. The branch-rule checklist was revised accordingly; no protection is claimed or configured. Required CI checks still run, and asset publication remains gated on successful verification.
