@@ -528,6 +528,8 @@ model PracticeJournal {
   postedBy String? @db.Uuid
   postedAt DateTime?
   reversalOf String? @unique @db.Uuid
+  reversal PracticeJournal? @relation("PracticeJournalReversal", fields: [firmId, reversalOf], references: [firmId, id], onDelete: Restrict, map: "PracticeJournal_reversal_scope_fkey")
+  reversedJournals PracticeJournal[] @relation("PracticeJournalReversal")
   lines PracticeJournalLine[]
   @@unique([firmId, reference])
   @@unique([firmId, id])

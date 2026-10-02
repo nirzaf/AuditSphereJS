@@ -100,6 +100,9 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       const foreignFirm = await db.firm.create({ data: { name: 'Other firm' } });
       const foreign = await db.practiceAccount.create({ data: { firmId: foreignFirm.id, code: '100', name: 'Other cash', kind: 'ASSET' } });
       await assert.rejects(db.practiceJournalLine.create({ data: { firmId, journalId: unbalanced.id, accountId: foreign.id, position: 2, debit: '1', credit: '0' } }), /foreign key/i);
+      const foreignPeriod = await db.practicePeriod.create({ data: { firmId: foreignFirm.id, startsOn: new Date('2026-01-01T00:00:00.000Z'), endsOn: new Date('2026-12-31T00:00:00.000Z') } });
+      const foreignJournal = await db.practiceJournal.create({ data: { firmId: foreignFirm.id, periodId: foreignPeriod.id, accountingDate: new Date('2026-10-02T00:00:00.000Z'), reference: 'FOREIGN-REVERSAL', memo: 'Foreign journal', createdBy: actorId } });
+      await assert.rejects(db.practiceJournal.create({ data: { firmId, periodId: period.id, accountingDate: new Date('2026-10-02T00:00:00.000Z'), reference: 'CROSS-FIRM-REVERSAL', memo: 'Must stay within firm', reversalOf: foreignJournal.id, createdBy: actorId } }), /PracticeJournal_reversal_scope_fkey|foreign key/i);
       assert.equal(await db.adjustmentJournal.count(), 0, 'firm postings must never create client audit adjustments');
     } finally { await db.$disconnect(); }
   } finally { await container.stop(); }
