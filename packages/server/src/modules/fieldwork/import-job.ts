@@ -15,3 +15,8 @@ export function parseImportJob(payload: unknown): ImportJob {
   if (!parsed.success) throw new Error('Invalid scoped trial-balance import job');
   return parsed.data;
 }
+
+/** Translate the queue identifier into the owned row key plus its full scope tuple. */
+export function importWhere(job: ImportJob) {
+  return { id: job.importId, firmId: job.firmId, clientId: job.clientId, engagementId: job.engagementId };
+}
