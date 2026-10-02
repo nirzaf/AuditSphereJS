@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_REVIEW` |
 | Execution class | `GATE` |
 | Phase | 01-foundation — Workspace and executable foundation |
 | Owner area | `gate` |
@@ -42,16 +43,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] In the selected Node/container target, install every mandatory direct dependency selected in the library register with strict peers.
-- [ ] Exercise Angular production build, compiled Nest DI, Fastify plugins, Prisma NUMERIC transaction, BullMQ Redis job, Socket.IO handshake and PDF/browser executable smoke.
-- [ ] Record exact versions, package integrity, operating-system dependencies and warnings; reject silent overrides and unsupported preview packages.
-- [ ] Commit the resolved lockfile and evidence; keep optional Microsoft/signing providers gated until their own credentialed tests.
+- [x] In the selected Node/container target, install every mandatory direct dependency selected in the library register with strict peers.
+- [x] Exercise Angular production build, compiled Nest DI, Fastify plugins, Prisma NUMERIC transaction, BullMQ Redis job, Socket.IO handshake and PDF/browser executable smoke.
+- [x] Record exact versions, package integrity, operating-system dependencies and warnings; reject silent overrides and unsupported preview packages.
+- [x] Commit the resolved lockfile and evidence; keep optional Microsoft/signing providers gated until their own credentialed tests.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Every mandatory compatibility row has a passing smoke or is an explicit production blocker.
-- [ ] **AC2:** Results include the actual command output and runtime versions.
-- [ ] **AC3:** A source-reviewed claim is not substituted for a run result.
+- [x] **AC1:** Every mandatory compatibility row has a passing smoke or is an explicit production blocker.
+- [x] **AC2:** Results include the actual command output and runtime versions.
+- [x] **AC3:** A source-reviewed claim is not substituted for a run result.
 
 Run every stated gate in the intended target; BLOCKED is the correct result when evidence is missing.
 
@@ -72,5 +73,7 @@ pnpm verify:task -- T017
 Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
+
+Evidence: [hosted compatibility run](../../evidence/T017/hosted-run-2026-10-02.md). Technical compatibility checks pass, but this gate remains `IN_REVIEW` while prerequisite T016 awaits repository branch-rule configuration and review.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
