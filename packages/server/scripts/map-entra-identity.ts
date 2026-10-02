@@ -12,10 +12,15 @@ function option(name: string): string {
 async function main() {
   const args = process.argv.slice(2);
   const allowed = new Set(['--local-user-id', '--tenant-id', '--object-id', '--apply']);
-  for (let index = 0; index < args.length; index += 1) {
-    if (!allowed.has(args[index]) || (args[index] !== '--apply' && (index + 1 >= args.length || args[index + 1].startsWith('--')))) {
-      throw new Error(`Unexpected or incomplete argument: ${args[index]}`);
+  for (let index = 0; index < args.length;) {
+    const name = args[index];
+    if (!allowed.has(name)) throw new Error(`Unexpected or incomplete argument: ${name}`);
+    if (name === '--apply') {
+      index += 1;
+      continue;
     }
+    if (index + 1 >= args.length || args[index + 1].startsWith('--')) throw new Error(`Unexpected or incomplete argument: ${name}`);
+    index += 2;
   }
   for (const name of ['--local-user-id', '--tenant-id', '--object-id']) {
     if (args.filter((value) => value === name).length !== 1) throw new Error(`Provide ${name} exactly once`);

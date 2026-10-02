@@ -43,9 +43,15 @@
 - `node --import tsx --test tests/audit-chain.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with orphan-event/head and cross-engagement chain-record denials.
 - `node --import tsx --test tests/unit-of-work.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with orphan command-receipt denial and existing transaction invariants.
 
+## Identity mapping procedure and scope regression — 2026-10-02
+
+- The operator-managed Entra mapping service and `pnpm identity:map:entra` CLI now provide a reviewed production mapping procedure. It binds only an existing active local user to an immutable tenant/object ID, defaults to dry-run, rejects conflicting or inactive identities, and never creates memberships or role grants. Its PostgreSQL concurrency and least-privilege tests are recorded in [T019 evidence](../T019/handoff.md).
+- `pnpm verify:task -- T018` passed on `41de138997374ac53f7e0d8d2ff31394e74b4c96`: Prisma/server build, scoped job tests (3/3), PostgreSQL firm/client scope (1/1), repository lineage (1/1), authorization grants (1/1), and Fastify foreign-scope boundary (1/1).
+- The local app database still has no user or engagement, so no production identity was mapped. No membership, role grant, tenant permission, or business record was created. Live mapped-user acceptance remains separate under T019; R008 organization hierarchy remains assigned to T052. T018 stays `IN_PROGRESS` until an authorized identity-map acceptance is available.
+
 ## Remaining acceptance
 
 - The protected lifecycle read and command boundaries are tested; the command denial leaves foreign state and transition history unchanged. Membership attachment is covered by the PostgreSQL composite-FK negative fixture; no separate membership-management HTTP workflow currently exists to test.
-- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). Fieldwork mapping, document and storage lineage; Practice reversal lineage; and platform audit/receipt scope now have owner-specific constraints. Production identity mapping remains an external acceptance dependency; R008 organization hierarchy remains assigned to T052.
-- The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only; there is no production database or reviewed identity map in this environment. The production identity mapping procedure remains open.
+- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). Fieldwork mapping, document and storage lineage; Practice reversal lineage; and platform audit/receipt scope now have owner-specific constraints. The mapping procedure is implemented; actual identity mapping remains an external acceptance dependency. R008 organization hierarchy remains assigned to T052.
+- The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only. There is no production database or live mapped identity in this environment.
 - No deployment or live Microsoft acceptance was performed by this change.

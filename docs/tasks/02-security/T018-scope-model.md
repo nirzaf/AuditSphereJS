@@ -79,4 +79,4 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
 
-Current handoff: [T018 scope and worker boundary](../../evidence/T018/handoff.md). The live API denies foreign reads and lifecycle commands with no state/history side effect; broader tenant-root review and a reviewed production identity map remain open; this task is not accepted yet.
+Current handoff: [T018 scope and worker boundary](../../evidence/T018/handoff.md). The live API denies foreign reads and lifecycle commands with no state/history side effect. The operator-managed immutable Entra mapping procedure is implemented and tested, but no live identity was mapped because there is no app user record or authorized mapping decision. T018 remains open for that mapped-identity acceptance; R008 organization hierarchy stays in T052.

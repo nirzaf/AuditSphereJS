@@ -26,6 +26,7 @@ test('Entra identity mapping binds only an existing active user and never provis
       const competingUserId = randomUUID();
       const claimedUserId = randomUUID();
       const racingUserId = randomUUID();
+      const cliUserId = randomUUID();
       const unmatched = { localUserId, tenantId, objectId };
       await db.user.createMany({ data: [
         { id: localUserId, email: `${localUserId}@example.test`, role: 'PREPARER' },
@@ -33,6 +34,7 @@ test('Entra identity mapping binds only an existing active user and never provis
         { id: competingUserId, email: `${competingUserId}@example.test`, role: 'PREPARER' },
         { id: claimedUserId, email: `${claimedUserId}@example.test`, role: 'PREPARER' },
         { id: racingUserId, email: `${racingUserId}@example.test`, role: 'PREPARER' },
+        { id: cliUserId, email: `${cliUserId}@example.test`, role: 'PREPARER' },
       ] });
 
       assert.deepEqual(await inspectEntraIdentityMapping(unmatched), { localUserId, status: 'READY' });
@@ -41,6 +43,22 @@ test('Entra identity mapping binds only an existing active user and never provis
       assert.equal(await db.roleGrant.count({ where: { userId: localUserId } }), 0, 'identity binding does not grant capabilities');
       assert.equal(await db.membership.count({ where: { userId: localUserId } }), 0, 'identity binding does not assign engagements');
       assert.equal((await db.user.findUniqueOrThrow({ where: { id: localUserId } })).role, 'PREPARER', 'directory identity does not change the local role');
+
+      const cliTenantId = randomUUID();
+      const cliObjectId = randomUUID();
+      const cliArgs = ['--local-user-id', cliUserId, '--tenant-id', cliTenantId, '--object-id', cliObjectId];
+      const cliEnv = { ...process.env, M365_TENANT_ID: cliTenantId };
+      const dryRun = execFileSync(process.execPath, ['--import', 'tsx', 'packages/server/scripts/map-entra-identity.ts', ...cliArgs], { env: cliEnv, encoding: 'utf8', timeout: 30_000, stdio: 'pipe' });
+      assert.match(dryRun, /Dry run valid.*no database change made/);
+      assert.equal((await db.user.findUniqueOrThrow({ where: { id: cliUserId } })).tenantId, null, 'CLI default must not modify the user');
+      const applied = execFileSync(process.execPath, ['--import', 'tsx', 'packages/server/scripts/map-entra-identity.ts', ...cliArgs, '--apply'], { env: cliEnv, encoding: 'utf8', timeout: 30_000, stdio: 'pipe' });
+      assert.match(applied, /Mapped Entra identity.*No memberships or role grants were created/);
+      const cliUser = await db.user.findUniqueOrThrow({ where: { id: cliUserId } });
+      assert.equal(cliUser.tenantId, cliTenantId);
+      assert.equal(cliUser.entraObjectId, cliObjectId);
+      assert.equal(await db.roleGrant.count({ where: { userId: cliUserId } }), 0);
+      assert.equal(await db.membership.count({ where: { userId: cliUserId } }), 0);
+
       await assert.rejects(inspectEntraIdentityMapping({ ...unmatched, localUserId: randomUUID() }), /does not exist/);
       await assert.rejects(inspectEntraIdentityMapping({ ...unmatched, localUserId: inactiveUserId }), /inactive/);
       await assert.rejects(mapEntraIdentityToExistingUser({ ...unmatched, localUserId, objectId: randomUUID() }), /already has an Entra identity mapping/);
