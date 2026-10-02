@@ -5,6 +5,7 @@
 ## Change
 
 - Added `User.active` with a PostgreSQL default of `true`; migration `202610020009_user_active` preserves all existing users as active until explicitly disabled.
+- Applied the five reviewed pending migrations to the local development database (`202610020005` through `202610020009`); `prisma migrate status` reports the schema up to date.
 - Refactored Entra and explicit development-fixture authentication through one local-user lookup. Entra identities still bind by `(tenantId, entraObjectId)`; inactive or unmapped users fail with 401.
 - Added `GET /api/v1/me`, returning only local user ID, email and active status. Engagement routes still require an active membership and scoped capability; the self route does not grant engagement access.
 - Added an Angular identity adapter token for testable MSAL integration, an authenticated-user indicator and popup sign-out. Sign-out clears the in-memory bearer token, local identity, loaded engagement records and unsaved drafts even when the logout popup fails; the UI reports when Microsoft sign-out could not be confirmed.
@@ -20,7 +21,7 @@
 | `pnpm lint` | Passed locally; ESLint and module/browser boundaries. |
 | Angular MCP `web:test` | Passed; 31/31 across five files, including sign-in and both confirmed/unconfirmed popup sign-out cases. |
 | Angular MCP `web:build` | Passed; production build output at `dist/web`. |
-| GitHub Actions | Pending push. |
+| GitHub Actions | Passed workflow [37016781547](https://github.com/nirzaf/AuditSphereJS/actions/runs/37016781547) on `6034f38d0b292279b8976347e1e550cfe5212221`: `verify:all`, contract checks, dependency audit, Linux build/smoke, packaged artifact and public web-assets job all passed. |
 
 ## Acceptance and limits
 
