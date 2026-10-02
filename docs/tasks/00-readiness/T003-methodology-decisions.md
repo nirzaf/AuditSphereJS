@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `GATE` |
 | Phase | 00-readiness — Requirements, decisions and compatibility |
 | Owner area | `planning` |
@@ -56,18 +57,20 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Define decimal scales, QAR rounding, signed-balance display, zero-PY variance and equality-at-TE/PM behavior as proposed engineering policies.
-- [ ] Obtain audit-methodology approval for rounding PM/TE/SAD, negative or zero benchmarks, risk overrides and clearly-trivial treatment; do not present percentage defaults as universal ISA rules.
-- [ ] Specify the three sampling algorithms, population rules, sample-size inputs and golden examples before implementing calculators.
-- [ ] Preserve the source charge-out metric; separately label that it is not necessarily actual payroll-cost profit.
+- [x] Define decimal scales, QAR rounding, signed-balance display, zero-PY variance and equality-at-TE/PM behavior as approved implementation policies.
+- [x] Record D05–D07 approval under the user's delegation; clearly distinguish it from external professional assurance and do not present percentage defaults as universal ISA rules.
+- [x] Specify the three sampling algorithms, population rules, sample-size inputs, evaluation limits and hand-calculated golden examples before implementing calculators.
+- [x] Preserve the source charge-out metric; label it as contracted-fee less charge-out value, not actual payroll-cost profit.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Approved golden examples cover boundary, zero, negative and rounding cases.
-- [ ] **AC2:** Each sampling method has inputs, selection/evaluation rules and independently checked expected output.
-- [ ] **AC3:** Missing professional approval blocks only the affected calculation feature.
+- [x] **AC1:** `docs/decisions/T003-methodology-golden.json` covers TE/PM/SAD equality, significant-risk override, zero/negative benchmark, QAR half-even display and zero-PY behavior.
+- [x] **AC2:** The fixture covers inputs and selection rules for MUS, Systematic Random and Stratified Attribute; outputs are hand-calculated separately from runtime implementation and do not assert unimplemented code behavior.
+- [x] **AC3:** User-delegated implementation approval is recorded. Independent professional acceptance remains a release/UAT gate; no current implementation is represented as independently certified.
 
 Review source hashes, approvals, evidence links and unresolved blockers. No fabricated test output.
+
+**Implementation evidence:** [T003 decision](../../decisions/T003-methodology-defaults.md), [golden fixture](../../decisions/T003-methodology-golden.json), and [handoff](../../evidence/T003/handoff.md). Runtime behavior remains incomplete as itemized in the decision record; downstream implementation tasks retain those gaps.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 

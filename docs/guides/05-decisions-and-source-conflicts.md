@@ -1,6 +1,6 @@
 # Source conflicts and approval decisions
 
-**Initial state of every decision: PENDING.** These records preserve ambiguities rather than resolving them silently. A proposal in this guide is not approved source wording. Foundation code may proceed, but affected business transitions/features remain blocked until their decision has a named owner and approval.
+**Initial state of every decision was PENDING.** The current state and approval evidence are recorded in [`register.json`](../decisions/register.json); status labels without a later decision link preserve the original proposal state. This guide preserves the original ambiguity and proposed direction. An implementation default is not approved source wording or professional certification. Affected behavior may use a recorded user-delegated default, but professional acceptance remains a separate gate where required.
 
 The numerical values, standards references and lifecycle terminology are taken from the supplied requirements. This pack is not legal, accounting or audit-standard certification. Where professional details are absent, the task is to obtain and test the approved specification, not generate a plausible substitute.
 
@@ -64,11 +64,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `195-213; 468-481; 493` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Audit methodology and finance owner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T003 methodology defaults](../decisions/T003-methodology-defaults.md). External professional-policy acceptance remains separate.
 
 **Unresolved point:** Equality at TE/PM, negative/zero benchmark, rounding of all thresholds and zero-PY variance are not fully specified.
 
-**Proposed implementation direction, not approval:** Approve digit/scale limits, signed balances, PM/TE/SAD rounding sequence, absolute-balance risk thresholds and undefined/zero-base display. Defaults remain proposals until signed off.
+**Recorded implementation default:** See T003 for scale, rounding, boundary, signed-balance, zero-base and failed-benchmark rules. Do not present these defaults as universal ISA rules.
 
 **Affected tasks:** [T023](../tasks/02-security/T023-money-clock.md), [T086](../tasks/07-planning/T086-materiality-calculator.md), [T087](../tasks/07-planning/T087-risk-classification.md).
 
@@ -78,11 +78,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `48-53; 208-213; 503; 507; 517` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Qualified audit-methodology owner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T003 methodology defaults](../decisions/T003-methodology-defaults.md). External professional-policy acceptance remains separate.
 
 **Unresolved point:** Three sampling names are specified but algorithms, confidence factors, evaluation rules and authoritative examples are absent; TE/performance materiality are combined in source terminology.
 
-**Proposed implementation direction, not approval:** Obtain method specifications and independent golden examples. Preserve source labels while documenting approved distinctions. Code does not certify ISA/IFRS compliance or make professional judgments.
+**Recorded implementation default:** T003 defines method inputs, population rules, selection/evaluation limits and hand-calculated engineering vectors. These do not establish independent ISA/IFRS compliance or professional assurance.
 
 **Affected tasks:** [T099](../tasks/08-fieldwork/T099-sampling-mus.md), [T100](../tasks/08-fieldwork/T100-sampling-systematic.md), [T101](../tasks/08-fieldwork/T101-sampling-stratified.md), [T102](../tasks/08-fieldwork/T102-sampling-results.md).
 
@@ -92,11 +92,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `343-355; 560-578` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Finance owner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T003 methodology defaults](../decisions/T003-methodology-defaults.md). Firm accounting policy remains separate.
 
 **Unresolved point:** Source profitability uses hours times charge-out rates, not necessarily actual payroll cost. Recognition, tax treatment, equity withdrawals and periods are not defined.
 
-**Proposed implementation direction, not approval:** Preserve named source metric and clearly label its basis. Approve invoice/advance recognition, taxes, cost rates and partner withdrawals without silently substituting billing rates for accounting costs.
+**Recorded implementation default:** Preserve and clearly label the contracted-fee less charge-out-value metric. Invoice recognition, taxes, payroll costs and partner withdrawals remain undecided and must not be inferred from this metric.
 
 **Affected tasks:** [T066](../tasks/06-billing-portal/T066-accounts-periods.md), [T069](../tasks/06-billing-portal/T069-invoice-foundation.md), [T143](../tasks/12-practice/T143-realization.md), [T146](../tasks/12-practice/T146-firm-pl.md).
 

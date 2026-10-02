@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": "STE-AUDIT-METHODS-2026.1",
+  "provenance": "Hand-calculated engineering defaults approved under user delegation on 2026-10-02. These are not outputs from the application implementation and are not ISA assurance factors.",
+  "materiality": {
+    "base": "1000000",
+    "benchmark": "PROFIT_BEFORE_TAX",
+    "ratePercent": "5",
+    "calculatedPm": "50000",
+    "adjustedPm": "49000",
+    "adjustmentPercent": "-2",
+    "performancePercent": "60",
+    "te": "29400",
+    "sadPercent": "4",
+    "sad": "1960",
+    "riskBoundaries": [
+      { "absoluteBalance": "29399.999999", "expectedBand": "GREEN" },
+      { "absoluteBalance": "29400", "expectedBand": "AMBER" },
+      { "absoluteBalance": "48999.999999", "expectedBand": "AMBER" },
+      { "absoluteBalance": "49000", "expectedBand": "RED" },
+      { "absoluteBalance": "1", "significantEstimate": true, "expectedBand": "RED" }
+    ],
+    "differenceBoundaries": [
+      { "absoluteDifference": "1960", "expected": "CLEARLY_TRIVIAL" },
+      { "absoluteDifference": "1960.000001", "expected": "ACCUMULATE_AND_ASSESS" },
+      { "absoluteDifference": "0", "expected": "CLEARLY_TRIVIAL" }
+    ],
+    "invalidBenchmarks": ["0", "-1"],
+    "qarHalfEven": [
+      { "input": "1.005", "display": "1.00" },
+      { "input": "1.015", "display": "1.02" },
+      { "input": "-1.015", "display": "-1.02" }
+    ],
+    "zeroPrior": { "current": "100", "prior": "0", "expectedStatus": "NO_BASE", "expectedPercentage": null }
+  },
+  "sampling": {
+    "mus": {
+      "interval": "300",
+      "population": [["row-01", "100"], ["row-02", "250"], ["row-03", "40"], ["row-04", "900"], ["row-05", "75"], ["row-06", "10"], ["row-07", "500"], ["row-08", "60"], ["row-09", "25"], ["row-10", "180"], ["credit-01", "-250"], ["zero-01", "0"]],
+      "eligibleIds": ["row-01", "row-02", "row-03", "row-04", "row-05", "row-06", "row-07", "row-08", "row-09", "row-10"],
+      "excluded": [{ "id": "credit-01", "reason": "NEGATIVE_CREDIT_SEPARATE_TEST" }, { "id": "zero-01", "reason": "ZERO_EXPOSURE" }],
+      "expectedSelectedIds": ["row-02", "row-04", "row-07", "row-10"],
+      "expectedSelectedAbsoluteTotal": "1830",
+      "expectedEligibleDebitTotal": "2140",
+      "reasoning": "Eligible cumulative exposure crosses 300 in row-02; 600, 900 and 1200 in row-04; 1500 and 1800 in row-07; and 2100 in row-10. Each row is selected once."
+    },
+    "systematicRandom": {
+      "orderedIds": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+      "populationCount": 10,
+      "sampleSize": 3,
+      "interval": "3.333333",
+      "start": "1.000000",
+      "expectedSelectedIds": ["B", "E", "H"],
+      "reasoning": "floor(1 + k×10/3) for k=0,1,2 yields zero-based indexes 1, 4 and 7."
+    },
+    "stratifiedAttribute": {
+      "attribute": "invoice_has_required_approval",
+      "strata": [
+        { "name": "HIGH_RISK", "populationIds": ["H1", "H2"], "selection": "CENSUS", "expectedSelectedIds": ["H1", "H2"], "observedDeviations": 1, "sampleRate": "0.5" },
+        { "name": "ROUTINE", "populationIds": ["R1", "R2", "R3", "R4", "R5", "R6"], "sampleSize": 2, "seed": 42, "algorithm": "STE-SPLITMIX64-DRAW-1", "expectedSelectedIds": ["R4", "R5"], "observedDeviations": 0, "sampleRate": "0" }
+      ],
+      "expectedDisposition": "REPORT_PER_STRATUM_ONLY_NO_PROJECTION",
+      "reasoning": "Strata are disjoint and exhaustive over the eight IDs; the high-risk stratum is censused; routine results are descriptive and are not projected."
+    }
+  },
+  "chargeOut": {
+    "hoursAndRates": [["2", "1000"], ["3", "500"]],
+    "contractedFee": "10000",
+    "chargeOutValue": "3500",
+    "expectedMetric": "6500",
+    "label": "CONTRACTED_FEE_LESS_CHARGE_OUT_VALUE"
+  }
+}

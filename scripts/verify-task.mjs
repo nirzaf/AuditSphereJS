@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 const id = process.argv.slice(2).find(value => value !== '--');
 const tasks = {
   T001: ['baseline'],
+  T003: ['methodology'],
   T007: ['lint', 'build:server', 'test:integration'],
   T008: ['build:server', 'test:integration'],
   T012: ['build:server', 'config'],
@@ -36,6 +37,11 @@ for (const step of tasks[id]) {
   if (step === 'ci-workflow' || step === 'install-policy') {
     const script = step === 'ci-workflow' ? 'verify-ci-workflow.mjs' : 'verify-pnpm-install-policy.mjs';
     const result = spawnSync(process.execPath, [`scripts/${script}`], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
+    continue;
+  }
+  if (step === 'methodology') {
+    const result = spawnSync(process.execPath, ['scripts/verify-methodology.mjs'], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }
