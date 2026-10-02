@@ -1,0 +1,42 @@
+{
+  "testedCommit": "9f6b9e0daa10a25129475e5e7aad53d881108a76",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156",
+  "checkedAtUtc": "2026-10-02T19:26:55Z/2026-10-02T19:27:04Z",
+  "testsPassed": 2,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "provider": "Microsoft Graph live nonproduction tenant",
+  "results": [
+    {
+      "provider": "SHAREPOINT",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 131,
+      "sha256": "be14d58a9abfd9a08aee9f26a34533d57073b0694c9e69c019aad29183457808",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "c21d94f39aa73cb4756bc708f13496e8333144986c58436ecd33a54533404f70",
+      "outsideFolderWrite": 403,
+      "deletedAcceptedVersionRead": 404,
+      "deletedReadOutcome": "READ_FAILS_CLOSED",
+      "syntheticFixtureDeleted": true
+    },
+    {
+      "provider": "ONEDRIVE",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 129,
+      "sha256": "04e3dd9c0fcd0d1d004e10b47ee64cbeda914b7abf028fd95ad7a85fe955faf2",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "e019e0e0d5c9917b46c91d5d1613afbb8a459ff3eae2bdce2edf55ea617f7602",
+      "outsideFolderWrite": 403,
+      "deletedAcceptedVersionRead": 404,
+      "deletedReadOutcome": "READ_FAILS_CLOSED",
+      "syntheticFixtureDeleted": true
+    }
+  ],
+  "limitations": [
+    "Does not establish Entra SPA sign-in or local business authorization.",
+    "Token expiry, consent revocation/recovery, throttling and ambiguous provider outcomes remain untested.",
+    "Does not establish legal retention, legal hold, records policy or archive sealing.",
+    "Earlier retained synthetic acceptance fixtures were not modified; this run deleted only its own uniquely named files.",
+    "No tenant settings, permissions, credentials, production folders or application deployment were changed."
+  ]
+}
