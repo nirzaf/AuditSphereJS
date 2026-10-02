@@ -50,6 +50,6 @@ No persistent data changes were made. User authorized direct pushes to `main`; n
 ## Review and next task
 
 Reviewer: pending  
-Review result: local verification passed; hosted verification pending  
+Review result: local verification passed; hosted run `37037318121` exposed the stale CI readiness URL, corrected in `.github/workflows/ci.yml`; rerun pending.
 Open blockers: none within T009.  
 Next eligible task by dependency order: review remaining T018 ownership acceptance and resume its downstream identity tasks.
