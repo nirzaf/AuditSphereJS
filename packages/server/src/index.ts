@@ -1,6 +1,6 @@
 export { db } from './platform/db.js';
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
-export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, practiceLedger } from './modules/practice/ledger.js';
+export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';
 export { calculateContractContribution, validateContractContribution } from './modules/practice/analytics.js';
 export type { ContractContribution, ContractTimeValue } from './modules/practice/analytics.js';
 export { AuditController } from './platform/audit-controller.js';

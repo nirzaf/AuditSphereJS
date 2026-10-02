@@ -2,7 +2,7 @@ import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
-import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, practiceLedger } from './ledger.js';
+import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
 
 @ApiTags('Practice ledger') @ApiBearerAuth() @UseGuards(InternalGuard)
 @Controller('engagements/:engagementId/practice')
@@ -15,4 +15,5 @@ export class PracticeLedgerController {
   @Post('journals/:id/post') post(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return postPracticeJournal(actorId, engagementId, id, body); }
   @Post('journals/:id/reverse') reverse(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return reversePracticeJournal(actorId, engagementId, id, body); }
   @Post('periods/:id/close') close(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return closePracticePeriod(actorId, engagementId, id, body); }
+  @Post('periods/:id/reopen') reopen(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return reopenPracticePeriod(actorId, engagementId, id, body); }
 }

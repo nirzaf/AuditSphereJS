@@ -19,7 +19,7 @@ async function main() {
     if (!existing) await db.roleGrant.create({ data: { userId: fixtureUser, capability, firmId, clientId, engagementId: id, grantedBy: fixtureUser, reason: 'Development fixture grant' } });
   }
   // Development-only firm ledger permissions. Production authority must be separately assigned.
-  for (const capability of ['PRACTICE_READ', 'PRACTICE_MANAGE', 'PRACTICE_POST'] as const) {
+  for (const capability of ['PRACTICE_READ', 'PRACTICE_MANAGE', 'PRACTICE_POST', 'PRACTICE_REOPEN_PERIOD'] as const) {
     const existing = await db.roleGrant.findFirst({ where: { userId: fixtureUser, capability, firmId, clientId: null, engagementId: null, revokedAt: null } });
     if (!existing) await db.roleGrant.create({ data: { userId: fixtureUser, capability, firmId, grantedBy: fixtureUser, reason: 'Development-only practice fixture' } });
   }

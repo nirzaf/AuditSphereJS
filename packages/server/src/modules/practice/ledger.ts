@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema } from '@auditsphere/contracts';
+import { practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema, practicePeriodTransitionSchema } from '@auditsphere/contracts';
 import { db } from '../../platform/db.js';
 import { AccountingDate } from '../../platform/clock.js';
 import { runUnitOfWork, lockForUpdate, type TransactionClient } from '../../platform/unit-of-work.js';
@@ -14,7 +14,7 @@ function parse<T>(schema: z.ZodType<T>, input: unknown): T {
 }
 function practiceFailure(error: unknown): never {
   const message = error instanceof Error ? error.message : '';
-  for (const guard of ['Approved firm posting policy is required', 'Posting date must belong to an open accounting period', 'Practice journal must contain balanced nonzero double-entry lines', 'Inactive or nonposting accounts cannot post', 'Reversal lines must exactly invert the original', 'Accounting periods must not overlap', 'Period identity and closed periods are immutable']) {
+  for (const guard of ['Approved firm posting policy is required', 'Posting date must belong to an open accounting period', 'Practice journal must contain balanced nonzero double-entry lines', 'Inactive or nonposting accounts cannot post', 'Reversal lines must exactly invert the original', 'Accounting periods must not overlap', 'Period transition requires an actor, reason and next version', 'Period identity and closed periods are immutable']) {
     if (message.includes(guard)) throw new ConflictException(guard);
   }
   const code = error && typeof error === 'object' ? (error as { code?: string }).code : undefined;
@@ -29,6 +29,9 @@ async function firmScope(tx: TransactionClient, actorId: string, engagementId: s
   if (!grants.some(g => g.firmId === engagement.firmId && g.clientId === null && g.engagementId === null))
     throw new ForbiddenException('A firm-wide practice grant is required');
   return engagement.firmId;
+}
+async function lockPracticePeriod(tx: TransactionClient, periodId: string) {
+  await tx.$queryRaw`SELECT id FROM "PracticePeriod" WHERE id = ${periodId}::uuid FOR UPDATE`;
 }
 async function command<T>(actorId: string, engagementId: string, capability: Capability, body: { idempotencyKey: string }, operation: string, work: (tx: TransactionClient, firmId: string) => Promise<T>) {
   const hash = createHash('sha256').update(JSON.stringify({ engagementId, operation, body })).digest('hex');
@@ -75,6 +78,7 @@ export async function createPracticePeriod(actorId: string, engagementId: string
 export async function createPracticeJournal(actorId: string, engagementId: string, input: unknown) {
   const body = parse(practiceJournalSchema, input);
   return command(actorId, engagementId, 'PRACTICE_MANAGE', body, 'PRACTICE_JOURNAL_CREATED', async (tx, firmId) => {
+    await lockPracticePeriod(tx, body.periodId);
     const period = await tx.practicePeriod.findFirst({ where: { id: body.periodId, firmId, closed: false } });
     if (!period) throw new ConflictException('An open period in this firm is required');
     const day = AccountingDate.fromISO(body.accountingDate).startOfUtcDay();
@@ -100,16 +104,37 @@ export async function reversePracticeJournal(actorId: string, engagementId: stri
     const original = await tx.practiceJournal.findFirst({ where: { id: journalId, firmId, status: 'POSTED', version: body.expectedVersion }, include: { lines: { orderBy: { position: 'asc' } } } });
     if (!original) throw new ConflictException('A current posted journal in this firm is required');
     if (await tx.practiceJournal.findUnique({ where: { reversalOf: journalId } })) throw new ConflictException('Journal was already reversed');
-    const reversal = await tx.practiceJournal.create({ data: { firmId, periodId: body.periodId, accountingDate: AccountingDate.fromISO(body.accountingDate).startOfUtcDay(), reference: body.reference, memo: `Reverse ${original.reference}`, createdBy: actorId, reversalOf: journalId, lines: { create: original.lines.map(l => ({ accountId: l.accountId, position: l.position, debit: l.credit, credit: l.debit })) } } });
+    await lockPracticePeriod(tx, body.periodId);
+    const period = await tx.practicePeriod.findFirst({ where: { id: body.periodId, firmId, closed: false } });
+    if (!period) throw new ConflictException('A reversal must use an open accounting period in this firm');
+    const accountingDate = AccountingDate.fromISO(body.accountingDate).startOfUtcDay();
+    if (accountingDate < period.startsOn || accountingDate > period.endsOn) throw new BadRequestException('Reversal date is outside the selected period');
+    const reversal = await tx.practiceJournal.create({ data: { firmId, periodId: period.id, accountingDate, reference: body.reference, memo: `Reverse ${original.reference}`, createdBy: actorId, reversalOf: journalId, lines: { create: original.lines.map(l => ({ accountId: l.accountId, position: l.position, debit: l.credit, credit: l.debit })) } } });
     return tx.practiceJournal.update({ where: { id: reversal.id }, data: { status: 'POSTED', version: { increment: 1 }, postedBy: actorId, postedAt: new Date() } });
   });
 }
 export async function closePracticePeriod(actorId: string, engagementId: string, periodId: string, input: unknown) {
-  const body = parse(practiceVersionSchema, input);
+  const body = parse(practicePeriodTransitionSchema, input);
   return command(actorId, engagementId, 'PRACTICE_MANAGE', body, `PRACTICE_PERIOD_CLOSED:${periodId}`, async (tx, firmId) => {
-    const changed = await tx.practicePeriod.updateMany({ where: { id: periodId, firmId, closed: false, version: body.expectedVersion }, data: { closed: true, version: { increment: 1 } } });
+    await lockPracticePeriod(tx, periodId);
+    const period = await tx.practicePeriod.findFirst({ where: { id: periodId, firmId, closed: false, version: body.expectedVersion } });
+    if (!period) throw new ConflictException('Period changed or is outside this firm');
+    const drafts = await tx.practiceJournal.count({ where: { firmId, periodId, status: 'DRAFT' } });
+    if (drafts !== 0) throw new ConflictException('All journals in the period must be posted before closing it');
+    const changed = await tx.practicePeriod.updateMany({ where: { id: periodId, firmId, closed: false, version: body.expectedVersion }, data: { closed: true, version: { increment: 1 }, lastTransitionReason: body.reason, lastTransitionBy: actorId } });
     if (changed.count !== 1) throw new ConflictException('Period changed or is outside this firm');
-    return { id: periodId, closed: true, version: body.expectedVersion + 1 };
+    return { id: periodId, closed: true, version: body.expectedVersion + 1, reason: body.reason };
+  });
+}
+export async function reopenPracticePeriod(actorId: string, engagementId: string, periodId: string, input: unknown) {
+  const body = parse(practicePeriodTransitionSchema, input);
+  return command(actorId, engagementId, 'PRACTICE_REOPEN_PERIOD', body, `PRACTICE_PERIOD_REOPENED:${periodId}`, async (tx, firmId) => {
+    await lockPracticePeriod(tx, periodId);
+    const period = await tx.practicePeriod.findFirst({ where: { id: periodId, firmId, closed: true, version: body.expectedVersion } });
+    if (!period) throw new ConflictException('A current closed period in this firm is required');
+    const changed = await tx.practicePeriod.updateMany({ where: { id: periodId, firmId, closed: true, version: body.expectedVersion }, data: { closed: false, version: { increment: 1 }, lastTransitionReason: body.reason, lastTransitionBy: actorId } });
+    if (changed.count !== 1) throw new ConflictException('Period changed or is outside this firm');
+    return { id: periodId, closed: false, version: body.expectedVersion + 1, reason: body.reason };
   });
 }
 export async function practiceLedger(actorId: string, engagementId: string) {

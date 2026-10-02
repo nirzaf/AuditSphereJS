@@ -71,7 +71,7 @@
 | T065 | [Generate partner-authorized engagement letters](../tasks/05-commercial/T065-letter.md) | CORE | NOT_STARTED | — | — |
 | T066 | [Create the firm chart of accounts and accounting-period controls](../tasks/06-billing-portal/T066-accounts-periods.md) | CORE | IN_PROGRESS | Codex | Firm ledger posting foundation; see evidence/T067/handoff.md |
 | T067 | [Implement draft journals and balanced posting transactions](../tasks/06-billing-portal/T067-journals.md) | CORE | IN_PROGRESS | Codex | Firm ledger posting foundation; see evidence/T067/handoff.md |
-| T068 | [Implement journal reversal and controlled period close](../tasks/06-billing-portal/T068-reversals.md) | CORE | NOT_STARTED | — | — |
+| T068 | [Implement journal reversal and controlled period close](../tasks/06-billing-portal/T068-reversals.md) | CORE | IN_REVIEW | Added reasoned close/reopen commands, separate `PRACTICE_REOPEN_PERIOD` firm grant, draft-free close, open-date reversal checks and database guards. `pnpm verify:affected` 67/67; Angular MCP build and 29/29 tests passed; focused PostgreSQL 18.6 Testcontainers check passed 1/1 after Docker Desktop recovery. T017/T025/T067 gates and independent review remain open. | `docs/evidence/T068/handoff.md` |
 | T069 | [Implement canonical invoices, numbering and billing ownership](../tasks/06-billing-portal/T069-invoice-foundation.md) | CORE | NOT_STARTED | — | — |
 | T070 | [Issue the advance invoice alongside the approved letter](../tasks/06-billing-portal/T070-advance-billing.md) | CORE | NOT_STARTED | — | — |
 | T071 | [Record payments, allocations and cleared-advance gate](../tasks/06-billing-portal/T071-payments.md) | CORE | NOT_STARTED | — | — |

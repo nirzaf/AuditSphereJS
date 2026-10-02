@@ -56,6 +56,7 @@ model User {
   entraObjectId String?      @db.Uuid
   memberships   Membership[]
   grants        RoleGrant[]
+  practicePeriodTransitions PracticePeriod[] @relation("PracticePeriodTransitionActor")
   @@unique([tenantId, entraObjectId])
 }
 /// A capability granted to a user over a scope and valid only inside its window.
@@ -477,6 +478,9 @@ model PracticePeriod {
   endsOn DateTime @db.Date
   closed Boolean @default(false)
   version Int @default(1)
+  lastTransitionReason String @default("")
+  lastTransitionBy String? @db.Uuid
+  lastTransitionActor User? @relation("PracticePeriodTransitionActor", fields: [lastTransitionBy], references: [id], onDelete: Restrict)
   @@unique([firmId, id])
 }
 model PracticeJournal {

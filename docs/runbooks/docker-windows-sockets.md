@@ -12,4 +12,10 @@ Both directories must be refreshed together when both sockets are malformed. The
 
 No factory reset, prune, uninstall, WSL unregister, VHDX deletion, or container/volume deletion was performed. Preserve the runtime backups until recovery remains stable.
 
+## Follow-up recovery — 2026-10-02
+
+Docker Desktop 4.91.0 continued to fail with the same ingest-socket rename error. The supported Docker updater did not progress in the failed-start state, so WinGet's Docker Inc. package metadata was checked and the official 4.93.0 installer was downloaded; WinGet verified the installer SHA-256 before installation. After the user approved the Windows administrator prompt, installation completed.
+
+Verified recovery: Docker Desktop 4.93.0 opened its dashboard, `docker info` returned Docker Engine 29.8.1, and `pnpm verify:task -- T068` successfully ran its PostgreSQL 18.6 Testcontainers test (1/1). No factory reset or Docker data/volume cleanup was used. The old runtime backup directories remain untouched.
+
 Similar reported issue: https://github.com/docker/desktop-feedback/issues/676

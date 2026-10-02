@@ -15,6 +15,7 @@ const tasks = {
   T026: ['build:server', 'checkpoint', 'audit-chain'],
   T066: ['build:server', 'practice-ledger'],
   T067: ['build:server', 'practice-ledger'],
+  T068: ['build:server', 'practice-ledger'],
   T032: ['build:server', 'storage'],
   T017: ['verify:all', 'build:linux', 'smoke:linux'],
 };

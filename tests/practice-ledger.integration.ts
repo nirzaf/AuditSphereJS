@@ -14,7 +14,7 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, practiceLedger } = await import('@auditsphere/server');
+    const { db, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID();
       await db.firm.create({ data: { id: firmId, name: 'Ledger firm' } });
@@ -58,16 +58,45 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       assert.equal(reversal.status, 'POSTED');
       assert.equal((await practiceLedger(actorId, engagementId)).balances.find(a => a.code === '500')?.balance, '0.000000');
       await assert.rejects(reversePracticeJournal(actorId, engagementId, journal.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-02', reference: 'REV-RENT-2' }), /already reversed/);
-      const draft = await create('CLOSED');
-      await closePracticePeriod(actorId, engagementId, period.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
-      await assert.rejects(postPracticeJournal(actorId, engagementId, draft.id, { expectedVersion: 1, idempotencyKey: randomUUID() }), /open accounting period/);
+      const closingPeriod = await createPracticePeriod(actorId, engagementId, { startsOn: '2027-01-01', endsOn: '2027-12-31' });
+      const createClosing = (reference: string) => createPracticeJournal(actorId, engagementId, { periodId: closingPeriod.id, accountingDate: '2027-02-10', reference, memo: 'Year-end correction', idempotencyKey: randomUUID(), lines: [{ accountId: rent.id, debit: '0.30', credit: '0' }, { accountId: cash.id, debit: '0', credit: '0.30' }] });
+      const closeDraft = await createClosing('CLOSE-DRAFT');
+      const closeCommand = { expectedVersion: 1, idempotencyKey: randomUUID(), reason: 'Month-end review is complete.' };
+      await assert.rejects(closePracticePeriod(actorId, engagementId, closingPeriod.id, closeCommand), /All journals in the period must be posted/);
+      assert.equal((await db.practicePeriod.findUniqueOrThrow({ where: { id: closingPeriod.id } })).closed, false, 'a failed close leaves the period open');
+      await postPracticeJournal(actorId, engagementId, closeDraft.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
+      const closing = await createClosing('CLOSE-READY');
+      await postPracticeJournal(actorId, engagementId, closing.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
+      // Reversal into a closed period is rejected before a reversal header or lines are written.
+      const closeKey = randomUUID();
+      const closeBody = { expectedVersion: 1, idempotencyKey: closeKey, reason: 'All draft journals have been reviewed.' };
+      const closed = await closePracticePeriod(actorId, engagementId, closingPeriod.id, closeBody);
+      assert.deepEqual(await closePracticePeriod(actorId, engagementId, closingPeriod.id, closeBody), closed, 'idempotent close must not advance the version twice');
+      assert.equal(closed.version, 2);
+      await assert.rejects(reversePracticeJournal(actorId, engagementId, closing.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: closingPeriod.id, accountingDate: '2027-02-10', reference: 'REV-CLOSED' }), /reversal must use an open accounting period/);
+      await assert.rejects(createPracticeJournal(actorId, engagementId, { periodId: closingPeriod.id, accountingDate: '2027-02-10', reference: 'CLOSED-DRAFT', memo: 'Must fail', idempotencyKey: randomUUID(), lines: [{ accountId: rent.id, debit: '1', credit: '0' }, { accountId: cash.id, debit: '0', credit: '1' }] }), /open period/);
+      await assert.rejects(db.practiceJournal.create({ data: { firmId, periodId: closingPeriod.id, accountingDate: new Date('2027-02-10T00:00:00.000Z'), reference: 'DIRECT-CLOSED', memo: 'Database guard', createdBy: actorId } }), /open accounting period/);
       // A caller-controlled search path and fake open period cannot bypass the database guard.
       await assert.rejects(db.$transaction(async tx => {
         await tx.$executeRawUnsafe('CREATE TEMP TABLE "PracticePeriod" AS SELECT * FROM public."PracticePeriod"');
         await tx.$executeRawUnsafe('UPDATE pg_temp."PracticePeriod" SET closed = false');
         await tx.$executeRawUnsafe('SET LOCAL search_path TO pg_temp, public');
-        await tx.$executeRaw`UPDATE public."PracticeJournal" SET status = 'POSTED', "postedBy" = ${actorId}::uuid, "postedAt" = CURRENT_TIMESTAMP WHERE id = ${draft.id}::uuid`;
+        await tx.$executeRaw`INSERT INTO public."PracticeJournal" (id, "firmId", "periodId", "accountingDate", reference, memo, "createdBy") VALUES (${randomUUID()}::uuid, ${firmId}::uuid, ${closingPeriod.id}::uuid, DATE '2027-02-10', 'SEARCH-PATH-CLOSED', 'Must resolve actual period', ${actorId}::uuid)`;
       }), /open accounting period/);
+      await assert.rejects(reopenPracticePeriod(actorId, engagementId, closingPeriod.id, { expectedVersion: 2, idempotencyKey: randomUUID(), reason: 'Approved correction period.' }), (error: any) => error.getStatus?.() === 403 && /firm-wide/.test(error.message));
+      await db.roleGrant.create({ data: { userId: actorId, capability: 'PRACTICE_REOPEN_PERIOD', firmId, grantedBy: actorId, reason: 'Privileged period-reopen test grant' } });
+      await assert.rejects(reopenPracticePeriod(actorId, engagementId, closingPeriod.id, { expectedVersion: 2, idempotencyKey: randomUUID(), reason: 'too short' }), (error: any) => error.getStatus?.() === 400);
+      const reopenBody = { expectedVersion: 2, idempotencyKey: randomUUID(), reason: 'Approved correction journal requires this period.' };
+      const reopened = await reopenPracticePeriod(actorId, engagementId, closingPeriod.id, reopenBody);
+      assert.deepEqual(await reopenPracticePeriod(actorId, engagementId, closingPeriod.id, reopenBody), reopened, 'replayed reopen must not advance the version twice');
+      assert.equal(reopened.closed, false);
+      assert.equal(reopened.version, 3);
+      assert.equal((await db.practicePeriod.findUniqueOrThrow({ where: { id: closingPeriod.id } })).lastTransitionReason, reopenBody.reason);
+      const reopenAudit = await db.auditEvent.findFirst({ where: { engagementId, action: `PRACTICE_PERIOD_REOPENED:${closingPeriod.id}` } });
+      assert.equal((reopenAudit?.payload as any).result.reason, reopenBody.reason, 'the immutable audit event records the reason');
+      const reopenedPeriodDraft = await createClosing('REOPENED-POST');
+      const reopenedPosting = await postPracticeJournal(actorId, engagementId, reopenedPeriodDraft.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
+      assert.equal(reopenedPosting.status, 'POSTED', 'an authorized reopen permits a new posted correction');
       const foreignFirm = await db.firm.create({ data: { name: 'Other firm' } });
       const foreign = await db.practiceAccount.create({ data: { firmId: foreignFirm.id, code: '100', name: 'Other cash', kind: 'ASSET' } });
       await assert.rejects(db.practiceJournalLine.create({ data: { firmId, journalId: unbalanced.id, accountId: foreign.id, position: 2, debit: '1', credit: '0' } }), /foreign key/i);

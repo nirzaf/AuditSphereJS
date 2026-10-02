@@ -7,7 +7,7 @@ export const finalizeSchema = z.object({ expectedVersion: z.number().int().posit
 export const moneySchema = z.string().regex(/^-?\d{1,22}(\.\d{1,6})?$/);
 /** Capability vocabulary evaluated against a firm/client/engagement scope. Local grants are
  *  never Microsoft directory authority and never infer one from the other. */
-export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND','PRACTICE_READ','PRACTICE_MANAGE','PRACTICE_POST'] as const;
+export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND','PRACTICE_READ','PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_REOPEN_PERIOD'] as const;
 export const capabilitySchema = z.enum(capabilities);
 /** Publishing binds one immutable accounting version to one exact finalized import version. */
 export const publishSchema = z.object({ importId: z.uuid(), expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
@@ -65,6 +65,8 @@ export const practiceAccountSchema = z.object({ code: z.string().trim().min(1).m
 export const practicePeriodSchema = z.object({ startsOn: z.iso.date(), endsOn: z.iso.date() }).refine(v => v.startsOn <= v.endsOn, 'Period dates are reversed');
 export const practiceJournalSchema = z.object({ periodId: z.uuid(), accountingDate: z.iso.date(), reference: z.string().trim().min(1).max(80), memo: z.string().trim().min(1).max(500), idempotencyKey: z.uuid(), lines: z.array(z.object({ accountId: z.uuid(), debit: moneySchema, credit: moneySchema })).min(2).max(500) });
 export const practiceVersionSchema = z.object({ expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
+/** Period transitions require a current version and a durable, human-readable reason. */
+export const practicePeriodTransitionSchema = practiceVersionSchema.extend({ reason: z.string().trim().min(10).max(1000) });
 export const lifecycleCommands = ['START_FIELDWORK','SUBMIT_FOR_REVIEW','RETURN_FOR_REWORK'] as const;
 export const lifecycleCommandSchema = z.object({
   command: z.enum(lifecycleCommands),

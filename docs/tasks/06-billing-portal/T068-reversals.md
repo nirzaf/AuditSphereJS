@@ -8,6 +8,8 @@
 | Owner area | `practice` |
 | Completion unit | One focused, reviewable change and its evidence |
 
+**Current implementation status:** `IN_REVIEW` — domain/UI commands and the focused PostgreSQL 18.6 integration recipe pass locally; T017/T025/T067 prerequisite gates and independent review remain pending.
+
 ## Outcome
 
 Create a reversing journal linked to the original and using an allowed open date.
@@ -41,18 +43,20 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 **Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
 
+Implementation applies the user's delegated D07/D12 defaults: only a separate firm-wide `PRACTICE_REOPEN_PERIOD` grant may reopen a period, and both close and reopen commands require an auditable reason. This records an engineering policy default; it is not professional accounting sign-off.
+
 ## Implementation checklist
 
-- [ ] Create a reversing journal linked to the original and using an allowed open date.
-- [ ] Prevent duplicate reversal requests with business uniqueness/idempotency.
-- [ ] Implement close-period checks and privileged reopen policy with reasons.
-- [ ] Keep original entries and historical report references unchanged.
+- [x] Create a reversing journal linked to the original and using an allowed open date.
+- [x] Prevent duplicate reversal requests with business uniqueness/idempotency.
+- [x] Implement close-period checks and privileged reopen policy with reasons.
+- [x] Keep original entries and historical report references unchanged.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Reversal restores the expected account net effect without altering original rows.
-- [ ] **AC2:** A closed period rejects ordinary posting.
-- [ ] **AC3:** Duplicate request does not reverse twice.
+- [x] **AC1:** Reversal restores the expected account net effect without altering original rows (focused PostgreSQL integration pass).
+- [x] **AC2:** A closed period rejects ordinary posting (focused PostgreSQL integration pass).
+- [x] **AC3:** Duplicate request does not reverse twice (focused PostgreSQL integration pass).
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 
