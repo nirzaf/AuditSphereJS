@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "capability": "C33 contract contribution (contracted fee less lifetime approved-time standard value)",
+  "provenance": {
+    "repository": "nirzaf/AuditSphere",
+    "commit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
+    "sourceFile": "tests/AuditSphereOps.Domain.Tests/ContractContributionCalculatorTests.cs",
+    "extraction": "Values quoted from the source domain test file at the referenced lines. The source tests assert these expectations; they were NOT executed in this workspace, so these fixtures are characterization inputs, not verified source output."
+  },
+  "cases": [
+    {
+      "id": "contract-fee-less-lifetime-standard",
+      "sourceLine": 13,
+      "intent": "lifetime approved time is valued at its captured charge-out rate, and the contribution is the fee less that value",
+      "input": {
+        "fee": "10000",
+        "currency": "QAR",
+        "approvedTime": [
+          { "minutes": 120, "capturedRate": "500", "currency": "QAR" },
+          { "minutes": 60, "capturedRate": "200", "currency": "QAR" }
+        ]
+      },
+      "expected": { "available": true, "lifetimeStandardValue": "1200", "feeLessStandardValue": "8800" }
+    },
+    {
+      "id": "unavailable-when-rate-missing",
+      "sourceLine": 25,
+      "intent": "a missing captured rate is unavailable, not zero contribution",
+      "input": {
+        "fee": "10000",
+        "currency": "QAR",
+        "approvedTime": [{ "minutes": 60, "capturedRate": null, "currency": "QAR" }]
+      },
+      "expected": { "available": false }
+    },
+    {
+      "id": "unavailable-when-currency-missing",
+      "sourceLine": 26,
+      "intent": "a missing time currency is unavailable, not zero contribution",
+      "input": {
+        "fee": "10000",
+        "currency": "QAR",
+        "approvedTime": [{ "minutes": 60, "capturedRate": "500", "currency": null }]
+      },
+      "expected": { "available": false }
+    },
+    {
+      "id": "unavailable-when-currency-differs",
+      "sourceLine": 27,
+      "intent": "approved time in another currency is never summed into a QAR contribution",
+      "input": {
+        "fee": "10000",
+        "currency": "QAR",
+        "approvedTime": [{ "minutes": 60, "capturedRate": "500", "currency": "USD" }]
+      },
+      "expected": { "available": false }
+    },
+    {
+      "id": "unavailable-when-rate-negative",
+      "sourceLine": 28,
+      "intent": "a negative captured rate is unavailable, not zero contribution",
+      "input": {
+        "fee": "10000",
+        "currency": "QAR",
+        "approvedTime": [{ "minutes": 60, "capturedRate": "-1", "currency": "QAR" }]
+      },
+      "expected": { "available": false }
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "note": "Destination evidence updated 2026-10-02 after real PostgreSQL and live browser verification. PARTIAL means tested implementation exists but the full preservation criterion is not met; task handoffs bound each claim.",
+  "note": "Destination evidence updated 2026-10-02 after real PostgreSQL and live browser verification, and extended with the contract-contribution port. PARTIAL means tested implementation exists but the full preservation criterion is not met; task handoffs bound each claim.",
   "statuses": {
     "C01": {
       "status": "PARTIAL",
@@ -256,9 +256,14 @@
       "migEpic": "MIG-006"
     },
     "C33": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No practice analytics.",
+      "status": "PARTIAL",
+      "targetFiles": [
+        "packages/server/src/modules/practice/analytics.ts",
+        "fixtures/characterization/practice-analytics.json",
+        "tests/practice-analytics.test.ts",
+        "scripts/migration/differential.mjs"
+      ],
+      "evidence": "Contract contribution ported from ContractContributionCalculator.cs as a pure calculator: lifetime approved minutes valued at their captured charge-out rate, netted against the contracted fee, summed as an exact rational and rounded once half-to-even to six decimals. Missing rates, foreign currencies and negative inputs return unavailable rather than zero, and the metric is named fee-less-standard-value so it is never presented as payroll-cost profit (D07). docs/migration/03-differential-report.md reports 53/53 checks matched including 7 new contract-contribution checks quoted from ContractContributionCalculatorTests.cs. Not implemented: the PracticeAnalyticsQuery aggregation (engagement economics, department utilization, milestone performance), rate cards, timesheets, budgets and any API or UI.",
       "migEpic": "MIG-015"
     },
     "C34": {

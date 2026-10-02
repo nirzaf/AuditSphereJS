@@ -11,8 +11,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 
 | Status | Capabilities |
 | --- | ---: |
-| NOT_STARTED | 24 |
-| PARTIAL | 14 |
+| NOT_STARTED | 23 |
+| PARTIAL | 15 |
 
 ## Destination status by capability
 
@@ -29,6 +29,7 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C26 | Review notes, reviews and completion | `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs` | 1 | Reporting review inbox and SRM | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
 | C30 | Records archive, checkpoints and release evidence | `src/AuditSphereOps.Application/Records/RecordsArchiveService.cs` | 1 | Reporting archive and regulator export | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-014 |
 | C32 | Firm billing, ledger and finance queries | `src/AuditSphereOps.Application/Practice/BillingService.cs`<br>`src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs`<br>`src/AuditSphereOps.Application/Practice/LedgerService.cs` | 3 | Practice finance and firm books | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-006 |
+| C33 | Practice analytics and contract contribution | `src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs`<br>`src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs` | 2 | Practice analytics | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-015 |
 | C36 | Operations hosts, workers and scoped operations UI | `src/AuditSphereOps.Application/Operations/Contracts.cs`<br>`src/AuditSphereOps.Application/Operations/OperationDispatcher.cs`<br>`src/AuditSphereOps.Application/Operations/OperationRecoveryService.cs`<br>`src/AuditSphereOps.Worker/Program.cs`<br>… 1 more | 5 | Platform operations and job status | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-005 |
 | C37 | API downloads, drafts, upload helpers and route guards | `src/AuditSphereOps.Domain/Documents/Pbc.cs` | 1 | Angular/API contract layer | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-003 |
 | C38 | Migrations, database checks, triggers and indexes | `src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Accounting.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AdjustmentBridge.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Audit.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AuditDeliverables.cs`<br>… 147 more | 151 | Prisma migrations plus reviewed PostgreSQL SQL | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-001, MIG-002, MIG-017 |
@@ -53,7 +54,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C28 | Opinions, signatures, representations and bundles | `src/AuditSphereOps.Application/Completion/AuditDeliverableService.Bundle.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.OpinionAreas.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.Representations.cs`<br>`src/AuditSphereOps.Application/Completion/AuditDeliverableService.Seal.cs`<br>… 1 more | 5 | Reporting opinions and signed deliverables | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-013 |
 | C29 | Freeze, amendments and document locks | `src/AuditSphereOps.Application/Records/FileFreezeService.cs`<br>`src/AuditSphereOps.Domain/Records/FileFreeze.cs` | 2 | Reporting records and operations | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-014 |
 | C31 | Practice time, budgets and rate cards | `src/AuditSphereOps.Application/Practice/PracticeTimeService.cs` | 1 | Practice timesheets and budgets | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
-| C33 | Practice analytics and contract contribution | `src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs`<br>`src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs` | 2 | Practice analytics | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-015 |
 | C34 | Technical library and published document versions | `src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs` | 1 | Practice technical library | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-015 |
 | C35 | Global staff search | `src/AuditSphereOps.Application/Search/GlobalSearchQuery.cs` | 1 | Shared staff search | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-015 |
 
@@ -107,7 +107,7 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source symbols resolved: `MappingMemoryService`, `MappedTrialBalanceSource`
 - Source files: `src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs`, `src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs`
 - Destination files: `packages/contracts/src/index.ts`, `packages/server/src/modules/fieldwork/service.ts`, `packages/server/src/modules/fieldwork/taxonomy.ts`, `prisma/migrations/202610010011_taxonomy_mapping_approval/migration.sql`, `prisma/migrations/202610010017_mapping_memory/migration.sql`, `apps/web/src/module-catalog.ts`, `apps/web/src/line-editor.ts`
-- Evidence / gap: Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mutated rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines. Not implemented: allocations, statement layouts/financial packages, taxonomy approval and per-import mapping approval actions in the UI, and the suggestion/provenance view.
+- Evidence / gap: Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines. Not implemented: allocations, statement layouts/financial packages, taxonomy approval and per-import mapping approval actions in the UI, and the suggestion/provenance view.
 
 ### C15 — Adjustment journals, plans and eligibility
 
@@ -168,6 +168,16 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Practice/BillingService.cs`, `src/AuditSphereOps.Application/Practice/FirmFinanceQuery.cs`, `src/AuditSphereOps.Application/Practice/LedgerService.cs`
 - Destination files: `packages/server/src/modules/practice/ledger.ts`, `apps/web/src/practice.ts`, `prisma/migrations/202610020002_practice_ledger/migration.sql`, `tests/practice-ledger.integration.ts`
 - Evidence / gap: Firm-wide authorized chart, active/posting accounts, non-overlapping date-only periods, policy-gated balanced journal posting, immutable posted headers and lines, exact append-only reversing journals, trial balance query and Practice UI. PostgreSQL scope, balance, lock and race guards are implemented. Not implemented: invoices, payment allocations, credit notes, period reopening, bank reconciliation, monthly P/L and AR aging; full source parity remains incomplete.
+
+### C33 — Practice analytics and contract contribution
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Practice analytics
+- Existing task anchor: T143, T148; MIG-015; migration epic: MIG-015
+- Source symbols resolved: `PracticeAnalyticsQuery`, `ContractContributionCalculator`
+- Source files: `src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs`, `src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs`
+- Destination files: `packages/server/src/modules/practice/analytics.ts`, `fixtures/characterization/practice-analytics.json`, `tests/practice-analytics.test.ts`, `scripts/migration/differential.mjs`
+- Evidence / gap: Contract contribution ported from ContractContributionCalculator.cs as a pure calculator: lifetime approved minutes valued at their captured charge-out rate, netted against the contracted fee, summed as an exact rational and rounded once half-to-even to six decimals. Missing rates, foreign currencies and negative inputs return unavailable rather than zero, and the metric is named fee-less-standard-value so it is never presented as payroll-cost profit (D07). docs/migration/03-differential-report.md reports 53/53 checks matched including 7 new contract-contribution checks quoted from ContractContributionCalculatorTests.cs. Not implemented: the PracticeAnalyticsQuery aggregation (engagement economics, department utilization, milestone performance), rate cards, timesheets, budgets and any API or UI.
 
 ### C36 — Operations hosts, workers and scoped operations UI
 
@@ -408,16 +418,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Practice/PracticeTimeService.cs`
 - Destination files: —
 - Evidence / gap: No practice time/rates/budgets.
-
-### C33 — Practice analytics and contract contribution
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Practice analytics
-- Existing task anchor: T143, T148; MIG-015; migration epic: MIG-015
-- Source symbols resolved: `PracticeAnalyticsQuery`, `ContractContributionCalculator`
-- Source files: `src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs`, `src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs`
-- Destination files: —
-- Evidence / gap: No practice analytics.
 
 ### C34 — Technical library and published document versions
 

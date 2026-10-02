@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-01T23:40:27.982Z",
+  "generatedAt": "2026-10-02T00:59:04.242Z",
   "sourceCommit": null,
   "counts": {
-    "PARTIAL": 14,
-    "NOT_STARTED": 24
+    "PARTIAL": 15,
+    "NOT_STARTED": 23
   },
   "rows": [
     {
@@ -156,7 +156,7 @@
         "apps/web/src/module-catalog.ts",
         "apps/web/src/line-editor.ts"
       ],
-      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mutated rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines. Not implemented: allocations, statement layouts/financial packages, taxonomy approval and per-import mapping approval actions in the UI, and the suggestion/provenance view."
+      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines. Not implemented: allocations, statement layouts/financial packages, taxonomy approval and per-import mapping approval actions in the UI, and the suggestion/provenance view."
     },
     {
       "id": "C15",
@@ -323,6 +323,33 @@
         "tests/practice-ledger.integration.ts"
       ],
       "evidence": "Firm-wide authorized chart, active/posting accounts, non-overlapping date-only periods, policy-gated balanced journal posting, immutable posted headers and lines, exact append-only reversing journals, trial balance query and Practice UI. PostgreSQL scope, balance, lock and race guards are implemented. Not implemented: invoices, payment allocations, credit notes, period reopening, bank reconciliation, monthly P/L and AR aging; full source parity remains incomplete."
+    },
+    {
+      "id": "C33",
+      "capability": "Practice analytics and contract contribution",
+      "destinationOwner": "Practice analytics",
+      "taskAnchor": "T143, T148; MIG-015",
+      "migEpic": "MIG-015",
+      "symbols": [
+        "PracticeAnalyticsQuery",
+        "ContractContributionCalculator"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs",
+        "src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs"
+      ],
+      "sourceFileCount": 2,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/modules/practice/analytics.ts",
+        "fixtures/characterization/practice-analytics.json",
+        "tests/practice-analytics.test.ts",
+        "scripts/migration/differential.mjs"
+      ],
+      "evidence": "Contract contribution ported from ContractContributionCalculator.cs as a pure calculator: lifetime approved minutes valued at their captured charge-out rate, netted against the contracted fee, summed as an exact rational and rounded once half-to-even to six decimals. Missing rates, foreign currencies and negative inputs return unavailable rather than zero, and the metric is named fee-less-standard-value so it is never presented as payroll-cost profit (D07). docs/migration/03-differential-report.md reports 53/53 checks matched including 7 new contract-contribution checks quoted from ContractContributionCalculatorTests.cs. Not implemented: the PracticeAnalyticsQuery aggregation (engagement economics, department utilization, milestone performance), rate cards, timesheets, budgets and any API or UI."
     },
     {
       "id": "C36",
@@ -1062,28 +1089,6 @@
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [],
       "evidence": "No practice time/rates/budgets."
-    },
-    {
-      "id": "C33",
-      "capability": "Practice analytics and contract contribution",
-      "destinationOwner": "Practice analytics",
-      "taskAnchor": "T143, T148; MIG-015",
-      "migEpic": "MIG-015",
-      "symbols": [
-        "PracticeAnalyticsQuery",
-        "ContractContributionCalculator"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Practice/ContractContributionCalculator.cs",
-        "src/AuditSphereOps.Application/Practice/FirmOperationsServices.cs"
-      ],
-      "sourceFileCount": 2,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No practice analytics."
     },
     {
       "id": "C34",

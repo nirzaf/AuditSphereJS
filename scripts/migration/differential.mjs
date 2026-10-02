@@ -9,7 +9,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
-const { Decimal6, deriveBenchmark, calculateMateriality, validateMateriality, riskBand, selectSample, calculateQuotation, validateQuotation, quotationInputHash, requiredApprovals } = await import('@auditsphere/server');
+const { Decimal6, deriveBenchmark, calculateMateriality, validateMateriality, riskBand, selectSample, calculateQuotation, validateQuotation, quotationInputHash, requiredApprovals, calculateContractContribution } = await import('@auditsphere/server');
 const fixtureDir = 'fixtures/characterization';
 const outDir = 'docs/migration/inventory';
 const load = (name) => JSON.parse(readFileSync(path.join(fixtureDir, name + '.json'), 'utf8'));
@@ -151,6 +151,24 @@ const record = (fixture, id, check, expected, actual) => results.push({ fixture,
   const configuredApproval = byId['approval-configured-bands'];
   const rules = configuredApproval.input.configuredRules.map((rule) => ({ id: rule.id, kind: rule.kind, thresholdPercent: rule.thresholdPercent ? Decimal6.from(rule.thresholdPercent) : null, requiredRole: rule.requiredRole, active: rule.active }));
   record('quotation', configuredApproval.id, 'requiredRoles', configuredApproval.expected.requiredRoles.join(','), requiredApprovals(rules, Decimal6.from(configuredApproval.input.discountPercent), configuredApproval.input.nonStandardTerms).map((approval) => approval.role).join(','));
+}
+
+// --- Practice analytics (C33): a destination implementation exists (practice/analytics.ts). ----
+{
+  const fixture = load('practice-analytics');
+  for (const item of fixture.cases) {
+    const result = calculateContractContribution(
+      Decimal6.from(item.input.fee),
+      item.input.currency,
+      item.input.approvedTime.map((row) => ({ minutes: row.minutes, capturedRate: row.capturedRate === null ? null : Decimal6.from(row.capturedRate), currency: row.currency })),
+    );
+    const available = item.expected.available === true;
+    record('practice-analytics', item.id, 'available', String(available), String(result !== null));
+    if (available && result) {
+      record('practice-analytics', item.id, 'lifetimeStandardValue', item.expected.lifetimeStandardValue, result.lifetimeStandardValue.toFixed(6));
+      record('practice-analytics', item.id, 'feeLessStandardValue', item.expected.feeLessStandardValue, result.feeLessStandardValue.toFixed(6));
+    }
+  }
 }
 
 // --- Capabilities with fixtures but no destination implementation yet. ------------------------

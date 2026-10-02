@@ -14,7 +14,7 @@ const minor = (value: string | number): bigint => {
 const ratio = (value: bigint, numerator: number, denominator: number) => (value * BigInt(numerator)) / BigInt(denominator);
 
 const load = (name: string) => JSON.parse(readFileSync(`fixtures/characterization/${name}.json`, 'utf8'));
-const fixtures = ['quotation', 'materiality', 'sampling'] as const;
+const fixtures = ['quotation', 'materiality', 'sampling', 'practice-analytics'] as const;
 
 describe('characterization fixtures', () => {
   it('carry pinned provenance and a complete case shape', () => {
@@ -72,5 +72,23 @@ describe('characterization fixtures', () => {
     expect(aboveThreshold).toEqual(expectedIds);
     const expectedTotal = expectedIds.reduce((sum, id) => sum + minor(population.find(([rowId]) => rowId === id)![1]), 0n);
     expect(expectedTotal).toBe(minor(keyItem.expected.selectedAbsoluteTotal));
+  });
+
+  it('keeps the quoted contract contribution internally consistent', () => {
+    const cases = load('practice-analytics').cases;
+    const priced = cases.find((item: { id: string }) => item.id === 'contract-fee-less-lifetime-standard');
+    const rows = priced.input.approvedTime as Array<{ minutes: number; capturedRate: string }>;
+    // minutes × rate / 60 summed exactly, then compared with the quoted expectation.
+    const standard = rows.reduce((sum, row) => sum + ratio(minor(row.capturedRate) * BigInt(row.minutes), 1, 60), 0n);
+    expect(standard).toBe(minor(priced.expected.lifetimeStandardValue));
+    expect(minor(priced.input.fee) - standard).toBe(minor(priced.expected.feeLessStandardValue));
+    // Every unavailable source Theory row must stay unavailable, never a silent zero contribution.
+    const unavailable = cases.filter((item: { expected: { available: boolean } }) => item.expected.available === false);
+    expect(unavailable.map((item: { id: string }) => item.id)).toEqual([
+      'unavailable-when-rate-missing',
+      'unavailable-when-currency-missing',
+      'unavailable-when-currency-differs',
+      'unavailable-when-rate-negative',
+    ]);
   });
 });

@@ -13,9 +13,9 @@ domain tests**, not invented.
   two stacks is only proven once both stacks actually run them (MIG-003).
 - `tests/characterization.test.ts` validates the fixture format, provenance and internal arithmetic
   consistency. `scripts/migration/differential.mjs` runs the destination calculators that exist and
-  writes `docs/migration/03-differential-report.md`. Materiality, sampling and quotation are all
-  implemented in the destination and currently report **46/46 checks matched**; no extracted family
-  is destination-absent.
+  writes `docs/migration/03-differential-report.md`. Materiality, sampling, quotation and contract
+  contribution are all implemented in the destination and currently report **53/53 checks matched**;
+  no extracted family is destination-absent.
 
 ## Files
 
@@ -24,6 +24,7 @@ domain tests**, not invented.
 | `quotation.json` | C05 quotation and approval matrix | `QuotationCalculatorTests.cs` |
 | `materiality.json` | C22 materiality and risk bands | `PlanningResourcesAndMaterialityTests.cs` |
 | `sampling.json` | C25 sampling reproducibility | `AuditSamplingEngineTests.cs` |
+| `practice-analytics.json` | C33 contract contribution | `ContractContributionCalculatorTests.cs` |
 
 Currency (C17) and consolidation (C18/C19) fixtures remain to be extracted from the much larger
 `ClientAccountingTests.Currency.cs` and consolidation suites.

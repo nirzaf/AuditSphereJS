@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-01T23:40:20.733Z",
+  "generatedAt": "2026-10-02T00:58:45.083Z",
   "harness": "scripts/migration/differential.mjs",
   "sourceCommit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
   "boundary": "Expected values are quoted from the pinned source domain tests; the source stack was not executed here. MATCH means the destination calculator agrees with the source test assertion, not that the source produced it in this session.",
   "totals": {
-    "checks": 46,
-    "matched": 46,
+    "checks": 53,
+    "matched": 53,
     "differences": 0,
     "destinationAbsentFamilies": 0,
     "notYetExtracted": [
@@ -380,6 +380,62 @@
       "check": "requiredRoles",
       "expected": "Manager",
       "actual": "Manager",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "contract-fee-less-lifetime-standard",
+      "check": "available",
+      "expected": "true",
+      "actual": "true",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "contract-fee-less-lifetime-standard",
+      "check": "lifetimeStandardValue",
+      "expected": "1200",
+      "actual": "1200.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "contract-fee-less-lifetime-standard",
+      "check": "feeLessStandardValue",
+      "expected": "8800",
+      "actual": "8800.000000",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "unavailable-when-rate-missing",
+      "check": "available",
+      "expected": "false",
+      "actual": "false",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "unavailable-when-currency-missing",
+      "check": "available",
+      "expected": "false",
+      "actual": "false",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "unavailable-when-currency-differs",
+      "check": "available",
+      "expected": "false",
+      "actual": "false",
+      "outcome": "MATCH"
+    },
+    {
+      "fixture": "practice-analytics",
+      "case": "unavailable-when-rate-negative",
+      "check": "available",
+      "expected": "false",
+      "actual": "false",
       "outcome": "MATCH"
     }
   ],

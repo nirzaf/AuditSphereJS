@@ -20,7 +20,7 @@ before implementation. Status here is deliberately coarse; the child tasks carry
 | MIG-012 — Microsoft capability parity | Tenant/capability consent, client repositories, privileged workers, exact versions | MIG-004/005, T149–T156 | IN_PROGRESS — per-client repository bindings and immutable document-version identity exist (WP08); tenant consent, site provisioning and live permission evidence remain |
 | MIG-013 — Artifact and bundle parity | Byte-preserving import, DOCX/PDF/ZIP contracts, signed LOR and bundle mapping | MIG-009/012, T118–T130 | NOT_STARTED |
 | MIG-014 — Freeze and records parity | Original deadlines, archive manifests, legal holds, amendments, audit bridge | MIG-005/013, T131–T138 | NOT_STARTED |
-| MIG-015 — Remaining source UX | Technical library, scoped search, operational views, distinct financial metrics | Owner modules, T139–T148 | NOT_STARTED |
+| MIG-015 — Remaining source UX | Technical library, scoped search, operational views, distinct financial metrics | Owner modules, T139–T148 | IN_PROGRESS — contract contribution calculator ported with 53/53 differential checks (`tasks/MIG-015-01-contract-contribution.md`); technical library, scoped search, the analytics query and its views remain |
 | MIG-016 — Restartable ETL | Read-only extraction, transformation, staged loading, identity/provider maps, checkpoints | MIG-001/002 | NOT_STARTED |
 | MIG-017 — Reconciliation | Schema/data/amount/permission/document/lineage comparisons and exception registry | MIG-003/016 | NOT_STARTED |
 | MIG-018 — Ownership and cutover | Cohort routing, legacy/target write fences, worker/provider handover | MIG-004/005/017 | NOT_STARTED |
