@@ -42,7 +42,13 @@ export class Workspace implements OnDestroy {
       const screen = screensFor(module).find(value => value.id === params.get('view')) ?? screensFor(module)[0];
       this.active.set(module); this.screenId.set(screen.id);
     });
-    void this.identity.identityConfiguration().then(config => this.identityProvider.set(config.provider)).catch(() => this.message.set('Identity configuration is unavailable.'));
+    void this.identity.identityConfiguration().then(config => {
+      this.identityProvider.set(config.provider);
+      if (config.provider === 'entra') void this.identity.restoreSession().then(user => {
+        if (!user) return;
+        this.currentUser.set(user); this.signedIn.set(true); this.message.set('Connected with Microsoft Entra ID.');
+      }).catch(error => this.message.set(error instanceof Error ? error.message : 'Microsoft sign-in could not be restored.'));
+    }).catch(() => this.message.set('Identity configuration is unavailable.'));
   }
   readonly modules = modules;
   readonly screenId = signal('trial-balance');
@@ -69,7 +75,7 @@ export class Workspace implements OnDestroy {
   }
   async run(action: () => Promise<void>) { this.busy.set(true); try { await action(); } catch (e) { this.message.set(e instanceof Error ? e.message : 'Request failed'); } finally { this.busy.set(false); } }
   connect() { void this.run(async () => { this.imports.set(await this.api('')); this.message.set('Connected. Upload a CSV or open an existing import.'); }); }
-  microsoftSignIn() { void this.run(async () => { this.token = await this.identity.signIn(); this.signedIn.set(true); this.currentUser.set(await this.identity.currentIdentity()); this.imports.set(await this.api('')); this.message.set('Connected with Microsoft Entra ID.'); }); }
+  microsoftSignIn() { void this.run(async () => { await this.identity.signIn(); this.signedIn.set(true); this.currentUser.set(await this.identity.currentIdentity()); this.imports.set(await this.api('')); this.message.set('Connected with Microsoft Entra ID.'); }); }
   microsoftSignOut() { void this.run(async () => {
     let signOutConfirmed = true;
     try { await this.identity.signOut(); } catch { signOutConfirmed = false; }

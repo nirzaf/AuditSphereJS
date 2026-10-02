@@ -150,6 +150,43 @@ it('binds import mapping approval to the selected immutable taxonomy',async()=>{
   expect(request.mock.calls[0][0]).toContain('/imports/00000000-0000-4000-8000-000000000004/mapping-approval');
   expect(JSON.parse(request.mock.calls[0][1].body)).toMatchObject({taxonomyVersionId:id});fixture.destroy();
 });
+it('reviews import mapping suggestions read-only and names their provenance',async()=>{
+  const request=vi.fn().mockResolvedValue(new Response(JSON.stringify({
+    importId:'import-a',taxonomyVersionId:'tax-a',taxonomyVersion:2,suggested:1,alreadyMapped:1,unresolved:2,items:[
+      {rowId:'r1',code:'1010',name:'Cash at bank',currentFsli:null,suggestedFsli:'CASH',reason:'MEMORY',provenance:{memoryEntryId:'m1',sourceApprovalId:'approval-9',timesApplied:2,lastApprovedAt:'2026-09-30T00:00:00.000Z'}},
+      {rowId:'r2',code:'4000',name:'Revenue',currentFsli:'REVENUE',suggestedFsli:null,reason:'ALREADY_MAPPED',provenance:null},
+      {rowId:'r3',code:'9999',name:'Unmapped account',currentFsli:null,suggestedFsli:null,reason:'NO_MEMORY',provenance:null},
+      {rowId:'r4',code:'1020',name:'Retired account',currentFsli:null,suggestedFsli:null,reason:'MEMORY_NOT_IN_TAXONOMY',provenance:{sourceApprovalId:'approval-8',timesApplied:1,lastApprovedAt:'2026-08-01T00:00:00.000Z'}},
+    ]})));vi.stubGlobal('fetch',request);
+  const fixture=await create('taxonomies');const view=fixture.componentInstance;
+  view.openAction({id:'tax-a',status:'APPROVED',name:'STE statutory taxonomy'},'suggestions');
+  expect(view.action()).toBe('suggestions');expect(view.suggestionsLoaded()).toBe(false);
+  view.actionForm.patchValue({importId:'import-a'});view.saveAction();
+  await vi.waitFor(()=>expect(view.busy()).toBe(false));
+  expect(request.mock.calls[0][0]).toBe('/api/v1/engagements/engagement-a/imports/import-a/suggestions?taxonomyVersionId=tax-a');
+  expect(request.mock.calls[0][1].method).toBe('GET');
+  expect(view.suggestionsLoaded()).toBe(true);expect(view.suggestionRows()).toHaveLength(4);
+  fixture.detectChanges();
+  const text=fixture.nativeElement.textContent??'';
+  expect(text).toContain('Approved taxonomy v2');
+  expect(text).toContain('1 remembered · 1 already mapped · 2 unresolved');
+  expect(text).toContain('Remembered from an approved mapping');
+  expect(text).toContain('approval-9');
+  expect(text).toContain('Remembered code is not in the approved taxonomy');
+  expect(text).toContain('2026-08-01T00:00:00.000Z');
+  fixture.destroy();
+});
+it('reports suggestion load failures without recording a decision or writing anything',async()=>{
+  const request=vi.fn().mockResolvedValue(new Response(JSON.stringify({error:{message:'No approved taxonomy version is configured for this firm'}}),{status:409}));vi.stubGlobal('fetch',request);
+  const fixture=await create('taxonomies');const view=fixture.componentInstance;
+  view.openAction({id:'tax-a',status:'APPROVED'},'suggestions');
+  view.actionForm.patchValue({importId:'import-b'});view.saveAction();
+  await vi.waitFor(()=>expect(view.busy()).toBe(false));
+  expect(request.mock.calls[0][1].method).toBe('GET');
+  expect(view.suggestionsLoaded()).toBe(false);expect(view.suggestionRows()).toEqual([]);
+  expect(view.error()).toContain('No approved taxonomy');
+  expect(view.action()).toBe('suggestions');expect(view.message()).toBe('');fixture.destroy();
+});
 it('preserves structured line drafts across workspace navigation and clears them explicitly',async()=>{
   const fixture=await create('adjustments','lines-session');const view=fixture.componentInstance;
   view.form.patchValue({reference:'Draft journal',memo:'Draft explanation'});

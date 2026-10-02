@@ -27,6 +27,8 @@ The production startup validator currently requires all four drive/folder variab
 
 The server reads environment configuration at startup and caches provider clients. Restart affected API/worker processes after identity or credential changes. Loading the acceptance harness's environment file does not change the separately running API.
 
+The Angular SPA uses MSAL full-page redirect login and logout with authorization code + PKCE. `restoreSession()` awaits `handleRedirectPromise()` before any interactive request and then checks the returned account through `/api/v1/me`. Do not combine popup and redirect interactions in this app. A redirect to Entra can succeed while `/api/v1/me` still returns 401 when the immutable tenant/object identity is not mapped to an active local `User`; do not resolve that denial by granting a business role implicitly.
+
 ## Staff assignment
 
 Map the intended staff identity to `User.tenantId` and `User.entraObjectId`, using the immutable Entra object ID, not email alone. Add membership for the intended engagement and current scoped role grants, including `ENGAGEMENT_READ`; mutations need their own capabilities. Tenant Global Administrator status does not create local partner, reviewer or finance authority.

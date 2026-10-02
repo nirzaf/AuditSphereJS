@@ -8,7 +8,7 @@
 - Applied the five reviewed pending migrations to the local development database (`202610020005` through `202610020009`); `prisma migrate status` reports the schema up to date.
 - Refactored Entra and explicit development-fixture authentication through one local-user lookup. Entra identities still bind by `(tenantId, entraObjectId)`; inactive or unmapped users fail with 401.
 - Added `GET /api/v1/me`, returning only local user ID, email and active status. Engagement routes still require an active membership and scoped capability; the self route does not grant engagement access.
-- Added an Angular identity adapter token for testable MSAL integration, an authenticated-user indicator and popup sign-out. Sign-out clears the in-memory bearer token, local identity, loaded engagement records and unsaved drafts even when the logout popup fails; the UI reports when Microsoft sign-out could not be confirmed.
+- Added an Angular identity adapter token for testable MSAL integration, an authenticated-user indicator and MSAL full-page redirect sign-in/sign-out. The callback is processed on app startup before local identity lookup, and one interaction path is used consistently. Sign-out navigation reloads the application, clearing in-memory access and unsaved drafts.
 - Added a real PostgreSQL 18.6/Testcontainers + Fastify boundary check for the self endpoint, disabled-user denial on self and engagement routes, foreign engagement denial, and read-only authentication being unable to issue a lifecycle command.
 - Expanded signed-token tests for the wrong issuer. Existing tests also reject wrong audience, wrong delegated scope, foreign tenant, expiry and malformed input. The token fixture includes an administrator claim to ensure no directory-role privilege mapping is introduced.
 
@@ -16,19 +16,20 @@
 
 | Command | Result |
 | --- | --- |
-| `pnpm verify:task -- T019` | Passed locally; Entra unit suite 1/1 and PostgreSQL/Fastify boundary test 1/1. |
-| `pnpm verify:affected` | Passed locally; boundaries, server/type builds, Angular production build and 69 unit tests. |
+| `pnpm verify:task -- T019` | Passed locally; Entra suite and PostgreSQL/Fastify identity boundary tests passed, including the real PostgreSQL session-revocation cutoff test. |
+| `pnpm verify:affected` | Passed locally after the redirect change; boundaries, server/test typechecks, Angular build and 70 unit tests. |
 | `pnpm lint` | Passed locally; ESLint and module/browser boundaries. |
-| Angular MCP `web:test` | Passed; 31/31 across five files, including sign-in and both confirmed/unconfirmed popup sign-out cases. |
-| Angular MCP `web:build` | Passed; production build output at `dist/web`. |
-| GitHub Actions | Passed workflow [37016781547](https://github.com/nirzaf/AuditSphereJS/actions/runs/37016781547) on `6034f38d0b292279b8976347e1e550cfe5212221`: `verify:all`, contract checks, dependency audit, Linux build/smoke, packaged artifact and public web-assets job all passed. |
+| Angular MCP `web:test` | Current change passed; 34/34 across six files, including redirect response handling, local identity lookup and redirect API selection. |
+| Angular MCP `web:build` | Current change passed; build output at `dist/web`. |
+| GitHub Actions | The latest pushed baseline workflow [37020194478](https://github.com/nirzaf/AuditSphereJS/actions/runs/37020194478) passed on `79191e01c3478da86bdc4b5bd99842ef6e966631`: `verify:all`, contract checks, dependency audit, Linux build/smoke, packaged artifact and public web-assets job all passed. It predates this uncommitted redirect change. |
 
 ## Acceptance and limits
 
 - AC1: Wrong audience, issuer, expiry, tenant, scope and malformed credential denial is covered by signed-token unit tests.
 - AC2: A locally inactive identity receives 401 on the self and engagement API boundaries.
 - AC3: A valid authenticated identity with membership and read-only `ENGAGEMENT_READ` receives 403 for a lifecycle command; engagement state remains unchanged.
-- Still open: live interactive Entra login and mapped-user acceptance, and the owner-scoped integrity follow-ups / production identity mapping required for T018. No live sign-in is claimed.
+- Live browser check on 2026-10-02: the Entra redirect round-trip returned to the app and removed the popup `timed_out`; `/api/v1/me` then returned the expected 401 message `Active internal identity is required`. This tenant account has no active local identity mapping. No user, membership or role was created, and no engagement records were read.
+- Still open: acceptance with a mapped staff identity and engagement grants, browser-initiated session revocation, and the owner-scoped integrity follow-ups / production identity mapping required for T018. A successful Entra authentication alone does not establish local authorization.
 - No credentials, tokens or tenant secrets are included. No deployment or tenant permission change was performed.
 
 ## Server-side revocation update — 2026-10-02

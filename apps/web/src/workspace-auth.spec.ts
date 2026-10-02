@@ -3,12 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { Workspace } from './workspace';
 import { IDENTITY_ADAPTER } from './identity';
 
-const auth = { identityConfiguration: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), currentAccessToken: vi.fn(), currentIdentity: vi.fn() };
+const auth = { identityConfiguration: vi.fn(), restoreSession: vi.fn(), signIn: vi.fn(), signOut: vi.fn(), currentAccessToken: vi.fn(), currentIdentity: vi.fn() };
 
 describe('Workspace Microsoft sign-in session', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [{ provide: IDENTITY_ADAPTER, useValue: auth }] });
     auth.identityConfiguration.mockResolvedValue({ provider: 'entra' });
+    auth.restoreSession.mockResolvedValue(null);
     auth.signIn.mockResolvedValue('access-token');
     auth.signOut.mockResolvedValue(undefined);
     auth.currentAccessToken.mockResolvedValue('access-token');
@@ -44,7 +45,19 @@ describe('Workspace Microsoft sign-in session', () => {
     fixture.destroy();
   });
 
-  it('clears local access and data when Microsoft popup logout cannot be confirmed', async () => {
+  it('restores an Entra session after the redirect without loading engagement records', async () => {
+    auth.restoreSession.mockResolvedValueOnce({ id: 'user-id', email: 'auditor@example.test', active: true });
+    const fixture = TestBed.createComponent(Workspace);
+    fixture.detectChanges();
+    await vi.waitFor(() => expect(fixture.componentInstance.signedIn()).toBe(true));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Signed in as auditor@example.test');
+    expect(fixture.componentInstance.imports()).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain('Connect, then upload a CSV');
+    fixture.destroy();
+  });
+
+  it('clears local access and data when Microsoft redirect logout cannot be confirmed', async () => {
     auth.signOut.mockRejectedValueOnce(new Error('Popup closed'));
     const fixture = TestBed.createComponent(Workspace);
     fixture.detectChanges();

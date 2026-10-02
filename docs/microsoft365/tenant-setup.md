@@ -32,7 +32,7 @@ In Entra **App registrations**, configure three single-tenant apps with separate
 
 Do not mix application object IDs, application/client IDs and service-principal IDs. Application updates address the application object; API audience and OAuth client configuration use client IDs. Consent connects service principals.
 
-Configure SPA authorization code flow with PKCE through MSAL. Register the exact redirect used by the browser, and use HTTPS for the eventual production origin. The tested local registration uses `localhost`, not `127.0.0.1`. See [Microsoft's SPA configuration](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-spa-app-configuration).
+Configure SPA authorization code flow with PKCE through MSAL. This app uses full-page redirect login/logout and processes the response with `handleRedirectPromise()` on return; it does not use popup flows. Register the exact redirect used by the browser, and use HTTPS for the eventual production origin. The tested local registration uses `localhost`, not `127.0.0.1`. See [Microsoft's SPA configuration](https://learn.microsoft.com/en-us/entra/identity-platform/scenario-spa-app-configuration).
 
 Verify the API rather than assuming its manifest defaults:
 

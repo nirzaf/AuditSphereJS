@@ -43,7 +43,10 @@ export class ModuleWorkspace {
   readonly search = signal(''); readonly selected = signal<RecordValue | null>(null); readonly confirm = signal(false);
   readonly submitted=signal(false); readonly editorRevision=signal(0);
   readonly lines = signal<EditorRow[]>([]); readonly linesValid = signal(false);
-  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | null>(null);
+  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | null>(null);
+  readonly suggestionSummary = signal<RecordValue>({});
+  readonly suggestionRows = signal<RecordValue[]>([]);
+  readonly suggestionsLoaded = signal(false);
   readonly actionFields = signal<ScreenField[]>([]);
   form = new FormRecord<FormControl<string>>({}); actionForm = new FormRecord<FormControl<string>>({});
   private readonly host=inject<ElementRef<HTMLElement>>(ElementRef);
@@ -61,6 +64,7 @@ export class ModuleWorkspace {
       const identity = this.token(); this.entra();
       if (sessionIdentity !== identity) { sessionDrafts.clear(); sessionIdentity = identity; }
       this.commandKey = crypto.randomUUID(); this.generation++; this.rows.set([]); this.state.set({}); this.loaded.set(false); this.error.set(''); this.message.set(''); this.busy.set(false); this.search.set(''); this.selected.set(null); this.action.set(null); this.confirm.set(false);
+      this.suggestionSummary.set({}); this.suggestionRows.set([]); this.suggestionsLoaded.set(false);
       const draft=sessionDrafts.get(draftKey);
       const saved:unknown=draft?.['__lines']?JSON.parse(draft['__lines']):[];
       this.lines.set(Array.isArray(saved)?saved.map(value=>Object.fromEntries(Object.entries(record(value)).filter((entry):entry is [string,string]=>typeof entry[1]==='string'))):[]);
@@ -82,6 +86,8 @@ export class ModuleWorkspace {
     return typeof value === 'string' || typeof value === 'number' ? String(value) : '—';
   }
   changeSearch(event: Event) { this.search.set((event.target as HTMLInputElement).value); }
+  provenanceOf(row: RecordValue): RecordValue { return record(row['provenance']); }
+  reasonLabel(reason: unknown): string { return reason === 'MEMORY' ? 'Remembered from an approved mapping' : reason === 'ALREADY_MAPPED' ? 'Already mapped' : reason === 'MEMORY_NOT_IN_TAXONOMY' ? 'Remembered code is not in the approved taxonomy' : reason === 'NO_MEMORY' ? 'No remembered mapping' : String(reason ?? '—'); }
   invalid(field: ScreenField, form = this.form) { const control = form.controls[field.key]; return control?.invalid && control.touched; }
   private async request(path: string, method = 'GET', body?: unknown) {
     const engagementId = this.engagementId();
@@ -147,10 +153,11 @@ export class ModuleWorkspace {
       this.editorRevision.update(value=>value+1);this.submitted.set(false);this.message.set('Saved to the engagement.'); await this.read(generation);
     });
   }
-  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove') {
+  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions') {
     this.selected.set(row); this.action.set(action); this.error.set('');
+    this.suggestionSummary.set({}); this.suggestionRows.set([]); this.suggestionsLoaded.set(false);
     this.commandKey=crypto.randomUUID();
-    const fields: ScreenField[] = action === 'mappingApprove' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
+    const fields: ScreenField[] = action === 'mappingApprove' || action === 'suggestions' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
       {key:'likelihood',label:'Likelihood',type:'select',options:['1','2','3'],required:true}, {key:'magnitude',label:'Magnitude',type:'select',options:['1','2','3'],required:true},
       {key:'significant',label:'Significant risk',type:'select',options:['No','Yes'],required:true}, {key:'fraudRisk',label:'Fraud risk',type:'select',options:['No','Yes'],required:true},
     ] : [];
@@ -170,6 +177,17 @@ export class ModuleWorkspace {
     const row = this.selected(); const action = this.action(); if (!row || !action) return;
     const values = this.actionForm.getRawValue(); let body: RecordValue = values; let path: string;
     const id = String(row['id'] ?? row['riskId'] ?? ''); if (!id && action !== 'transition') return;
+    if (action === 'suggestions') {
+      const importId = String(values['importId'] ?? '').trim(); if (!importId) return;
+      void this.run(async generation => {
+        const view = record(await this.request(`/imports/${encodeURIComponent(importId)}/suggestions?taxonomyVersionId=${encodeURIComponent(id)}`));
+        if (generation !== this.generation) return;
+        this.suggestionSummary.set(view);
+        this.suggestionRows.set(Array.isArray(view['items']) ? view['items'].map(record) : []);
+        this.suggestionsLoaded.set(true);
+      });
+      return;
+    }
     if(action==='taxonomyApprove') {path=`/taxonomies/${encodeURIComponent(id)}/approve`;body={};}
     else if(action==='mappingApprove') {path=`/imports/${encodeURIComponent(values['importId'])}/mapping-approval`;body={taxonomyVersionId:id,idempotencyKey:this.commandKey};const parsed=approveMappingSchema.safeParse(body);if(!parsed.success){this.error.set('Load an approved taxonomy version before approving mappings.');return;}}
     else if (action === 'owner') { path = `/risks/${encodeURIComponent(id)}/owner`; }
