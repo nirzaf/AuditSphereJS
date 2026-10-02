@@ -53,7 +53,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Acceptance criteria and required tests
 
-- [x] **AC1:** A valid UUID from another engagement cannot be read or attached. The protected lifecycle API returns 403 for an engagement outside the authenticated user's membership and grant.
+- [x] **AC1:** A valid UUID from another engagement cannot be read or attached. The protected lifecycle API returns 403 for foreign reads and commands, and the denied command leaves state and history unchanged.
 - [x] **AC2:** Worker queries require an explicit authorized scope.
 - [x] **AC3:** No artificial per-file quota is added.
 
@@ -79,4 +79,4 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
 
-Current handoff: [T018 scope and worker boundary](../../evidence/T018/handoff.md). The live API has a cross-engagement read denial test; mutation/attach boundary coverage, broader tenant-root review and a reviewed production identity map remain open; this task is not accepted yet.
+Current handoff: [T018 scope and worker boundary](../../evidence/T018/handoff.md). The live API denies foreign reads and lifecycle commands with no state/history side effect; broader tenant-root review and a reviewed production identity map remain open; this task is not accepted yet.

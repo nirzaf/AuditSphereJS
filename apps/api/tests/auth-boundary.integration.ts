@@ -59,7 +59,15 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     assert.deepEqual(ownHistory.history, []);
     const foreign = await fetch(`${origin}/api/v1/engagements/${engagementB}/lifecycle`, { headers });
     assert.equal(foreign.status, 403, 'a real foreign engagement UUID must not disclose lifecycle state');
-    console.log('Fastify lifecycle route allows the assigned engagement and denies a valid foreign engagement UUID');
+    const foreignCommand = await fetch(`${origin}/api/v1/engagements/${engagementB}/lifecycle`, {
+      method: 'POST',
+      headers: { ...headers, 'content-type': 'application/json' },
+      body: JSON.stringify({ command: 'START_FIELDWORK', expectedVersion: 1, idempotencyKey: '11111111-1111-4111-8111-111111111111' }),
+    });
+    assert.equal(foreignCommand.status, 403, 'a valid foreign engagement UUID cannot be mutated');
+    assert.equal((await db.engagement.findUniqueOrThrow({ where: { id: engagementB } })).state, 'LEAD_INGESTION', 'denied command must not change foreign state');
+    assert.equal(await db.engagementTransition.count({ where: { engagementId: engagementB } }), 0, 'denied command must not append transition history');
+    console.log('Fastify lifecycle route allows the assigned engagement and denies foreign reads and commands');
   } finally {
     if (app) await app.close();
     await disconnect?.();
