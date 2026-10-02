@@ -9,7 +9,9 @@
     "ambiguity": "Quotation terms say 50% upon draft report; bundle workflow triggers remaining 50% at release.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Issue the final half-fee invoice once at final bundle authorization for release; idempotency key is engagement plus FINAL_FEE.",
+    "decisionRecord": "docs/decisions/T002-business-defaults.md"
   },
   {
     "id": "D02",
@@ -21,7 +23,9 @@
     "ambiguity": "Persona says access terminates on closure, while final-release workflow permits certified-bundle downloads.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Freeze client uploads at release; preserve only scoped read/download access to the released package until the T004 archive deadline, then revoke the engagement client grant.",
+    "decisionRecord": "docs/decisions/T002-business-defaults.md"
   },
   {
     "id": "D03",
@@ -47,7 +51,9 @@
     "ambiguity": "Risk sign-off is needed before the letter yet also appears in the later Governance flow; directory provisioning occurs at risk acceptance, portal only after advance clears.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Use one versioned partner acceptance review for both the letter and governance gates; provision private directories after risk acceptance and client portal only after cleared advance payment.",
+    "decisionRecord": "docs/decisions/T002-business-defaults.md"
   },
   {
     "id": "D05",
@@ -59,7 +65,8 @@
     "ambiguity": "Equality at TE/PM, negative/zero benchmark, rounding of all thresholds and zero-PY variance are not fully specified.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "decisionRecord": "docs/decisions/T003-methodology-defaults.md"
   },
   {
     "id": "D06",
@@ -71,7 +78,8 @@
     "ambiguity": "Three sampling names are specified but algorithms, confidence factors, evaluation rules and authoritative examples are absent; TE/performance materiality are combined in source terminology.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "decisionRecord": "docs/decisions/T003-methodology-defaults.md"
   },
   {
     "id": "D07",
@@ -83,7 +91,8 @@
     "ambiguity": "Source profitability uses hours times charge-out rates, not necessarily actual payroll cost. Recognition, tax treatment, equity withdrawals and periods are not defined.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "decisionRecord": "docs/decisions/T003-methodology-defaults.md"
   },
   {
     "id": "D08",
@@ -146,7 +155,9 @@
       "integration": "Microsoft Graph",
       "evidenceStorage": "SharePoint",
       "workingStorage": "OneDrive for Business"
-    }
+    },
+    "implementationDefault": "No per-file product cap; Entra/Graph/SharePoint/OneDrive are selected. Region, production recovery and service-specific retention require T006 evidence.",
+    "decisionRecord": "docs/decisions/T002-business-defaults.md"
   },
   {
     "id": "D12",
@@ -158,6 +169,8 @@
     "ambiguity": "Preparer limits, reviewer authority and partner firm/engagement authority need explicit assignment, admin and billing permission rules.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Use scoped expiring role grants, enforce no self-approval and separate operational administration from partner authority.",
+    "decisionRecord": "docs/decisions/T002-business-defaults.md"
   }
 ]

@@ -4,6 +4,7 @@ import { createHash } from 'node:crypto';
 const id = process.argv.slice(2).find(value => value !== '--');
 const tasks = {
   T001: ['baseline'],
+  T002: ['business-decisions'],
   T003: ['methodology'],
   T004: ['records-policy'],
   T007: ['lint', 'build:server', 'test:integration'],
@@ -48,6 +49,11 @@ for (const step of tasks[id]) {
   }
   if (step === 'records-policy') {
     const result = spawnSync(process.execPath, ['scripts/verify-records-policy.mjs'], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
+    continue;
+  }
+  if (step === 'business-decisions') {
+    const result = spawnSync(process.execPath, ['scripts/verify-business-decisions.mjs'], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }

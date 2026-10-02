@@ -8,11 +8,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `401; 546; 596` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Billing owner and engagement partner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T002 business defaults](../decisions/T002-business-defaults.md). Independent finance acceptance remains separate.
 
 **Unresolved point:** Quotation terms say 50% upon draft report; bundle workflow triggers remaining 50% at release.
 
-**Proposed implementation direction, not approval:** Choose the trigger and due date explicitly. Use one engagement/milestone invoice identity, so draft and release cannot bill the same balance twice.
+**Recorded implementation default:** Issue the final half-fee invoice once at final bundle authorization for release, using one engagement/milestone business key. See T002.
 
 **Affected tasks:** [T060](../tasks/05-commercial/T060-quote.md), [T125](../tasks/10-reporting/T125-final-fee.md), [T129](../tasks/10-reporting/T129-release.md).
 
@@ -22,11 +22,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `64; 324; 434; 596` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Client-service owner and partner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T002 business defaults](../decisions/T002-business-defaults.md).
 
 **Unresolved point:** Persona says access terminates on closure, while final-release workflow permits certified-bundle downloads.
 
-**Proposed implementation direction, not approval:** Separate upload eligibility from sign-in/download entitlement. Define final read-only period and closure explicitly; do not simply keep uploads enabled.
+**Recorded implementation default:** Freeze uploads at final release; keep scoped read/download access until the T004 archive deadline, then close the client grant.
 
 **Affected tasks:** [T020](../tasks/02-security/T020-portal-auth.md), [T077](../tasks/06-billing-portal/T077-portal-documents.md), [T129](../tasks/10-reporting/T129-release.md).
 
@@ -50,11 +50,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `138-175; 185; 411-413; 446; 456; 591` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Engagement partner and product owner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T002 business defaults](../decisions/T002-business-defaults.md).
 
 **Unresolved point:** Risk sign-off is needed before the letter yet also appears in the later Governance flow; directory provisioning occurs at risk acceptance, portal only after advance clears.
 
-**Proposed implementation direction, not approval:** Use one acceptance/continuance review referenced by both gates. Private directory creation is not client portal access. Decide whether invite redemption replaces emailed temporary passwords.
+**Recorded implementation default:** One versioned partner acceptance record is referenced by both letter and governance gates; provision the private engagement directory at acceptance, but activate the client portal only after cleared advance payment.
 
 **Affected tasks:** [T057](../tasks/05-commercial/T057-acceptance.md), [T059](../tasks/05-commercial/T059-partner-risk.md), [T064](../tasks/05-commercial/T064-directories.md), [T073](../tasks/06-billing-portal/T073-portal-activation.md).
 
@@ -148,11 +148,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `44; 489; 551` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Product, operations and security owners.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T002 business defaults](../decisions/T002-business-defaults.md) and T006 for unresolved production location/backup acceptance.
 
 **Unresolved point:** No per-file licensing penalty is required, but there are no workload/SLO/region/provider or component-license budgets.
 
-**Proposed implementation direction, not approval:** Do not add product file-count caps, but approve technical limits, storage region, recovery objectives, paid component/provider costs and support terms. “Unlimited” is not infinite capacity.
+**Recorded implementation default:** Entra ID, Graph, SharePoint and OneDrive are the selected identity/storage path; no per-file cap. Region, backup ownership, SLO, exact production costs and provider retention remain T006/production acceptance items.
 
 **Affected tasks:** [T006](../tasks/00-readiness/T006-deployment-decisions.md), [T051](../tasks/04-tb-proof/T051-tb-proof-gate.md), [T159](../tasks/14-production/T159-load-tests.md).
 
@@ -162,11 +162,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `59-64; 451; 511-518` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Partner and security owner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T002 business defaults](../decisions/T002-business-defaults.md). Domain enforcement and independent UAT remain separate.
 
 **Unresolved point:** Preparer limits, reviewer authority and partner firm/engagement authority need explicit assignment, admin and billing permission rules.
 
-**Proposed implementation direction, not approval:** Default deny, distinguish identity/admin/grade/audit role, and approve cross-engagement delegation and no-self-review policy. Directory global-admin status is not partner sign-off.
+**Recorded implementation default:** Apply scoped expiring engagement grants and no-self-approval; admin identity never implies partner approval. Role boundaries are defined in T002.
 
 **Affected tasks:** [T021](../tasks/02-security/T021-authorization.md), [T083](../tasks/07-planning/T083-scheduling.md), [T116](../tasks/09-review/T116-partner-clearance.md).
 

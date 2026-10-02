@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `GATE` |
 | Phase | 00-readiness — Requirements, decisions and compatibility |
 | Owner area | `planning` |
@@ -50,19 +51,21 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Record D01-D12 from the decision register, with source references, proposed interpretation, owner and status.
-- [ ] Resolve the final-50% trigger: quotation says draft report while release workflow says final bundle. Define one invoice business key regardless of trigger.
-- [ ] Resolve portal closure versus continued downloads, and signed LOR return versus upload freeze.
-- [ ] Resolve acceptance-before-letter versus the later governance module: one review record, referenced twice, not two independent approvals.
-- [ ] Keep affected production transitions blocked until their decisions are approved; permit unrelated foundation work.
+- [x] Record D01-D12 with source references, owner and status in the decision register; approved interpretations are linked in T002/T003/T004 records.
+- [x] Resolve the final-50% trigger to one final-release milestone and one idempotency/business key.
+- [x] Separate client upload freeze from final download access and apply the archive-closure boundary; define signed LOR as a pre-release package gate.
+- [x] Use one versioned partner risk-review record referenced by the commercial letter and later governance activation gate.
+- [x] Add a task-readiness gate that blocks only tasks mapped to pending decisions and leaves unrelated tasks available.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Each conflict remains visible with both source references.
-- [ ] **AC2:** No unapproved default is represented as a requirement.
-- [ ] **AC3:** Automated gate tests can distinguish pending policy from an ordinary validation failure.
+- [x] **AC1:** The preserved source remains byte-identical; each D01-D12 register row retains its source-line reference and ambiguity alongside the implementation choice.
+- [x] **AC2:** Approved user-delegated defaults are labeled as implementation policy, not as changes to CURRENT or professional certification.
+- [x] **AC3:** Automated vectors return distinct `POLICY_PENDING`, `ALLOW` for an unrelated feature, and `VALIDATION_ERROR` outcomes.
 
 Review source hashes, approvals, evidence links and unresolved blockers. No fabricated test output.
+
+**Implementation evidence:** [business defaults](../../decisions/T002-business-defaults.md), [task gate vectors](../../decisions/T002-policy-gate.json), and [handoff](../../evidence/T002/handoff.md). This verifier is migration tooling; production commands still need to enforce these decisions inside their owning modules.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 
