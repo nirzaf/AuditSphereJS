@@ -33,6 +33,15 @@ The Angular SPA uses MSAL full-page redirect login and logout with authorization
 
 Map the intended staff identity to `User.tenantId` and `User.entraObjectId`, using the immutable Entra object ID, not email alone. Add membership for the intended engagement and current scoped role grants, including `ENGAGEMENT_READ`; mutations need their own capabilities. Tenant Global Administrator status does not create local partner, reviewer or finance authority.
 
+For the identity binding only, use the operator CLI after independently verifying the tenant object ID and the exact existing local user:
+
+```powershell
+pnpm identity:map:entra -- --local-user-id <existing-local-user-uuid> --tenant-id <tenant-uuid> --object-id <entra-object-uuid>
+pnpm identity:map:entra -- --local-user-id <existing-local-user-uuid> --tenant-id <tenant-uuid> --object-id <entra-object-uuid> --apply
+```
+
+The first invocation is a dry run. `--apply` only binds an existing active `User` to the configured `M365_TENANT_ID` and immutable Entra object ID. It never creates users, memberships, role grants or business permissions, never changes the local role, and refuses inactive, already-bound, unknown or conflicting accounts. Repeating the exact mapping is idempotent. Restrict command history and operational records as appropriate for staff identifiers. Create engagement membership and least-privilege capability grants separately through the reviewed provisioning process; do not infer them from Entra directory roles. Do not use the tenant administrator identity for acceptance unless it is explicitly approved as the intended local test principal and its scope is bounded to synthetic data.
+
 The backend validates tenant, v2 issuer, audience, RS256 signature, expiry and delegated API scope before looking up the local user. It binds `(tenantId, entraObjectId)` to an active local `User`; setting `User.active=false` immediately denies `/api/v1/me` and engagement routes with 401. The authenticated user's self endpoint returns only local ID, email and active status. Engagement routes additionally require local membership and current scoped grants; missing membership or grant returns 403. Directory administrator claims do not grant local partner, reviewer or finance authority. Use a bounded nonproduction identity fixture for acceptance. The full live SPA-to-API assignment journey remains pending; no self-service provisioning screen is claimed.
 
 ## Private credentials

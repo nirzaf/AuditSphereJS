@@ -39,3 +39,15 @@
 - Each Entra-authenticated request validates the signed token first, binds the immutable tenant/object identity to an active local user, then checks the newest persisted cutoff against token `iat`. Old tokens return 401; tokens issued at/after the cutoff work. This revokes all existing API access tokens for that mapped user.
 - `pnpm verify:task -- T019` passed after the change: signed Entra unit tests; a real PostgreSQL Testcontainers test for old-token rejection, post-cutoff token acceptance and append-only enforcement; and Fastify tests for the Entra-only endpoint and disabled/foreign/read-only access boundaries.
 - Remaining: live interactive SPA sign-in and browser-initiated revocation acceptance in the configured tenant, plus T018’s owner-scoped integrity follow-ups and production identity mapping review. No tenant permission, credential or application registration was changed.
+
+## Operator-managed identity binding — 2026-10-02
+
+- Added `pnpm identity:map:entra` for an operator to bind an explicitly selected existing active local user to an immutable `(tenantId, entraObjectId)` identity. The default is read-only dry-run; `--apply` requires an exact existing UUID pair and the requested tenant must match `M365_TENANT_ID`.
+- The service refuses unknown/inactive users, conflicting or partial mappings, and identities already claimed by another user. The conditional PostgreSQL update and unique constraint prevent competing identity claims; exact replay is idempotent.
+- Mapping changes no local role and creates no membership, capability grant or business record. These remain separate reviewed authorization steps.
+- Added a PostgreSQL 18.6/Testcontainers test for dry-run inspection behavior, successful bind and replay, inactive/missing/mapped/claimed identity denials, zero implicit authorization, UUID validation and concurrent uniqueness.
+- Not run against the live tenant: the administrator identity remains unmapped and no live user assignment or grant was created. The SPA still returns 401 until an explicitly authorized test principal is selected and separately assigned synthetic engagement access.
+- `pnpm verify:task -- T019` passed after this change: server compile, Entra token suite (1/1), PostgreSQL session-revocation integration (1/1), PostgreSQL identity mapping integration (1/1) and Fastify identity boundary integration (1/1).
+- `pnpm verify:affected` passed: module/browser boundaries, server and test TypeScript checks, Angular production build, and 81 unit tests across 18 files. `pnpm lint` passed, including ESLint and module/browser boundaries.
+- `pnpm test:integration` and `pnpm verify:all` were not run as full-suite commands in this increment. No GitHub Actions run is claimed until this change is pushed and the workflow completes.
+- T019 stays `IN_PROGRESS`; T018 owner-scoped evidence and the full interactive acceptance with an authorized mapped test principal and synthetic engagement grant remain open.
