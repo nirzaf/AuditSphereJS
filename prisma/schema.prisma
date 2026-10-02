@@ -26,6 +26,7 @@ model Client {
   firm        Firm         @relation(fields: [firmId], references: [id])
   engagements Engagement[]
   repositories ClientRepository[]
+  mappingMemoryEntries MappingMemoryEntry[]
   roleGrants   RoleGrant[]
   @@unique([firmId, id])
 }
@@ -49,6 +50,7 @@ model Engagement {
   materialityAssessments MaterialityAssessment[]
   risks RiskItem[]
   storedObjects StoredObject[]
+  documents Document[]
   reviewNotes ReviewNote[]
   adjustmentJournals AdjustmentJournal[]
   @@unique([firmId, clientId, id])
@@ -111,6 +113,7 @@ model Membership {
 model Document {
   id           String            @id @default(uuid()) @db.Uuid
   engagementId String            @db.Uuid
+  engagement   Engagement        @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   key          String            @unique
   sha256       String
   filename     String
@@ -118,6 +121,8 @@ model Document {
   createdAt    DateTime          @default(now())
   versions     DocumentVersion[]
   storedObjects StoredObject[]
+  imports      TbImport[]
+  @@unique([engagementId, id])
 }
 /// Binds one client to one provider repository. Replaces the previous single global
 /// drive/folder configuration so evidence cannot be written into another client's site.
@@ -162,6 +167,7 @@ model TbImport {
   engagementId String     @db.Uuid
   engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
   documentId   String     @db.Uuid
+  document     Document   @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "TbImport_document_scope_fkey")
   sha256       String
   status       String     @default("QUEUED")
   error        String?
@@ -295,7 +301,9 @@ model MappingApproval {
   approvedBy        String          @db.Uuid
   approvedAt        DateTime        @default(now())
   publications      BalancePublication[]
+  mappingMemoryEntries MappingMemoryEntry[]
   @@unique([importId, taxonomyVersionId])
+  @@unique([firmId, clientId, id])
   @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, approvedAt])
 }
@@ -398,7 +406,7 @@ model StoredObject {
   sha256       String
   status       String    @default("PENDING")
   documentId   String?   @db.Uuid
-  document     Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  document     Document? @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "StoredObject_document_scope_fkey")
   createdAt    DateTime  @default(now())
   resolvedAt   DateTime?
   @@index([status, createdAt])
@@ -409,10 +417,12 @@ model MappingMemoryEntry {
   id               String   @id @default(uuid()) @db.Uuid
   firmId           String   @db.Uuid
   clientId         String   @db.Uuid
+  client           Client   @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict, map: "MappingMemoryEntry_client_scope_fkey")
   accountCode      String
   accountName      String
   taxonomyLineCode String
   sourceApprovalId String   @db.Uuid
+  sourceApproval MappingApproval @relation(fields: [firmId, clientId, sourceApprovalId], references: [firmId, clientId, id], onDelete: Restrict, map: "MappingMemoryEntry_source_approval_scope_fkey")
   timesApplied     Int      @default(1)
   lastApprovedAt   DateTime @default(now())
   @@unique([firmId, clientId, accountCode])

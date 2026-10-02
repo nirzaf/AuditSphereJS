@@ -52,6 +52,13 @@ test('per-client repository bindings resolve per purpose and document versions a
 
       // Version identity is append-only and constrained.
       await db.document.create({ data: { id: documentId, engagementId, key: 'repository/dataset.csv', sha256: 'a'.repeat(64), filename: 'dataset.csv' } });
+      const otherEngagementId = '8a8a8a8a-8a8a-48a8-88a8-8a8a8a8a8a8a';
+      const otherDocumentId = '9a9a9a9a-9a9a-49a9-89a9-9a9a9a9a9a9a';
+      await db.engagement.create({ data: { id: otherEngagementId, firmId, clientId: clientB, name: 'Other repository engagement' } });
+      await db.document.create({ data: { id: otherDocumentId, engagementId: otherEngagementId, key: 'repository/other.csv', sha256: 'b'.repeat(64), filename: 'other.csv' } });
+      await assert.rejects(db.document.create({ data: { engagementId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', key: 'repository/orphan.csv', sha256: 'c'.repeat(64), filename: 'orphan.csv' } }), /Document_engagementId_fkey|foreign key/i);
+      await assert.rejects(db.tbImport.create({ data: { firmId, clientId: clientA, engagementId, documentId: otherDocumentId, sha256: 'd'.repeat(64) } }), /TbImport_document_scope_fkey/);
+      await assert.rejects(db.storedObject.create({ data: { engagementId, documentId: otherDocumentId, key: 'repository/cross-engagement-object', reference: 'cross-engagement-test', sha256: 'e'.repeat(64), status: 'REFERENCED', resolvedAt: new Date() } }), /StoredObject_document_scope_fkey/);
       await db.documentVersion.create({ data: { documentId, provider: 'graph', driveId: 'driveA', itemId: 'item-1', versionId: '1.0', eTag: 'etag-1', sha256: 'a'.repeat(64), sizeBytes: 5, createdBy: actorId } });
       assert.equal(await db.documentVersion.count({ where: { documentId } }), 1);
       await assert.rejects(db.$executeRaw`UPDATE "DocumentVersion" SET "versionId" = '9.9' WHERE "documentId" = ${documentId}::uuid`, /append-only/);

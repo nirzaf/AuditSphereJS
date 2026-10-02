@@ -61,8 +61,18 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
       await db.tbImport.create({ data: { id: otherImportId, firmId, clientId, engagementId: otherEngagementId, documentId: otherDocumentId, sha256: '8'.repeat(64), status: 'MAPPING_REQUIRED' } });
       const otherFirmId = randomUUID();
       const otherTaxonomyId = randomUUID();
+      const otherClientId = randomUUID();
+      const foreignEngagementId = randomUUID();
+      const foreignDocumentId = randomUUID();
+      const foreignImportId = randomUUID();
+      const foreignApprovalId = randomUUID();
       await db.firm.create({ data: { id: otherFirmId, name: 'Other taxonomy firm' } });
+      await db.client.create({ data: { id: otherClientId, firmId: otherFirmId, name: 'Other taxonomy client' } });
+      await db.engagement.create({ data: { id: foreignEngagementId, firmId: otherFirmId, clientId: otherClientId, name: 'Foreign mapping engagement' } });
       await db.taxonomyVersion.create({ data: { id: otherTaxonomyId, firmId: otherFirmId, name: 'FOREIGN', version: 1, createdBy: actorId } });
+      await db.document.create({ data: { id: foreignDocumentId, engagementId: foreignEngagementId, key: `taxonomy/${foreignDocumentId}.csv`, sha256: '6'.repeat(64), filename: 'foreign.csv' } });
+      await db.tbImport.create({ data: { id: foreignImportId, firmId: otherFirmId, clientId: otherClientId, engagementId: foreignEngagementId, documentId: foreignDocumentId, sha256: '7'.repeat(64), status: 'MAPPING_REQUIRED' } });
+      await db.$executeRaw`INSERT INTO "MappingApproval" (id,"firmId","clientId","engagementId","importId","taxonomyVersionId",digest,"rowCount","approvedBy") VALUES (${foreignApprovalId}::uuid, ${otherFirmId}::uuid, ${otherClientId}::uuid, ${foreignEngagementId}::uuid, ${foreignImportId}::uuid, ${otherTaxonomyId}::uuid, ${'5'.repeat(64)}, 1, ${actorId}::uuid)`;
       const invalidMappingApproval = (mappingImportId: string, taxonomyId: string) => db.$executeRaw`INSERT INTO "MappingApproval" (id,"firmId","clientId","engagementId","importId","taxonomyVersionId",digest,"rowCount","approvedBy") VALUES (gen_random_uuid(), ${firmId}::uuid, ${clientId}::uuid, ${engagementId}::uuid, ${mappingImportId}::uuid, ${taxonomyId}::uuid, ${'a'.repeat(64)}, 1, ${actorId}::uuid)`;
       await assert.rejects(invalidMappingApproval(otherImportId, v1.id), /MappingApproval_import_scope_fkey/);
       await assert.rejects(invalidMappingApproval(importId, otherTaxonomyId), /MappingApproval_taxonomy_scope_fkey/);
@@ -95,6 +105,9 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
 
       // Approved mappings become client-scoped memory with the approval as provenance.
       assert.equal(await db.mappingMemoryEntry.count({ where: { firmId, clientId } }), 2);
+      const invalidMemoryEntry = (memoryFirmId: string, memoryClientId: string, sourceApprovalId: string, accountCode: string) => db.$executeRaw`INSERT INTO "MappingMemoryEntry" (id,"firmId","clientId","accountCode","accountName","taxonomyLineCode","sourceApprovalId") VALUES (gen_random_uuid(), ${memoryFirmId}::uuid, ${memoryClientId}::uuid, ${accountCode}, 'Cash', 'Cash and equivalents', ${sourceApprovalId}::uuid)`;
+      await assert.rejects(invalidMemoryEntry(firmId, otherClientId, v1Approval.approvalId, 'BAD-CLIENT'), /MappingMemoryEntry_client_scope_fkey/);
+      await assert.rejects(invalidMemoryEntry(firmId, clientId, foreignApprovalId, 'BAD-APPROVAL'), /MappingMemoryEntry_source_approval_scope_fkey/);
 
       // A later import is offered those remembered codes, each naming its source approval.
       const secondImportId = '18181818-1818-4818-8818-181818181818';
