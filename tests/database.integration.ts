@@ -15,7 +15,7 @@ const clientA = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 const clientB = 'dddddddd-dddd-4ddd-8ddd-dddddddddddd';
 
 test('empty disposable PostgreSQL 18.6 database migrates, keeps monetary precision and enforces firm/client scope', { timeout: 120_000 }, async () => {
-  const container = await new PostgreSqlContainer('postgres:18.6').withDatabase('auditsphere_test').withUsername('test_owner').withPassword(randomBytes(24).toString('hex')).start();
+  const container = await new PostgreSqlContainer('postgres:18.6@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722').withDatabase('auditsphere_test').withUsername('test_owner').withPassword(randomBytes(24).toString('hex')).start();
   try {
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });

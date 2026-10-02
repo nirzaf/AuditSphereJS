@@ -1,6 +1,6 @@
 # Local dependency services
 
-These containers are local development dependencies only. Mailpit captures SMTP messages in memory; it does not deliver them externally. Compose binds SMTP and its viewing interface to loopback.
+These containers are local development dependencies only. PostgreSQL, Redis and Mailpit images are pinned by version and immutable Linux/amd64 digest. Mailpit captures SMTP messages in memory; it does not deliver them externally. Compose binds SMTP and its viewing interface to loopback.
 
 ## Start
 

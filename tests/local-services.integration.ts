@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { GenericContainer, Wait } from 'testcontainers';
 
 test('isolated queue Redis containers assert the selected version and durable queue settings', { timeout: 60_000 }, async () => {
-  const start = () => new GenericContainer('redis:8.10')
+  const start = () => new GenericContainer('redis:8.10@sha256:6f81e8915c60b065a524e6967e0ad1c639ba6efa84d669f823683ea04d9150ee')
     .withExposedPorts(6379)
     .withCommand(['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction'])
     .withWaitStrategy(Wait.forLogMessage('Ready to accept connections', 1))

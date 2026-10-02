@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_REVIEW` — PostgreSQL/Redis Testcontainers version and persistence checks pass; remaining local mail-sink, immutable image identity and T006 deployment decisions are open |
+| Current status | `IN_REVIEW` — PostgreSQL/Redis/Mailpit Testcontainers and image-digest checks pass; T006 deployment and backup/recovery decisions remain open |
 | Execution class | `CORE` |
 | Phase | 01-foundation — Workspace and executable foundation |
 | Owner area | `infrastructure` |
@@ -80,6 +80,6 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 ## Current partial evidence
 
-`pnpm verify:task -- T013` passed on 2026-10-02: the PostgreSQL 18.6 Testcontainers integration asserts its actual `server_version`; two concurrently started Redis 8.10 Testcontainers instances assert distinct mapped ports, actual Redis 8.10.x version, `noeviction` and AOF enabled; and a digest-pinned Mailpit container accepts a synthetic SMTP message without external delivery. See [the focused evidence](../../evidence/T013/testcontainers-2026-10-02.md). T013 remains in review because PostgreSQL and Redis use version tags rather than immutable digests in Compose, and T006 production-region/backup decisions remain open.
+`pnpm verify:task -- T013` passed on 2026-10-02: the PostgreSQL 18.6 Testcontainers integration asserts its actual `server_version`; two concurrently started Redis 8.10 Testcontainers instances assert distinct mapped ports, actual Redis 8.10.x version, `noeviction` and AOF enabled; and a digest-pinned Mailpit container accepts a synthetic SMTP message without external delivery. Compose and test containers now pin all three Linux/amd64 images by version and immutable digest. See [the focused evidence](../../evidence/T013/testcontainers-2026-10-02.md). T013 remains in review because T006 production-region and backup/recovery decisions remain open.
 
 Local startup and non-destructive shutdown instructions are in the [local services runbook](../../runbooks/local-services.md).
