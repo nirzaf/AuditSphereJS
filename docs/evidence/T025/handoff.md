@@ -37,17 +37,17 @@ Delivered in this change:
 | `pnpm exec tsc -p tsconfig.tests.json --noEmit` | Server + test typecheck | PASS |
 | `pnpm exec vitest run tests/audit-write.test.ts` | Redaction unit tests (3) | PASS |
 | `pnpm verify:task -- T025` | `build:server` + `tests/audit-write.integration.ts` against PostgreSQL 18.6 Testcontainers | PASS, 1/1, exit 0 |
-| 2026-10-02 review follow-up: `pnpm verify:task -- T025` | Audit payload redaction and database invariants against PostgreSQL 18.6 Testcontainers | PASS, 1/1, exit 0 |
+| 2026-10-02 review follow-up: `pnpm verify:task -- T025` | Audit payload redaction, five simultaneous writes and database invariants against PostgreSQL 18.6 Testcontainers | PASS, 1/1, exit 0 |
 | 2026-10-02 review follow-up: `pnpm exec vitest run tests/audit-write.test.ts` | Sensitive-key and over-depth fail-closed redaction | PASS, 3/3 |
 | 2026-10-02 review follow-up: `pnpm verify:affected` | Boundaries, server/test typecheck, Angular production build, unit suite | PASS, 18 files / 81 tests |
 | Full `pnpm test:integration` and web suites | Combined tree | See final verification entry recorded in the handoff date |
 
 ## Review follow-up
 
-An implementation review found that the first redaction helper returned unvisited deep subtrees unchanged and did not sanitize the general `payload` field. Both paths are fixed and covered: an over-depth subtree becomes `[REDACTED]`, while non-sensitive values remain available, and the PostgreSQL test verifies that a payload `apiKey` is stored only as `[REDACTED]`. This resolves those findings; T025 stays `IN_REVIEW` because T021/T024 prerequisites, independent review, and the recorded digest/call-site limitations are still open.
+An implementation review found that the first redaction helper returned unvisited deep subtrees unchanged and did not sanitize the general `payload` field. Both paths are fixed and covered: an over-depth subtree becomes `[REDACTED]`, while non-sensitive values remain available, and the PostgreSQL test verifies that a payload `apiKey` is stored only as `[REDACTED]`. The focused PostgreSQL test also writes five audit events concurrently, captures sequence 7 and verifies the resulting chain. This resolves those findings; T025 stays `IN_REVIEW` because T021/T024 prerequisites, independent review, and the recorded digest/call-site limitations are still open.
 
 ## Acceptance criteria
 
 - AC1: PASS. An application-shaped role (`SELECT, INSERT` only) is denied `UPDATE`, `DELETE` and `TRUNCATE` on `AuditEvent` and `SecurityEvent` with `permission denied`; the table owner is denied by the row-level immutability triggers; `TRUNCATE "AuditEvent"` is additionally blocked by the sidecar foreign key even with user triggers disabled.
 - AC2: PASS. A transaction that writes an audit event and then fails authorization leaves no event, leaves the chain head unchanged, and still records `CAPABILITY_DENIED` in `SecurityEvent`.
-- AC3: PASS. A SERVICE event with a null actor and a correlation id (`outbox:job-9`) is accepted, chains into the engagement series and verifies; USER events without an actor and SERVICE events without a correlation are rejected by database CHECK constraints.
+- AC3: PASS. A SERVICE event with a null actor and a correlation id (`outbox:job-9`) is accepted, five simultaneous USER audit writes produce a verifiable sequence-7 chain, and USER events without an actor plus SERVICE events without a correlation are rejected by database CHECK constraints.

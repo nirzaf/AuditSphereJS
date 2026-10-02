@@ -57,6 +57,15 @@ test('audit writes carry traceability, resist mutation and erasure, and denial e
       assert.equal(secondCheckpoint.sequence, '2');
       assert.deepEqual(await verifyAuditChain(engagementId, secondCheckpoint), { valid: true });
 
+      // Simultaneous audit writes remain ordered and verifiable by the database-backed chain.
+      await Promise.all(Array.from({ length: 5 }, (_, index) => recordAuditEvent(db, {
+        engagementId, action: `CONCURRENT_EVENT_${index}`, actorId, correlationId: `concurrent:${index}`,
+        payload: { index },
+      })));
+      const concurrentCheckpoint = await captureAuditCheckpoint(engagementId);
+      assert.equal(concurrentCheckpoint.sequence, '7');
+      assert.deepEqual(await verifyAuditChain(engagementId, concurrentCheckpoint), { valid: true });
+
       // Traceability is enforced by the database, not only by the writer.
       await assert.rejects(recordAuditEvent(db, { engagementId, action: 'BAD_USER', actorKind: 'USER', actorId: null }), /audit_event_actor_traceability_check/);
       await assert.rejects(recordAuditEvent(db, { engagementId, action: 'BAD_SERVICE', actorKind: 'SERVICE' }), /audit_event_actor_traceability_check/);
