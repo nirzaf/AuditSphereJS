@@ -20,6 +20,7 @@ const tasks = {
   T032: ['build:server', 'storage'],
   T017: ['verify:all', 'build:linux', 'smoke:linux'],
   T018: ['build:server', 'scope-jobs', 'scope-database', 'scope-repository', 'scope-authorization', 'scope-boundary'],
+  T009: ['typecheck', 'api-shell', 'config'],
   T044: ['build:server', 'trial-balance-csv'],
   T156: ['m365-storage-live'],
 };
@@ -46,7 +47,7 @@ for (const step of tasks[id]) {
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }
-  const filters = { config: 'tests/config.test.ts', storage: 'tests/graph-storage.test.ts', identity: 'packages/server/tests/entra.test.ts', 'money-clock': 'tests/money-clock.test.ts', checkpoint: 'tests/audit-checkpoint.test.ts', 'scope-jobs': 'packages/server/tests/import-job.test.ts', 'trial-balance-csv': 'packages/server/tests/parser.test.ts' };
+  const filters = { config: 'tests/config.test.ts', 'api-shell': 'apps/api/tests/shell.test.ts', storage: 'tests/graph-storage.test.ts', identity: 'packages/server/tests/entra.test.ts', 'money-clock': 'tests/money-clock.test.ts', checkpoint: 'tests/audit-checkpoint.test.ts', 'scope-jobs': 'packages/server/tests/import-job.test.ts', 'trial-balance-csv': 'packages/server/tests/parser.test.ts' };
   const path = filters[step];
   const integration = { 'unit-of-work': 'tests/unit-of-work.integration.ts', 'audit-chain': 'tests/audit-chain.integration.ts', 'practice-ledger': 'tests/practice-ledger.integration.ts', 'scope-database': 'tests/database.integration.ts', 'scope-repository': 'tests/repository.integration.ts', 'scope-authorization': 'tests/authorization.integration.ts', 'scope-boundary': 'apps/api/tests/auth-boundary.integration.ts', 'identity-boundary': 'apps/api/tests/auth-boundary.integration.ts', 'identity-session': 'packages/server/tests/session-revocation.integration.ts' }[step];
   if (integration && !existsSync(integration)) throw new Error(`Missing intended test: ${integration}`);

@@ -2,7 +2,7 @@
 
 | Field | Value |
 | :--- | :--- |
-| Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 01-foundation — Workspace and executable foundation |
 | Owner area | `foundation` |
@@ -42,16 +42,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Create a minimal Fastify-hosted Nest app with /api/v1, request IDs, bounded JSON payloads and controlled proxy trust.
-- [ ] Implement /health/live and /health/ready without returning secrets or a full dependency dump.
-- [ ] Register only adapter-compatible plugins; use one CORS registration and no Express/Multer request assumptions.
-- [ ] Add structured startup validation and graceful shutdown hooks.
+- [x] Create a Fastify-hosted Nest app with /api/v1, validated request IDs, bounded JSON payloads and explicit `trustProxy: false`.
+- [x] Implement unprefixed /health/live and /health/ready without returning secrets or a full dependency dump; add /api/v1/system/version.
+- [x] Register adapter-compatible plugins, one CORS registration and no Express/Multer request assumptions.
+- [x] Add structured startup validation and graceful shutdown hooks.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Fastify injection receives a versioned JSON response.
-- [ ] **AC2:** Oversized/malformed payloads fail before business execution.
-- [ ] **AC3:** Startup fails clearly for missing required configuration.
+- [x] **AC1:** Fastify injection receives the JSON API version and request correlation header.
+- [x] **AC2:** Malformed and oversized request bodies return 400 and 413 before controller execution.
+- [x] **AC3:** Missing required configuration fails with a safe configuration-key error.
 
 Run pnpm typecheck, affected builds and the task-specific smoke tests; prove generated/compiled runtime works.
 
@@ -71,6 +71,6 @@ pnpm verify:task -- T009
 
 Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
 
-Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
+Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations in [the T009 handoff](../../evidence/T009/handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

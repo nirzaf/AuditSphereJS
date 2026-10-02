@@ -7,6 +7,7 @@
   },
   "include": [
     "tests/**/*.ts",
+    "apps/api/tests/**/*.ts",
     "packages/server/tests/**/*.ts",
     "scripts/**/*.ts",
     "prisma/seed.ts"
