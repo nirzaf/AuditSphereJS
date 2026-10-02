@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T00:59:04.242Z",
+  "generatedAt": "2026-10-02T16:21:07.600Z",
   "sourceCommit": null,
   "counts": {
     "PARTIAL": 15,
@@ -156,7 +156,7 @@
         "apps/web/src/module-catalog.ts",
         "apps/web/src/line-editor.ts"
       ],
-      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines. Not implemented: allocations, statement layouts/financial packages, taxonomy approval and per-import mapping approval actions in the UI, and the suggestion/provenance view."
+      "evidence": "Optimistic per-row versions, idempotency receipts and engagement-row locking, plus firm-scoped versioned taxonomies whose approved versions and lines are immutable by database trigger, and a mapping approval that binds one import's mapped rows to an exact taxonomy version by digest. Any later row change makes the approval stale, and publication now requires a current approval. Approved mappings build client-scoped memory with the approval as provenance, and a read-only suggestion endpoint offers remembered codes (reporting unknown accounts, retired codes and already-mapped rows explicitly). A staff workspace now authors taxonomy versions through the guarded endpoint with repeating validated lines, approves draft versions, binds an import's mapping approval to the exact approved version, and reviews per-import suggestions read-only with named reasons and approval provenance. Not implemented: allocations, statement layouts/financial packages, and a corrections workflow."
     },
     {
       "id": "C15",

@@ -56,6 +56,7 @@ model Engagement {
   auditEvents AuditEvent[]
   auditChainHead AuditChainHead?
   commandReceipts CommandReceipt[]
+  outboxEvents OutboxEvent[]
   @@unique([firmId, clientId, id])
 }
 model User {
@@ -179,6 +180,7 @@ model TbImport {
   rows         TbRow[]
   mappingApprovals MappingApproval[]
   publication  BalancePublication?
+  outboxEvents OutboxEvent[]
   createdAt    DateTime   @default(now())
   @@unique([engagementId, sha256])
   @@unique([firmId, clientId, engagementId, id])
@@ -575,6 +577,12 @@ model AuditChainRecord {
 }
 model OutboxEvent {
   id          String    @id @default(uuid()) @db.Uuid
+  firmId      String    @db.Uuid
+  clientId    String    @db.Uuid
+  engagementId String   @db.Uuid
+  engagement  Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  importId    String?   @db.Uuid
+  import      TbImport? @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_import_scope_fkey")
   type        String
   payload     Json
   publishedAt DateTime?
@@ -582,6 +590,7 @@ model OutboxEvent {
   /// database here removes schema drift without altering stored values.
   completedAt DateTime? @db.Timestamptz
   createdAt   DateTime  @default(now())
+  @@index([completedAt, type, createdAt], map: "OutboxEvent_unfinished_scope")
 }
 model CommandReceipt {
   key          String   @id @db.Uuid

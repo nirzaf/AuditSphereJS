@@ -47,14 +47,14 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 ## Implementation checklist
 
 - [x] Model one firm boundary initially with explicit firm_id on tenant-owned roots, client entities and engagement membership. Membership now stores firm/client/engagement keys and PostgreSQL checks the complete tuple.
-- [x] Use composite ownership keys/foreign keys where cross-client references could be created; UUID unpredictability is not authorization. Membership, staged imports, per-client repository bindings and role-grant scope tuples have negative cross-scope database fixtures.
-- [x] Provide scoped query helpers for API and worker use cases without an unscoped bypass. Trial-balance outbox and queue jobs now carry the full scope tuple and every worker import lookup/update uses it.
+- [x] Use composite ownership keys/foreign keys where cross-client references could be created; UUID unpredictability is not authorization. Membership, staged imports, per-client repository bindings, role-grant scope tuples and outbox/import links have negative cross-scope database fixtures.
+- [x] Provide scoped query helpers for API and worker use cases without an unscoped bypass. The PostgreSQL outbox owns the full scope tuple; Redis carries only the durable outbox UUID, which the worker resolves before every import operation.
 - [x] Add cross-firm, cross-client and cross-engagement negative fixtures. PostgreSQL rejects mismatched firm/client membership and import tuples; the Fastify lifecycle route denies a valid foreign engagement UUID.
 
 ## Acceptance criteria and required tests
 
 - [x] **AC1:** A valid UUID from another engagement cannot be read or attached. The protected lifecycle API returns 403 for foreign reads and commands, and the denied command leaves state and history unchanged.
-- [x] **AC2:** Worker queries require an explicit authorized scope.
+- [x] **AC2:** Worker queries require an explicit authorized scope loaded from the PostgreSQL outbox row; Redis carries only the durable outbox UUID.
 - [x] **AC3:** No artificial per-file quota is added.
 
 Test valid/invalid/expired credentials and cross-firm/client/engagement access through actual API boundaries.

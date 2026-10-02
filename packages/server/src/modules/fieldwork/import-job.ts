@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+const importOutboxIdSchema = z.uuid();
+
 export const importJobSchema = z.object({
   importId: z.uuid(),
   firmId: z.uuid(),
@@ -9,10 +11,17 @@ export const importJobSchema = z.object({
 
 export type ImportJob = z.infer<typeof importJobSchema>;
 
-/** Queue/outbox payloads must carry the authorized ownership tuple; IDs alone are insufficient. */
+/** A database-loaded ownership tuple must be validated before worker access; IDs alone are insufficient. */
 export function parseImportJob(payload: unknown): ImportJob {
   const parsed = importJobSchema.safeParse(payload);
   if (!parsed.success) throw new Error('Invalid scoped trial-balance import job');
+  return parsed.data;
+}
+
+/** The queue carries only the durable PostgreSQL outbox key; scope is reloaded from PostgreSQL. */
+export function parseImportOutboxId(value: unknown): string {
+  const parsed = importOutboxIdSchema.safeParse(value);
+  if (!parsed.success) throw new Error('Invalid trial-balance outbox event id');
   return parsed.data;
 }
 
