@@ -31,7 +31,7 @@ The server reads environment configuration at startup and caches provider client
 
 Map the intended staff identity to `User.tenantId` and `User.entraObjectId`, using the immutable Entra object ID, not email alone. Add membership for the intended engagement and current scoped role grants, including `ENGAGEMENT_READ`; mutations need their own capabilities. Tenant Global Administrator status does not create local partner, reviewer or finance authority.
 
-The backend validates tenant, v2 issuer, audience, RS256 signature, expiry and delegated API scope before looking up the local user. A missing identity assignment returns 401; missing membership or grant returns 403. Use a bounded nonproduction identity fixture for acceptance. The full live SPA-to-API assignment journey remains pending; no self-service provisioning screen is claimed.
+The backend validates tenant, v2 issuer, audience, RS256 signature, expiry and delegated API scope before looking up the local user. It binds `(tenantId, entraObjectId)` to an active local `User`; setting `User.active=false` immediately denies `/api/v1/me` and engagement routes with 401. The authenticated user's self endpoint returns only local ID, email and active status. Engagement routes additionally require local membership and current scoped grants; missing membership or grant returns 403. Directory administrator claims do not grant local partner, reviewer or finance authority. Use a bounded nonproduction identity fixture for acceptance. The full live SPA-to-API assignment journey remains pending; no self-service provisioning screen is claimed.
 
 ## Private credentials
 

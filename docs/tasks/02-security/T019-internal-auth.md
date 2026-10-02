@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_PROGRESS` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `identity` |
@@ -45,16 +46,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Implement the approved internal identity route from deployment decisions: production Entra/OIDC adapter or another reviewed provider, never a demo login.
-- [ ] Validate issuer, audience, signature, token lifetime and authorized tenant; bind immutable provider subject/tenant identifiers, not display email alone.
-- [ ] Map identity to active local membership and permissions; administrator status never grants audit sign-off automatically.
-- [ ] Add logout/revocation/session-expiry behavior and test identities restricted to isolated test environments.
+- [x] Implement production Entra identity validation and the authenticated `GET /api/v1/me` self endpoint; development token use remains explicit and isolated.
+- [x] Validate issuer, audience, RS256 signature, token lifetime, authorized tenant and delegated API scope; bind by immutable tenant/object identifiers, not email.
+- [x] Deny inactive local users and rely on engagement membership plus scoped PostgreSQL grants for business permissions; directory administrator claims grant no audit authority.
+- [ ] Add client logout, revocation/session-expiry behavior and complete interactive Entra acceptance; no live SPA sign-in acceptance is claimed.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Wrong-audience, wrong-issuer, expired and foreign-tenant tokens fail.
-- [ ] **AC2:** Disabled local users lose application access.
-- [ ] **AC3:** Authentication success alone cannot approve an engagement.
+- [x] **AC1:** Entra unit tests reject wrong-audience, wrong-issuer, expired, foreign-tenant, invalid-scope and malformed credentials.
+- [x] **AC2:** PostgreSQL/Fastify integration returns 401 for an inactive local user on `/api/v1/me` and a protected engagement route.
+- [x] **AC3:** The authenticated read-only fixture is denied a lifecycle command with 403 and the engagement remains unchanged.
 
 Test valid/invalid/expired credentials and cross-firm/client/engagement access through actual API boundaries.
 
@@ -75,5 +76,7 @@ pnpm verify:task -- T019
 Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
+
+Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). AC tests pass locally, but the task remains `IN_PROGRESS` until logout/revocation/session expiry and interactive live Entra acceptance are proven, and prerequisite scope review is complete.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

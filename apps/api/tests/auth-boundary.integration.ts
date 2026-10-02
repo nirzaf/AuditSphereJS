@@ -27,7 +27,7 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, DEV_AUTH_ENABLED: 'true', DEV_AUTH_TOKEN: 'auth-boundary-local-test-token' });
-    const { db, InternalGuard, GovernanceController } = await import('@auditsphere/server');
+    const { db, InternalGuard, InternalIdentityGuard, InternalIdentityController, GovernanceController } = await import('@auditsphere/server');
     disconnect = () => db.$disconnect();
     await db.firm.createMany({ data: [{ id: firmA, name: 'Firm A' }, { id: firmB, name: 'Firm B' }] });
     await db.client.createMany({ data: [{ id: clientA, firmId: firmA, name: 'Client A' }, { id: clientB, firmId: firmB, name: 'Client B' }] });
@@ -42,7 +42,7 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     await db.membership.create({ data: { userId: fixtureUser, firmId: firmA, clientId: clientA, engagementId: engagementA } });
     await db.roleGrant.create({ data: { userId: fixtureUser, capability: 'ENGAGEMENT_READ', firmId: firmA, clientId: clientA, engagementId: engagementA, grantedBy: grantor } });
 
-    @Module({ controllers: [GovernanceController], providers: [InternalGuard] })
+    @Module({ controllers: [GovernanceController, InternalIdentityController], providers: [InternalGuard, InternalIdentityGuard] })
     class BoundaryModule {}
 
     app = await NestFactory.create(BoundaryModule, new FastifyAdapter(), { logger: false });
@@ -52,11 +52,21 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     assert.ok(address && typeof address === 'object');
     const origin = `http://127.0.0.1:${address.port}`;
     const headers = { authorization: 'Bearer auth-boundary-local-test-token' };
+    const identity = await fetch(`${origin}/api/v1/me`, { headers });
+    assert.equal(identity.status, 200);
+    assert.deepEqual(await identity.json(), { id: fixtureUser, email: 'auth-fixture@example.test', active: true });
     const own = await fetch(`${origin}/api/v1/engagements/${engagementA}/lifecycle`, { headers });
     assert.equal(own.status, 200);
     const ownHistory = await own.json() as { state: string; history: unknown[] };
     assert.equal(ownHistory.state, 'LEAD_INGESTION');
     assert.deepEqual(ownHistory.history, []);
+    const identityOnlyCommand = await fetch(`${origin}/api/v1/engagements/${engagementA}/lifecycle`, {
+      method: 'POST',
+      headers: { ...headers, 'content-type': 'application/json' },
+      body: JSON.stringify({ command: 'START_FIELDWORK', expectedVersion: 1, idempotencyKey: '21212121-2121-4121-8121-212121212121' }),
+    });
+    assert.equal(identityOnlyCommand.status, 403, 'successful authentication and read access do not grant a lifecycle command');
+    assert.equal((await db.engagement.findUniqueOrThrow({ where: { id: engagementA } })).state, 'LEAD_INGESTION');
     const foreign = await fetch(`${origin}/api/v1/engagements/${engagementB}/lifecycle`, { headers });
     assert.equal(foreign.status, 403, 'a real foreign engagement UUID must not disclose lifecycle state');
     const foreignCommand = await fetch(`${origin}/api/v1/engagements/${engagementB}/lifecycle`, {
@@ -67,7 +77,12 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     assert.equal(foreignCommand.status, 403, 'a valid foreign engagement UUID cannot be mutated');
     assert.equal((await db.engagement.findUniqueOrThrow({ where: { id: engagementB } })).state, 'LEAD_INGESTION', 'denied command must not change foreign state');
     assert.equal(await db.engagementTransition.count({ where: { engagementId: engagementB } }), 0, 'denied command must not append transition history');
-    console.log('Fastify lifecycle route allows the assigned engagement and denies foreign reads and commands');
+    await db.user.update({ where: { id: fixtureUser }, data: { active: false } });
+    const disabledIdentity = await fetch(`${origin}/api/v1/me`, { headers });
+    assert.equal(disabledIdentity.status, 401, 'disabled local users lose identity access');
+    const disabledEngagement = await fetch(`${origin}/api/v1/engagements/${engagementA}/lifecycle`, { headers });
+    assert.equal(disabledEngagement.status, 401, 'disabled local users lose business API access');
+    console.log('Fastify identity route returns only the authenticated user and denies disabled or foreign identities');
   } finally {
     if (app) await app.close();
     await disconnect?.();

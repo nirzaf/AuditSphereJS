@@ -10,7 +10,7 @@ const tasks = {
   T014: ['test:unit', 'test:integration', 'test:e2e'],
   T015: ['lint', 'typecheck', 'test'],
   T016: ['verify:all', 'contracts:check', 'audit', 'ci-workflow', 'install-policy'],
-  T019: ['build:server', 'identity'],
+  T019: ['build:server', 'identity', 'identity-boundary'],
   T023: ['build:server', 'money-clock'],
   T024: ['build:server', 'unit-of-work'],
   T026: ['build:server', 'checkpoint', 'audit-chain'],
@@ -47,7 +47,7 @@ for (const step of tasks[id]) {
   }
   const filters = { config: 'tests/config.test.ts', storage: 'tests/graph-storage.test.ts', identity: 'packages/server/tests/entra.test.ts', 'money-clock': 'tests/money-clock.test.ts', checkpoint: 'tests/audit-checkpoint.test.ts', 'scope-jobs': 'packages/server/tests/import-job.test.ts' };
   const path = filters[step];
-  const integration = { 'unit-of-work': 'tests/unit-of-work.integration.ts', 'audit-chain': 'tests/audit-chain.integration.ts', 'practice-ledger': 'tests/practice-ledger.integration.ts', 'scope-database': 'tests/database.integration.ts', 'scope-repository': 'tests/repository.integration.ts', 'scope-authorization': 'tests/authorization.integration.ts', 'scope-boundary': 'apps/api/tests/auth-boundary.integration.ts' }[step];
+  const integration = { 'unit-of-work': 'tests/unit-of-work.integration.ts', 'audit-chain': 'tests/audit-chain.integration.ts', 'practice-ledger': 'tests/practice-ledger.integration.ts', 'scope-database': 'tests/database.integration.ts', 'scope-repository': 'tests/repository.integration.ts', 'scope-authorization': 'tests/authorization.integration.ts', 'scope-boundary': 'apps/api/tests/auth-boundary.integration.ts', 'identity-boundary': 'apps/api/tests/auth-boundary.integration.ts' }[step];
   if (integration && !existsSync(integration)) throw new Error(`Missing intended test: ${integration}`);
   if (path && !existsSync(path)) throw new Error(`Missing intended test: ${path}`);
   const args = integration ? ['exec', 'node', '--import', 'tsx', '--test', integration] : path ? ['exec', 'vitest', 'run', path] : [step];
