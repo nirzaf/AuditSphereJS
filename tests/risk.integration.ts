@@ -78,6 +78,11 @@ test('risk bands are derived, append-only, and a red band needs current Partner 
       assert.equal(risks[0].cleared, true);
       assert.equal(risks[0].assessmentCount, 4);
 
+      // A valid assessment from another risk cannot be attached to this risk's assignment.
+      const unrelatedRisk = await createRisk(managerId, engagementId, { title: 'Inventory valuation' }) as { riskId: string };
+      const unrelatedBand = await assessRiskBand(managerId, engagementId, unrelatedRisk.riskId, { likelihood: 1, magnitude: 1, significant: false, fraudRisk: false }) as { assessmentId: string };
+      await assert.rejects(db.$executeRaw`INSERT INTO "RiskOwnerAssignment" (id,"riskId","assessmentId","ownerUserId","ownerStaffingLevel","assignedBy") VALUES (gen_random_uuid(), ${risk.riskId}::uuid, ${unrelatedBand.assessmentId}::uuid, ${partnerId}::uuid, 'StaffAssociate', ${managerId}::uuid)`, /RiskOwnerAssignment_assessmentId_riskId_fkey/);
+
       // A newer assessment supersedes the cleared one; the old clearance cannot clear the new band.
       const latest = await assessRiskBand(managerId, engagementId, risk.riskId, { likelihood: 1, magnitude: 1, significant: false, fraudRisk: false }) as { assessmentId: string; band: string };
       assert.equal(latest.band, 'GREEN');

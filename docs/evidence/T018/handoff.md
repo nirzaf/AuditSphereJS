@@ -11,6 +11,7 @@
 - The database integration fixture proves a firm-B/client-B membership cannot attach to a firm-A engagement. Existing staged-import cross-firm denial remains covered. The Fastify lifecycle route returns 403 for foreign reads and commands, and verifies a denied command leaves foreign state and transition history unchanged. The worker payload test accepts a complete scope and rejects an unscoped legacy payload.
 - The per-client repository integration fixture proves a mismatched firm/client pair is rejected by PostgreSQL.
 - The authorization integration fixture proves mismatched firm/client and firm/client/engagement grants are rejected by PostgreSQL while valid grants at all three scope levels continue to authorize as expected.
+- Governance migration `202610020011_risk_assignment_scope` adds a composite foreign key from each risk-owner assignment's `(assessmentId, riskId)` to the corresponding pair on `RiskBandAssessment`. A real PostgreSQL integration case rejects an assignment that pairs risk A with a valid assessment belonging to risk B. This migration is Governance-owned and does not modify platform or Fieldwork tables.
 
 ## Verification
 
@@ -18,6 +19,8 @@
 - `pnpm verify:affected` — passed on 2026-10-02; module boundaries, Prisma/server and Angular production builds, TypeScript checks, and 69 unit tests.
 - `pnpm lint` — passed on 2026-10-02.
 - `git diff --check` — passed on 2026-10-02.
+- `pnpm exec prisma validate` and `pnpm exec prisma generate` — passed after the Governance schema change.
+- `node --import tsx --test tests/risk.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including the new cross-risk assessment assignment denial.
 
 ## Remaining acceptance
 

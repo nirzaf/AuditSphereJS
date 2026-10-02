@@ -1,7 +1,7 @@
 # Governance
 Purpose: own firm/client/engagement lifecycle commands, materiality, risk and the governance domain described in the architecture plan.
-Owned use cases: guarded engagement lifecycle commands; pure materiality/risk-band rules; persisted version-bound materiality assessments with segregated approval; persisted risk bands with database-derived colour and Partner clearance. Wider acceptance/continuance/activation and risk owner assignment are still pending.
-Owned tables: EngagementTransition, MaterialityAssessment (append-only, frozen when approved), RiskItem, RiskBandAssessment (append-only), RiskPartnerClearance (append-only). Engagement itself is platform-scoped ownership.
+Owned use cases: guarded engagement lifecycle commands; pure materiality/risk-band rules; persisted version-bound materiality assessments with segregated approval; persisted risk bands with database-derived colour and Partner clearance; owner assignments bound to the exact assessment and risk. Wider acceptance/continuance/activation remain pending.
+Owned tables: EngagementTransition, MaterialityAssessment (append-only, frozen when approved), RiskItem, RiskBandAssessment (append-only), RiskPartnerClearance (append-only), RiskOwnerAssignment (append-only). Engagement itself is platform-scoped ownership.
 Public services: applyLifecycleCommand, lifecycleHistory, permittedCommands; deriveBenchmark, validateMateriality, calculateMateriality, riskBand, riskRoute; calculateMaterialityAssessment, approveMaterialityAssessment, latestMaterialityAssessment; createRisk, assessRiskBand, clearRiskBand, currentRisks.
 Published events: none yet; audit events and history rows are written in the same transaction.
 Consumed events: none.

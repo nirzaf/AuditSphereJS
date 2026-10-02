@@ -353,6 +353,7 @@ model RiskBandAssessment {
   clearances  RiskPartnerClearance[]
   assignments RiskOwnerAssignment[]
   @@index([riskId, assessedAt])
+  @@unique([id, riskId])
 }
 /// Who responds to a risk, bound to the exact band assessment and the owner's staffing rank. Append-only.
 model RiskOwnerAssignment {
@@ -360,7 +361,7 @@ model RiskOwnerAssignment {
   riskId             String             @db.Uuid
   risk               RiskItem           @relation(fields: [riskId], references: [id])
   assessmentId       String             @db.Uuid
-  assessment         RiskBandAssessment @relation(fields: [assessmentId], references: [id])
+  assessment         RiskBandAssessment @relation(fields: [assessmentId, riskId], references: [id, riskId])
   ownerUserId        String             @db.Uuid
   ownerStaffingLevel String
   assignedBy         String             @db.Uuid
