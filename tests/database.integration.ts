@@ -22,6 +22,9 @@ test('empty disposable PostgreSQL 18.6 database migrates, keeps monetary precisi
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri });
     const { db } = await import('@auditsphere/server');
     try {
+      const version = await db.$queryRaw<Array<{ version: string }>>`SELECT current_setting('server_version') AS version`;
+      assert.match(version[0].version, /^18\.6(?:\.|\s)/, 'integration database must match the PostgreSQL 18.6 service line');
+
       const migrations = await db.$queryRaw<Array<{ count: number }>>`SELECT count(*)::int AS count FROM _prisma_migrations WHERE finished_at IS NOT NULL`;
       assert.equal(migrations[0].count, reviewedMigrations, 'every reviewed migration must be applied');
 

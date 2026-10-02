@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_REVIEW` — PostgreSQL/Redis Testcontainers version and persistence checks pass; remaining local mail-sink, immutable image identity and T006 deployment decisions are open |
 | Execution class | `CORE` |
 | Phase | 01-foundation — Workspace and executable foundation |
 | Owner area | `infrastructure` |
@@ -76,3 +77,7 @@ Before that script exists, record the actual available compile/test/review comma
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
+
+## Current partial evidence
+
+`pnpm verify:task -- T013` passed on 2026-10-02: the PostgreSQL 18.6 Testcontainers integration asserts its actual `server_version`, and two concurrently started Redis 8.10 Testcontainers instances assert distinct mapped ports, actual Redis 8.10.x version, `noeviction` and AOF enabled. See [the focused evidence](../../evidence/T013/testcontainers-2026-10-02.md). T013 remains in review because the repository has no local mail sink, version tags are not immutable image digests captured as release evidence, and T006 production-region/backup decisions remain open.
