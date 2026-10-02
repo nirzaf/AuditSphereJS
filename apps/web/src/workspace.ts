@@ -5,13 +5,16 @@ import { ModuleWorkspace } from './module-workspace';
 import { modules, screensFor } from './module-catalog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { fslis, TrialBalanceRow } from '@auditsphere/contracts';
-import { identityConfiguration, signIn, currentAccessToken } from './identity';
+import { IDENTITY_ADAPTER, type InternalIdentity } from './identity';
 // Standalone is the default in Angular v20+; setting it explicitly is unnecessary.
 @Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule, ModuleWorkspace], templateUrl: './workspace.html' })
 export class Workspace implements OnDestroy {
   readonly identityProvider = signal<'loading' | 'entra' | 'development'>('loading');
+  readonly signedIn = signal(false);
+  readonly currentUser = signal<InternalIdentity | null>(null);
   engagementId = '00000000-0000-4000-8000-000000000002';
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly identity = inject(IDENTITY_ADAPTER);
   private readonly router = inject(Router, { optional: true });
   private readonly route = inject(ActivatedRoute, { optional: true });
   private navigation?: { unsubscribe(): void };
@@ -39,7 +42,7 @@ export class Workspace implements OnDestroy {
       const screen = screensFor(module).find(value => value.id === params.get('view')) ?? screensFor(module)[0];
       this.active.set(module); this.screenId.set(screen.id);
     });
-    void identityConfiguration().then(config => this.identityProvider.set(config.provider)).catch(() => this.message.set('Identity configuration is unavailable.'));
+    void this.identity.identityConfiguration().then(config => this.identityProvider.set(config.provider)).catch(() => this.message.set('Identity configuration is unavailable.'));
   }
   readonly modules = modules;
   readonly screenId = signal('trial-balance');
@@ -60,13 +63,19 @@ export class Workspace implements OnDestroy {
     void this.router?.navigate([], { queryParams: { module, view: selected.id } });
   }
   async api(path: string, method = 'GET', body?: unknown): Promise<any> {
-    if (this.identityProvider() === 'entra') this.token = await currentAccessToken();
+    if (this.identityProvider() === 'entra') this.token = await this.identity.currentAccessToken();
     const response = await fetch(this.base + path, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
     const result = await response.json(); if (!response.ok) throw new Error(typeof result.error?.message === 'string' ? result.error.message : JSON.stringify(result.error?.message)); return result;
   }
   async run(action: () => Promise<void>) { this.busy.set(true); try { await action(); } catch (e) { this.message.set(e instanceof Error ? e.message : 'Request failed'); } finally { this.busy.set(false); } }
   connect() { void this.run(async () => { this.imports.set(await this.api('')); this.message.set('Connected. Upload a CSV or open an existing import.'); }); }
-  microsoftSignIn() { void this.run(async () => { this.token = await signIn(); this.imports.set(await this.api('')); this.message.set('Connected with Microsoft Entra ID.'); }); }
+  microsoftSignIn() { void this.run(async () => { this.token = await this.identity.signIn(); this.signedIn.set(true); this.currentUser.set(await this.identity.currentIdentity()); this.imports.set(await this.api('')); this.message.set('Connected with Microsoft Entra ID.'); }); }
+  microsoftSignOut() { void this.run(async () => {
+    let signOutConfirmed = true;
+    try { await this.identity.signOut(); } catch { signOutConfirmed = false; }
+    this.token = ''; this.signedIn.set(false); this.currentUser.set(null); this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
+    this.message.set(signOutConfirmed ? 'Signed out. Local engagement data and unsaved drafts were cleared.' : 'Local access and engagement data were cleared, but Microsoft sign-out could not be confirmed.');
+  }); }
   async load(id: string) { this.batch.set(await this.api('/' + id)); if (this.batch().status === 'FAILED') { this.message.set(this.batch().error); return; } if (['MAPPING_REQUIRED','FINALIZED'].includes(this.batch().status)) { const page = await this.api(`/${id}/rows?offset=${this.offset}&search=${encodeURIComponent(this.search)}`); this.rows.set(page.rows); this.total.set(page.total); this.summary.set(await this.api('/' + id + '/summary')); } }
   open(id: string) { this.changes.set({}); this.offset = 0; void this.run(() => this.load(id)); }
   upload(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 15_000_000) { this.message.set('CSV must be smaller than 15 MB.'); return; } void this.run(async () => { const batch = await this.api('', 'POST', { filename: file.name, csv: await file.text() }); this.imports.set(await this.api('')); await this.load(batch.id); this.message.set('Import queued. Worker validation runs in the background.'); }); }

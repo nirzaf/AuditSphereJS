@@ -49,7 +49,8 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Implement production Entra identity validation and the authenticated `GET /api/v1/me` self endpoint; development token use remains explicit and isolated.
 - [x] Validate issuer, audience, RS256 signature, token lifetime, authorized tenant and delegated API scope; bind by immutable tenant/object identifiers, not email.
 - [x] Deny inactive local users and rely on engagement membership plus scoped PostgreSQL grants for business permissions; directory administrator claims grant no audit authority.
-- [ ] Add client logout, revocation/session-expiry behavior and complete interactive Entra acceptance; no live SPA sign-in acceptance is claimed.
+- [x] Add MSAL popup sign-out and clear app-held token, identity, records and unsaved drafts even if Microsoft logout cannot be confirmed. Access-token expiry is enforced by token validation and silent renewal.
+- [ ] Complete explicit server-side session revocation and interactive Entra acceptance; no live SPA sign-in acceptance is claimed.
 
 ## Acceptance criteria and required tests
 
