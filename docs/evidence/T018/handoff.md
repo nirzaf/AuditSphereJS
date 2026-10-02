@@ -17,14 +17,18 @@
 - Practice migration `202610020015_practice_reversal_scope` replaces the ID-only reversal foreign key with `(firmId,reversalOf) → (firmId,id)`. The PostgreSQL practice-ledger integration test confirms a draft cannot reference a valid journal from another firm; existing constraints already bind journal periods and line accounts to the same firm.
 - Fieldwork migration `202610020016_fieldwork_document_scope` adds a real Engagement FK and composite key to Document, binds each TbImport to a document in its same engagement, and binds an optional StoredObject document reference to the same engagement. The repository PostgreSQL integration test rejects orphan documents and mismatched import/object document references.
 - Fieldwork migration `202610020017_fieldwork_mapping_memory_scope` binds mapping memory to a real firm/client and its source approval to that exact client. The taxonomy PostgreSQL integration test rejects a foreign client tuple and a valid source approval belonging to another firm/client.
+- Platform migration `202610020018_platform_audit_scope` binds AuditEvent and AuditChainHead to Engagement, binds each AuditChainRecord to the same engagement as its immutable event, and binds CommandReceipt to its engagement. PostgreSQL tests reject orphan audit events/heads, cross-engagement chain records and orphan receipts.
 
 ## Verification
 
+- Hosted run [37028621620](https://github.com/nirzaf/AuditSphereJS/actions/runs/37028621620) failed in `tests/materiality-persistence.integration.ts` after the document-scope migration exposed a stale fixture that reused another engagement's document. The fixture now creates a document for its second engagement; the complete local integration suite passes with two concurrent test files.
+
 - `pnpm verify:task -- T018` — passed on 2026-10-02, including the rerun after the Fieldwork document/mapping-memory migrations; generated Prisma client/build, scoped-job tests, PostgreSQL membership/import constraints, per-client repository constraints, authorization grant scope constraints, and Fastify read/write authorization-boundary assertions.
-- `pnpm verify:affected` — passed after the Fieldwork document and mapping-memory constraints on 2026-10-02; module boundaries, Prisma/server and Angular production builds, TypeScript checks, and 70 unit tests.
-- `pnpm lint` — passed after the Fieldwork document and mapping-memory migrations on 2026-10-02.
+- `pnpm verify:affected` — passed after the platform audit/receipt constraints on 2026-10-02; module boundaries, Prisma/server and Angular production builds, TypeScript checks, and 70 unit tests.
+- `pnpm lint` — passed after the platform audit/receipt migration on 2026-10-02.
+- Full PostgreSQL integration suite — passed all 17 files with `--test-concurrency=2`. The default-parallelism attempt timed out four Testcontainers cases at 120 seconds on this Docker Desktop host; it produced no assertion failures and completed after limiting concurrency.
 - `git diff --check` — passed on 2026-10-02.
-- `pnpm exec prisma validate` and `pnpm exec prisma generate` — passed after all Fieldwork and Practice lineage schema changes.
+- `pnpm exec prisma validate` and `pnpm exec prisma generate` — passed after Fieldwork, Practice and platform audit/receipt lineage changes.
 - `node --import tsx --test tests/risk.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including the new cross-risk assessment assignment denial.
 - `node --import tsx --test tests/materiality-persistence.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including Fieldwork/Governance scope migrations and cross-engagement publication / cross-firm taxonomy denials.
 - `node --import tsx --test tests/taxonomy.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with cross-engagement import and cross-firm taxonomy approval denials.
@@ -32,10 +36,12 @@
 - `node --import tsx --test tests/practice-ledger.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with cross-firm reversal denial and existing ledger invariants.
 - `node --import tsx --test tests/repository.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with orphan-document and cross-engagement trial-balance/stored-object document denials.
 - `node --import tsx --test tests/taxonomy.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with cross-client mapping-memory and cross-firm source-approval denials.
+- `node --import tsx --test tests/audit-chain.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with orphan-event/head and cross-engagement chain-record denials.
+- `node --import tsx --test tests/unit-of-work.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with orphan command-receipt denial and existing transaction invariants.
 
 ## Remaining acceptance
 
 - The protected lifecycle read and command boundaries are tested; the command denial leaves foreign state and transition history unchanged. Membership attachment is covered by the PostgreSQL composite-FK negative fixture; no separate membership-management HTTP workflow currently exists to test.
-- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). Fieldwork's mapping approval/publication, document/storage and mapping-memory lineage and Practice reversal lineage are now covered by owner-specific migrations. Platform audit-event/chain scope, command-receipt engagement references and production identity mapping remain before T018 can be accepted.
+- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). Fieldwork mapping, document and storage lineage; Practice reversal lineage; and platform audit/receipt scope now have owner-specific constraints. Production identity mapping remains an external acceptance dependency; R008 organization hierarchy remains assigned to T052.
 - The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only; there is no production database or reviewed identity map in this environment. The production identity mapping procedure remains open.
 - No deployment or live Microsoft acceptance was performed by this change.

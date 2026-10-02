@@ -16,7 +16,16 @@ test('audit chains serialize concurrent writes, roll back, and detect event/chec
     Object.assign(process.env, env);
     const { db, captureAuditCheckpoint, verifyAuditChain } = await import('@auditsphere/server');
     try {
-      const engagementId = randomUUID(), actorId = randomUUID();
+      const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), otherEngagementId = randomUUID(), actorId = randomUUID();
+      const orphanEngagementId = randomUUID();
+      await db.firm.create({ data: { id: firmId, name: 'Audit-chain firm' } });
+      await db.client.create({ data: { id: clientId, firmId, name: 'Audit-chain client' } });
+      await db.engagement.createMany({ data: [
+        { id: engagementId, firmId, clientId, name: 'Audit-chain engagement' },
+        { id: otherEngagementId, firmId, clientId, name: 'Other audit-chain engagement' },
+      ] });
+      await assert.rejects(db.auditEvent.create({ data: { engagementId: orphanEngagementId, actorId, action: 'ORPHAN', payload: {} } }), /AuditEvent_engagementId_fkey/);
+      await assert.rejects(db.$executeRaw`INSERT INTO "AuditChainHead" ("engagementId",sequence,digest) VALUES (${orphanEngagementId}::uuid, 0, ${'0'.repeat(64)})`, /AuditChainHead_engagementId_fkey/);
       await Promise.all(Array.from({ length: 20 }, (_, n) => db.auditEvent.create({ data: { engagementId, actorId, action: `EVENT_${n}`, payload: { amount: '0.10', nested: { z: n, a: 'é' } } } })));
       const checkpoint = await captureAuditCheckpoint(engagementId);
       assert.equal(checkpoint.sequence, '20');
@@ -44,9 +53,13 @@ test('audit chains serialize concurrent writes, roll back, and detect event/chec
       await db.$executeRawUnsafe('ALTER TABLE "AuditEvent" ENABLE TRIGGER USER');
       assert.match((await verifyAuditChain(engagementId, checkpoint)).reason ?? '', /Event changed/);
       await assert.rejects(db.$executeRawUnsafe('DELETE FROM "AuditChainRecord"'), /immutable/);
-      const deletionScope = randomUUID();
+      const deletionScope = otherEngagementId;
       await db.auditEvent.create({ data: { engagementId: deletionScope, actorId, action: 'REMOVAL_TEST', payload: {} } });
       const deletionCheckpoint = await captureAuditCheckpoint(deletionScope);
+      await db.$executeRawUnsafe('ALTER TABLE "AuditEvent" DISABLE TRIGGER USER');
+      const unchainedEvent = await db.auditEvent.create({ data: { engagementId: deletionScope, actorId, action: 'UNCHAINED_SCOPE_TEST', payload: {} } });
+      await db.$executeRawUnsafe('ALTER TABLE "AuditEvent" ENABLE TRIGGER USER');
+      await assert.rejects(db.$executeRaw`INSERT INTO "AuditChainRecord" ("eventId","engagementId",sequence,"formatVersion","previousDigest",digest,"canonicalText") VALUES (${unchainedEvent.id}::uuid, ${engagementId}::uuid, 999, 1, ${'0'.repeat(64)}, ${'1'.repeat(64)}, '{}')`, /AuditChainRecord_event_scope_fkey/);
       await db.$executeRawUnsafe('ALTER TABLE "AuditChainRecord" DISABLE TRIGGER USER');
       await db.$executeRaw`DELETE FROM "AuditChainRecord" WHERE "engagementId" = ${deletionScope}::uuid`;
       await db.$executeRawUnsafe('ALTER TABLE "AuditChainRecord" ENABLE TRIGGER USER');

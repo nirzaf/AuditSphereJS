@@ -43,6 +43,7 @@ test('unit of work commits atomically, shares one transaction, rolls back and re
       await db.client.create({ data: { id: clientId, firmId, name: 'UoW client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'UoW engagement' } });
       await db.user.create({ data: { id: actorId, email: 'uow@example.test', role: 'PREPARER' } });
+      await assert.rejects(db.commandReceipt.create({ data: { key: deriveKey('orphan-receipt'), engagementId: deriveKey('missing-engagement'), actorId, hash: 'orphan', result: {} } }), /CommandReceipt_engagementId_fkey/);
 
       // AC1: an induced failure after the first write rolls back the whole command, and a deferred
       // post-commit side effect never runs when the transaction aborts.

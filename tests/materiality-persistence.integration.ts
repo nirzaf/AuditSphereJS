@@ -67,9 +67,11 @@ test('materiality assessments bind a published version, enforce segregation of d
 
       // Materiality lineage cannot cross to a publication in another engagement or a taxonomy from another firm.
       const otherEngagementId = randomUUID();
+      const otherDocumentId = randomUUID();
       await db.engagement.create({ data: { id: otherEngagementId, firmId, clientId, name: 'Other materiality engagement', state: 'FIELDWORK_EXECUTION' } });
+      await db.document.create({ data: { id: otherDocumentId, engagementId: otherEngagementId, key: `materiality/${otherDocumentId}.csv`, sha256: '8'.repeat(64), filename: 'other.csv' } });
       const otherImportId = randomUUID();
-      await db.tbImport.create({ data: { id: otherImportId, firmId, clientId, engagementId: otherEngagementId, documentId, sha256: 'f'.repeat(64), status: 'FINALIZED' } });
+      await db.tbImport.create({ data: { id: otherImportId, firmId, clientId, engagementId: otherEngagementId, documentId: otherDocumentId, sha256: 'f'.repeat(64), status: 'FINALIZED' } });
       const otherPublication = await db.balancePublication.create({ data: { firmId, clientId, engagementId: otherEngagementId, importId: otherImportId, sequence: 1, currency: 'QAR', rowCount: 1, digest: 'a'.repeat(64), publishedBy: preparerId } });
       const otherFirmId = randomUUID();
       await db.firm.create({ data: { id: otherFirmId, name: 'Other taxonomy firm' } });

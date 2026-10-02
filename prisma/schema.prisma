@@ -53,6 +53,9 @@ model Engagement {
   documents Document[]
   reviewNotes ReviewNote[]
   adjustmentJournals AdjustmentJournal[]
+  auditEvents AuditEvent[]
+  auditChainHead AuditChainHead?
+  commandReceipts CommandReceipt[]
   @@unique([firmId, clientId, id])
 }
 model User {
@@ -483,14 +486,17 @@ model AdjustmentJournalLine {
 model AuditEvent {
   id           String   @id @default(uuid()) @db.Uuid
   engagementId String   @db.Uuid
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   actorId      String   @db.Uuid
   action       String
   payload      Json
   createdAt    DateTime @default(now())
   chainRecord  AuditChainRecord?
+  @@unique([engagementId, id])
 }
 model AuditChainHead {
   engagementId String @id @db.Uuid
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   sequence BigInt
   digest String
 }
@@ -557,13 +563,14 @@ model PracticeJournalLine {
 }
 model AuditChainRecord {
   eventId String @id @db.Uuid
-  event AuditEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
   engagementId String @db.Uuid
+  event AuditEvent @relation(fields: [engagementId, eventId], references: [engagementId, id], onDelete: Restrict, map: "AuditChainRecord_event_scope_fkey")
   sequence BigInt
   formatVersion Int
   previousDigest String
   digest String
   canonicalText String
+  @@unique([engagementId, eventId])
   @@unique([engagementId, sequence])
 }
 model OutboxEvent {
@@ -579,7 +586,9 @@ model OutboxEvent {
 model CommandReceipt {
   key          String   @id @db.Uuid
   engagementId String   @db.Uuid
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
   actorId      String   @db.Uuid
   hash         String
   result       Json
+  @@index([engagementId])
 }
