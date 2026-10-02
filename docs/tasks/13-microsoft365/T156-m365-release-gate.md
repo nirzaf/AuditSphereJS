@@ -53,7 +53,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 ## Implementation checklist
 
 - [ ] Run credentialed nonproduction tests for the enabled integration subset and record actual consent/permission state.
-- [ ] Exercise token expiry, revoked consent, throttling, deleted external item and unknown provider outcome.
+- [ ] Exercise token expiry, revoked consent, throttling and unknown provider outcome. Deleted-item behavior is now covered for both selected drives.
 - [ ] Confirm business modules still depend on platform interfaces, not direct Graph imports.
 - [ ] Mark disabled integrations NOT_APPLICABLE with owner approval; never mark an untested integration production-ready.
 
@@ -89,4 +89,4 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 ## Current partial evidence
 
-The enabled SharePoint/OneDrive storage subset passed credentialed nonproduction verification at commit `b409b2a6bd3de5e1956ba192c5acb4ede4d117ac` on 2026-10-02: 2 passed, 0 failed, 0 skipped, including `pnpm verify:task -- T156`. See [the redacted per-run evidence](../../evidence/T156/live-storage-2026-10-02-b409b2a.json). T156 remains incomplete: identity sign-in, token expiry, consent revocation, throttling, deleted-item behavior and unknown provider outcomes have not all been accepted. The SPA currently returns 401 because its signed-in tenant identity has no active local user mapping.
+The enabled SharePoint/OneDrive storage subset passed credentialed nonproduction verification at commit `b409b2a6bd3de5e1956ba192c5acb4ede4d117ac` on 2026-10-02: 2 passed, 0 failed, 0 skipped, including `pnpm verify:task -- T156`. See [the redacted per-run evidence](../../evidence/T156/live-storage-2026-10-02-b409b2a.json). A later targeted run also created, externally edited, and deleted only its own synthetic file in each selected folder; the accepted-version read failed closed with provider 404 on both SharePoint and OneDrive. The per-run evidence will be recorded against the commit containing that test. T156 remains incomplete: identity sign-in, token expiry, consent revocation, throttling and unknown provider outcomes have not all been accepted. The SPA currently returns 401 because its signed-in tenant identity has no active local user mapping.

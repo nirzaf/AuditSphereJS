@@ -51,3 +51,8 @@
 - `pnpm verify:affected` passed: module/browser boundaries, server and test TypeScript checks, Angular production build, and 81 unit tests across 18 files. `pnpm lint` passed, including ESLint and module/browser boundaries.
 - `pnpm test:integration` and `pnpm verify:all` were not run as full-suite commands in this increment. No GitHub Actions run is claimed until this change is pushed and the workflow completes.
 - T019 stays `IN_PROGRESS`; T018 owner-scoped evidence and the full interactive acceptance with an authorized mapped test principal and synthetic engagement grant remain open.
+
+## Live storage deleted-item verification — 2026-10-02
+
+- `pnpm verify:task -- T156` passed live against the configured nonproduction SharePoint and OneDrive folders (2/2, zero failed or skipped). In each provider, the test uploaded and read a unique synthetic file, confirmed immutable-version recovery after an external same-size edit, verified a write outside the selected folder was denied (403), deleted only its own file, and verified the accepted version read failed closed (404).
+- No prior acceptance files were touched. Tenant permissions, app registrations, credentials and business records were unchanged. Token expiry, consent revocation, throttling and ambiguous upload outcomes remain open; the storage subset does not close T156 or T019 live identity acceptance.

@@ -10,9 +10,9 @@ pnpm verify:task -- T156
 Remove-Item Env:M365_ACCEPTANCE_ENV_FILE
 ```
 
-The private file must contain `M365_ACCEPTANCE_NONPRODUCTION=1` and the [acceptance variables](application-configuration.md). The harness creates and retains a unique synthetic text file in each folder, validates its bytes/hash, changes that fixture's current bytes and reads the original accepted version. It also attempts a synthetic drive-root write, which must be denied with HTTP 403. A wrongly broad permission could allow that test-only root file to be created and cause the test to fail; inspect and correct the grant rather than treating it as success. There is no automatic file deletion.
+The private file must contain `M365_ACCEPTANCE_NONPRODUCTION=1` and the [acceptance variables](application-configuration.md). The harness creates a unique synthetic text file in each folder, validates its bytes/hash, changes that fixture's current bytes and reads the original accepted version. It also attempts a synthetic drive-root write, which must be denied with HTTP 403. It then deletes only its own uniquely named fixture and checks that reading its accepted version either remains byte-exact or fails closed with provider 404. Earlier acceptance files are not modified. A wrongly broad permission could allow the test-only root file to be created and cause the test to fail; inspect and correct the grant rather than treating it as success.
 
-Expected result: 2 tests passed, 0 failures, 0 skipped. Redacted results are written under ignored `test-results/m365-live/`. Copy reviewed redacted summaries into `docs/evidence/T156/`; include tested commit, UTC time, hashes, assertions and remaining gaps. Do not copy tokens, secrets or download URLs. Ordinary CI/unit tests do not run this credentialed harness.
+Expected result: 2 tests passed, 0 failures, 0 skipped. Redacted results are written under ignored `test-results/m365-live/`. Copy reviewed redacted summaries into `docs/evidence/T156/`; include tested commit, UTC time, hashes, deleted-item outcome, assertions and remaining gaps. Do not copy tokens, secrets or download URLs. Ordinary CI/unit tests do not run this credentialed harness.
 
 ## Staff sign-in acceptance
 
@@ -47,4 +47,4 @@ Before reusing a folder for durable evidence, verify versioning, retention, owne
 
 After any change, update [current-tenant.md](current-tenant.md), the relevant setup/configuration section, and [T156 evidence](../evidence/T156/tenant-readiness.md). Mark a check as pending when it was not executed. No recurring unattended administration or monitoring is configured by these guides.
 
-Latest execution: commit `d301c78e4185a852aa3d14d9f4c8dd32fd722d57`, 2026-10-02, **2 passed / 0 failed / 0 skipped**. The per-run redacted records are in [T156 evidence](../evidence/T156/live-storage-2026-10-02-d301c78.json); older evidence is retained separately.
+Latest prior execution: commit `d301c78e4185a852aa3d14d9f4c8dd32fd722d57`, 2026-10-02, **2 passed / 0 failed / 0 skipped**. The deleted-item extension ran live against both designated synthetic folders on 2026-10-02; its committed per-run evidence is linked from the [current tenant inventory](current-tenant.md). Older evidence is retained separately.

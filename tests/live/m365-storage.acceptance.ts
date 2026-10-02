@@ -32,7 +32,7 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
   const folderId = process.env[`M365_ACCEPTANCE_${purpose}_FOLDER_ID`];
   assert.ok(driveId && folderId, `Configure the designated ${purpose} acceptance drive and folder`);
   const repository = { driveId, folderId };
-  test(`live ${purpose}: version roundtrip, external edit and selected-folder denial`, async () => {
+  test(`live ${purpose}: version roundtrip, external edit, selected-folder denial and deleted-item behavior`, async () => {
     const bytes = Buffer.from(`AuditSphereJS synthetic acceptance fixture\nRun ${runId}\nStorage ${purpose}\nNo client or personal data.\n`);
     const reference = await storage.put(repository, `auditspherejs-acceptance-${runId}.txt`, bytes);
     const identity = decodeGraphReference(reference);
@@ -55,13 +55,26 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
     assert.ok(updatedItem.eTag && updatedItem.eTag !== identity.eTag, 'Provider did not record a new current identity');
     assert.deepEqual(await storage.get(repository, reference), bytes, 'External current bytes substituted the accepted version');
     await assert.rejects(storage.put({ driveId, folderId: 'root' }, `auditspherejs-denied-${runId}.txt`, bytes), /Graph upload failed \(403\)/, 'Runtime app must not write outside its selected acceptance folder');
+    const removal = await fetch(`https://graph.microsoft.com/v1.0/drives/${encodeURIComponent(driveId)}/items/${encodeURIComponent(identity.itemId)}`, {
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000),
+    });
+    assert.equal(removal.status, 204, 'Could not delete the test-created synthetic fixture');
+    let deletedReadOutcome: 'ACCEPTED_VERSION_REMAINS_READABLE' | 'READ_FAILS_CLOSED';
+    try {
+      assert.deepEqual(await storage.get(repository, reference), bytes, 'A deleted item returned substituted or corrupted bytes');
+      deletedReadOutcome = 'ACCEPTED_VERSION_REMAINS_READABLE';
+    } catch (error) {
+      assert.match(error instanceof Error ? error.message : String(error), /Graph version metadata failed \(404\)|Graph download failed \(404\)/, 'Deleted-item read must fail closed with provider not-found');
+      deletedReadOutcome = 'READ_FAILS_CLOSED';
+    }
     await mkdir('test-results/m365-live', { recursive: true });
     await writeFile(`test-results/m365-live/${purpose.toLowerCase()}-${runId}.json`, JSON.stringify({
       runId, checkedAt: new Date().toISOString(), provider: purpose,
       result: 'ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED', byteCount: bytes.length, sha256: identity.sha256,
       repositoryIdentityHash: sha256(Buffer.from(`${driveId}\n${folderId}`)),
       versionIdentityHash: sha256(Buffer.from(`${identity.itemId}\n${identity.versionId}`)),
-      fixtureRetained: true,
+      fixtureRetained: false,
+      deletedReadOutcome,
       limitations: ['Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance'],
     }, null, 2));
   });
