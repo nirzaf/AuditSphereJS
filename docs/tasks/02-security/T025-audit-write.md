@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_REVIEW` — implementation, PostgreSQL 18.6 integration recipe (`pnpm verify:task -- T025`) and handoff complete; independent review pending |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `audit` |
@@ -44,16 +45,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Add actor kind/id, scope, action, resource/version, correlation ID and redacted before/after payloads.
-- [ ] Deny UPDATE/DELETE/TRUNCATE to application credentials; protect relevant write paths with migration-owned constraints/triggers.
-- [ ] Support system/service actors without fake user IDs.
-- [ ] Keep sensitive documents out of logs; append failed-security events to the separate security log when a business transaction rolls back.
+- [x] Add actor kind/id, scope, action, resource/version, correlation ID and redacted before/after payloads.
+- [x] Deny UPDATE/DELETE/TRUNCATE to application credentials; protect relevant write paths with migration-owned constraints/triggers.
+- [x] Support system/service actors without fake user IDs.
+- [x] Keep sensitive documents out of logs; append failed-security events to the separate security log when a business transaction rolls back.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Application-role attempts to alter or erase an audit event fail.
-- [ ] **AC2:** A rolled-back business mutation leaves no false success event.
-- [ ] **AC3:** System jobs have a traceable initiating operation and actor.
+- [x] **AC1:** Application-role attempts to alter or erase an audit event fail.
+- [x] **AC2:** A rolled-back business mutation leaves no false success event.
+- [x] **AC3:** System jobs have a traceable initiating operation and actor.
 
 Test application-role denial and simultaneous writes against PostgreSQL; validate exact audit/checkpoint lineage.
 

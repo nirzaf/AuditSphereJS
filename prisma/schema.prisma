@@ -489,12 +489,30 @@ model AuditEvent {
   id           String   @id @default(uuid()) @db.Uuid
   engagementId String   @db.Uuid
   engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
-  actorId      String   @db.Uuid
+  actorId      String?  @db.Uuid
+  actorKind    String   @default("USER")
   action       String
   payload      Json
+  resourceType    String?
+  resourceId      String?
+  resourceVersion Int?
+  correlationId   String?
+  beforeState     Json?
+  afterState      Json?
   createdAt    DateTime @default(now())
   chainRecord  AuditChainRecord?
   @@unique([engagementId, id])
+}
+model SecurityEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  // Claimed scope and actor are recorded as attempted, without foreign keys: probes with
+  // unknown identifiers must still be logged.
+  engagementId  String?  @db.Uuid
+  actorId       String?  @db.Uuid
+  action        String
+  correlationId String?
+  detail        Json     @default("{}")
+  createdAt     DateTime @default(now())
 }
 model AuditChainHead {
   engagementId String @id @db.Uuid

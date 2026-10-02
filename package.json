@@ -24,7 +24,7 @@
     "boundaries": "node scripts/check-boundaries.mjs",
     "build:server": "prisma generate && tsc -b",
     "test:unit": "vitest run && ng test web --watch=false",
-    "test:integration": "node --import tsx --test tests/foundation.integration.ts tests/database.integration.ts tests/lifecycle.integration.ts apps/api/tests/auth-boundary.integration.ts tests/authorization.integration.ts tests/publication.integration.ts tests/repository.integration.ts tests/taxonomy.integration.ts tests/materiality-persistence.integration.ts tests/risk.integration.ts tests/upload-race.integration.ts tests/review-notes.integration.ts tests/adjustments.integration.ts tests/unit-of-work.integration.ts tests/audit-chain.integration.ts tests/practice-ledger.integration.ts",
+    "test:integration": "node --import tsx --test tests/foundation.integration.ts tests/database.integration.ts tests/lifecycle.integration.ts apps/api/tests/auth-boundary.integration.ts tests/authorization.integration.ts tests/publication.integration.ts tests/repository.integration.ts tests/taxonomy.integration.ts tests/materiality-persistence.integration.ts tests/risk.integration.ts tests/upload-race.integration.ts tests/review-notes.integration.ts tests/adjustments.integration.ts tests/unit-of-work.integration.ts tests/audit-chain.integration.ts tests/audit-write.integration.ts tests/practice-ledger.integration.ts",
     "lint": "eslint . && pnpm boundaries",
     "verify:task": "node scripts/verify-task.mjs",
     "verify:all": "pnpm lint && pnpm typecheck && pnpm test:unit && pnpm test:integration && pnpm test:e2e",

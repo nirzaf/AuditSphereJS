@@ -1,5 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { db } from './db.js';
+import { recordSecurityEvent } from './audit.js';
 import type { capabilities } from '@auditsphere/contracts';
 
 export type Capability = (typeof capabilities)[number];
@@ -50,6 +51,15 @@ export async function anyCapability(client: AuthClient, userId: string, scope: S
 /** Authoritative check. Call this inside the write transaction, not only in the HTTP guard. */
 export async function requireCapability(client: AuthClient, userId: string, capability: Capability, scope: Scope, at: Date = new Date()): Promise<void> {
   if (!(await hasCapability(client, userId, capability, scope, at))) {
+    // A denial inside a business transaction would roll back with it, so the security log is
+    // written on the pooled client. Best-effort: the original denial still throws if the log
+    // write itself fails.
+    try {
+      await recordSecurityEvent(db, { action: 'CAPABILITY_DENIED', engagementId: scope.engagementId, actorId: userId, detail: { capability } });
+    } catch {
+      // Do not echo a database error or parameters into logs while preserving the original denial.
+      console.error('Security event recording failed; authorization denial preserved');
+    }
     throw new ForbiddenException(`${capability} is not granted for this engagement`);
   }
 }

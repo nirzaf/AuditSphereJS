@@ -10,6 +10,8 @@ export { InternalGuard, InternalIdentityGuard, currentInternalIdentity, revokeCu
 export { EntraIdentity } from './platform/entra.js';
 export { InternalIdentityController } from './platform/identity-controller.js';
 export { requireCapability, hasCapability, anyCapability, grantCoversScope, revokeGrant } from './platform/authorization.js';
+export { recordAuditEvent, recordSecurityEvent, redactValue, redactedMarker } from './platform/audit.js';
+export type { AuditEventInput, SecurityEventInput } from './platform/audit.js';
 export { FieldworkController } from './modules/fieldwork/controller.js';
 export { GovernanceController } from './modules/governance/controller.js';
 export { applyLifecycleCommand, lifecycleHistory, transitions, permittedCommands, canApply } from './modules/governance/lifecycle.js';
