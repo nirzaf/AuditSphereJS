@@ -61,4 +61,8 @@ it('supports a single-line minimum for taxonomy workspaces and reveals errors on
   fixture.componentRef.setInput('submitted', true); fixture.detectChanges(); await fixture.whenStable();
   expect(view.invalid(view.view()[0].group, 'code')).toBe(true);
   fixture.destroy();
+});it('replaces rendered control identities and initial values on a scope reset', async()=>{
+  const fixture=await create();const view=fixture.componentInstance;const before=view.view()[0].group;
+  fixture.componentRef.setInput('initialValues',[{accountCode:'NEW',debit:'0',credit:'0'},{accountCode:'OTHER',debit:'0',credit:'0'}]);fixture.componentRef.setInput('scopeKey','new-scope');fixture.detectChanges();await fixture.whenStable();
+  expect(view.view()[0].group).not.toBe(before);expect(view.view()[0].group.controls['accountCode'].value).toBe('NEW');fixture.destroy();
 });

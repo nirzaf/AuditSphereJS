@@ -1,6 +1,6 @@
-import { Component, computed, effect, input, signal } from '@angular/core';
+import { Component, computed, effect, input, signal, inject, ElementRef, Injector, afterNextRender } from '@angular/core';
 import { FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
-import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema } from '@auditsphere/contracts';
+import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema, approveMappingSchema } from '@auditsphere/contracts';
 import { Practice } from './practice';
 import { currentAccessToken } from './identity';
 import { LineEditor, type EditorRow } from './line-editor';
@@ -22,6 +22,12 @@ const taxonomyLineFields: readonly ScreenField[] = [
   { key: 'statementSection', label: 'Statement section', type: 'select', options: ['INCOME', 'EXPENSE', 'ASSETS', 'LIABILITIES', 'EQUITY'], required: true },
   { key: 'sortOrder', label: 'Sort order', type: 'integer', required: true },
 ];
+const preparationLineFields: Record<string,readonly ScreenField[]> = {
+ procedure:[{key:'instruction',label:'Procedure instruction',required:true},{key:'evidence',label:'Evidence reference',required:false},{key:'finding',label:'Prepared finding',required:false}],
+ evidence:[{key:'reference',label:'Evidence reference',required:true},{key:'kind',label:'Reference type',type:'select',options:['Digital file','Physical binder'],required:true},{key:'location',label:'File location or binder index',required:true}],
+ confirmation:[{key:'counterparty',label:'Counterparty',required:true},{key:'email',label:'Contact email',type:'email',required:false},{key:'reference',label:'Confirmation reference',required:true},{key:'note',label:'Prepared follow-up note',required:false}],
+ schedule:[{key:'staff',label:'Team member',required:true},{key:'role',label:'Proposed role',type:'select',options:['Preparer','Reviewer','Engagement Partner'],required:true},{key:'allocation',label:'Proposed assignment',required:true}],
+};
 // Presentation drafts only. No localStorage, tokens, approval or business state.
 const sessionDrafts = new Map<string, DraftValues>();
 let sessionIdentity = ''; // Memory only; clear drafts when the authenticated session changes.
@@ -35,10 +41,14 @@ export class ModuleWorkspace {
   readonly rows = signal<RecordValue[]>([]); readonly state = signal<RecordValue>({});
   readonly busy = signal(false); readonly error = signal(''); readonly message = signal(''); readonly loaded = signal(false);
   readonly search = signal(''); readonly selected = signal<RecordValue | null>(null); readonly confirm = signal(false);
+  readonly submitted=signal(false); readonly editorRevision=signal(0);
   readonly lines = signal<EditorRow[]>([]); readonly linesValid = signal(false);
-  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | null>(null);
+  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | null>(null);
   readonly actionFields = signal<ScreenField[]>([]);
   form = new FormRecord<FormControl<string>>({}); actionForm = new FormRecord<FormControl<string>>({});
+  private readonly host=inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector=inject(Injector);
+  private focus(selector:string){afterNextRender(()=>this.host.nativeElement.querySelector<HTMLElement>(selector)?.focus(),{injector:this.injector});}
   private generation = 0;
   private commandKey = crypto.randomUUID();
   readonly visibleRows = computed(() => this.rows().filter(row => this.screen().columns.some(column => this.display(row, column.key).toLowerCase().includes(this.search().toLowerCase()))));
@@ -51,9 +61,12 @@ export class ModuleWorkspace {
       const identity = this.token(); this.entra();
       if (sessionIdentity !== identity) { sessionDrafts.clear(); sessionIdentity = identity; }
       this.commandKey = crypto.randomUUID(); this.generation++; this.rows.set([]); this.state.set({}); this.loaded.set(false); this.error.set(''); this.message.set(''); this.busy.set(false); this.search.set(''); this.selected.set(null); this.action.set(null); this.confirm.set(false);
-      this.lines.set([]); this.linesValid.set(false);
-      this.form = this.controls(screen.fields, sessionDrafts.get(draftKey));
-      const subscription = this.form.valueChanges.subscribe(() => { this.confirm.set(false); this.commandKey = crypto.randomUUID(); sessionDrafts.set(draftKey, this.form.getRawValue()); });
+      const draft=sessionDrafts.get(draftKey);
+      const saved:unknown=draft?.['__lines']?JSON.parse(draft['__lines']):[];
+      this.lines.set(Array.isArray(saved)?saved.map(value=>Object.fromEntries(Object.entries(record(value)).filter((entry):entry is [string,string]=>typeof entry[1]==='string'))):[]);
+      this.linesValid.set(false); this.submitted.set(false); this.editorRevision.update(value=>value+1);
+      this.form = this.controls(screen.fields,draft);
+      const subscription = this.form.valueChanges.subscribe(() => { this.confirm.set(false); this.commandKey = crypto.randomUUID(); this.keepDraft(draftKey); });
       onCleanup(() => { subscription.unsubscribe(); this.generation++; });
     });
   }
@@ -62,6 +75,7 @@ export class ModuleWorkspace {
     for (const field of fields) controls[field.key] = new FormControl(values[field.key] ?? '', { nonNullable: true, validators: [Validators.maxLength(field.type === 'textarea' ? 4000 : 500), ...(field.required ? [Validators.required] : []), ...(field.type === 'integer' ? [Validators.pattern(/^[1-9]\d{0,8}$/)] : []), ...(field.type === 'email' ? [Validators.email] : []), ...(field.type === 'decimal' ? [Validators.pattern(/^-?\d{1,22}(\.\d{1,6})?$/)] : [])] });
     return new FormRecord(controls);
   }
+  private keepDraft(key=`${this.engagementId()}:${this.screenId()}`) {sessionDrafts.set(key,{...this.form.getRawValue(),__lines:JSON.stringify(this.lines())});}
   display(row: RecordValue, key: string): string {
     const value = row[key];
     if (value === true) return 'Yes'; if (value === false) return 'No';
@@ -84,7 +98,7 @@ export class ModuleWorkspace {
   private async run(work: (generation: number) => Promise<void>) {
     if (this.busy()) return;
     const generation = this.generation; this.busy.set(true); this.error.set('');
-    try { await work(generation); } catch (error) { if (generation === this.generation) this.error.set(error instanceof Error ? error.message : 'Request failed.'); }
+    try { await work(generation); } catch (error) { if (generation === this.generation) this.error.set(error instanceof Error ? error.message : 'Request failed.'); if(generation===this.generation)this.focus('[data-form-error]'); }
     finally { if (generation === this.generation) this.busy.set(false); }
   }
   private async read(generation: number) {
@@ -96,18 +110,18 @@ export class ModuleWorkspace {
     this.rows.set(Array.isArray(list) ? list.map(record) : list ? [record(list)] : []); this.loaded.set(true);
   }
   refresh() { void this.run(generation => this.read(generation)); }
-  onLineChanges(event: { rows: EditorRow[]; valid: boolean }) { this.lines.set(event.rows); this.linesValid.set(event.valid); this.error.set(''); }
-  lineFields(screen: ModuleScreen): readonly ScreenField[] { return screen.lineKind === 'taxonomy' ? taxonomyLineFields : adjustmentLineFields; }
-  lineMinimum(screen: ModuleScreen): number { return screen.lineKind === 'taxonomy' ? 1 : 2; }
-  lineTitle(screen: ModuleScreen): string { return screen.lineKind === 'taxonomy' ? 'Taxonomy lines' : 'Journal lines'; }
+  onLineChanges(event: { rows: EditorRow[]; valid: boolean }) { this.lines.set(event.rows); this.linesValid.set(event.valid); this.confirm.set(false); this.commandKey=crypto.randomUUID(); this.error.set('');this.keepDraft(); }
+  lineFields(screen: ModuleScreen): readonly ScreenField[] { return screen.lineKind === 'taxonomy' ? taxonomyLineFields : screen.lineKind==='adjustment'?adjustmentLineFields:preparationLineFields[screen.lineKind??'']??[]; }
+  lineMinimum(screen: ModuleScreen): number { return screen.lineKind === 'adjustment' ? 2 : 1; }
+  lineTitle(screen: ModuleScreen): string { return screen.lineKind === 'taxonomy' ? 'Taxonomy lines' : screen.lineKind==='adjustment'?'Journal lines':screen.lineKind==='procedure'?'Procedure steps':screen.lineKind==='evidence'?'Evidence references':screen.lineKind==='confirmation'?'Confirmation counterparties':'Proposed team assignments'; }
   prepare() {
-    this.form.markAllAsTouched(); if (this.form.invalid) return;
-    if (this.screen().lineKind && !this.linesValid()) { this.error.set('Review the structured lines before confirming.'); return; }
-    if (this.screen().action) { this.confirm.set(true); return; }
-    sessionDrafts.set(`${this.engagementId()}:${this.screenId()}`, this.form.getRawValue());
+    this.submitted.set(true); this.form.markAllAsTouched(); if (this.form.invalid) {this.error.set('Complete the highlighted fields before continuing.');this.focus('[data-form-error]');return;}
+    if (this.screen().lineKind && !this.linesValid()) { this.error.set('Review the structured lines before confirming.');this.focus('[data-form-error]');return; }
+    if (this.screen().action) { this.confirm.set(true);this.focus('.confirmation h2'); return; }
+    this.keepDraft();
     this.message.set('Draft kept in this session. It has not been submitted or approved. Closing or reloading the application clears session drafts.');
   }
-  discard() { sessionDrafts.delete(`${this.engagementId()}:${this.screenId()}`); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.lines.set([]); this.linesValid.set(false); this.message.set('Draft cleared.'); this.confirm.set(false); this.error.set(''); }
+  discard() { sessionDrafts.delete(`${this.engagementId()}:${this.screenId()}`); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.lines.set([]); this.linesValid.set(false); this.lines.set([]);this.editorRevision.update(value=>value+1);this.submitted.set(false);this.message.set('Draft cleared.'); this.confirm.set(false); this.error.set(''); }
   save() {
     if (this.form.invalid || !this.screen().action || !this.confirm()) return;
     const screen = this.screen(); const body: RecordValue = { ...this.form.getRawValue() };
@@ -130,12 +144,13 @@ export class ModuleWorkspace {
       await this.request(screen.id === 'publications' ? '/publications' : screen.endpoint!, 'POST', parsed.data);
       if (generation !== this.generation) return;
       this.confirm.set(false); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.lines.set([]); this.linesValid.set(false); this.error.set(''); sessionDrafts.delete(`${this.engagementId()}:${screen.id}`);
-      this.message.set('Saved to the engagement.'); await this.read(generation);
+      this.editorRevision.update(value=>value+1);this.submitted.set(false);this.message.set('Saved to the engagement.'); await this.read(generation);
     });
   }
-  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner') {
+  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove') {
     this.selected.set(row); this.action.set(action); this.error.set('');
-    const fields: ScreenField[] = action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
+    this.commandKey=crypto.randomUUID();
+    const fields: ScreenField[] = action === 'mappingApprove' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
       {key:'likelihood',label:'Likelihood',type:'select',options:['1','2','3'],required:true}, {key:'magnitude',label:'Magnitude',type:'select',options:['1','2','3'],required:true},
       {key:'significant',label:'Significant risk',type:'select',options:['No','Yes'],required:true}, {key:'fraudRisk',label:'Fraud risk',type:'select',options:['No','Yes'],required:true},
     ] : [];
@@ -155,11 +170,13 @@ export class ModuleWorkspace {
     const row = this.selected(); const action = this.action(); if (!row || !action) return;
     const values = this.actionForm.getRawValue(); let body: RecordValue = values; let path: string;
     const id = String(row['id'] ?? row['riskId'] ?? ''); if (!id && action !== 'transition') return;
-    if (action === 'owner') { path = `/risks/${encodeURIComponent(id)}/owner`; }
+    if(action==='taxonomyApprove') {path=`/taxonomies/${encodeURIComponent(id)}/approve`;body={};}
+    else if(action==='mappingApprove') {path=`/imports/${encodeURIComponent(values['importId'])}/mapping-approval`;body={taxonomyVersionId:id,idempotencyKey:this.commandKey};const parsed=approveMappingSchema.safeParse(body);if(!parsed.success){this.error.set('Load an approved taxonomy version before approving mappings.');return;}}
+    else if (action === 'owner') { path = `/risks/${encodeURIComponent(id)}/owner`; }
     else if (action === 'post' || action === 'reverse') { path = `/adjustments/${encodeURIComponent(id)}/${action}`; body = {expectedVersion:row['version']}; }
-    else if (action === 'transition') { path = '/lifecycle'; body = {...values, expectedVersion:row['version'], idempotencyKey:crypto.randomUUID()}; }
+    else if (action === 'transition') { path = '/lifecycle'; body = {...values, expectedVersion:row['version'], idempotencyKey:this.commandKey}; }
     else if (action === 'resolve') path = `/review-notes/${encodeURIComponent(id)}/resolve`;
-    else if (action === 'approve') { path = `/materiality/${encodeURIComponent(id)}/approve`; body = {idempotencyKey:crypto.randomUUID()}; }
+    else if (action === 'approve') { path = `/materiality/${encodeURIComponent(id)}/approve`; body = {idempotencyKey:this.commandKey}; }
     else if (action === 'clear') { path = `/risks/${encodeURIComponent(id)}/assessments/${encodeURIComponent(String(row['currentAssessmentId']))}/clearance`; }
     else { path = `/risks/${encodeURIComponent(id)}/assessments`; body = {...values,likelihood:Number(values['likelihood']),magnitude:Number(values['magnitude']),significant:values['significant']==='Yes',fraudRisk:values['fraudRisk']==='Yes'}; }
     void this.run(async generation => { await this.request(path,'POST',body); if (generation !== this.generation) return; this.action.set(null); this.selected.set(null); this.message.set('Decision recorded on the engagement.'); await this.read(generation); });

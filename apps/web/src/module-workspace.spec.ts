@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ModuleWorkspace } from './module-workspace';
+import { moduleScreens } from './module-catalog';
 import { afterEach, it, expect, vi } from 'vitest';
 const create = async (screen: string, token = 'test-session') => {
   const fixture = TestBed.createComponent(ModuleWorkspace);
@@ -114,7 +115,7 @@ it('validates taxonomy lines against the versioned taxonomy contract', async () 
     {code:'REV',label:'Revenue',statementSection:'INCOME',sortOrder:'0'},
     {code:'EXP',label:'Operating expenses',statementSection:'EXPENSE',sortOrder:'1'},
   ]});
-  view.save(); await vi.waitFor(() => expect(view.busy()).toBe(false));
+  view.prepare(); view.save(); await vi.waitFor(() => expect(view.busy()).toBe(false));
   expect(request.mock.calls[0][0]).toBe('/api/v1/engagements/engagement-a/taxonomies');
   const body = JSON.parse(request.mock.calls[0][1].body);
   expect(body.name).toBe('STE statutory taxonomy');
@@ -132,4 +133,55 @@ it('reuses the reviewed command key after transport failure and invalidates revi
   view.save(); await vi.waitFor(() => expect(request).toHaveBeenCalledTimes(2));
   expect(JSON.parse(request.mock.calls[0][1].body).idempotencyKey).toBe(JSON.parse(request.mock.calls[1][1].body).idempotencyKey);
   view.form.controls['ratePercent'].setValue('2'); expect(view.confirm()).toBe(false); fixture.destroy();
+});
+it('records taxonomy approval on the exact protected version route', async () => {
+  const request=vi.fn().mockImplementation(async()=>new Response('[]'));vi.stubGlobal('fetch',request);
+  const fixture=await create('taxonomies');const view=fixture.componentInstance;
+  view.openAction({id:'taxonomy-a',version:2,status:'DRAFT'},'taxonomyApprove');view.saveAction();
+  await vi.waitFor(()=>expect(view.busy()).toBe(false));
+  expect(request.mock.calls[0][0]).toBe('/api/v1/engagements/engagement-a/taxonomies/taxonomy-a/approve');
+  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({});fixture.destroy();
+});
+it('binds import mapping approval to the selected immutable taxonomy',async()=>{
+  const request=vi.fn().mockImplementation(async()=>new Response('[]'));vi.stubGlobal('fetch',request);
+  const fixture=await create('taxonomies');const view=fixture.componentInstance;const id='00000000-0000-4000-8000-000000000003';
+  view.openAction({id,status:'APPROVED'},'mappingApprove');view.actionForm.patchValue({importId:'00000000-0000-4000-8000-000000000004'});view.saveAction();
+  await vi.waitFor(()=>expect(view.busy()).toBe(false));
+  expect(request.mock.calls[0][0]).toContain('/imports/00000000-0000-4000-8000-000000000004/mapping-approval');
+  expect(JSON.parse(request.mock.calls[0][1].body)).toMatchObject({taxonomyVersionId:id});fixture.destroy();
+});
+it('preserves structured line drafts across workspace navigation and clears them explicitly',async()=>{
+  const fixture=await create('adjustments','lines-session');const view=fixture.componentInstance;
+  view.form.patchValue({reference:'Draft journal',memo:'Draft explanation'});
+  view.onLineChanges({rows:[{accountCode:'1000',debit:'10.000000',credit:'0'},{accountCode:'2000',debit:'0',credit:'10.000000'}],valid:true});
+  fixture.componentRef.setInput('screenId','risks');fixture.detectChanges();await fixture.whenStable();
+  fixture.componentRef.setInput('screenId','adjustments');fixture.detectChanges();await fixture.whenStable();
+  expect(view.lines()[0]['accountCode']).toBe('1000');expect(view.form.controls['reference'].value).toBe('Draft journal');
+  view.discard();fixture.detectChanges();await fixture.whenStable();expect(view.lines()[0]['accountCode']).toBe('');fixture.destroy();
+});
+it('requires another review after editing structured lines',async()=>{
+  const fixture=await create('adjustments','line-review-session');const view=fixture.componentInstance;
+  view.form.patchValue({reference:'Reference',memo:'Explanation'});view.onLineChanges({rows:[{accountCode:'1000',debit:'10',credit:'0'},{accountCode:'2000',debit:'0',credit:'10'}],valid:true});view.prepare();expect(view.confirm()).toBe(true);
+  view.onLineChanges({rows:[{accountCode:'1000',debit:'20',credit:'0'},{accountCode:'2000',debit:'0',credit:'20'}],valid:true});expect(view.confirm()).toBe(false);fixture.destroy();
+});
+it('keeps repeated workprogram preparation in session without calling a business API',async()=>{
+  const request=vi.fn();vi.stubGlobal('fetch',request);const fixture=await create('workprogram','procedure-session');const view=fixture.componentInstance;
+  view.form.patchValue({fsli:'Cash and equivalents',assertion:'Existence',assignee:'Synthetic preparer',procedure:'Verify bank reconciliation'});
+  view.onLineChanges({valid:true,rows:[{instruction:'Inspect reconciliation',evidence:'Draft reference',finding:''},{instruction:'Prepare exception follow-up',evidence:'',finding:''}]});view.prepare();
+  expect(view.message()).toContain('not been submitted');expect(request).not.toHaveBeenCalled();fixture.destroy();
+});
+it('focuses an announced error summary after invalid preparation',async()=>{
+  const fixture=await create('leads','focus-session');const view=fixture.componentInstance;view.prepare();fixture.detectChanges();await fixture.whenStable();
+  const summary=fixture.nativeElement.querySelector('[data-form-error]');expect(summary).not.toBeNull();expect(document.activeElement).toBe(summary);expect(summary.getAttribute('role')).toBe('alert');fixture.destroy();
+});
+
+it('renders every catalog workspace without issuing protected requests on navigation',async()=>{
+ const request=vi.fn();vi.stubGlobal('fetch',request);
+ for(const screen of moduleScreens.filter(value=>value.id!=='trial-balance')) {
+  const fixture=await create(screen.id,'');
+  expect(fixture.nativeElement.querySelector('h1')).not.toBeNull();
+  expect(fixture.nativeElement.querySelector('input[aria-invalid="true"]')).toBeNull();
+  fixture.destroy();
+ }
+ expect(request).not.toHaveBeenCalled();
 });

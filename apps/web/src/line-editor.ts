@@ -15,9 +15,9 @@ const decimalPattern = /^-?\d{1,22}(\.\d{1,6})?$/;
 @for(entry of view(); track entry.group; let index=$index) {
 <div class="line-entry" [formGroup]="entry.group"><div class="line-number">Line {{index+1}}<button type="button" (click)="remove(index)" [disabled]="view().length <= minimum()" [attr.aria-label]="'Remove line ' + (index+1)">Remove</button></div><div class="form-grid">
 @for(field of fields();track field.key) { <label class="form-field">{{field.label}}{{field.required === false ? '' : ' *'}}
-@if(field.type==='select') { <select [formControlName]="field.key" [attr.aria-label]="field.label + ' line ' + (index+1)" [attr.aria-invalid]="invalid(entry.group, field.key) ? 'true' : null"><option value="" disabled>Select a value</option>@for(option of field.options;track option) { <option [value]="option">{{option}}</option> }</select> }
-@else { <input [formControlName]="field.key" maxlength="500" [attr.inputmode]="field.type==='decimal'?'decimal':null" [attr.aria-label]="field.label + ' line ' + (index+1)" [attr.aria-invalid]="invalid(entry.group, field.key) ? 'true' : null"> }
-@if(invalid(entry.group, field.key)) { <span class="field-error">Enter a valid {{field.label.toLowerCase()}}.</span> }</label> }
+@if(field.type==='select') { <select [formControlName]="field.key" [attr.aria-label]="field.label + ' line ' + (index+1)" [attr.aria-invalid]="invalid(entry.group, field.key) ? 'true' : null" [attr.aria-describedby]="invalid(entry.group, field.key) ? scopeKey() + '-' + index + '-' + field.key : null"><option value="" disabled>Select a value</option>@for(option of field.options;track option) { <option [value]="option">{{option}}</option> }</select> }
+@else { <input [formControlName]="field.key" maxlength="500" [attr.inputmode]="field.type==='decimal'?'decimal':null" [attr.aria-label]="field.label + ' line ' + (index+1)" [attr.aria-invalid]="invalid(entry.group, field.key) ? 'true' : null" [attr.aria-describedby]="invalid(entry.group, field.key) ? scopeKey() + '-' + index + '-' + field.key : null"> }
+@if(invalid(entry.group, field.key)) { <span class="field-error" [id]="scopeKey() + '-' + index + '-' + field.key">Enter a valid {{field.label.toLowerCase()}}.</span> }</label> }
 </div></div> }</section>`})
 export class LineEditor {
   readonly fields = input.required<readonly ScreenField[]>(); readonly scopeKey = input.required<string>(); readonly initialValues = input<readonly EditorRow[]>([]);
@@ -37,14 +37,14 @@ export class LineEditor {
       for (const seed of seeds) this.rows.push(this.create(fields, seed));
       const subscription = this.rows.valueChanges.subscribe(() => { this.revision.update(value => value + 1); this.emit(); });
       cleanup(() => subscription.unsubscribe());
-      this.emit();
+      this.revision.update(value=>value+1); this.emit();
     });
     effect(() => { if (this.submitted()) { this.rows.markAllAsTouched(); this.revision.update(value => value + 1); } });
   }
   invalid(group: FormRecord<FormControl<string>>, key: string) { const control = group.controls[key]; return Boolean(control?.invalid && control.touched); }
   private create(fields: readonly ScreenField[], values: EditorRow = {}) {
     const controls: Record<string, FormControl<string>> = {};
-    for (const field of fields) controls[field.key] = new FormControl(values[field.key] ?? (field.type === 'decimal' ? '0' : ''), { nonNullable: true, validators: [Validators.maxLength(500), ...(field.required === false ? [] : [Validators.required]), ...(field.type === 'decimal' ? [Validators.pattern(decimalPattern)] : [])] });
+    for (const field of fields) controls[field.key] = new FormControl(values[field.key] ?? (field.type === 'decimal' ? '0' : ''), { nonNullable: true, validators: [Validators.maxLength(500), ...(field.required === false ? [] : [Validators.required]), ...(field.type === 'decimal' ? [Validators.pattern(decimalPattern)] : []),...(field.type==='email'?[Validators.email]:[]),...(field.type==='integer'?[Validators.pattern(/^\d{1,5}$/)]:[])] });
     return new FormRecord(controls);
   }
   private emit() { this.changed.emit({ rows: this.rows.getRawValue(), valid: this.rows.valid }); }
