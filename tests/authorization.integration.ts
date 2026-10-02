@@ -78,6 +78,8 @@ test('scoped grants decide authorization: expiry, revocation, wrong scope and no
 
       // Database invariants: ambiguous scope, half revocation and an inverted window are rejected.
       await assert.rejects(db.$executeRaw`INSERT INTO "RoleGrant" (id,"userId",capability,"clientId","grantedBy") VALUES (gen_random_uuid(), ${user}::uuid, 'ENGAGEMENT_READ', ${clientA}::uuid, ${grantedBy}::uuid)`, /role_grant_scope_check/);
+      await assert.rejects(db.$executeRaw`INSERT INTO "RoleGrant" (id,"userId",capability,"firmId","clientId","grantedBy") VALUES (gen_random_uuid(), ${user}::uuid, 'ENGAGEMENT_READ', ${firmB}::uuid, ${clientA}::uuid, ${grantedBy}::uuid)`, /RoleGrant_firmId_clientId_fkey/);
+      await assert.rejects(db.$executeRaw`INSERT INTO "RoleGrant" (id,"userId",capability,"firmId","clientId","engagementId","grantedBy") VALUES (gen_random_uuid(), ${user}::uuid, 'ENGAGEMENT_READ', ${firmA}::uuid, ${clientA}::uuid, ${engagementB}::uuid, ${grantedBy}::uuid)`, /RoleGrant_firmId_clientId_engagementId_fkey/);
       await assert.rejects(db.$executeRaw`INSERT INTO "RoleGrant" (id,"userId",capability,"revokedAt","grantedBy") VALUES (gen_random_uuid(), ${user}::uuid, 'ENGAGEMENT_READ', now(), ${grantedBy}::uuid)`, /role_grant_revocation_check/);
 
       console.log('scoped grants enforced: expiry, revocation, wrong scope and no implicit role');

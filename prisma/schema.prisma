@@ -12,6 +12,7 @@ model Firm {
   name      String
   createdAt DateTime @default(now())
   clients   Client[]
+  roleGrants RoleGrant[]
 }
 /// Client belongs to exactly one firm. Ids are only unique inside their firm so child
 /// records can carry a composite (firmId, clientId) reference and the database itself
@@ -24,6 +25,7 @@ model Client {
   firm        Firm         @relation(fields: [firmId], references: [id])
   engagements Engagement[]
   repositories ClientRepository[]
+  roleGrants   RoleGrant[]
   @@unique([firmId, id])
 }
 /// Engagement is scoped to a firm and one of that firm's clients. The composite foreign
@@ -39,6 +41,7 @@ model Engagement {
   client      Client       @relation(fields: [firmId, clientId], references: [firmId, id])
   memberships Membership[]
   imports     TbImport[]
+  roleGrants  RoleGrant[]
   transitions EngagementTransition[]
   publications BalancePublication[]
   mappingApprovals MappingApproval[]
@@ -69,8 +72,11 @@ model RoleGrant {
   user         User      @relation(fields: [userId], references: [id])
   capability   String
   firmId       String?   @db.Uuid
+  firm         Firm?     @relation(fields: [firmId], references: [id], onDelete: Restrict)
   clientId     String?   @db.Uuid
+  client       Client?   @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict)
   engagementId String?   @db.Uuid
+  engagement   Engagement? @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
   grantedBy    String    @db.Uuid
   grantedAt    DateTime  @default(now())
   expiresAt    DateTime?
