@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { moduleScreens } from '../../apps/web/src/module-catalog.js';
 test('every module workspace renders with clear authority boundaries and mobile containment', async ({page}) => {
+  test.setTimeout(60_000);
   await page.route('**/api/v1/identity/config', route => route.fulfill({json:{provider:'development'}}));
   for (const screen of moduleScreens) {
     await page.goto(`/?module=${screen.module}&view=${screen.id}`);

@@ -9,6 +9,7 @@ const tasks = {
   T012: ['build:server', 'config'],
   T014: ['test:unit', 'test:integration', 'test:e2e'],
   T015: ['lint', 'typecheck', 'test'],
+  T016: ['verify:all', 'contracts:check', 'audit', 'ci-workflow', 'install-policy'],
   T019: ['build:server', 'identity'],
   T023: ['build:server', 'money-clock'],
   T024: ['build:server', 'unit-of-work'],
@@ -26,6 +27,12 @@ for (const step of tasks[id]) {
     if (!bytes.equals(readFileSync('docs/sources/requirements-current.md'))) throw new Error('Baseline differs from supplied requirements');
     const record = JSON.parse(readFileSync('docs/evidence/T001/baseline.json'));
     if (createHash('sha256').update(bytes).digest('hex') !== record.sha256 || record.coverageIds.length !== 82) throw new Error('Baseline evidence mismatch');
+    continue;
+  }
+  if (step === 'ci-workflow' || step === 'install-policy') {
+    const script = step === 'ci-workflow' ? 'verify-ci-workflow.mjs' : 'verify-pnpm-install-policy.mjs';
+    const result = spawnSync(process.execPath, [`scripts/${script}`], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }
   const filters = { config: 'tests/config.test.ts', storage: 'tests/graph-storage.test.ts', identity: 'packages/server/tests/entra.test.ts', 'money-clock': 'tests/money-clock.test.ts', checkpoint: 'tests/audit-checkpoint.test.ts' };

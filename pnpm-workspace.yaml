@@ -3,6 +3,7 @@ packages:
   - packages/*
 strictPeerDependencies: true
 engineStrict: true
+strictDepBuilds: true
 saveExact: true
 allowBuilds:
   esbuild: true

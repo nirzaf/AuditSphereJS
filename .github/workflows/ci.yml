@@ -1,7 +1,7 @@
 name: Build and test
 on: [push, pull_request, workflow_dispatch]
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
@@ -9,16 +9,21 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
         with:
           version: 12.8.1
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24.21.0
-          cache: pnpm
+          runtime: node@24.21.0
+          install: false
+          cache: false
       - run: pnpm install --frozen-lockfile
+      - name: Verify CI permission and cache policy
+        run: node scripts/verify-ci-workflow.mjs
+      - name: Verify dependency install denial paths
+        run: pnpm exec node scripts/verify-pnpm-install-policy.mjs
       - run: pnpm setup:local
       - run: pnpm infra:up
       - run: pnpm db:migrate
@@ -37,7 +42,7 @@ jobs:
           exit 1
       - run: pnpm verify:all
         env:
-          RUN_LIVE_E2E: '1'
+          RUN_LIVE_E2E: "1"
       - run: pnpm contracts:check
       - run: pnpm audit --audit-level=moderate
       - run: pnpm build:linux
@@ -48,22 +53,14 @@ jobs:
           tar -czf release/web.tar.gz -C dist/web/browser .
           docker save auditsphere-local:compatibility | gzip > release/compatibility-image.tar.gz
           sha256sum release/* > release/SHA256SUMS
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: verified-build-${{ github.sha }}
           path: release/
           retention-days: 7
-      - name: Publish public web assets
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          cd release
-          sha256sum web.tar.gz > web-SHA256SUMS
-          gh release create "build-${GITHUB_SHA}" web.tar.gz web-SHA256SUMS --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Verified web build ${GITHUB_SHA:0:7}" --notes "CI-verified static web assets. API and Microsoft 365 configuration are required for connected workflows. This development build does not represent complete product acceptance. No deployment is performed."
       - name: Upload diagnostic evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: diagnostics-${{ github.sha }}
           path: |
@@ -74,3 +71,22 @@ jobs:
       - name: Stop local infrastructure
         if: always()
         run: docker compose down
+
+  publish-web-assets:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v6
+        with:
+          name: verified-build-${{ github.sha }}
+          path: release
+      - name: Publish public web assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd release
+          sha256sum web.tar.gz > web-SHA256SUMS
+          gh release create "build-${GITHUB_SHA}" web.tar.gz web-SHA256SUMS --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --title "Verified web build ${GITHUB_SHA:0:7}" --notes "CI-verified static web assets. API and Microsoft 365 configuration are required for connected workflows. This development build does not represent complete product acceptance. No deployment is performed."
