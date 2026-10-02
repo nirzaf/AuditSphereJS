@@ -50,7 +50,8 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Validate issuer, audience, RS256 signature, token lifetime, authorized tenant and delegated API scope; bind by immutable tenant/object identifiers, not email.
 - [x] Deny inactive local users and rely on engagement membership plus scoped PostgreSQL grants for business permissions; directory administrator claims grant no audit authority.
 - [x] Add MSAL popup sign-out and clear app-held token, identity, records and unsaved drafts even if Microsoft logout cannot be confirmed. Access-token expiry is enforced by token validation and silent renewal.
-- [ ] Complete explicit server-side session revocation and interactive Entra acceptance; no live SPA sign-in acceptance is claimed.
+- [x] Persist an append-only self-revocation cutoff and reject previously issued Entra API tokens on every authenticated request; the static development credential cannot invoke this endpoint.
+- [ ] Complete interactive Entra SPA acceptance; no live SPA sign-in acceptance is claimed.
 
 ## Acceptance criteria and required tests
 
@@ -78,6 +79,6 @@ Before that script exists, record the actual available compile/test/review comma
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
-Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). AC tests pass locally, but the task remains `IN_PROGRESS` until logout/revocation/session expiry and interactive live Entra acceptance are proven, and prerequisite scope review is complete.
+Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior. The task remains `IN_PROGRESS` until interactive live Entra acceptance is proven and prerequisite T018 scope review is complete.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

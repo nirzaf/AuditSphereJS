@@ -55,6 +55,10 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     const identity = await fetch(`${origin}/api/v1/me`, { headers });
     assert.equal(identity.status, 200);
     assert.deepEqual(await identity.json(), { id: fixtureUser, email: 'auth-fixture@example.test', active: true });
+    const revoked = await fetch(`${origin}/api/v1/me/revoke-sessions`, { method: 'POST', headers });
+    assert.equal(revoked.status, 409, 'static development credentials cannot claim Entra session revocation');
+    assert.equal(await db.identitySessionRevocation.count({ where: { userId: fixtureUser } }), 0);
+
     const own = await fetch(`${origin}/api/v1/engagements/${engagementA}/lifecycle`, { headers });
     assert.equal(own.status, 200);
     const ownHistory = await own.json() as { state: string; history: unknown[] };

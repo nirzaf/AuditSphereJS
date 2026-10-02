@@ -3,16 +3,24 @@ import { timingSafeEqual } from 'node:crypto';
 import { db } from './db.js';
 import { configuredEntraIdentity } from './entra.js';
 import { requireCapability } from './authorization.js';
+import { sessionRevocationCutoff, wasSessionRevoked } from './session-revocation.js';
+import type { EntraIdentity } from './entra.js';
 export const fixtureUser = '00000000-0000-4000-8000-000000000001';
+
+export async function authenticateEntraActor(identity: Pick<EntraIdentity, 'authenticate'>, received: string): Promise<string> {
+  const verified = await identity.authenticate(received);
+  const user = await db.user.findUnique({ where: { tenantId_entraObjectId: { tenantId: verified.tenantId, entraObjectId: verified.objectId } }, select: { id: true, active: true } });
+  if (!user?.active) throw new Error('Active local identity assignment missing');
+  const revocation = await db.identitySessionRevocation.findFirst({ where: { userId: user.id }, orderBy: { revokedBefore: 'desc' }, select: { revokedBefore: true } });
+  if (revocation && wasSessionRevoked(verified.issuedAt, revocation.revokedBefore)) throw new Error('Entra session was revoked');
+  return user.id;
+}
 
 async function authenticateInternalActor(received: string): Promise<string> {
   let userId: string;
   if (process.env.AUTH_PROVIDER === 'entra' || process.env.NODE_ENV === 'production') {
     try {
-      const identity = await configuredEntraIdentity().authenticate(received);
-      const user = await db.user.findUnique({ where: { tenantId_entraObjectId: { tenantId: identity.tenantId, entraObjectId: identity.objectId } }, select: { id: true, active: true } });
-      if (!user?.active) throw new Error('Active local identity assignment missing');
-      userId = user.id;
+      userId = await authenticateEntraActor(configuredEntraIdentity(), received);
     } catch { throw new UnauthorizedException('Internal authentication required'); }
   } else {
     const configured = process.env.DEV_AUTH_TOKEN;
@@ -22,6 +30,14 @@ async function authenticateInternalActor(received: string): Promise<string> {
     userId = user.id;
   }
   return userId;
+}
+
+export async function revokeCurrentUserSessions(userId: string) {
+  const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, active: true } });
+  if (!user?.active) throw new UnauthorizedException('Internal authentication required');
+  const revokedBefore = sessionRevocationCutoff();
+  const event = await db.identitySessionRevocation.create({ data: { userId, revokedBefore }, select: { id: true, revokedBefore: true } });
+  return { revokedBefore: event.revokedBefore.toISOString() };
 }
 
 export async function currentInternalIdentity(userId: string) {

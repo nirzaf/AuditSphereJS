@@ -61,8 +61,18 @@ model User {
   entraObjectId String?      @db.Uuid
   memberships   Membership[]
   grants        RoleGrant[]
+  sessionRevocations IdentitySessionRevocation[]
   practicePeriodTransitions PracticePeriod[] @relation("PracticePeriodTransitionActor")
   @@unique([tenantId, entraObjectId])
+}
+/// Append-only revocation cutoff for Entra access tokens issued to one local user.
+model IdentitySessionRevocation {
+  id           String   @id @default(uuid()) @db.Uuid
+  userId       String   @db.Uuid
+  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  revokedBefore DateTime
+  createdAt    DateTime @default(now())
+  @@index([userId, revokedBefore])
 }
 /// A capability granted to a user over a scope and valid only inside its window.
 /// Grants are historical: revocation sets revokedAt and never deletes the row. A revoked or

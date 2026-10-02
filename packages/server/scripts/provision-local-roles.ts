@@ -23,6 +23,7 @@ try {
   // deliberately extended, so least privilege is not silently widened by a migration.
   await client.query('GRANT SELECT, INSERT, UPDATE, DELETE ON "Firm", "Client", "User", "Membership", "Engagement", "Document", "TbImport", "TbRow", "OutboxEvent", "CommandReceipt" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "AuditEvent", "EngagementTransition" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT ON "IdentitySessionRevocation" TO auditsphere_api');
   await client.query('GRANT SELECT ON "EngagementTransition" TO auditsphere_report');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "RoleGrant" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "PracticeAccount", "PracticePeriod", "PracticeJournal", "PracticeJournalLine" TO auditsphere_api');

@@ -9,7 +9,8 @@ export class EntraIdentity {
   async authenticate(token: string) {
     const { payload } = await jwtVerify(token, this.keys, { issuer: `https://login.microsoftonline.com/${this.config.tenantId}/v2.0`, audience: this.config.audience, algorithms: ['RS256'], requiredClaims: ['exp', 'iat', 'oid', 'tid'] });
     if (payload.tid !== this.config.tenantId || typeof payload.oid !== 'string' || !/^[0-9a-f-]{36}$/i.test(payload.oid) || typeof payload.scp !== 'string' || !payload.scp.split(' ').includes(this.config.scope)) throw new Error('Entra API scope or tenant denied');
-    return { tenantId: this.config.tenantId, objectId: payload.oid };
+    if (!Number.isSafeInteger(payload.iat)) throw new Error('Entra API token issue time is invalid');
+    return { tenantId: this.config.tenantId, objectId: payload.oid, issuedAt: payload.iat! };
   }
 }
 let identity: EntraIdentity | undefined;

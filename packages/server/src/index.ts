@@ -6,7 +6,8 @@ export type { ContractContribution, ContractTimeValue } from './modules/practice
 export { AuditController } from './platform/audit-controller.js';
 export { captureAuditCheckpoint, verifyAuditChain, verifyAuditRecords, signAuditCheckpoint, verifySignedAuditCheckpoint } from './platform/audit-chain.js';
 export type { AuditCheckpoint, AuditChainRow, SignedAuditCheckpoint } from './platform/audit-chain.js';
-export { InternalGuard, InternalIdentityGuard, currentInternalIdentity, fixtureUser } from './platform/auth.js';
+export { InternalGuard, InternalIdentityGuard, currentInternalIdentity, revokeCurrentUserSessions, authenticateEntraActor, fixtureUser } from './platform/auth.js';
+export { EntraIdentity } from './platform/entra.js';
 export { InternalIdentityController } from './platform/identity-controller.js';
 export { requireCapability, hasCapability, anyCapability, grantCoversScope, revokeGrant } from './platform/authorization.js';
 export { FieldworkController } from './modules/fieldwork/controller.js';
