@@ -8,6 +8,7 @@ import { PostgreSqlContainer } from '@testcontainers/postgresql';
 
 const cli = resolve('node_modules/prisma', JSON.parse(readFileSync('node_modules/prisma/package.json', 'utf8')).bin.prisma);
 const firmId = '1a1a1a1a-1a1a-41a1-81a1-1a1a1a1a1a1a';
+const otherFirmId = '0b0b0b0b-0b0b-40b0-80b0-0b0b0b0b0b0b';
 const clientA = '2a2a2a2a-2a2a-42a2-82a2-2a2a2a2a2a2a';
 const clientB = '3a3a3a3a-3a3a-43a3-83a3-3a3a3a3a3a3a';
 const clientC = '4a4a4a4a-4a4a-44a4-84a4-4a4a4a4a4a4a';
@@ -23,7 +24,7 @@ test('per-client repository bindings resolve per purpose and document versions a
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, STORAGE_PROVIDER: 'graph' });
     const { db, resolveClientRepository } = await import('@auditsphere/server');
     try {
-      await db.firm.create({ data: { id: firmId, name: 'Repository firm' } });
+      await db.firm.createMany({ data: [{ id: firmId, name: 'Repository firm' }, { id: otherFirmId, name: 'Other repository firm' }] });
       await db.client.createMany({ data: [{ id: clientA, firmId, name: 'Client A' }, { id: clientB, firmId, name: 'Client B' }, { id: clientC, firmId, name: 'Client C' }] });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId: clientA, name: 'Repository engagement' } });
       await db.clientRepository.createMany({ data: [
@@ -31,6 +32,11 @@ test('per-client repository bindings resolve per purpose and document versions a
         { firmId, clientId: clientA, purpose: 'working', provider: 'graph', driveId: 'workingA', folderId: 'folderA' },
         { firmId, clientId: clientB, purpose: 'evidence', provider: 'graph', driveId: 'driveB', folderId: 'evidenceB', retiredAt: new Date() },
       ] });
+      await assert.rejects(
+        db.$executeRaw`INSERT INTO "ClientRepository" (id,"firmId","clientId",purpose,provider,"driveId","folderId") VALUES (gen_random_uuid(), ${otherFirmId}::uuid, ${clientA}::uuid, 'evidence', 'graph', 'foreign-drive', 'foreign-folder')`,
+        /foreign key/i,
+        'a repository cannot bind a different firm to an existing client',
+      );
 
       // Each client binds to its own repository; the retired binding is never selected.
       assert.deepEqual(await resolveClientRepository(db, firmId, clientA, 'evidence'), { driveId: 'driveA', folderId: 'evidenceA', purpose: 'evidence' });

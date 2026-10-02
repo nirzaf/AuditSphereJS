@@ -23,6 +23,7 @@ model Client {
   createdAt   DateTime     @default(now())
   firm        Firm         @relation(fields: [firmId], references: [id])
   engagements Engagement[]
+  repositories ClientRepository[]
   @@unique([firmId, id])
 }
 /// Engagement is scoped to a firm and one of that firm's clients. The composite foreign
@@ -112,6 +113,7 @@ model ClientRepository {
   folderId  String
   createdAt DateTime  @default(now())
   retiredAt DateTime?
+  client    Client    @relation(fields: [firmId, clientId], references: [firmId, id])
   @@unique([firmId, clientId, purpose, provider])
   @@index([clientId, purpose])
 }
