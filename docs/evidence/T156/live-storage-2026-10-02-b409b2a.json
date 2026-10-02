@@ -1,0 +1,43 @@
+{
+  "testedCommit": "b409b2a6bd3de5e1956ba192c5acb4ede4d117ac",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156",
+  "testsPassed": 2,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "provider": "Microsoft Graph live tenant",
+  "results": [
+    {
+      "runId": "86c6fb5e-3360-42b5-978e-6faa70c7df32",
+      "checkedAt": "2026-10-02T18:40:17.878Z",
+      "provider": "SHAREPOINT",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 131,
+      "sha256": "04c28bbe650156d6d3addb2c2cca631f697632a124a7e981d52b6d2802ea568c",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "9c2f92cf04c91f995414ac2a98a08a89e3fac8e60a0d9db37871b44c27deef5f",
+      "fixtureRetained": true,
+      "limitations": [
+        "Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance"
+      ]
+    },
+    {
+      "runId": "86c6fb5e-3360-42b5-978e-6faa70c7df32",
+      "checkedAt": "2026-10-02T18:40:25.034Z",
+      "provider": "ONEDRIVE",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 129,
+      "sha256": "06c97bd6fa204825ee749ce287d3cfda7ebbca557679ef718f7af59e63d5b143",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "f2b421a3baa1c587791f5476fbba0138267279e5a319b51369a1601b04f72dbe",
+      "fixtureRetained": true,
+      "limitations": [
+        "Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance"
+      ]
+    }
+  ],
+  "acceptanceLimitations": [
+    "Does not establish Entra SPA sign-in, token expiry, consent revocation, throttling, Graph notifications, or full T156 acceptance.",
+    "Synthetic fixtures were retained in designated nonproduction folders.",
+    "No tenant settings, permissions, credentials, production folders, or application deployment were changed."
+  ]
+}

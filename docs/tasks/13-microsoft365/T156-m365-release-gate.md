@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_PROGRESS` — enabled SharePoint/OneDrive storage subset passes; broader Microsoft 365 release checks remain open |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |
@@ -88,4 +89,4 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 ## Current partial evidence
 
-The enabled SharePoint/OneDrive storage subset passed a credentialed nonproduction rerun at commit `d301c78e4185a852aa3d14d9f4c8dd32fd722d57` on 2026-10-02: 2 passed, 0 failed, 0 skipped. See [the redacted per-run evidence](../../evidence/T156/live-storage-2026-10-02-d301c78.json). T156 remains incomplete: identity sign-in, token expiry, consent revocation, throttling, deleted-item behavior and unknown provider outcomes have not all been accepted.
+The enabled SharePoint/OneDrive storage subset passed credentialed nonproduction verification at commit `b409b2a6bd3de5e1956ba192c5acb4ede4d117ac` on 2026-10-02: 2 passed, 0 failed, 0 skipped, including `pnpm verify:task -- T156`. See [the redacted per-run evidence](../../evidence/T156/live-storage-2026-10-02-b409b2a.json). T156 remains incomplete: identity sign-in, token expiry, consent revocation, throttling, deleted-item behavior and unknown provider outcomes have not all been accepted. The SPA currently returns 401 because its signed-in tenant identity has no active local user mapping.
