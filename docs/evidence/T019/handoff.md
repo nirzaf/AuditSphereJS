@@ -28,7 +28,7 @@
 - AC1: Wrong audience, issuer, expiry, tenant, scope and malformed credential denial is covered by signed-token unit tests.
 - AC2: A locally inactive identity receives 401 on the self and engagement API boundaries.
 - AC3: A valid authenticated identity with membership and read-only `ENGAGEMENT_READ` receives 403 for a lifecycle command; engagement state remains unchanged.
-- Still open: live interactive Entra login and mapped-user acceptance, and broader T018 ownership review. No live sign-in is claimed.
+- Still open: live interactive Entra login and mapped-user acceptance, and the owner-scoped integrity follow-ups / production identity mapping required for T018. No live sign-in is claimed.
 - No credentials, tokens or tenant secrets are included. No deployment or tenant permission change was performed.
 
 ## Server-side revocation update — 2026-10-02
@@ -37,4 +37,4 @@
 - `POST /api/v1/me/revoke-sessions` is available only with Entra authentication and appends a cutoff one whole second after the current token timestamp, ensuring tokens already issued during that second are revoked. Static development credentials receive 409 and do not create an event.
 - Each Entra-authenticated request validates the signed token first, binds the immutable tenant/object identity to an active local user, then checks the newest persisted cutoff against token `iat`. Old tokens return 401; tokens issued at/after the cutoff work. This revokes all existing API access tokens for that mapped user.
 - `pnpm verify:task -- T019` passed after the change: signed Entra unit tests; a real PostgreSQL Testcontainers test for old-token rejection, post-cutoff token acceptance and append-only enforcement; and Fastify tests for the Entra-only endpoint and disabled/foreign/read-only access boundaries.
-- Remaining: live interactive SPA sign-in and browser-initiated revocation acceptance in the configured tenant, plus the prerequisite T018 broader tenant-root review. No tenant permission, credential or application registration was changed.
+- Remaining: live interactive SPA sign-in and browser-initiated revocation acceptance in the configured tenant, plus T018’s owner-scoped integrity follow-ups and production identity mapping review. No tenant permission, credential or application registration was changed.

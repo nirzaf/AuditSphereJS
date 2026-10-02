@@ -22,5 +22,6 @@
 ## Remaining acceptance
 
 - The protected lifecycle read and command boundaries are tested; the command denial leaves foreign state and transition history unchanged. Membership attachment is covered by the PostgreSQL composite-FK negative fixture; no separate membership-management HTTP workflow currently exists to test.
-- Review broader tenant-owned root coverage and the production identity mapping procedure. The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only; there is no production database or reviewed identity map in this environment.
+- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). It found additional gaps in module-owned cross-links; the required follow-up migrations and negative database fixtures must be completed by the respective table owners before T018 can be accepted.
+- The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only; there is no production database or reviewed identity map in this environment. The production identity mapping procedure remains open.
 - No deployment or live Microsoft acceptance was performed by this change.
