@@ -1,7 +1,7 @@
 # Fieldwork
 Purpose: own the fieldwork domain described in the architecture plan.
 Owned use cases: staged CSV import, mapping against a versioned taxonomy with approved-mapping memory, immutable finalization/aggregation, deterministic sampling, and publication of accepted balance versions.
-Owned tables: TbImport, TbRow, BalancePublication, PublishedBalanceRow, ClientRepository, DocumentVersion, TaxonomyVersion, TaxonomyLine, MappingApproval, MappingMemoryEntry, StoredObject, AdjustmentJournal, AdjustmentJournalLine.
+Owned tables: TbImport, TbRow, BalancePublication, PublishedBalanceRow, ClientRepository, DocumentVersion, TaxonomyVersion, TaxonomyLine, MappingApproval, MappingMemoryEntry, StoredObject, AdjustmentJournal, AdjustmentJournalLine. Taxonomy versions reference a real firm; publications and taxonomies expose composite keys for scope-safe module references.
 Public services: service.ts (import/mapping/finalize/aggregate), uploads.ts (unreferenced-object sweep), publication.ts, sampling.ts, taxonomy.ts (taxonomy, approval, suggestions), adjustments.ts (client audit adjustment journals).
 Published events: tb.import via transactional outbox.
 Consumed events: none.

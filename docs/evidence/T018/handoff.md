@@ -12,19 +12,21 @@
 - The per-client repository integration fixture proves a mismatched firm/client pair is rejected by PostgreSQL.
 - The authorization integration fixture proves mismatched firm/client and firm/client/engagement grants are rejected by PostgreSQL while valid grants at all three scope levels continue to authorize as expected.
 - Governance migration `202610020011_risk_assignment_scope` adds a composite foreign key from each risk-owner assignment's `(assessmentId, riskId)` to the corresponding pair on `RiskBandAssessment`. A real PostgreSQL integration case rejects an assignment that pairs risk A with a valid assessment belonging to risk B. This migration is Governance-owned and does not modify platform or Fieldwork tables.
+- Fieldwork migration `202610020012_fieldwork_scope_keys` adds real Firm ownership to TaxonomyVersion and composite keys for publications/taxonomies. Governance migration `202610020013_materiality_lineage_scope` then binds `MaterialityAssessment` to the exact `(firmId, clientId, engagementId, publicationId)` tuple and same-firm `(firmId, taxonomyVersionId)` tuple. The materiality PostgreSQL integration test rejects a valid publication from a different engagement and a valid taxonomy from a different firm.
 
 ## Verification
 
 - `pnpm verify:task -- T018` — passed on 2026-10-02, including the rerun after adding the foreign lifecycle-command denial; generated Prisma client/build, 2 scoped-job tests, PostgreSQL membership/import constraints, per-client repository constraints, authorization grant scope constraints, and Fastify read/write authorization-boundary assertions.
-- `pnpm verify:affected` — passed on 2026-10-02; module boundaries, Prisma/server and Angular production builds, TypeScript checks, and 69 unit tests.
+- `pnpm verify:affected` — passed after the scope migrations on 2026-10-02; module boundaries, Prisma/server and Angular production builds, TypeScript checks, and 70 unit tests.
 - `pnpm lint` — passed on 2026-10-02.
 - `git diff --check` — passed on 2026-10-02.
-- `pnpm exec prisma validate` and `pnpm exec prisma generate` — passed after the Governance schema change.
+- `pnpm exec prisma validate` and `pnpm exec prisma generate` — passed after the Fieldwork/Governance scope schema changes.
 - `node --import tsx --test tests/risk.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including the new cross-risk assessment assignment denial.
+- `node --import tsx --test tests/materiality-persistence.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including Fieldwork/Governance scope migrations and cross-engagement publication / cross-firm taxonomy denials.
 
 ## Remaining acceptance
 
 - The protected lifecycle read and command boundaries are tested; the command denial leaves foreign state and transition history unchanged. Membership attachment is covered by the PostgreSQL composite-FK negative fixture; no separate membership-management HTTP workflow currently exists to test.
-- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). It found additional gaps in module-owned cross-links; the required follow-up migrations and negative database fixtures must be completed by the respective table owners before T018 can be accepted.
+- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). It found additional gaps in module-owned cross-links; cross-firm mapping approvals, Practice ledger relations and document/storage bindings remain for their respective owners before T018 can be accepted.
 - The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only; there is no production database or reviewed identity map in this environment. The production identity mapping procedure remains open.
 - No deployment or live Microsoft acceptance was performed by this change.

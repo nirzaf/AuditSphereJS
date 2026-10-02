@@ -65,6 +65,19 @@ test('materiality assessments bind a published version, enforce segregation of d
       const first = await makePublished(1, '-2000000.000000', '1450000.000000', '1000000.000000', '-500000.000000');
       assert.equal(first.sequence, 1);
 
+      // Materiality lineage cannot cross to a publication in another engagement or a taxonomy from another firm.
+      const otherEngagementId = randomUUID();
+      await db.engagement.create({ data: { id: otherEngagementId, firmId, clientId, name: 'Other materiality engagement', state: 'FIELDWORK_EXECUTION' } });
+      const otherImportId = randomUUID();
+      await db.tbImport.create({ data: { id: otherImportId, firmId, clientId, engagementId: otherEngagementId, documentId, sha256: 'f'.repeat(64), status: 'FINALIZED' } });
+      const otherPublication = await db.balancePublication.create({ data: { firmId, clientId, engagementId: otherEngagementId, importId: otherImportId, sequence: 1, currency: 'QAR', rowCount: 1, digest: 'a'.repeat(64), publishedBy: preparerId } });
+      const otherFirmId = randomUUID();
+      await db.firm.create({ data: { id: otherFirmId, name: 'Other taxonomy firm' } });
+      const otherTaxonomy = await db.taxonomyVersion.create({ data: { firmId: otherFirmId, name: 'OTHER', version: 1, createdBy: preparerId } });
+      const invalidLineageInsert = (publicationId: string, taxonomyVersionId: string) => db.$executeRaw`INSERT INTO "MaterialityAssessment" (id,"firmId","clientId","engagementId","publicationId","taxonomyVersionId","benchmarkKind","sourceLineCount",currency,"benchmarkAmount","planningMateriality","tolerableError","sadThreshold","ratePercent","performancePercent","trivialPercent","policyVersion","inputHash","calculatedBy") VALUES (gen_random_uuid(), ${firmId}::uuid, ${clientId}::uuid, ${engagementId}::uuid, ${publicationId}::uuid, ${taxonomyVersionId}::uuid, 'REVENUE', 1, 'QAR', 1, 1, 1, 1, 1, 75, 5, 'test-v1', ${'b'.repeat(64)}, ${preparerId}::uuid)`;
+      await assert.rejects(invalidLineageInsert(otherPublication.id, taxonomy.id), /MaterialityAssessment_publication_scope_fkey/);
+      await assert.rejects(invalidLineageInsert(first.publicationId, otherTaxonomy.id), /MaterialityAssessment_taxonomy_scope_fkey/);
+
       const calculated = await calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'REVENUE', ratePercent: '1', performancePercent: '75', trivialPercent: '5', idempotencyKey: randomUUID() }) as { assessmentId: string; planningMateriality: string; tolerableError: string; sadThreshold: string; benchmarkAmount: string; inputHash: string };
       assert.equal(calculated.benchmarkAmount, '2000000.000000');
       assert.equal(calculated.planningMateriality, '20000.000000');

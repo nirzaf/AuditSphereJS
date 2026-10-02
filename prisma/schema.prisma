@@ -13,6 +13,7 @@ model Firm {
   createdAt DateTime @default(now())
   clients   Client[]
   roleGrants RoleGrant[]
+  taxonomies TaxonomyVersion[]
 }
 /// Client belongs to exactly one firm. Ids are only unique inside their firm so child
 /// records can carry a composite (firmId, clientId) reference and the database itself
@@ -207,6 +208,7 @@ model BalancePublication {
   rows         PublishedBalanceRow[]
   materialityAssessments MaterialityAssessment[]
   @@unique([engagementId, sequence])
+  @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, publishedAt])
 }
 /// The exact published balances. Immutable once written; PostgreSQL rejects update and delete.
@@ -244,6 +246,7 @@ model EngagementTransition {
 model TaxonomyVersion {
   id                String           @id @default(uuid()) @db.Uuid
   firmId            String           @db.Uuid
+  firm              Firm             @relation(fields: [firmId], references: [id])
   name              String
   version           Int
   status            String           @default("DRAFT")
@@ -255,6 +258,7 @@ model TaxonomyVersion {
   mappingApprovals  MappingApproval[]
   materialityAssessments MaterialityAssessment[]
   @@unique([firmId, name, version])
+  @@unique([firmId, id])
   @@index([firmId, status])
 }
 /// One taxonomy line. The code is the value stored on mapped trial-balance rows; the statement
@@ -299,9 +303,9 @@ model MaterialityAssessment {
   engagementId        String             @db.Uuid
   engagement          Engagement         @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
   publicationId       String             @db.Uuid
-  publication         BalancePublication @relation(fields: [publicationId], references: [id])
+  publication         BalancePublication @relation(fields: [firmId, clientId, engagementId, publicationId], references: [firmId, clientId, engagementId, id], map: "MaterialityAssessment_publication_scope_fkey")
   taxonomyVersionId   String             @db.Uuid
-  taxonomyVersion     TaxonomyVersion    @relation(fields: [taxonomyVersionId], references: [id])
+  taxonomyVersion     TaxonomyVersion    @relation(fields: [firmId, taxonomyVersionId], references: [firmId, id], map: "MaterialityAssessment_taxonomy_scope_fkey")
   benchmarkKind       String
   destinationCode     String?
   sourceLineCount     Int
