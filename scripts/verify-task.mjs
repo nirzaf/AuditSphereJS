@@ -5,6 +5,7 @@ const id = process.argv.slice(2).find(value => value !== '--');
 const tasks = {
   T001: ['baseline'],
   T003: ['methodology'],
+  T004: ['records-policy'],
   T007: ['lint', 'build:server', 'test:integration'],
   T008: ['build:server', 'test:integration'],
   T012: ['build:server', 'config'],
@@ -42,6 +43,11 @@ for (const step of tasks[id]) {
   }
   if (step === 'methodology') {
     const result = spawnSync(process.execPath, ['scripts/verify-methodology.mjs'], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
+    continue;
+  }
+  if (step === 'records-policy') {
+    const result = spawnSync(process.execPath, ['scripts/verify-records-policy.mjs'], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }

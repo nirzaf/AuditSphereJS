@@ -36,11 +36,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `544; 434; 596` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Audit-methodology owner and partner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T004 records defaults](../decisions/T004-records-defaults.md). Independent professional acceptance remains separate.
 
 **Unresolved point:** LOR must be exported, signed by client management and re-uploaded; final release immediately freezes upload.
 
-**Proposed implementation direction, not approval:** Decide whether signed LOR is a prerequisite of report signature/release or an explicitly controlled exception channel exists. No hidden unrestricted late-upload bypass.
+**Recorded implementation default:** Generate the LOR from the approved report snapshot and require the current engagement-matched signature before final package validation/external release; no routine bypass. See T004.
 
 **Affected tasks:** [T122](../tasks/10-reporting/T122-lor-draft.md), [T123](../tasks/10-reporting/T123-lor-return.md), [T128](../tasks/10-reporting/T128-bundle-validation.md).
 
@@ -106,11 +106,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `421; 309; 537; 542` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Partner, security and records owners.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under direct user instruction and delegation; see [D08 image-signature decision](../decisions/D08-image-signature.md) and [T004 records defaults](../decisions/T004-records-defaults.md).
 
 **Unresolved point:** Signature/seal PNG appearance is mentioned alongside digitally signed certified PDF.
 
-**Proposed implementation direction, not approval:** Select required assurance: visual endorsement versus independently verifiable cryptographic signature, signer authorization, trust/timestamp/revocation and key custody. A PNG cannot prove the latter.
+**Recorded implementation default:** Use version-bound partner image artwork and firm seal with approval of exact report bytes. Do not call the result cryptographically signed. Certificate signatures/eSignature are excluded by direct user instruction.
 
 **Affected tasks:** [T065](../tasks/05-commercial/T065-letter.md), [T126](../tasks/10-reporting/T126-signing.md), [T128](../tasks/10-reporting/T128-bundle-validation.md).
 
@@ -120,11 +120,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `550-552; 597-598` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Records/compliance owner and partner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T004 records defaults](../decisions/T004-records-defaults.md). Legal/records acceptance and provider configuration remain separate.
 
 **Unresolved point:** A permanent application read-only state is required 60 calendar days from partner signature; storage retention duration and exceptional correction procedure are not specified.
 
-**Proposed implementation direction, not approval:** Keep source business countdown; approve authoritative signature/report instant, timezone, full-file scope, provider retention and independent post-lock addenda. Do not conflate assembly deadline with permanent legal hold.
+**Recorded implementation default:** UTC signature-date boundary, 60 calendar days, separate application read-only state, no automatic application disposal, separately scoped legal hold and immutable addenda. See T004.
 
 **Affected tasks:** [T131](../tasks/11-archive/T131-archive-deadline.md), [T133](../tasks/11-archive/T133-object-retention.md), [T137](../tasks/11-archive/T137-archive-corrections.md).
 
@@ -134,11 +134,11 @@ The numerical values, standards references and lifecycle terminology are taken f
 
 **Source lines:** `418-419; 529-536` in [CURRENT](../sources/requirements-current.md).  
 **Owner:** Audit-methodology owner.  
-**Status:** `PENDING`.
+**Status:** `APPROVED_IMPLEMENTATION_DEFAULT` under user delegation; see [T004 records defaults](../decisions/T004-records-defaults.md). Independent professional acceptance remains separate.
 
 **Unresolved point:** Statutory audit and internal audit/AUP template options coexist with a four-way audit-opinion path.
 
-**Proposed implementation direction, not approval:** Define valid templates, gates and outputs per engagement type. Do not force statutory opinion wording onto an AUP engagement without professional approval.
+**Recorded implementation default:** Statutory audit uses the four-way opinion; internal audit and AUP use separately scoped report templates without an inherited statutory opinion selector. See T004.
 
 **Affected tasks:** [T065](../tasks/05-commercial/T065-letter.md), [T118](../tasks/10-reporting/T118-opinion.md), [T120](../tasks/10-reporting/T120-report-basis.md).
 

@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `GATE` |
 | Phase | 00-readiness — Requirements, decisions and compatibility |
 | Owner area | `planning` |
@@ -51,18 +52,20 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Distinguish pasted signature/seal appearance from cryptographically verifiable PDF signing; choose the required assurance and credential provider.
-- [ ] Preserve the 60-day signature-based business countdown, but get records-owner decisions for report date, time zone, retention period and permitted post-archive addenda.
-- [ ] Define how internal audit and agreed-upon-procedures engagements use separate reporting templates rather than statutory four-way audit opinions by accident.
-- [ ] Define signed LOR timing and archive-manifest scope; no irreversible retention lock may be applied in production during development.
+- [x] Record the user's choice of image signature and firm seal, and prohibit describing the resulting PDF as cryptographically signed.
+- [x] Preserve the 60-calendar-day business countdown, use UTC date boundaries, and distinguish it from object retention, legal hold and post-archive addenda.
+- [x] Define separate reporting paths for statutory audit, internal audit and agreed-upon procedures.
+- [x] Define signed LOR timing and archive-manifest membership. No production retention lock or deletion was executed.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Approved records policy separates assembly deadline, application read-only, object-version retention and legal hold.
-- [ ] **AC2:** PNG-only signature output is never labeled cryptographically signed.
-- [ ] **AC3:** Non-statutory engagement paths have an approved reporting policy before release.
+- [x] **AC1:** [T004 records defaults](../../decisions/T004-records-defaults.md) separates the countdown, application lock, provider object retention, legal hold and immutable addendum path.
+- [x] **AC2:** D08 and T004 explicitly state that image artwork plus approval record is not cryptographic PDF signing.
+- [x] **AC3:** The policy and fixture define internal-audit and AUP reports without the statutory four-way opinion selector; release remains gated on matching approved template/evidence.
 
 Review source hashes, approvals, evidence links and unresolved blockers. No fabricated test output.
+
+**Implementation evidence:** [T004 decision](../../decisions/T004-records-defaults.md), [golden fixture](../../decisions/T004-records-golden.json), and [handoff](../../evidence/T004/handoff.md). Production retention configuration, archive implementation and independent legal/professional acceptance remain open downstream.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 

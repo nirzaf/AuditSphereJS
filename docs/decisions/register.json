@@ -33,7 +33,9 @@
     "ambiguity": "LOR must be exported, signed by client management and re-uploaded; final release immediately freezes upload.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Generate LOR from approved report snapshot; require current engagement-matched client signature before final package validation/external release; no routine bypass.",
+    "decisionRecord": "docs/decisions/T004-records-defaults.md"
   },
   {
     "id": "D04",
@@ -97,7 +99,8 @@
     "signingMethod": "PARTNER_IMAGE_AND_FIRM_SEAL",
     "assurance": "IMAGE_WITH_VERSION_BOUND_PARTNER_APPROVAL",
     "supersedingEvidence": "2026-10-02 user: use just image signature no need M365 eSignature. See docs/decisions/D08-image-signature.md.",
-    "liveSigningProviderAcceptance": "NOT_APPLICABLE_BY_USER_INSTRUCTION"
+    "liveSigningProviderAcceptance": "NOT_APPLICABLE_BY_USER_INSTRUCTION",
+    "decisionRecord": "docs/decisions/T004-records-defaults.md"
   },
   {
     "id": "D09",
@@ -109,7 +112,9 @@
     "ambiguity": "A permanent application read-only state is required 60 calendar days from partner signature; storage retention duration and exceptional correction procedure are not specified.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Anchor the 60-calendar-day countdown to UTC signature date and reach due at UTC midnight on day 60; separate application read-only, object retention, legal hold and addenda. No automatic application disposal before an authorized retention schedule.",
+    "decisionRecord": "docs/decisions/T004-records-defaults.md"
   },
   {
     "id": "D10",
@@ -121,7 +126,9 @@
     "ambiguity": "Statutory audit and internal audit/AUP template options coexist with a four-way audit-opinion path.",
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
-    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate."
+    "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
+    "implementationDefault": "Statutory audit retains four-way opinion path; internal audit and AUP use separate scope-bound templates, with no inherited statutory opinion selector.",
+    "decisionRecord": "docs/decisions/T004-records-defaults.md"
   },
   {
     "id": "D11",

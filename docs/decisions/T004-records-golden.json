@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "decisionVersion": "STE-RECORDS-2026.1",
+  "provenance": "User-delegated implementation defaults recorded 2026-10-02; vectors are specification checks, not live provider or legal acceptance.",
+  "archiveDeadline": {
+    "anchorUtc": "2026-10-02T16:00:00.000Z",
+    "anchorUtcDate": "2026-10-02",
+    "calendarDays": 60,
+    "expectedDeadlineUtc": "2026-12-01T00:00:00.000Z",
+    "checks": [
+      { "instant": "2026-11-30T23:59:59.999Z", "deadlinePassed": false },
+      { "instant": "2026-12-01T00:00:00.000Z", "deadlinePassed": true }
+    ]
+  },
+  "controls": {
+    "applicationReadOnly": "deadline_or_early_partner_lock",
+    "objectRetention": "no_automatic_application_disposal_until_authorized_schedule",
+    "legalHold": "separate_scoped_disposal_suspension_does_not_unlock_archive",
+    "postArchiveCorrection": "new_addendum_linked_by_prior_digest_never_overwrite",
+    "signatureAssurance": "image_and_approval_record_only_not_cryptographic_pdf_signature",
+    "signedLor": "required_before_final_package_validation_and_external_release_after_report_snapshot_approval"
+  },
+  "reportingByEngagementType": [
+    { "type": "EXTERNAL_STATUTORY_AUDIT", "template": "statutory-report", "opinionSelector": "four-way-partner-only", "assuranceLabel": "audit-opinion-per-approved-report" },
+    { "type": "INTERNAL_AUDIT", "template": "internal-audit-report", "opinionSelector": null, "assuranceLabel": "scope-bound-internal-audit-findings" },
+    { "type": "AGREED_UPON_PROCEDURES", "template": "isrs-4400-procedures-findings", "opinionSelector": null, "assuranceLabel": "no-audit-opinion-or-assurance-conclusion" }
+  ]
+}
