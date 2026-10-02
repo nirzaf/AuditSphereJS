@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_PROGRESS` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `identity` |
@@ -79,4 +79,4 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
 
-Current handoff: [T018 scope and worker boundary](../../evidence/T018/handoff.md). The live API denies foreign reads and lifecycle commands with no state/history side effect. The operator-managed immutable Entra mapping procedure is implemented and tested, but no live identity was mapped because there is no app user record or authorized mapping decision. T018 remains open for that mapped-identity acceptance; R008 organization hierarchy stays in T052.
+Current handoff: [T018 scope and worker boundary](../../evidence/T018/handoff.md). Its ownership, worker, and API-boundary acceptance criteria are verified against PostgreSQL and Fastify. Live Entra identity mapping is a separate T019 operational acceptance gate; no live identity was mapped. R008 organization hierarchy remains assigned to T052.

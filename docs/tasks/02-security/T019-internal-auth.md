@@ -79,6 +79,6 @@ Before that script exists, record the actual available compile/test/review comma
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
-Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior. The task remains `IN_PROGRESS` until interactive live Entra acceptance is proven and prerequisite T018 reaches `DONE` after owner-scoped integrity follow-ups and production identity mapping review.
+Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior. T018 ownership prerequisites are complete. T019 remains `IN_PROGRESS` until mapped-user and browser-initiated revocation acceptance are proven; no live identity mapping or synthetic engagement grant has been authorized.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
