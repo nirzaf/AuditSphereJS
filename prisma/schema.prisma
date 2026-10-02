@@ -169,8 +169,10 @@ model TbImport {
   version      Int        @default(1)
   rows         TbRow[]
   mappingApprovals MappingApproval[]
+  publication  BalancePublication?
   createdAt    DateTime   @default(now())
   @@unique([engagementId, sha256])
+  @@unique([firmId, clientId, engagementId, id])
   @@index([firmId, clientId, engagementId])
 }
 model TbRow {
@@ -197,8 +199,9 @@ model BalancePublication {
   engagementId String                @db.Uuid
   engagement   Engagement            @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
   importId     String                @unique @db.Uuid
+  sourceImport TbImport              @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict)
   mappingApprovalId String?          @db.Uuid
-  mappingApproval MappingApproval?   @relation(fields: [mappingApprovalId], references: [id], onDelete: Restrict)
+  mappingApproval MappingApproval?   @relation(fields: [firmId, clientId, engagementId, mappingApprovalId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "BalancePublication_mapping_approval_scope_fkey")
   sequence     Int
   currency     String
   rowCount     Int
@@ -208,6 +211,7 @@ model BalancePublication {
   rows         PublishedBalanceRow[]
   materialityAssessments MaterialityAssessment[]
   @@unique([engagementId, sequence])
+  @@unique([firmId, clientId, engagementId, importId])
   @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, publishedAt])
 }
@@ -283,15 +287,16 @@ model MappingApproval {
   engagementId      String          @db.Uuid
   engagement        Engagement      @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
   importId          String          @db.Uuid
-  importBatch       TbImport        @relation(fields: [importId], references: [id])
+  importBatch       TbImport        @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "MappingApproval_import_scope_fkey")
   taxonomyVersionId String          @db.Uuid
-  taxonomyVersion   TaxonomyVersion @relation(fields: [taxonomyVersionId], references: [id])
+  taxonomyVersion   TaxonomyVersion @relation(fields: [firmId, taxonomyVersionId], references: [firmId, id], onDelete: Restrict, map: "MappingApproval_taxonomy_scope_fkey")
   digest            String
   rowCount          Int
   approvedBy        String          @db.Uuid
   approvedAt        DateTime        @default(now())
   publications      BalancePublication[]
   @@unique([importId, taxonomyVersionId])
+  @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, approvedAt])
 }
 /// One append-only planning-materiality calculation bound to an exact published accounting version

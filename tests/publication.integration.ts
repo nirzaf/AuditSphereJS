@@ -68,6 +68,24 @@ test('publishing creates immutable accepted balance versions bound to one finali
       await db.tbImport.update({ where: { id: tampered }, data: { status: 'FINALIZED', version: 2 } });
       await assert.rejects(publishBalances(engagementId, actorId, { importId: tampered, expectedVersion: 2, idempotencyKey: key('08') }), /mapping changed after approval/);
 
+      const otherEngagementId = randomUUID();
+      const otherDocumentId = randomUUID();
+      const otherImportId = randomUUID();
+      await db.engagement.create({ data: { id: otherEngagementId, firmId, clientId, name: 'Other publication engagement', state: 'FIELDWORK_EXECUTION' } });
+      await db.document.create({ data: { id: otherDocumentId, engagementId: otherEngagementId, key: 'publication/other.csv', sha256: '8'.repeat(64), filename: 'other.csv' } });
+      await db.tbImport.create({ data: { id: otherImportId, firmId, clientId, engagementId: otherEngagementId, documentId: otherDocumentId, sha256: '7'.repeat(64), status: 'FINALIZED' } });
+      const balancedApproval = await db.mappingApproval.findFirstOrThrow({ where: { importId: balanced } });
+      await assert.rejects(db.balancePublication.create({ data: {
+        firmId, clientId, engagementId, importId: otherImportId, mappingApprovalId: balancedApproval.id,
+        sequence: 98, currency: 'QAR', rowCount: 2, digest: '6'.repeat(64), publishedBy: actorId,
+      } }), /BalancePublication_import_scope_fkey/);
+      const foreignApprovalId = randomUUID();
+      await db.$executeRaw`INSERT INTO "MappingApproval" (id,"firmId","clientId","engagementId","importId","taxonomyVersionId",digest,"rowCount","approvedBy") VALUES (${foreignApprovalId}::uuid, ${firmId}::uuid, ${clientId}::uuid, ${otherEngagementId}::uuid, ${otherImportId}::uuid, ${(taxonomy as { id: string }).id}::uuid, ${'5'.repeat(64)}, 1, ${actorId}::uuid)`;
+      await assert.rejects(db.balancePublication.create({ data: {
+        firmId, clientId, engagementId, importId: balanced, mappingApprovalId: foreignApprovalId,
+        sequence: 99, currency: 'QAR', rowCount: 2, digest: '4'.repeat(64), publishedBy: actorId,
+      } }), /BalancePublication_mapping_approval_scope_fkey/);
+
       const first = await publishBalances(engagementId, actorId, { importId: balanced, expectedVersion: 2, idempotencyKey: key('05') }) as { publicationId: string; sequence: number; rowCount: number; digest: string; currency: string };
       assert.equal(first.sequence, 1);
       assert.equal(first.rowCount, 2);

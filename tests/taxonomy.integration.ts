@@ -53,6 +53,19 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
 
       const importId = '17171717-1717-4717-8717-171717171717';
       await db.tbImport.create({ data: { id: importId, firmId, clientId, engagementId, documentId, sha256: 'd'.repeat(64), status: 'MAPPING_REQUIRED' } });
+      const otherEngagementId = randomUUID();
+      const otherDocumentId = randomUUID();
+      const otherImportId = randomUUID();
+      await db.engagement.create({ data: { id: otherEngagementId, firmId, clientId, name: 'Other mapping engagement', state: 'FIELDWORK_EXECUTION' } });
+      await db.document.create({ data: { id: otherDocumentId, engagementId: otherEngagementId, key: 'taxonomy/other.csv', sha256: '9'.repeat(64), filename: 'other.csv' } });
+      await db.tbImport.create({ data: { id: otherImportId, firmId, clientId, engagementId: otherEngagementId, documentId: otherDocumentId, sha256: '8'.repeat(64), status: 'MAPPING_REQUIRED' } });
+      const otherFirmId = randomUUID();
+      const otherTaxonomyId = randomUUID();
+      await db.firm.create({ data: { id: otherFirmId, name: 'Other taxonomy firm' } });
+      await db.taxonomyVersion.create({ data: { id: otherTaxonomyId, firmId: otherFirmId, name: 'FOREIGN', version: 1, createdBy: actorId } });
+      const invalidMappingApproval = (mappingImportId: string, taxonomyId: string) => db.$executeRaw`INSERT INTO "MappingApproval" (id,"firmId","clientId","engagementId","importId","taxonomyVersionId",digest,"rowCount","approvedBy") VALUES (gen_random_uuid(), ${firmId}::uuid, ${clientId}::uuid, ${engagementId}::uuid, ${mappingImportId}::uuid, ${taxonomyId}::uuid, ${'a'.repeat(64)}, 1, ${actorId}::uuid)`;
+      await assert.rejects(invalidMappingApproval(otherImportId, v1.id), /MappingApproval_import_scope_fkey/);
+      await assert.rejects(invalidMappingApproval(importId, otherTaxonomyId), /MappingApproval_taxonomy_scope_fkey/);
       await db.tbRow.createMany({ data: [
         { importId, position: 0, code: '100', name: 'Cash', fsli: 'Unknown line', current: '10.000000', prior: '0.000000' },
         { importId, position: 1, code: '400', name: 'Revenue', fsli: 'Revenue', current: '-10.000000', prior: '0.000000' },

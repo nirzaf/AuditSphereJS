@@ -13,6 +13,7 @@
 - The authorization integration fixture proves mismatched firm/client and firm/client/engagement grants are rejected by PostgreSQL while valid grants at all three scope levels continue to authorize as expected.
 - Governance migration `202610020011_risk_assignment_scope` adds a composite foreign key from each risk-owner assignment's `(assessmentId, riskId)` to the corresponding pair on `RiskBandAssessment`. A real PostgreSQL integration case rejects an assignment that pairs risk A with a valid assessment belonging to risk B. This migration is Governance-owned and does not modify platform or Fieldwork tables.
 - Fieldwork migration `202610020012_fieldwork_scope_keys` adds real Firm ownership to TaxonomyVersion and composite keys for publications/taxonomies. Governance migration `202610020013_materiality_lineage_scope` then binds `MaterialityAssessment` to the exact `(firmId, clientId, engagementId, publicationId)` tuple and same-firm `(firmId, taxonomyVersionId)` tuple. The materiality PostgreSQL integration test rejects a valid publication from a different engagement and a valid taxonomy from a different firm.
+- Fieldwork migration `202610020014_fieldwork_mapping_lineage_scope` adds the composite import key, binds each MappingApproval to its exact firm/client/engagement import and same-firm taxonomy, binds each publication to its exact-scope import, and binds a referenced approval to the same engagement. The taxonomy PostgreSQL integration test rejects a valid import from another engagement and a valid taxonomy from another firm; the publication integration test rejects a foreign-scope import and a valid approval from another engagement.
 
 ## Verification
 
@@ -23,10 +24,12 @@
 - `pnpm exec prisma validate` and `pnpm exec prisma generate` — passed after the Fieldwork/Governance scope schema changes.
 - `node --import tsx --test tests/risk.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including the new cross-risk assessment assignment denial.
 - `node --import tsx --test tests/materiality-persistence.integration.ts` — passed on PostgreSQL 18.6/Testcontainers, including Fieldwork/Governance scope migrations and cross-engagement publication / cross-firm taxonomy denials.
+- `node --import tsx --test tests/taxonomy.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with cross-engagement import and cross-firm taxonomy approval denials.
+- `node --import tsx --test tests/publication.integration.ts` — passed on PostgreSQL 18.6/Testcontainers with cross-engagement import and mapping-approval lineage denials.
 
 ## Remaining acceptance
 
 - The protected lifecycle read and command boundaries are tested; the command denial leaves foreign state and transition history unchanged. Membership attachment is covered by the PostgreSQL composite-FK negative fixture; no separate membership-management HTTP workflow currently exists to test.
-- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). It found additional gaps in module-owned cross-links; cross-firm mapping approvals, Practice ledger relations and document/storage bindings remain for their respective owners before T018 can be accepted.
+- The broader tenant-root review is recorded in [the 2026-10-02 ownership review](tenant-root-review-2026-10-02.md). Mapping approval and publication lineage is now covered by a Fieldwork-owned migration. Practice ledger relations and document/storage bindings remain for their respective owners before T018 can be accepted.
 - The existing scope-bootstrap migration documents that synthetic bootstrap scope is development-only; there is no production database or reviewed identity map in this environment. The production identity mapping procedure remains open.
 - No deployment or live Microsoft acceptance was performed by this change.
