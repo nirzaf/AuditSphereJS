@@ -18,7 +18,7 @@ pnpm dev
 ```
 Open http://127.0.0.1:4200 and enter your local token. Upload a UTF-8 CSV with headers `code,name,current,prior`; balances are signed decimals and each period must sum to zero before finalization.
 The seed's technical engagement is explicitly a development fixture. Microsoft Entra API token validation and MSAL browser sign-in are implemented. Production requires tenant configuration and explicitly assigned users; live tenant acceptance is pending.
-API health: http://127.0.0.1:3000/api/v1/health · Swagger: http://127.0.0.1:3000/api/docs
+API health: http://127.0.0.1:3000/health and readiness at http://127.0.0.1:3000/health/ready. Health routes stay unprefixed; every other route is under `/api/v1`. Swagger: http://127.0.0.1:3000/api/docs (non-production only).
 
 ## Verify
 ```

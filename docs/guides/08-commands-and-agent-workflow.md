@@ -1,6 +1,6 @@
 # Repository commands and one-task execution workflow
 
-These are **scripts the foundation tasks must implement in the target repository**, not commands executable against this documentation-only ZIP. Do not claim they already exist or pass.
+This is the command contract the foundation tasks were to implement. The repository now implements most of it; the authoritative list of commands that exist today, with their exact runner scopes, is in the root [AGENTS.md](../../AGENTS.md). Confirm a command exists in `package.json` before claiming it passed.
 
 ## Stable command interface
 
@@ -18,8 +18,8 @@ These are **scripts the foundation tasks must implement in the target repository
 | `pnpm verify:all` | Run the full mandatory test/build/security/check suite for a release candidate. |
 | `pnpm contracts:generate` | Produce OpenAPI and the single selected browser contract/client surface. |
 | `pnpm contracts:check` | Fail when committed generated artifacts drift from canonical schemas. |
-| `pnpm db:migrate:test` | Migrate only an explicitly identified disposable test DB. |
-| `pnpm db:seed:test` | Seed deterministic synthetic fixtures only in a verified test target. |
+| `pnpm db:migrate` | Implements the disposable-test intent of `db:migrate:test`, which is **not implemented as a separate command**: it deploys migrations to the single `DATABASE_URL` target, so run it only against the local compose stack. |
+| `pnpm db:seed` | Implements the intent of `db:seed:test`, which is **not implemented as a separate command**: it writes one clearly labelled development fixture into the current target only. |
 | `pnpm dependencies:check` | Record current support/engine/peer/advisory/license results and unresolved issues. |
 
 Production migration, reset, seeding and cutover are not implicit parts of these commands. Require explicit environment safeguards and authorization for data-changing production operations. Do not ship a command that guesses a production connection from defaults.
