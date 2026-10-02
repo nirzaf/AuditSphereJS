@@ -1,5 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { createConnection } from 'node:net';
+import { createInterface } from 'node:readline';
+import { randomUUID } from 'node:crypto';
 import { GenericContainer, Wait } from 'testcontainers';
 
 test('isolated queue Redis containers assert the selected version and durable queue settings', { timeout: 60_000 }, async () => {
@@ -27,5 +30,49 @@ test('isolated queue Redis containers assert the selected version and durable qu
     }
   } finally {
     await Promise.all(containers.map(container => container.stop()));
+  }
+});
+
+test('digest-pinned Mailpit accepts a synthetic message over SMTP without external delivery', { timeout: 60_000 }, async () => {
+  const container = await new GenericContainer('ghcr.io/axllent/mailpit:v1.31.3@sha256:13de4ffbd28f3089be6dff32afbc8210edb5a593d738fa877ae7272cc73aeb67')
+    .withExposedPorts(1025, 8025)
+    .withWaitStrategy(Wait.forListeningPorts())
+    .start();
+  const socket = createConnection({ host: container.getHost(), port: container.getMappedPort(1025) });
+  const replies = createInterface({ input: socket });
+  const lines = replies[Symbol.asyncIterator]();
+  const response = async (expected: number) => {
+    const received: string[] = [];
+    while (true) {
+      const line = await lines.next();
+      assert.equal(line.done, false, 'SMTP connection closed before a complete response');
+      received.push(line.value);
+      if (/^\d{3} /.test(line.value)) break;
+    }
+    assert.ok(received[0]?.startsWith(`${expected}`), `expected SMTP ${expected}, received ${received.join(' | ')}`);
+  };
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      socket.once('connect', resolve);
+      socket.once('error', reject);
+    });
+    await response(220);
+    socket.write('EHLO auditsphere.test\r\n');
+    await response(250);
+    socket.write('MAIL FROM:<sender@example.test>\r\n');
+    await response(250);
+    socket.write('RCPT TO:<recipient@example.test>\r\n');
+    await response(250);
+    socket.write('DATA\r\n');
+    await response(354);
+    socket.write(`From: sender@example.test\r\nTo: recipient@example.test\r\nSubject: Synthetic acceptance ${randomUUID()}\r\n\r\nLocal-only test message.\r\n.\r\n`);
+    await response(250);
+    socket.write('QUIT\r\n');
+    await response(221);
+  } finally {
+    replies.close();
+    socket.destroy();
+    await container.stop();
   }
 });

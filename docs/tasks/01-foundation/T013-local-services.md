@@ -80,4 +80,6 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 ## Current partial evidence
 
-`pnpm verify:task -- T013` passed on 2026-10-02: the PostgreSQL 18.6 Testcontainers integration asserts its actual `server_version`, and two concurrently started Redis 8.10 Testcontainers instances assert distinct mapped ports, actual Redis 8.10.x version, `noeviction` and AOF enabled. See [the focused evidence](../../evidence/T013/testcontainers-2026-10-02.md). T013 remains in review because the repository has no local mail sink, version tags are not immutable image digests captured as release evidence, and T006 production-region/backup decisions remain open.
+`pnpm verify:task -- T013` passed on 2026-10-02: the PostgreSQL 18.6 Testcontainers integration asserts its actual `server_version`; two concurrently started Redis 8.10 Testcontainers instances assert distinct mapped ports, actual Redis 8.10.x version, `noeviction` and AOF enabled; and a digest-pinned Mailpit container accepts a synthetic SMTP message without external delivery. See [the focused evidence](../../evidence/T013/testcontainers-2026-10-02.md). T013 remains in review because PostgreSQL and Redis use version tags rather than immutable digests in Compose, and T006 production-region/backup decisions remain open.
+
+Local startup and non-destructive shutdown instructions are in the [local services runbook](../../runbooks/local-services.md).
