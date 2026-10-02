@@ -6,7 +6,7 @@ Last reviewed: 2026-10-02. Run from the repository root with the project's Node 
 
 ```powershell
 $env:M365_ACCEPTANCE_ENV_FILE = '.env.m365.acceptance'
-pnpm test:m365:storage:live
+pnpm verify:task -- T156
 Remove-Item Env:M365_ACCEPTANCE_ENV_FILE
 ```
 
@@ -45,3 +45,5 @@ Resource grants and app-role consent are independent. Before changing either, id
 Before reusing a folder for durable evidence, verify versioning, retention, ownership, sharing and client isolation. Hash/version checks detect substitution; they do not establish a regulatory records/retention policy. Keep acceptance fixtures separate from client records.
 
 After any change, update [current-tenant.md](current-tenant.md), the relevant setup/configuration section, and [T156 evidence](../evidence/T156/tenant-readiness.md). Mark a check as pending when it was not executed. No recurring unattended administration or monitoring is configured by these guides.
+
+Latest execution: commit `d301c78e4185a852aa3d14d9f4c8dd32fd722d57`, 2026-10-02, **2 passed / 0 failed / 0 skipped**. The per-run redacted records are in [T156 evidence](../evidence/T156/live-storage-2026-10-02-d301c78.json); older evidence is retained separately.

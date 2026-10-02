@@ -75,11 +75,17 @@ Fail without a partial successful business state. Keep committed history and evi
 Once [the verification command contract](../01-foundation/T015-commands.md) exists, run the exact task check:
 
 ```bash
-pnpm verify:task -- T156
+M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156
 ```
 
-Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
+The T156 verifier currently executes the credentialed SharePoint/OneDrive storage subset only and fails if the designated private environment is absent. It does not assert completion of the broader T156 matrix listed above; keep T156 `IN_PROGRESS` until every enabled integration check is evidenced and disabled integrations have an approved `NOT_APPLICABLE` disposition.
+
+The live command requires the designated credentials and must fail closed when they are missing. A storage-subset pass is not full T156 acceptance.
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
+
+## Current partial evidence
+
+The enabled SharePoint/OneDrive storage subset passed a credentialed nonproduction rerun at commit `d301c78e4185a852aa3d14d9f4c8dd32fd722d57` on 2026-10-02: 2 passed, 0 failed, 0 skipped. See [the redacted per-run evidence](../../evidence/T156/live-storage-2026-10-02-d301c78.json). T156 remains incomplete: identity sign-in, token expiry, consent revocation, throttling, deleted-item behavior and unknown provider outcomes have not all been accepted.

@@ -20,6 +20,7 @@ const tasks = {
   T032: ['build:server', 'storage'],
   T017: ['verify:all', 'build:linux', 'smoke:linux'],
   T018: ['build:server', 'scope-jobs', 'scope-database', 'scope-repository', 'scope-authorization', 'scope-boundary'],
+  T156: ['m365-storage-live'],
 };
 if (!tasks[id]) throw new Error(`Task ${id || '(missing)'} has no recorded verification recipe. It cannot be verified.`);
 for (const step of tasks[id]) {
@@ -33,6 +34,14 @@ for (const step of tasks[id]) {
   if (step === 'ci-workflow' || step === 'install-policy') {
     const script = step === 'ci-workflow' ? 'verify-ci-workflow.mjs' : 'verify-pnpm-install-policy.mjs';
     const result = spawnSync(process.execPath, [`scripts/${script}`], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
+    continue;
+  }
+  if (step === 'm365-storage-live') {
+    const executable = process.env.npm_execpath;
+    if (!executable) throw new Error('Run task verification through pnpm verify:task');
+    const javascript = /\.(?:c?js|mjs)$/i.test(executable);
+    const result = spawnSync(javascript ? process.execPath : executable, javascript ? [executable, 'test:m365:storage:live'] : ['test:m365:storage:live'], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }
