@@ -22,6 +22,8 @@ Start the API with Entra variables and development authentication disabled. Open
 
 Current nonproduction handoff (2026-10-03): the existing Staff Fixture identity is mapped to a local `PREPARER` record and one synthetic `LEAD_INGESTION` engagement. It has one engagement membership and one scoped `ENGAGEMENT_READ` grant; no mutation capability was granted. The built-in browser reached that account's password step after selecting “Use another account.” The account owner must enter the password and complete MFA; do not store either in the repository or test evidence. No authenticated SPA response or workflow acceptance is claimed until the browser returns and displays the assigned engagement.
 
+Browser recheck (2026-10-03): `pnpm verify:affected` passed on the current working tree (82/82 tests, server/type checks and Angular production build). The built-in browser exercised all 37 module screens and verified each module/view route while unauthenticated; all remained behind the staff identity gate and exposed no engagement data. The Staff Fixture sign-in is still at the password prompt, so `/api/v1/me`, assigned-engagement discovery and authenticated read/denial behavior have not yet been browser-accepted. This route sweep is not live identity acceptance.
+
 ## Failure diagnosis
 
 | Symptom | Checks / response |
