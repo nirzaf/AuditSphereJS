@@ -1,6 +1,6 @@
 # Verify and maintain Microsoft 365 configuration
 
-Last reviewed: 2026-10-03. Run from the repository root with the project's Node 24 and pinned pnpm. Use only designated nonproduction folders.
+Last reviewed: 2026-10-04. Run from the repository root with the project's Node 24 and pinned pnpm. Use only designated nonproduction folders.
 
 ## Live storage acceptance
 
@@ -10,11 +10,11 @@ pnpm verify:task -- T156
 Remove-Item Env:M365_ACCEPTANCE_ENV_FILE
 ```
 
-The private file must contain `M365_ACCEPTANCE_NONPRODUCTION=1` and the [acceptance variables](application-configuration.md). The harness creates a unique synthetic text file in each folder, validates its bytes/hash, changes that fixture's current bytes and reads the original accepted version. It also attempts a synthetic drive-root write, which must be denied with HTTP 403. It then deletes only its own uniquely named fixture and checks that reading its accepted version either remains byte-exact or fails closed with provider 404. Earlier acceptance files are not modified. A wrongly broad permission could allow the test-only root file to be created and cause the test to fail; inspect and correct the grant rather than treating it as success.
+The private file must contain `M365_ACCEPTANCE_NONPRODUCTION=1` and the [acceptance variables](application-configuration.md). The harness creates a unique synthetic text file in each folder, validates its bytes/hash through the normal read API and a private temporary-file streaming read, changes that fixture's current bytes and reads the original accepted version, then attempts a synthetic drive-root write that must fail with HTTP 403. Finally it deletes only its own uniquely named fixture and checks that reading its accepted version either remains byte-exact or fails closed with provider 404. Earlier acceptance files are not modified. A wrongly broad permission could allow the test-only root file to be created and cause the test to fail; inspect and correct the grant rather than treating it as success.
 
 Expected result: 2 tests passed, 0 failures, 0 skipped. Redacted results are written under ignored `test-results/m365-live/`. Copy reviewed redacted summaries into `docs/evidence/T156/`; include tested commit, UTC time, hashes, deleted-item outcome, assertions and remaining gaps. Do not copy tokens, secrets or download URLs. Ordinary CI/unit tests do not run this credentialed harness.
 
-Most recent rerun: 2026-10-03 local time, tested commit `829dfef871315a48cdb29fa0610103bcbc9ad1a6`, 2 passed / 0 failed / 0 skipped. Both designated repositories passed outside-folder 403, exact-version reads, synthetic external edit isolation and deleted-item fail-closed checks. See [per-run evidence](../evidence/T156/live-storage-2026-10-03-829dfef.json). The remaining T156 checks are still open.
+Most recent rerun: 2026-10-04 Riyadh time, tested working tree based on `5751c89ae00aaea7afe42117716cd4aca91d7f8c`, 2 passed / 0 failed / 0 skipped. Both designated repositories passed the private-file streaming hash/size check, exact-version roundtrip, external-edit isolation, outside-folder 403 and deleted-item fail-closed checks. See [per-run evidence](../evidence/T156/live-storage-2026-10-04-streaming.json). The remaining T156 checks are still open.
 
 ## Staff sign-in acceptance
 

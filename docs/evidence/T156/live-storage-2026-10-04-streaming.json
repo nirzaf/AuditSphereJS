@@ -1,0 +1,36 @@
+{
+  "runId": "e002365a-7a32-4c03-9d62-76fdb77f968f",
+  "checkedAt": "2026-10-03T21:00:49Z",
+  "testedCommit": "working tree based on 5751c89ae00aaea7afe42117716cd4aca91d7f8c",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156",
+  "result": "2 passed, 0 failed, 0 skipped",
+  "scope": [
+    "SharePoint and OneDrive: exact-version Graph content streamed to private files and matched expected bytes, size and SHA-256",
+    "Same-size external edits did not substitute accepted version bytes",
+    "Writes outside the two selected folders returned HTTP 403",
+    "The test-created synthetic files were deleted and their version reads failed closed"
+  ],
+  "providers": [
+    {
+      "provider": "SHAREPOINT",
+      "byteCount": 131,
+      "sha256": "1b35b7d626f61093aeb877a98d4b557acaf54f4d27dea8b9acc227e16c3f9b7b",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "2e621db7e9527a3fcd323cbceb87a584afcd30e886ebd1eb3d427f72527833f5",
+      "deletedReadOutcome": "READ_FAILS_CLOSED"
+    },
+    {
+      "provider": "ONEDRIVE",
+      "byteCount": 129,
+      "sha256": "7b44c230466282b98fb8cafca8edcb25b0c5d9f9156ce32d3660d9e68a52c594",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "fdae0a7f689bfea054196cb7aee15076509b2c5d949e67d07d2670ca062faf7b",
+      "deletedReadOutcome": "READ_FAILS_CLOSED"
+    }
+  ],
+  "fixturesRetained": false,
+  "limitations": [
+    "Does not establish live Entra SPA sign-in, Graph consent revocation/recovery, throttling, retention or full T156 acceptance",
+    "The live test exercises the provider adapter; the authenticated API route was verified with synthetic Graph responses and PostgreSQL"
+  ]
+}

@@ -48,16 +48,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Provide authorized download endpoints that stream the stored immutable provider version after a fresh scope check.
-- [ ] Use attachment disposition for untrusted content and safe filename encoding.
-- [ ] Track access separately from document creation and report release; a download response is not proof of client receipt.
-- [ ] Provide hash/version metadata for regulator exports and browser integrity display.
+- [x] Provide an authenticated staff download endpoint that streams the stored immutable provider version only after a fresh scope check. Every request repeats authorization; no preauthenticated provider or reusable download URL is issued.
+- [x] Use attachment disposition for untrusted content and safe filename encoding.
+- [x] Track authorization, provider failure and completed/aborted HTTP response separately from document creation and report release. A response-finished event is not proof of client receipt.
+- [x] Provide SHA-256 and immutable version metadata in response headers for integrity display/export clients.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Another client cannot obtain a download URL.
-- [ ] **AC2:** Expired/changed access is handled according to the approved short-link policy.
-- [ ] **AC3:** Audit history identifies the exact version downloaded.
+- [x] **AC1:** Another client's internal staff identity cannot obtain bytes or a provider URL; foreign-scope requests are concealed as not found.
+- [x] **AC2:** The route does not create a short link. Entra token expiry is enforced by the identity guard, and every HTTP request checks current engagement scope/grants; an expired/revoked grant cannot reuse prior authorization. No separate short-link lifetime was invented.
+- [x] **AC3:** Append-only audit history records the exact `DocumentVersion` resource id and sequence for authorization and response outcome.
 
 Test real/emulated storage behavior, boundary failures and immutable hash/version references; provider-specific assurance requires real-provider evidence.
 
@@ -78,5 +78,7 @@ pnpm verify:task -- T034
 Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
+
+Current evidence is in [the T034 handoff](../../evidence/T034/handoff.md). Client-portal downloads and released-report delivery remain owned by later portal/reporting workflows; this staff endpoint does not claim those workflows.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

@@ -2885,6 +2885,45 @@
         ]
       }
     },
+    "/api/v1/documents/{documentId}/versions/{versionId}/download": {
+      "get": {
+        "operationId": "DocumentDownloadsController_download",
+        "parameters": [
+          {
+            "name": "documentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Verified immutable document bytes."
+          },
+          "default": {
+            "description": "The document is missing or the active principal has no current access to it."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Documents"
+        ]
+      }
+    },
     "/api/v1/engagements/{engagementId}/imports": {
       "get": {
         "operationId": "FieldworkController_list",

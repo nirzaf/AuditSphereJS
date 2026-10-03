@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import { config } from 'dotenv';
 import { configuredGraphStorage, decodeGraphReference } from '../../packages/server/src/platform/graph-storage.js';
@@ -38,6 +40,14 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
     const identity = decodeGraphReference(reference);
     const downloaded = await storage.get(repository, reference);
     assert.deepEqual(downloaded, bytes);
+    const spoolDirectory = await mkdtemp(join(tmpdir(), 'auditsphere-live-download-'));
+    try {
+      const spoolPath = join(spoolDirectory, 'verified-version');
+      await storage.getToFile(repository, reference, spoolPath);
+      assert.deepEqual(await readFile(spoolPath), bytes, 'The streamed provider version must be hash/size verified before it is accepted');
+    } finally {
+      await rm(spoolDirectory, { recursive: true, force: true });
+    }
     assert.equal(identity.sha256, sha256(bytes));
     assert.equal(identity.sizeBytes, bytes.length);
     assert.equal(identity.repositoryFolderId, folderId, 'Provider references must retain the exact configured repository folder');
@@ -72,7 +82,7 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
     await mkdir('test-results/m365-live', { recursive: true });
     await writeFile(`test-results/m365-live/${purpose.toLowerCase()}-${runId}.json`, JSON.stringify({
       runId, checkedAt: new Date().toISOString(), provider: purpose,
-      result: 'ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED', byteCount: bytes.length, sha256: identity.sha256,
+      result: 'STREAMED_VERSION_ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED', byteCount: bytes.length, sha256: identity.sha256,
       repositoryIdentityHash: sha256(Buffer.from(`${driveId}\n${folderId}`)),
       versionIdentityHash: sha256(Buffer.from(`${identity.itemId}\n${identity.versionId}`)),
       fixtureRetained: false,

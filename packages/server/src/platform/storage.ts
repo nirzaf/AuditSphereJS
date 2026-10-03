@@ -1,6 +1,9 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
-import { createReadStream } from 'node:fs';
-import { configuredGraphStorage, type GraphRepository } from './graph-storage.js';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { Readable, Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
+import { configuredGraphStorage, decodeGraphReference, type GraphRepository } from './graph-storage.js';
 export const storageProvider = () => process.env.STORAGE_PROVIDER || (process.env.NODE_ENV === 'production' ? 'graph' : 'local-s3');
 let graphStorage: ReturnType<typeof configuredGraphStorage> | undefined;
 const graph = () => graphStorage ||= configuredGraphStorage();
@@ -60,4 +63,31 @@ export async function retrieve(key: string, repository?: GraphRepository) {
   }
   if (process.env.NODE_ENV === 'production' || storageProvider() !== 'local-s3') throw new Error('Local storage references are disabled');
   const result = await client.send(new GetObjectCommand({ Bucket, Key: key })); return result.Body!.transformToString();
+}
+
+/** Verify provider bytes into a private file before the API begins streaming them to a caller. */
+export async function retrieveToFile(key: string, destination: string, expected: { sha256: string; sizeBytes: number }, repository?: GraphRepository): Promise<void> {
+  if (!/^[a-f0-9]{64}$/.test(expected.sha256) || !Number.isSafeInteger(expected.sizeBytes) || expected.sizeBytes < 0) throw new Error('Invalid immutable document metadata');
+  if (key.startsWith('graph:')) {
+    if (!repository) throw new Error('Graph references require the owning client repository binding');
+    const identity = decodeGraphReference(key);
+    if (identity.sha256 !== expected.sha256 || identity.sizeBytes !== expected.sizeBytes) throw new Error('Graph reference does not match immutable document metadata');
+    await graph().getToFile(repository, key, destination);
+    return;
+  }
+  if (process.env.NODE_ENV === 'production' || storageProvider() !== 'local-s3') throw new Error('Local storage references are disabled');
+  const result = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+  if (!result.Body) throw new Error('Stored document has no content stream');
+  const body = result.Body as unknown as { transformToWebStream?: () => ReadableStream<Uint8Array> };
+  const source = body.transformToWebStream ? Readable.fromWeb(body.transformToWebStream() as never) : result.Body as unknown as Readable;
+  const digest = createHash('sha256');
+  let size = 0;
+  const verify = new Transform({ transform(chunk: Buffer, _encoding, callback) {
+    size += chunk.byteLength;
+    if (size > expected.sizeBytes) return callback(new Error('Stored document exceeds its immutable size'));
+    digest.update(chunk);
+    callback(null, chunk);
+  } });
+  await pipeline(source, verify, createWriteStream(destination, { flags: 'wx', mode: 0o600 }));
+  if (size !== expected.sizeBytes || digest.digest('hex') !== expected.sha256) throw new Error('Stored document failed immutable version verification');
 }

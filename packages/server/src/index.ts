@@ -18,6 +18,8 @@ export { InternalIdentityController } from './platform/identity-controller.js';
 export { assignEngagementStaff, revokeEngagementStaff } from './platform/staff-access.js';
 export { PortalAuthController } from './platform/portal-auth-controller.js';
 export { DocumentUploadsController } from './platform/document-uploads-controller.js';
+export { DocumentDownloadsController } from './platform/document-downloads-controller.js';
+export { prepareDocumentVersionDownload } from './platform/document-downloads.js';
 export { initiateDocumentUpload, receiveDocumentUpload, finalizeDocumentUpload, getDocumentUploadSession } from './platform/document-uploads.js';
 export { issuePortalInvitation, issuePortalPasswordReset, redeemPortalInvitation, loginPortalUser, completePortalPasswordReset, completePortalFirstLogin, resolvePortalSession, logoutPortalSession, assertPortalUploadAllowed } from './platform/portal-auth.js';
 export { requireCapability, hasCapability, anyCapability, grantCoversScope, revokeGrant } from './platform/authorization.js';
@@ -59,7 +61,7 @@ export { createTaxonomyVersion, approveTaxonomyVersion, listTaxonomies, approveI
 export type { SamplingPlan, SamplingOutcome, SampledItem, SamplingPopulationItem } from './modules/fieldwork/sampling.js';
 export { publishBalances, latestPublication, publicationDetail, rowDigest } from './modules/fieldwork/publication.js';
 export { runWorker } from './worker.js';
-export { ensureBucket, store, retrieve, removeObject, storageProvider } from './platform/storage.js';
+export { ensureBucket, store, retrieve, retrieveToFile, removeObject, storageProvider } from './platform/storage.js';
 export { resolveClientRepository } from './platform/repository.js';
 export { GraphStorage, configuredGraphStorage, decodeGraphReference } from './platform/graph-storage.js';
 export { RuntimeModule, Readiness } from './platform/runtime.js';

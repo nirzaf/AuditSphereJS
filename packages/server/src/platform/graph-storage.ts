@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
-import { Readable } from 'node:stream';
+import { createWriteStream } from 'node:fs';
+import { Readable, Transform } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 
 /** A resolved client repository. Drive and folder always come from the client binding. */
 export type GraphRepository = { driveId: string; folderId: string; purpose?: 'evidence' | 'working' };
@@ -117,7 +119,7 @@ export class GraphStorage {
     const encodedReference = encodeReference({ driveId: repository.driveId, repositoryFolderId: repository.folderId, itemId: item.id, versionId: latest.id, eTag: item.eTag, sha256: expectedSha256, sizeBytes: item.size! });
     await this.deleteStaged(repository, encodedReference);
   }
-  async get(repository: GraphRepository, reference: string): Promise<Buffer> {
+  private async openVersion(repository: GraphRepository, reference: string) {
     const parsed = decodeGraphReference(reference);
     if (parsed.driveId !== repository.driveId) throw new Error('Evidence does not belong to this client repository');
     if (parsed.repositoryFolderId && parsed.repositoryFolderId !== repository.folderId) throw new Error('Evidence does not belong to this client repository folder');
@@ -152,11 +154,36 @@ export class GraphStorage {
       response = await this.request(target, { redirect: 'error', signal: AbortSignal.timeout(120_000) });
     }
     if (!response.ok) throw new Error(`Graph download failed (${response.status})`);
+    if (!response.body) throw new Error('Graph download returned no content stream');
+    return { parsed, token, itemBase, response, currentVersionDownload };
+  }
+  async get(repository: GraphRepository, reference: string): Promise<Buffer> {
+    const { parsed, token, itemBase, response, currentVersionDownload } = await this.openVersion(repository, reference);
     const body = Buffer.from(await response.arrayBuffer());
     if (sha(body) !== parsed.sha256) throw new Error('Stored evidence failed SHA-256 verification');
     if (body.byteLength !== parsed.sizeBytes) throw new Error('Stored evidence size does not match its version identity');
     if (currentVersionDownload) await this.verifyCurrentItem(itemBase, token, parsed);
     return body;
+  }
+  /** Verify an immutable Graph version to a private staging file without buffering the binary. */
+  async getToFile(repository: GraphRepository, reference: string, destination: string): Promise<void> {
+    const { parsed, token, itemBase, response, currentVersionDownload } = await this.openVersion(repository, reference);
+    const digest = createHash('sha256');
+    let size = 0;
+    const verify = new Transform({ transform(chunk: Buffer, _encoding, callback) {
+      size += chunk.byteLength;
+      if (size > parsed.sizeBytes) return callback(new Error('Stored evidence size exceeds its immutable version identity'));
+      digest.update(chunk);
+      callback(null, chunk);
+    } });
+    await pipeline(
+      Readable.fromWeb(response.body as never),
+      verify,
+      createWriteStream(destination, { flags: 'wx', mode: 0o600 }),
+    );
+    if (size !== parsed.sizeBytes) throw new Error('Stored evidence size does not match its version identity');
+    if (digest.digest('hex') !== parsed.sha256) throw new Error('Stored evidence failed SHA-256 verification');
+    if (currentVersionDownload) await this.verifyCurrentItem(itemBase, token, parsed);
   }
   private async verifyCurrentItem(itemBase: string, token: string, reference: GraphReference) {
     const response = await this.request(`${itemBase}?$select=id,eTag,size`, { headers: { Authorization: `Bearer ${token}` }, redirect: 'error', signal: AbortSignal.timeout(30_000) });
