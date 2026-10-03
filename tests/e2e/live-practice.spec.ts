@@ -14,6 +14,6 @@ test('live Practice keeps the fieldwork-only preparer outside the firm ledger', 
   await expect(page.getByRole('status')).toContainText('Connected');
   await page.getByRole('button', { name: 'Practice' }).click();
   await page.getByRole('button', { name: 'Load ledger', exact: true }).click();
-  await expect(page.getByRole('alert')).toContainText('PRACTICE_READ is not granted');
+  await expect(page.getByText('Your account needs the firm-wide Practice permission required for this action.', { exact: true })).toBeVisible();
   await page.screenshot({ path: 'test-results/practice-preview.png', fullPage: true });
 });
