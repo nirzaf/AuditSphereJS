@@ -26,7 +26,11 @@ test('publishing creates immutable accepted balance versions bound to one finali
       await db.firm.create({ data: { id: firmId, name: 'Publication firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Publication client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Publication engagement', state: 'FIELDWORK_EXECUTION' } });
-      await db.user.createMany({ data: [{ id: actorId, email: 'publisher@example.test', role: 'PREPARER' }, { id: auditorId, email: 'auditor@example.test', role: 'REVIEWER' }] });
+      await db.user.createMany({ data: [{ id: actorId, email: 'publisher@example.test', role: 'REVIEWER' }, { id: auditorId, email: 'auditor@example.test', role: 'REVIEWER' }] });
+      await db.membership.createMany({ data: [
+        { userId: actorId, firmId, clientId, engagementId, role: 'REVIEWER' },
+        { userId: auditorId, firmId, clientId, engagementId, role: 'REVIEWER' },
+      ] });
       await db.document.create({ data: { id: documentId, engagementId, key: 'publication/dataset.csv', sha256: 'b'.repeat(64), filename: 'dataset.csv' } });
       for (const capability of ['ENGAGEMENT_READ', 'FIELDWORK_WRITE', 'FIELDWORK_FINALIZE', 'TB_PUBLISH', 'MAPPING_APPROVE', 'TAXONOMY_MANAGE'] as const) {
         await db.roleGrant.create({ data: { userId: actorId, capability, firmId, clientId, engagementId, grantedBy: actorId } });
@@ -35,8 +39,8 @@ test('publishing creates immutable accepted balance versions bound to one finali
       const taxonomy = await createTaxonomyVersion(actorId, engagementId, { name: 'STE-STATUTORY', lines: [
         { code: 'Cash and equivalents', label: 'Cash and equivalents', statementSection: 'ASSETS', sortOrder: 1 },
         { code: 'Equity', label: 'Equity', statementSection: 'EQUITY', sortOrder: 2 },
-      ] }) as { id: string };
-      await approveTaxonomyVersion(actorId, engagementId, taxonomy.id);
+      ] }) as { id: string; version: number };
+      await approveTaxonomyVersion(actorId, engagementId, taxonomy.id, { expectedVersion: taxonomy.version });
 
       let sequence = 0;
       const makeImport = async (rows: Array<[string, string, string, string, string]>, status: string, version: number) => {
@@ -45,7 +49,8 @@ test('publishing creates immutable accepted balance versions bound to one finali
         await db.tbImport.create({ data: { id, firmId, clientId, engagementId, documentId, sha256: String(sequence).repeat(64).slice(0, 64), status: 'MAPPING_REQUIRED' } });
         await db.tbRow.createMany({ data: rows.map(([code, name, fsli, current, prior], position) => ({ importId: id, position, code, name, fsli: fsli || null, current, prior })) });
         if (status === 'FINALIZED') {
-          await approveImportMapping(actorId, engagementId, id, { idempotencyKey: randomUUID() });
+          const batch = await db.tbImport.findUniqueOrThrow({ where: { id } });
+          await approveImportMapping(actorId, engagementId, id, { expectedVersion: batch.version, idempotencyKey: randomUUID() });
           await db.tbImport.update({ where: { id }, data: { status: 'FINALIZED', version } });
         }
         return id;
@@ -63,7 +68,8 @@ test('publishing creates immutable accepted balance versions bound to one finali
 
       // An import whose mapping was changed after approval cannot be published.
       const tampered = await makeImport([['100', 'Cash', 'Cash and equivalents', '5.000000', '0.000000'], ['200', 'Equity', 'Equity', '-5.000000', '0.000000']], 'MAPPING_REQUIRED', 1);
-      await approveImportMapping(actorId, engagementId, tampered, { idempotencyKey: randomUUID() });
+      const tamperedBatch = await db.tbImport.findUniqueOrThrow({ where: { id: tampered } });
+      await approveImportMapping(actorId, engagementId, tampered, { expectedVersion: tamperedBatch.version, idempotencyKey: randomUUID() });
       await db.tbRow.updateMany({ where: { importId: tampered, code: '100' }, data: { fsli: 'Equity' } });
       await db.tbImport.update({ where: { id: tampered }, data: { status: 'FINALIZED', version: 2 } });
       await assert.rejects(publishBalances(engagementId, actorId, { importId: tampered, expectedVersion: 2, idempotencyKey: key('08') }), /mapping changed after approval/);

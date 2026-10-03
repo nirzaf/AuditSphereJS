@@ -8,6 +8,8 @@
 | Owner area | `async` |
 | Completion unit | One focused, reviewable change and its evidence |
 
+> Current status: `IN_PROGRESS`. Durable Trial Balance dispatch, PostgreSQL/Redis recovery, invoice idempotency and the queued-versus-completed invariant are verified. AC2 remains open for report release because its owning workflow is not implemented yet (T129/T130).
+
 ## Outcome
 
 Write typed outbox records in the same transaction as originating business state; include stable operation IDs and small versioned payloads.
@@ -48,16 +50,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Write typed outbox records in the same transaction as originating business state; include stable operation IDs and small versioned payloads.
-- [ ] Claim dispatch batches with SKIP LOCKED/claim expiry and enqueue deterministic BullMQ job IDs.
-- [ ] Distinguish queued from completed; retain PostgreSQL operation state so lost Redis jobs can be discovered and re-enqueued.
-- [ ] Add a reconciliation scan for nonterminal operations and record unknown provider outcomes for manual resolution.
+- [x] Write typed outbox records in the same transaction as originating business state; include stable operation IDs and small versioned payloads.
+- [x] Claim dispatch batches with SKIP LOCKED/claim expiry and enqueue deterministic BullMQ job IDs.
+- [x] Distinguish queued from completed; retain PostgreSQL operation state so lost Redis jobs can be discovered and re-enqueued.
+- [x] Add a reconciliation scan for nonterminal operations and record unknown provider outcomes for manual resolution.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Crash before/after enqueue produces no lost durable intent.
-- [ ] **AC2:** Re-delivery never creates a second invoice or release.
-- [ ] **AC3:** Marking an outbox event dispatched does not falsely mark its business operation complete.
+- [x] **AC1:** Crash before/after enqueue produces no lost durable intent.
+- [ ] **AC2:** Re-delivery never creates a second invoice or release. Duplicate invoice delivery is covered by T027's PostgreSQL test; report-release delivery cannot yet be exercised because that operation does not exist (T129/T130).
+- [x] **AC3:** Marking an outbox event dispatched does not falsely mark its business operation complete.
 
 Exercise commit/enqueue gaps, retries, worker shutdown and recovery on real PostgreSQL/Redis.
 

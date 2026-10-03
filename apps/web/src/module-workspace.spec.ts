@@ -31,6 +31,43 @@ it('requires review and sends decimal strings to the exact engagement scope', as
   const options = request.mock.calls[0][1]; expect(options.method).toBe('POST');
   expect(JSON.parse(options.body)).toMatchObject({ratePercent:'1.2500',performancePercent:'75'}); fixture.destroy();
 });
+it('requires an invoice due date and never accepts an amount from the billing form', async () => {
+  const request = vi.fn().mockResolvedValue(new Response(JSON.stringify([]))); vi.stubGlobal('fetch', request);
+  const fixture = await create('advance'); const view = fixture.componentInstance;
+  expect(view.form.controls['dueOn']).toBeDefined(); expect(view.form.controls['amount']).toBeUndefined();
+  view.form.patchValue({ dueOn: '2026-12-31' }); view.prepare(); expect(view.confirm()).toBe(true);
+  view.save(); await vi.waitFor(() => expect(view.busy()).toBe(false));
+  const post = request.mock.calls.find(([, init]) => init?.method === 'POST');
+  expect(post?.[0]).toBe('/api/v1/engagements/engagement-a/practice/invoices');
+  expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ dueOn: '2026-12-31', kind: 'ADVANCE_50' });
+  expect(JSON.parse(String(post?.[1]?.body))).not.toHaveProperty('amount'); fixture.destroy();
+});
+it('allows a reasoned void only for an unpaid issued invoice', async () => {
+  const request = vi.fn().mockResolvedValue(new Response('[]')); vi.stubGlobal('fetch', request);
+  const fixture = await create('advance'); const view = fixture.componentInstance;
+  const invoice = { id: 'invoice-a', number: 'INV-0001', kind: 'ADVANCE_50', status: 'ISSUED', amount: '600.00', dueOn: '2026-12-31', paidToDate: '0.00', receiptIssued: false };
+  view.rows.set([invoice]); fixture.detectChanges();
+  const buttons = [...fixture.nativeElement.querySelectorAll('button')].map((button: HTMLButtonElement) => button.textContent.trim());
+  expect(buttons).toContain('Void unpaid invoice');
+  view.openAction(invoice, 'invoiceVoid');
+  expect(view.actionFields()).toEqual([{ key: 'reason', label: 'Reason for voiding this unpaid invoice', type: 'textarea', required: true }]);
+  view.actionForm.patchValue({ reason: 'wrong' }); view.saveAction();
+  expect(request.mock.calls.some(([, init]) => init?.method === 'POST')).toBe(false);
+  expect(view.error()).toContain('at least 10 characters');
+  view.actionForm.patchValue({ reason: 'Duplicate invoice issued in error' }); view.saveAction();
+  await vi.waitFor(() => expect(view.busy()).toBe(false));
+  const post = request.mock.calls.find(([, init]) => init?.method === 'POST');
+  expect(post?.[0]).toBe('/api/v1/engagements/engagement-a/practice/invoices/invoice-a/void');
+  expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ reason: 'Duplicate invoice issued in error' });
+  view.rows.set([{ ...invoice, status: 'PAID' }]); fixture.detectChanges();
+  const paidButtons = [...fixture.nativeElement.querySelectorAll('button')].map((button: HTMLButtonElement) => button.textContent.trim());
+  expect(paidButtons).toContain('Issue receipt'); expect(paidButtons).not.toContain('Void unpaid invoice');
+  view.rows.set([{ ...invoice, status: 'VOID', voidReason: 'Duplicate invoice issued in error' }]); fixture.detectChanges();
+  const voidButtons = [...fixture.nativeElement.querySelectorAll('button')].map((button: HTMLButtonElement) => button.textContent.trim());
+  expect(voidButtons).not.toContain('Void unpaid invoice'); expect(voidButtons).not.toContain('Issue receipt');
+  expect(fixture.nativeElement.textContent).toContain('Voided: Duplicate invoice issued in error');
+  fixture.destroy();
+});
 it('does not present authorization rejection as a recorded decision', async () => {
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue(new Response('{}',{status:403})));
   const fixture = await create('reviews'); const view = fixture.componentInstance;
@@ -140,15 +177,15 @@ it('records taxonomy approval on the exact protected version route', async () =>
   view.openAction({id:'taxonomy-a',version:2,status:'DRAFT'},'taxonomyApprove');view.saveAction();
   await vi.waitFor(()=>expect(view.busy()).toBe(false));
   expect(request.mock.calls[0][0]).toBe('/api/v1/engagements/engagement-a/taxonomies/taxonomy-a/approve');
-  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({});fixture.destroy();
+  expect(JSON.parse(request.mock.calls[0][1].body)).toEqual({expectedVersion:2});fixture.destroy();
 });
 it('binds import mapping approval to the selected immutable taxonomy',async()=>{
-  const request=vi.fn().mockImplementation(async()=>new Response('[]'));vi.stubGlobal('fetch',request);
+  const request=vi.fn().mockImplementation(async(input,init)=>new Response(String(input).endsWith('/imports/00000000-0000-4000-8000-000000000004')?JSON.stringify({id:'00000000-0000-4000-8000-000000000004',version:7,status:'MAPPING_REQUIRED'}):init?.method==='POST'?'{}':'[]'));vi.stubGlobal('fetch',request);
   const fixture=await create('taxonomies');const view=fixture.componentInstance;const id='00000000-0000-4000-8000-000000000003';
   view.openAction({id,status:'APPROVED'},'mappingApprove');view.actionForm.patchValue({importId:'00000000-0000-4000-8000-000000000004'});view.saveAction();
   await vi.waitFor(()=>expect(view.busy()).toBe(false));
-  expect(request.mock.calls[0][0]).toContain('/imports/00000000-0000-4000-8000-000000000004/mapping-approval');
-  expect(JSON.parse(request.mock.calls[0][1].body)).toMatchObject({taxonomyVersionId:id});fixture.destroy();
+  expect(request.mock.calls[1][0]).toContain('/imports/00000000-0000-4000-8000-000000000004/mapping-approval');
+  expect(JSON.parse(request.mock.calls[1][1].body)).toMatchObject({taxonomyVersionId:id,expectedVersion:7});fixture.destroy();
 });
 it('reviews import mapping suggestions read-only and names their provenance',async()=>{
   const request=vi.fn().mockResolvedValue(new Response(JSON.stringify({
@@ -212,7 +249,7 @@ it('focuses an announced error summary after invalid preparation',async()=>{
   const summary=fixture.nativeElement.querySelector('[data-form-error]');expect(summary).not.toBeNull();expect(document.activeElement).toBe(summary);expect(summary.getAttribute('role')).toBe('alert');fixture.destroy();
 });
 
-it('renders every catalog workspace without issuing protected requests on navigation',async()=>{
+it('renders every catalog workspace without issuing mutation requests on navigation',async()=>{
  const request=vi.fn();vi.stubGlobal('fetch',request);
  for(const screen of moduleScreens.filter(value=>value.id!=='trial-balance')) {
   const fixture=await create(screen.id,'');
@@ -220,5 +257,5 @@ it('renders every catalog workspace without issuing protected requests on naviga
   expect(fixture.nativeElement.querySelector('input[aria-invalid="true"]')).toBeNull();
   fixture.destroy();
  }
- expect(request).not.toHaveBeenCalled();
+ expect(request.mock.calls.filter(([,init])=>init?.method && init.method !== 'GET')).toEqual([]);
 });

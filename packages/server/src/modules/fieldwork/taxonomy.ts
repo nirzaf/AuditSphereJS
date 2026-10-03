@@ -2,7 +2,9 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { createHash } from 'node:crypto';
 import { db } from '../../platform/db.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
-import { approveMappingSchema, createTaxonomySchema } from '@auditsphere/contracts';
+import { withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
+import { approveMappingSchema, approveTaxonomySchema, createTaxonomySchema } from '@auditsphere/contracts';
+import type { PaginationQuery } from '@auditsphere/contracts';
 
 /**
  * Versioned mapping taxonomy and the approved-mapping boundary (MIG-009).
@@ -31,17 +33,19 @@ async function loadEngagement(engagementId: string) {
   return engagement;
 }
 
-export async function createTaxonomyVersion(actorId: string, engagementId: string, input: unknown) {
+export async function createTaxonomyVersion(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = createTaxonomySchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'TAXONOMY_MANAGE', firmScope(engagement));
   const codes = new Set<string>();
   for (const line of parsed.data.lines) {
     if (codes.has(line.code)) throw new BadRequestException(`Duplicate taxonomy code '${line.code}'`);
     codes.add(line.code);
   }
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'TAXONOMY_MANAGE', firmScope(engagement));
     const latest = await tx.taxonomyVersion.findFirst({ where: { firmId: engagement.firmId, name: parsed.data.name }, orderBy: { version: 'desc' } });
     const version = (latest?.version ?? 0) + 1;
     const created = await tx.taxonomyVersion.create({ data: { firmId: engagement.firmId, name: parsed.data.name, version, createdBy: actorId } });
@@ -51,25 +55,30 @@ export async function createTaxonomyVersion(actorId: string, engagementId: strin
   });
 }
 
-export async function approveTaxonomyVersion(actorId: string, engagementId: string, taxonomyVersionId: string) {
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'TAXONOMY_MANAGE', firmScope(engagement));
-  return db.$transaction(async (tx) => {
+export async function approveTaxonomyVersion(actorId: string, engagementId: string, taxonomyVersionId: string, input: unknown, unitOfWork?: UnitOfWork) {
+  const parsed = approveTaxonomySchema.safeParse(input);
+  if (!parsed.success) throw new BadRequestException(parsed.error.issues);
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'TAXONOMY_MANAGE', firmScope(engagement));
     const version = await tx.taxonomyVersion.findFirst({ where: { id: taxonomyVersionId, firmId: engagement.firmId } });
     if (!version) throw new NotFoundException('Taxonomy version not found');
     if (version.status !== 'DRAFT') throw new ConflictException('Only a draft taxonomy version can be approved');
+    if (version.version !== parsed.data.expectedVersion) throw new ConflictException('Taxonomy version changed; reload before approving');
     const lineCount = await tx.taxonomyLine.count({ where: { taxonomyVersionId } });
     if (!lineCount) throw new ConflictException('A taxonomy version needs at least one line before approval');
-    const changed = await tx.taxonomyVersion.updateMany({ where: { id: taxonomyVersionId, status: 'DRAFT' }, data: { status: 'APPROVED', approvedBy: actorId, approvedAt: new Date() } });
+    const changed = await tx.taxonomyVersion.updateMany({ where: { id: taxonomyVersionId, version: parsed.data.expectedVersion, status: 'DRAFT' }, data: { status: 'APPROVED', approvedBy: actorId, approvedAt: new Date() } });
     if (changed.count !== 1) throw new ConflictException('Taxonomy version changed; reload before approving');
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TAXONOMY_VERSION_APPROVED', payload: { taxonomyVersionId, version: version.version, lineCount } } });
     return { id: taxonomyVersionId, status: 'APPROVED', version: version.version, lineCount };
   });
 }
 
-export async function listTaxonomies(engagementId: string) {
+export async function listTaxonomies(engagementId: string, page: PaginationQuery = { offset: 0, limit: 50 }) {
   const engagement = await loadEngagement(engagementId);
-  return db.taxonomyVersion.findMany({ where: { firmId: engagement.firmId }, orderBy: [{ name: 'asc' }, { version: 'desc' }], include: { lines: { orderBy: { sortOrder: 'asc' } } } });
+  return db.taxonomyVersion.findMany({ where: { firmId: engagement.firmId }, orderBy: [{ name: 'asc' }, { version: 'desc' }], skip: page.offset, take: page.limit, include: { lines: { orderBy: { sortOrder: 'asc' } } } });
 }
 
 /**
@@ -116,23 +125,25 @@ export async function currentMappingApproval(engagementId: string, importId: str
   return mappingDigest(rows) === approval.digest ? approval : null;
 }
 
-export async function approveImportMapping(actorId: string, engagementId: string, importId: string, input: unknown) {
+export async function approveImportMapping(actorId: string, engagementId: string, importId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = approveMappingSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
   const hash = digestOf(JSON.stringify({ engagementId, importId, body }));
-  const engagement = await loadEngagement(engagementId);
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'MAPPING_APPROVE', firmScope(engagement));
     const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
     if (receipt) {
       if (receipt.hash !== hash || receipt.actorId !== actorId || receipt.engagementId !== engagementId) throw new ConflictException('Idempotency key reused');
       return receipt.result;
     }
-    await requireCapability(tx, actorId, 'MAPPING_APPROVE', firmScope(engagement));
     const batch = await tx.tbImport.findFirst({ where: { id: importId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId } });
     if (!batch) throw new NotFoundException('Import not found');
     if (batch.status !== 'MAPPING_REQUIRED') throw new ConflictException('Only an import whose mapping is complete can be approved');
+    if (batch.version !== body.expectedVersion) throw new ConflictException('Import changed; reload mappings before approving');
     const rows = await tx.tbRow.findMany({ where: { importId: batch.id }, select: { id: true, fsli: true, version: true } });
     if (!rows.length) throw new ConflictException('The import has no mapped rows');
     if (rows.some((row) => !row.fsli)) throw new ConflictException('Every account must be mapped before approval');

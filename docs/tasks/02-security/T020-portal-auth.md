@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `identity` |
@@ -47,16 +48,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Create portal principals and session storage separate from internal role grants.
-- [ ] Issue expiring single-use invitations or temporary credentials according to the approved source reconciliation; store only secure hashes and never log credentials.
-- [ ] Require first-login password establishment/reset before document submission; rotate session identifiers on authentication changes.
-- [ ] Apply HttpOnly/Secure cookies, CSRF defenses and origin checks to portal mutations; add reset/recovery throttles.
+- [x] Create portal principals, engagement-scoped membership, credential-token and session storage separate from internal role grants.
+- [x] Add expiring single-use invitation and password-reset token services; persist only SHA-256 token digests. Delivery through the notification outbox remains open under T037.
+- [x] Require first-login password establishment before the client session can access the upload authorization guard; hash passwords with Node scrypt and rotate session identifiers on password change.
+- [x] Add HttpOnly/Secure session cookies, same-site CSRF tokens and exact-origin checks to auth mutations. Login/reset throttles remain in T029; reset and invitation delivery remain in T037.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** An invitation replay or expired reset token fails.
-- [ ] **AC2:** Portal credentials cannot use internal routes.
-- [ ] **AC3:** Upload remains forbidden until first reset and engagement payment gates both pass.
+- [x] **AC1:** PostgreSQL/Fastify tests deny invitation replay and expired or consumed password-reset tokens.
+- [x] **AC2:** Portal session cookies are rejected by the internal identity route, which still requires internal bearer authentication.
+- [x] **AC3:** The portal upload authorization guard denies unpaid, first-reset-pending, released, archived and revoked memberships. T075 still needs to enforce this guard at its upload API boundary.
 
 Test valid/invalid/expired credentials and cross-firm/client/engagement access through actual API boundaries.
 
@@ -79,3 +80,5 @@ Before that script exists, record the actual available compile/test/review comma
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
+
+Current implementation evidence: [T020 handoff](../../evidence/T020/handoff.md). T020 closes the separate portal principal, credential, session and authorization-guard outcome. Notification dispatch (T037), login/reset throttling (T029), and applying the guard at the PBC upload endpoint (T075) remain separate open tasks and do not change T020's completion status.

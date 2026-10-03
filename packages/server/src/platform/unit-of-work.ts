@@ -86,6 +86,8 @@ export interface UnitOfWorkOptions {
   wait?: (ms: number) => Promise<void>;
   /** Interactive transaction timeout in milliseconds. */
   timeoutMs?: number;
+  /** Optional PostgreSQL isolation override for standalone commands. */
+  isolationLevel?: Prisma.TransactionIsolationLevel;
 }
 
 const wait = async (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
@@ -113,7 +115,11 @@ export async function runUnitOfWork<T>(work: (scope: UnitOfWork) => Promise<T>, 
       value = await client.$transaction(async (tx) => {
         scope = new UnitOfWork(tx);
         return work(scope);
-      }, { maxWait: 5000, timeout: options.timeoutMs ?? 30000 });
+      }, {
+        maxWait: 5000,
+        timeout: options.timeoutMs ?? 30000,
+        ...(options.isolationLevel ? { isolationLevel: options.isolationLevel } : {}),
+      });
     } catch (error) {
       lastError = error;
       if (!isRetryableConflict(error) || attempt === maxAttempts) throw error;
@@ -127,4 +133,16 @@ export async function runUnitOfWork<T>(work: (scope: UnitOfWork) => Promise<T>, 
     return value;
   }
   throw lastError;
+}
+
+/**
+ * Join an existing command transaction or create a standalone one. Module facades receive the
+ * context explicitly; a nested call never opens a second connection or commits independently.
+ */
+export function withUnitOfWork<T>(
+  scope: UnitOfWork | undefined,
+  work: (scope: UnitOfWork) => Promise<T>,
+  options: Omit<UnitOfWorkOptions, 'client'> = {},
+): Promise<T> {
+  return scope ? work(scope) : runUnitOfWork(work, options);
 }

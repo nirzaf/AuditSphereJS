@@ -2,7 +2,8 @@ import { BadRequestException, ConflictException, ForbiddenException, NotFoundExc
 import { db } from '../../platform/db.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { raiseReviewNoteSchema, resolveReviewNoteSchema } from '@auditsphere/contracts';
-import { runUnitOfWork, lockForUpdate, type TransactionClient } from '../../platform/unit-of-work.js';
+import type { PaginationQuery } from '@auditsphere/contracts';
+import { withUnitOfWork, lockForUpdate, type TransactionClient, type UnitOfWork } from '../../platform/unit-of-work.js';
 
 /**
  * Anchored review notes (C26).
@@ -30,37 +31,38 @@ async function loadEngagement(engagementId: string) {
   return engagement;
 }
 
-export async function raiseReviewNote(actorId: string, engagementId: string, input: unknown) {
+export async function raiseReviewNote(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = raiseReviewNoteSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  return runUnitOfWork(async ({ client: tx }) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     const engagement = await authorizeReviewWrite(tx, actorId, engagementId, 'REVIEW_RAISE');
     const note = await tx.reviewNote.create({ data: { firmId: engagement.firmId, clientId: engagement.clientId, engagementId, workpackage: parsed.data.workpackage, body: parsed.data.body, raisedBy: actorId } });
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'REVIEW_NOTE_RAISED', payload: { noteId: note.id, workpackage: note.workpackage } } });
-    return { noteId: note.id, status: note.status, workpackage: note.workpackage, raisedBy: actorId, raisedAt: note.raisedAt };
+    return { id: note.id, noteId: note.id, status: note.status, workpackage: note.workpackage, body: note.body, raisedAt: note.raisedAt, resolution: null, resolvedAt: null };
   });
 }
 
-export async function resolveReviewNote(actorId: string, engagementId: string, noteId: string, input: unknown) {
+export async function resolveReviewNote(actorId: string, engagementId: string, noteId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = resolveReviewNoteSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  return runUnitOfWork(async ({ client: tx }) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     const engagement = await authorizeReviewWrite(tx, actorId, engagementId, 'REVIEW_RESOLVE');
     const note = await tx.reviewNote.findFirst({ where: { id: noteId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId } });
     if (!note) throw new NotFoundException('Review note not found');
     if (note.status !== 'OPEN') throw new ConflictException('Only an open review note can be resolved');
     if (note.raisedBy === actorId) throw new ForbiddenException('A reviewer cannot resolve their own review note');
-    const changed = await tx.reviewNote.updateMany({ where: { id: noteId, status: 'OPEN' }, data: { status: 'RESOLVED', resolvedBy: actorId, resolution: parsed.data.resolution, resolvedAt: new Date() } });
+    const resolvedAt = new Date();
+    const changed = await tx.reviewNote.updateMany({ where: { id: noteId, status: 'OPEN' }, data: { status: 'RESOLVED', resolvedBy: actorId, resolution: parsed.data.resolution, resolvedAt } });
     if (changed.count !== 1) throw new ConflictException('Review note changed; reload before resolving');
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'REVIEW_NOTE_RESOLVED', payload: { noteId, workpackage: note.workpackage } } });
-    return { noteId, status: 'RESOLVED', resolvedBy: actorId, workpackage: note.workpackage };
+    return { id: noteId, noteId, status: 'RESOLVED', workpackage: note.workpackage, body: note.body, raisedAt: note.raisedAt, resolution: parsed.data.resolution, resolvedAt };
   });
 }
 
-export async function listReviewNotes(engagementId: string, options: { status?: string } = {}) {
+export async function listReviewNotes(engagementId: string, options: { status?: string } = {}, page: PaginationQuery = { offset: 0, limit: 50 }) {
   await loadEngagement(engagementId);
   if (options.status && !reviewStatuses.includes(options.status)) throw new BadRequestException('Unknown status filter');
-  return db.reviewNote.findMany({ where: { engagementId, ...(options.status ? { status: options.status } : {}) }, orderBy: { raisedAt: 'asc' } });
+  return db.reviewNote.findMany({ where: { engagementId, ...(options.status ? { status: options.status } : {}) }, orderBy: { raisedAt: 'asc' }, skip: page.offset, take: page.limit });
 }
 
 export async function reviewSummary(engagementId: string) {

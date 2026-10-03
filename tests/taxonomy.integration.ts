@@ -25,7 +25,8 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
       await db.firm.create({ data: { id: firmId, name: 'Taxonomy firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Taxonomy client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Taxonomy engagement', state: 'FIELDWORK_EXECUTION' } });
-      await db.user.createMany({ data: [{ id: actorId, email: 'mapper@example.test', role: 'PREPARER' }, { id: outsiderId, email: 'outsider@example.test', role: 'REVIEWER' }] });
+      await db.user.createMany({ data: [{ id: actorId, email: 'mapper@example.test', role: 'REVIEWER' }, { id: outsiderId, email: 'outsider@example.test', role: 'REVIEWER' }] });
+      await db.membership.create({ data: { userId: actorId, firmId, clientId, engagementId, role: 'REVIEWER' } });
       for (const capability of ['ENGAGEMENT_READ', 'FIELDWORK_WRITE', 'MAPPING_APPROVE', 'TAXONOMY_MANAGE'] as const) {
         await db.roleGrant.create({ data: { userId: actorId, capability, firmId, clientId, engagementId, grantedBy: actorId } });
       }
@@ -41,7 +42,8 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
       await assert.rejects(createTaxonomyVersion(actorId, engagementId, { name: 'STE-STATUTORY', lines: [lines[0], lines[0]] }), /Duplicate taxonomy code/);
       await assert.rejects(createTaxonomyVersion(outsiderId, engagementId, { name: 'OTHER', lines }), /not granted/i);
 
-      await approveTaxonomyVersion(actorId, engagementId, v1.id);
+      await assert.rejects(approveTaxonomyVersion(actorId, engagementId, v1.id, { expectedVersion: 2 }), /Taxonomy version changed/);
+      await approveTaxonomyVersion(actorId, engagementId, v1.id, { expectedVersion: v1.version });
       // An approved version and its lines can never be changed or removed.
       await assert.rejects(db.$executeRaw`UPDATE "TaxonomyVersion" SET "status" = 'RETIRED' WHERE id = ${v1.id}::uuid`, /immutable/);
       await assert.rejects(db.$executeRaw`DELETE FROM "TaxonomyLine" WHERE "taxonomyVersionId" = ${v1.id}::uuid`, /immutable/);
@@ -49,7 +51,7 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
 
       const v2 = await createTaxonomyVersion(actorId, engagementId, { name: 'STE-STATUTORY', lines }) as { id: string; version: number };
       assert.equal(v2.version, 2, 'a change is a new version, not an edit');
-      await approveTaxonomyVersion(actorId, engagementId, v2.id);
+      await approveTaxonomyVersion(actorId, engagementId, v2.id, { expectedVersion: v2.version });
 
       const importId = '17171717-1717-4717-8717-171717171717';
       await db.tbImport.create({ data: { id: importId, firmId, clientId, engagementId, documentId, sha256: 'd'.repeat(64), status: 'MAPPING_REQUIRED' } });
@@ -82,11 +84,16 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
       ] });
 
       // A mapped value outside the taxonomy is rejected rather than accepted silently.
-      await assert.rejects(approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v1.id, idempotencyKey: randomUUID() }), /not in STE-STATUTORY/);
-      await assert.rejects(approveImportMapping(outsiderId, engagementId, importId, { idempotencyKey: randomUUID() }), /not granted/i);
+      await assert.rejects(approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v1.id, expectedVersion: 1, idempotencyKey: randomUUID() }), /not in STE-STATUTORY/);
+      await assert.rejects(approveImportMapping(outsiderId, engagementId, importId, { expectedVersion: 1, idempotencyKey: randomUUID() }), /not granted/i);
 
-      await db.tbRow.updateMany({ where: { importId, code: '100' }, data: { fsli: 'Cash and equivalents' } });
-      const approval = await approveImportMapping(actorId, engagementId, importId, { idempotencyKey: randomUUID() }) as { approvalId: string; digest: string; taxonomyVersion: number; rowCount: number };
+      // Simulate a competing mapping command after this reviewer read import revision 1.
+      await db.$transaction(async (tx) => {
+        await tx.tbRow.updateMany({ where: { importId, code: '100' }, data: { fsli: 'Cash and equivalents', version: { increment: 1 } } });
+        await tx.tbImport.update({ where: { id: importId }, data: { version: { increment: 1 } } });
+      });
+      await assert.rejects(approveImportMapping(actorId, engagementId, importId, { expectedVersion: 1, idempotencyKey: randomUUID() }), /Import changed; reload mappings/);
+      const approval = await approveImportMapping(actorId, engagementId, importId, { expectedVersion: 2, idempotencyKey: randomUUID() }) as { approvalId: string; digest: string; taxonomyVersion: number; rowCount: number };
       assert.match(approval.digest, /^[0-9a-f]{64}$/);
       assert.equal(approval.taxonomyVersion, 2, 'the latest approved taxonomy is used when none is named');
       assert.equal(approval.rowCount, 2);
@@ -95,11 +102,11 @@ test('taxonomy versions are immutable when approved and a mapping approval goes 
       // Changing a mapped row makes the approval stale.
       await db.tbRow.updateMany({ where: { importId, code: '100' }, data: { fsli: 'Revenue' } });
       assert.equal(await currentMappingApproval(engagementId, importId), null);
-      await assert.rejects(approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v2.id, idempotencyKey: randomUUID() }), /mapping changed after approval/);
+      await assert.rejects(approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v2.id, expectedVersion: 2, idempotencyKey: randomUUID() }), /mapping changed after approval/);
 
       // Approving against a different taxonomy version records a new approval and becomes current.
       await db.tbRow.updateMany({ where: { importId, code: '100' }, data: { fsli: 'Cash and equivalents' } });
-      const v1Approval = await approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v1.id, idempotencyKey: randomUUID() }) as { taxonomyVersion: number; approvalId: string };
+      const v1Approval = await approveImportMapping(actorId, engagementId, importId, { taxonomyVersionId: v1.id, expectedVersion: 2, idempotencyKey: randomUUID() }) as { taxonomyVersion: number; approvalId: string };
       assert.equal(v1Approval.taxonomyVersion, 1);
       assert.ok(await currentMappingApproval(engagementId, importId));
 

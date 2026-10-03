@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -26,6 +26,7 @@ test('concurrent identical uploads produce one authoritative import and track th
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Upload engagement', state: 'FIELDWORK_EXECUTION' } });
       await db.engagement.create({ data: { id: secondEngagementId, firmId, clientId, name: 'Second upload engagement', state: 'FIELDWORK_EXECUTION' } });
       await db.user.create({ data: { id: actorId, email: 'uploader@example.test', role: 'PREPARER' } });
+      await db.membership.createMany({ data: [engagementId, secondEngagementId].map((assignedEngagementId) => ({ userId: actorId, firmId, clientId, engagementId: assignedEngagementId, role: 'PREPARER' })) });
       for (const scopedEngagementId of [engagementId, secondEngagementId]) {
         for (const capability of ['ENGAGEMENT_READ', 'FIELDWORK_WRITE'] as const) {
           await db.roleGrant.create({ data: { userId: actorId, capability, firmId, clientId, engagementId: scopedEngagementId, grantedBy: actorId } });
@@ -50,11 +51,32 @@ test('concurrent identical uploads produce one authoritative import and track th
         { firmId, clientId, engagementId, importId: winningImport.id },
         'outbox ownership is persisted in relational columns',
       );
+      const invalidOperationId = randomUUID();
       await assert.rejects(
-        db.outboxEvent.create({ data: { type: 'tb.import', firmId, clientId, engagementId: secondEngagementId, importId: winningImport.id, payload: {} } }),
+        db.$transaction(async tx => {
+          await tx.backgroundOperation.create({ data: {
+            id: invalidOperationId,
+            firmId,
+            clientId,
+            engagementId: secondEngagementId,
+            type: 'tb.import',
+          } });
+          await tx.outboxEvent.create({ data: {
+            id: invalidOperationId,
+            operationId: invalidOperationId,
+            firmId,
+            clientId,
+            engagementId: secondEngagementId,
+            type: 'tb.import',
+            payloadVersion: 1,
+            importId: winningImport.id,
+            payload: {},
+          } });
+        }),
         (error: { code?: string }) => error.code === 'P2003',
-        'PostgreSQL must reject an outbox event linked across engagement scope',
+        'PostgreSQL must reject an outbox event linked across engagement scope and roll back its operation row',
       );
+      assert.equal(await db.backgroundOperation.count({ where: { id: invalidOperationId } }), 0);
       assert.equal(await db.document.count({ where: { engagementId } }), 1);
       assert.equal(await db.storedObject.count({ where: { engagementId, status: 'REFERENCED' } }), 1);
       assert.equal(await db.storedObject.count({ where: { engagementId, status: 'DUPLICATE' } }), 2);

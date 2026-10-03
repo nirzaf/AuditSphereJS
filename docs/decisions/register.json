@@ -170,7 +170,7 @@
     "approvedBy": "User delegated implementation decisions to Codex",
     "approvedAt": "2026-10-01",
     "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
-    "implementationDefault": "Use scoped expiring role grants, enforce no self-approval and separate operational administration from partner authority.",
+    "implementationDefault": "Store PREPARER/REVIEWER/APPROVER/BILLING/ADMIN per engagement Membership. Effective authority requires an active internal User, exact membership tuple, membership-role capability ceiling, current scoped RoleGrant and owning command state/version guards. Keep CLIENT on the separate PortalUser boundary. ADMIN cannot be promoted to business authority; BILLING alone receives Practice capabilities; partner approvals require APPROVER plus an explicit scoped grant. RoleGrant records grantor, expiry, reason and revocation. Engagement team assignment/revocation requires an APPROVER membership plus a current engagement-scoped TEAM_ASSIGNMENT_MANAGE grant, an active target identity, role-ceiling-checked capabilities, a future expiry and a reason; self-change is denied and writes are audited/idempotent. Fine-grained workprogram assignment and final bundle release await T091/T106 and T129/T130 domain models.",
     "decisionRecord": "docs/decisions/T002-business-defaults.md"
   }
 ]

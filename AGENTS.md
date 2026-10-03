@@ -48,7 +48,7 @@ pnpm dev              # api :3000, web :4200 proxying /api, worker
 | `pnpm verify:all` | Lint, typecheck, unit, integration, e2e. Release-candidate scope. |
 | `pnpm verify:task -- T###` | The recorded checks for one task. |
 | `pnpm lint`, `pnpm boundaries`, `pnpm build`, `pnpm build:server`, `pnpm typecheck` | ESLint, import rules, server `tsc -b` and the Angular production build. |
-| `pnpm contracts:generate`, `contracts:check` | Canonical contracts and generated schemas; CI fails on drift. |
+| `pnpm contracts:generate`, `pnpm openapi:generate`, `pnpm contracts:check` | Canonical Zod JSON Schemas; OpenAPI generation requires a fresh `pnpm build:server`; contract check fails on schema or OpenAPI drift. |
 | `pnpm dependencies:check` | Advisory, engine, peer and license evidence. |
 | `pnpm build:linux`, `smoke:linux` | Source-fingerprinted compatibility image and its runtime smoke. |
 | `pnpm migration:inventory`, `migration:parity`, `migration:differential` | Legacy-finance parity harness under `docs/migration/`. |

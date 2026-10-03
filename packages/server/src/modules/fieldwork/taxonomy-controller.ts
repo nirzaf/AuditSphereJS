@@ -1,21 +1,51 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiTags } from '@nestjs/swagger';
-import { z } from 'zod';
-import { approveMappingSchema, createTaxonomySchema } from '@auditsphere/contracts';
+import { Body, Controller, Get, Param, Post, Query, SerializeOptions, StandardSchemaSerializerInterceptor, StandardSchemaValidationPipe, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
+import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  apiProblemSchema, approveMappingSchema, approveTaxonomySchema, createTaxonomySchema, mappingApprovalResultSchema,
+  mappingSuggestionsSchema, paginationQuerySchema, taxonomyApprovedResultSchema, taxonomyCreatedResultSchema, taxonomyViewSchema,
+} from '@auditsphere/contracts';
+import type { PaginationQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { approveImportMapping, approveTaxonomyVersion, createTaxonomyVersion, listTaxonomies, suggestMappings } from './taxonomy.js';
+import { toMappingSuggestionsView, toTaxonomyView } from './taxonomy-response.js';
 
-@ApiTags('Fieldwork') @ApiBearerAuth() @UseGuards(InternalGuard)
+@ApiTags('Fieldwork') @ApiBearerAuth() @ApiDefaultResponse({ standardSchema: apiProblemSchema }) @UseGuards(InternalGuard) @UsePipes(new StandardSchemaValidationPipe()) @UseInterceptors(StandardSchemaSerializerInterceptor)
 @Controller('engagements/:engagementId')
 export class TaxonomyController {
-  @Get('taxonomies') list(@Param('engagementId') engagementId: string) { return listTaxonomies(engagementId); }
-  @Post('taxonomies') @ApiBody({ schema: z.toJSONSchema(createTaxonomySchema) as any })
-  create(@Param('engagementId') engagementId: string, @ReqActor() actorId: string, @Body() body: unknown) { return createTaxonomyVersion(actorId, engagementId, body); }
+  @Get('taxonomies')
+  @ApiOkResponse({ standardSchema: taxonomyViewSchema, isArray: true })
+  @SerializeOptions({ schema: taxonomyViewSchema })
+  async list(@Param('engagementId') engagementId: string, @Query({ schema: paginationQuerySchema }) page: PaginationQuery) {
+    const versions = await listTaxonomies(engagementId, page);
+    return versions.map(toTaxonomyView);
+  }
+
+  @Post('taxonomies')
+  @ApiCreatedResponse({ standardSchema: taxonomyCreatedResultSchema })
+  @SerializeOptions({ schema: taxonomyCreatedResultSchema })
+  create(@Param('engagementId') engagementId: string, @ReqActor() actorId: string, @Body({ schema: createTaxonomySchema }) body: unknown) {
+    return createTaxonomyVersion(actorId, engagementId, body);
+  }
+
   @Post('taxonomies/:taxonomyVersionId/approve')
-  approve(@Param('engagementId') engagementId: string, @Param('taxonomyVersionId') taxonomyVersionId: string, @ReqActor() actorId: string) { return approveTaxonomyVersion(actorId, engagementId, taxonomyVersionId); }
-  @Post('imports/:importId/mapping-approval') @ApiBody({ schema: z.toJSONSchema(approveMappingSchema) as any })
-  approveMapping(@Param('engagementId') engagementId: string, @Param('importId') importId: string, @ReqActor() actorId: string, @Body() body: unknown) { return approveImportMapping(actorId, engagementId, importId, body); }
+  @ApiCreatedResponse({ standardSchema: taxonomyApprovedResultSchema })
+  @SerializeOptions({ schema: taxonomyApprovedResultSchema })
+  approve(@Param('engagementId') engagementId: string, @Param('taxonomyVersionId') taxonomyVersionId: string, @ReqActor() actorId: string, @Body({ schema: approveTaxonomySchema }) body: unknown) {
+    return approveTaxonomyVersion(actorId, engagementId, taxonomyVersionId, body);
+  }
+
+  @Post('imports/:importId/mapping-approval')
+  @ApiCreatedResponse({ standardSchema: mappingApprovalResultSchema })
+  @SerializeOptions({ schema: mappingApprovalResultSchema })
+  approveMapping(@Param('engagementId') engagementId: string, @Param('importId') importId: string, @ReqActor() actorId: string, @Body({ schema: approveMappingSchema }) body: unknown) {
+    return approveImportMapping(actorId, engagementId, importId, body);
+  }
+
   @Get('imports/:importId/suggestions')
-  suggestions(@Param('engagementId') engagementId: string, @Param('importId') importId: string, @ReqActor() actorId: string, @Query('taxonomyVersionId') taxonomyVersionId?: string) { return suggestMappings(actorId, engagementId, importId, taxonomyVersionId ? { taxonomyVersionId } : {}); }
+  @ApiOkResponse({ standardSchema: mappingSuggestionsSchema })
+  @SerializeOptions({ schema: mappingSuggestionsSchema })
+  async suggestions(@Param('engagementId') engagementId: string, @Param('importId') importId: string, @ReqActor() actorId: string, @Query('taxonomyVersionId') taxonomyVersionId?: string) {
+    return toMappingSuggestionsView(await suggestMappings(actorId, engagementId, importId, taxonomyVersionId ? { taxonomyVersionId } : {}));
+  }
 }

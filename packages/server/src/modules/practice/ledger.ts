@@ -1,11 +1,14 @@
 import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
-import { z } from 'zod';
-import { practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema, practicePeriodTransitionSchema } from '@auditsphere/contracts';
+import type { z } from 'zod';
+import {
+  practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema,
+  practicePeriodTransitionSchema, practicePostingPolicySchema, practiceReverseJournalSchema,
+} from '@auditsphere/contracts';
 import { db } from '../../platform/db.js';
 import { AccountingDate } from '../../platform/clock.js';
-import { runUnitOfWork, lockForUpdate, type TransactionClient } from '../../platform/unit-of-work.js';
-import { activeGrants, type Capability } from '../../platform/authorization.js';
+import { runUnitOfWork, withUnitOfWork, lockForUpdate, type TransactionClient, type UnitOfWork } from '../../platform/unit-of-work.js';
+import { activeGrants, isAssignedToScope, roleAllowsCapability, type Capability } from '../../platform/authorization.js';
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const value = schema.safeParse(input);
@@ -25,17 +28,24 @@ function practiceFailure(error: unknown): never {
 async function firmScope(tx: TransactionClient, actorId: string, engagementId: string, capability: Capability) {
   const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
   if (!engagement) throw new NotFoundException('Engagement not found');
+  const scope = { firmId: engagement.firmId, clientId: engagement.clientId, engagementId };
+  if (!(await isAssignedToScope(tx, actorId, scope))) throw new ForbiddenException('Engagement assignment is required for this operation');
+  if (!(await roleAllowsCapability(tx, actorId, capability, scope))) throw new ForbiddenException(`${capability} is not granted for this engagement`);
   const grants = await activeGrants(tx, actorId, capability, new Date());
   if (!grants.some(g => g.firmId === engagement.firmId && g.clientId === null && g.engagementId === null))
     throw new ForbiddenException('A firm-wide practice grant is required');
   return engagement.firmId;
 }
+/** Shared engagement-plus-firm Practice authorization for other Practice-owned commands. */
+export async function practiceFirmScope(tx: TransactionClient, actorId: string, engagementId: string, capability: Capability) {
+  return firmScope(tx, actorId, engagementId, capability);
+}
 async function lockPracticePeriod(tx: TransactionClient, periodId: string) {
   await tx.$queryRaw`SELECT id FROM "PracticePeriod" WHERE id = ${periodId}::uuid FOR UPDATE`;
 }
-async function command<T>(actorId: string, engagementId: string, capability: Capability, body: { idempotencyKey: string }, operation: string, work: (tx: TransactionClient, firmId: string) => Promise<T>) {
+async function command<T>(actorId: string, engagementId: string, capability: Capability, body: { idempotencyKey: string }, operation: string, work: (tx: TransactionClient, firmId: string) => Promise<T>, unitOfWork?: UnitOfWork) {
   const hash = createHash('sha256').update(JSON.stringify({ engagementId, operation, body })).digest('hex');
-  return runUnitOfWork(async scope => {
+  return withUnitOfWork(unitOfWork, async scope => {
     const tx = scope.client;
     await lockForUpdate(tx, 'Engagement', engagementId);
     const firmId = await firmScope(tx, actorId, engagementId, capability);
@@ -51,13 +61,13 @@ async function command<T>(actorId: string, engagementId: string, capability: Cap
     return result;
   }).catch(practiceFailure);
 }
-export async function approveFirmPostingPolicy(actorId: string, engagementId: string, input: unknown) {
-  const body = parse(z.object({ policyVersion: z.string().trim().min(1).max(80), revenueTreatment: z.literal('DEFERRED_UNTIL_RELEASE'), taxTreatment: z.literal('NO_TAX'), idempotencyKey: z.uuid() }), input);
-  return command(actorId, engagementId, 'PRACTICE_POST', body, 'PRACTICE_POLICY_APPROVED', async (tx, firmId) => tx.firmPostingPolicy.create({ data: { firmId, policyVersion: body.policyVersion, revenueTreatment: body.revenueTreatment, taxTreatment: body.taxTreatment, approvedBy: actorId } }));
+export async function approveFirmPostingPolicy(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
+  const body = parse(practicePostingPolicySchema, input);
+  return command(actorId, engagementId, 'PRACTICE_POST', body, 'PRACTICE_POLICY_APPROVED', async (tx, firmId) => tx.firmPostingPolicy.create({ data: { firmId, policyVersion: body.policyVersion, revenueTreatment: body.revenueTreatment, taxTreatment: body.taxTreatment, approvedBy: actorId } }), unitOfWork);
 }
-export async function createPracticeAccount(actorId: string, engagementId: string, input: unknown) {
+export async function createPracticeAccount(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practiceAccountSchema, input);
-  return runUnitOfWork(async ({ client: tx }) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await lockForUpdate(tx, 'Engagement', engagementId);
     const firmId = await firmScope(tx, actorId, engagementId, 'PRACTICE_MANAGE');
     const account = await tx.practiceAccount.create({ data: { ...body, firmId } });
@@ -65,9 +75,9 @@ export async function createPracticeAccount(actorId: string, engagementId: strin
     return account;
   }).catch(practiceFailure);
 }
-export async function createPracticePeriod(actorId: string, engagementId: string, input: unknown) {
+export async function createPracticePeriod(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practicePeriodSchema, input);
-  return runUnitOfWork(async ({ client: tx }) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await lockForUpdate(tx, 'Engagement', engagementId);
     const firmId = await firmScope(tx, actorId, engagementId, 'PRACTICE_MANAGE');
     const period = await tx.practicePeriod.create({ data: { firmId, startsOn: AccountingDate.fromISO(body.startsOn).startOfUtcDay(), endsOn: AccountingDate.fromISO(body.endsOn).startOfUtcDay() } });
@@ -75,7 +85,7 @@ export async function createPracticePeriod(actorId: string, engagementId: string
     return period;
   }).catch(practiceFailure);
 }
-export async function createPracticeJournal(actorId: string, engagementId: string, input: unknown) {
+export async function createPracticeJournal(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practiceJournalSchema, input);
   return command(actorId, engagementId, 'PRACTICE_MANAGE', body, 'PRACTICE_JOURNAL_CREATED', async (tx, firmId) => {
     await lockPracticePeriod(tx, body.periodId);
@@ -86,19 +96,18 @@ export async function createPracticeJournal(actorId: string, engagementId: strin
     const accountIds = [...new Set(body.lines.map(l => l.accountId))];
     if (await tx.practiceAccount.count({ where: { firmId, id: { in: accountIds }, active: true, posting: true } }) !== accountIds.length) throw new BadRequestException('Unknown, inactive, nonposting or cross-firm account');
     return tx.practiceJournal.create({ data: { firmId, periodId: period.id, accountingDate: day, reference: body.reference, memo: body.memo, createdBy: actorId, lines: { create: body.lines.map((l, position) => ({ ...l, position })) } }, include: { lines: true } });
-  });
+  }, unitOfWork);
 }
-export async function postPracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown) {
+export async function postPracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practiceVersionSchema, input);
   return command(actorId, engagementId, 'PRACTICE_POST', body, `PRACTICE_JOURNAL_POSTED:${journalId}`, async (tx, firmId) => {
     const updated = await tx.practiceJournal.updateMany({ where: { id: journalId, firmId, status: 'DRAFT', version: body.expectedVersion }, data: { status: 'POSTED', version: { increment: 1 }, postedBy: actorId, postedAt: new Date() } });
     if (updated.count !== 1) throw new ConflictException('Journal changed, was posted, or is outside this firm');
     return tx.practiceJournal.findUniqueOrThrow({ where: { id: journalId } });
-  });
+  }, unitOfWork);
 }
-export async function reversePracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown) {
-  const schema = practiceVersionSchema.extend({ periodId: z.uuid(), accountingDate: z.iso.date(), reference: z.string().trim().min(1).max(80) });
-  const body = parse(schema, input);
+export async function reversePracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {
+  const body = parse(practiceReverseJournalSchema, input);
   return command(actorId, engagementId, 'PRACTICE_POST', body, `PRACTICE_JOURNAL_REVERSED:${journalId}`, async (tx, firmId) => {
     await tx.$queryRaw`SELECT id FROM "PracticeJournal" WHERE id = ${journalId}::uuid FOR UPDATE`;
     const original = await tx.practiceJournal.findFirst({ where: { id: journalId, firmId, status: 'POSTED', version: body.expectedVersion }, include: { lines: { orderBy: { position: 'asc' } } } });
@@ -111,9 +120,9 @@ export async function reversePracticeJournal(actorId: string, engagementId: stri
     if (accountingDate < period.startsOn || accountingDate > period.endsOn) throw new BadRequestException('Reversal date is outside the selected period');
     const reversal = await tx.practiceJournal.create({ data: { firmId, periodId: period.id, accountingDate, reference: body.reference, memo: `Reverse ${original.reference}`, createdBy: actorId, reversalOf: journalId, lines: { create: original.lines.map(l => ({ accountId: l.accountId, position: l.position, debit: l.credit, credit: l.debit })) } } });
     return tx.practiceJournal.update({ where: { id: reversal.id }, data: { status: 'POSTED', version: { increment: 1 }, postedBy: actorId, postedAt: new Date() } });
-  });
+  }, unitOfWork);
 }
-export async function closePracticePeriod(actorId: string, engagementId: string, periodId: string, input: unknown) {
+export async function closePracticePeriod(actorId: string, engagementId: string, periodId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practicePeriodTransitionSchema, input);
   return command(actorId, engagementId, 'PRACTICE_MANAGE', body, `PRACTICE_PERIOD_CLOSED:${periodId}`, async (tx, firmId) => {
     await lockPracticePeriod(tx, periodId);
@@ -124,9 +133,9 @@ export async function closePracticePeriod(actorId: string, engagementId: string,
     const changed = await tx.practicePeriod.updateMany({ where: { id: periodId, firmId, closed: false, version: body.expectedVersion }, data: { closed: true, version: { increment: 1 }, lastTransitionReason: body.reason, lastTransitionBy: actorId } });
     if (changed.count !== 1) throw new ConflictException('Period changed or is outside this firm');
     return { id: periodId, closed: true, version: body.expectedVersion + 1, reason: body.reason };
-  });
+  }, unitOfWork);
 }
-export async function reopenPracticePeriod(actorId: string, engagementId: string, periodId: string, input: unknown) {
+export async function reopenPracticePeriod(actorId: string, engagementId: string, periodId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practicePeriodTransitionSchema, input);
   return command(actorId, engagementId, 'PRACTICE_REOPEN_PERIOD', body, `PRACTICE_PERIOD_REOPENED:${periodId}`, async (tx, firmId) => {
     await lockPracticePeriod(tx, periodId);
@@ -135,10 +144,10 @@ export async function reopenPracticePeriod(actorId: string, engagementId: string
     const changed = await tx.practicePeriod.updateMany({ where: { id: periodId, firmId, closed: true, version: body.expectedVersion }, data: { closed: false, version: { increment: 1 }, lastTransitionReason: body.reason, lastTransitionBy: actorId } });
     if (changed.count !== 1) throw new ConflictException('Period changed or is outside this firm');
     return { id: periodId, closed: false, version: body.expectedVersion + 1, reason: body.reason };
-  });
+  }, unitOfWork);
 }
 export async function practiceLedger(actorId: string, engagementId: string) {
-  return db.$transaction(async tx => {
+  return runUnitOfWork(async ({ client: tx }) => {
     const firmId = await firmScope(tx, actorId, engagementId, 'PRACTICE_READ');
     const [accounts, periods, journals, balances] = await Promise.all([
       tx.practiceAccount.findMany({ where: { firmId }, orderBy: { code: 'asc' } }),

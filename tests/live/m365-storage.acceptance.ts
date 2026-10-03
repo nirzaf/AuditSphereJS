@@ -40,7 +40,9 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
     assert.deepEqual(downloaded, bytes);
     assert.equal(identity.sha256, sha256(bytes));
     assert.equal(identity.sizeBytes, bytes.length);
+    assert.equal(identity.repositoryFolderId, folderId, 'Provider references must retain the exact configured repository folder');
     assert.ok(identity.versionId);
+    await assert.rejects(storage.get({ driveId, folderId: 'root' }, reference), /does not belong to this client repository folder/, 'Version reads must reject a different repository folder before Graph access');
     // A separate provider write simulates an external, same-size current edit.
     // Only our newly created synthetic file is changed; the accepted v1 remains.
     const token = await acceptanceAccessToken();

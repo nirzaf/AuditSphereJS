@@ -7,7 +7,10 @@ const schema = z.object({
   DEV_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
   STORAGE_PROVIDER: z.enum(['graph', 'local-s3']).optional(),
   AUTH_PROVIDER: z.enum(['entra', 'development']).optional(),
-  WEB_ORIGIN: z.url().default('http://127.0.0.1:4200'),
+  WEB_ORIGIN: z.url().refine(value => {
+    const origin = new URL(value);
+    return ['http:', 'https:'].includes(origin.protocol) && origin.origin === value;
+  }, 'WEB_ORIGIN must be an HTTP(S) origin without a path, query or fragment').default('http://127.0.0.1:4200'),
   HOST: z.string().default('127.0.0.1'),
 });
 export function readConfiguration(env = process.env) {

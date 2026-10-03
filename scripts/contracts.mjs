@@ -1,11 +1,16 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { z } from 'zod';
-import { practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema, uploadSchema, mappingSchema, finalizeSchema, lifecycleCommandSchema, publishSchema, approveMappingSchema, createTaxonomySchema, calculateMaterialitySchema, approveMaterialitySchema, createRiskSchema, assessRiskSchema, clearRiskSchema, assignRiskOwnerSchema, raiseReviewNoteSchema, resolveReviewNoteSchema, createAdjustmentJournalSchema, postAdjustmentJournalSchema, reverseAdjustmentJournalSchema } from '@auditsphere/contracts';
+import { contractSchemas } from '@auditsphere/contracts';
+import { spawnSync } from 'node:child_process';
 const mode = process.argv[2];
 if (!['generate', 'check'].includes(mode)) throw new Error('Expected generate or check');
-const schemas = { practiceAccount: z.toJSONSchema(practiceAccountSchema), practicePeriod: z.toJSONSchema(practicePeriodSchema), practiceJournal: z.toJSONSchema(practiceJournalSchema), practiceVersion: z.toJSONSchema(practiceVersionSchema), upload: z.toJSONSchema(uploadSchema), mappings: z.toJSONSchema(mappingSchema), finalize: z.toJSONSchema(finalizeSchema), lifecycle: z.toJSONSchema(lifecycleCommandSchema), publish: z.toJSONSchema(publishSchema), mappingApproval: z.toJSONSchema(approveMappingSchema), taxonomy: z.toJSONSchema(createTaxonomySchema), materiality: z.toJSONSchema(calculateMaterialitySchema), materialityApproval: z.toJSONSchema(approveMaterialitySchema), risk: z.toJSONSchema(createRiskSchema), riskAssessment: z.toJSONSchema(assessRiskSchema), riskClearance: z.toJSONSchema(clearRiskSchema), riskOwner: z.toJSONSchema(assignRiskOwnerSchema), reviewNote: z.toJSONSchema(raiseReviewNoteSchema), reviewResolution: z.toJSONSchema(resolveReviewNoteSchema), adjustment: z.toJSONSchema(createAdjustmentJournalSchema), adjustmentPost: z.toJSONSchema(postAdjustmentJournalSchema), adjustmentReverse: z.toJSONSchema(reverseAdjustmentJournalSchema) };
+const schemas = Object.fromEntries(Object.entries(contractSchemas).map(([name, schema]) => [name, z.toJSONSchema(schema)]));
 const output = JSON.stringify(schemas, null, 2) + '\n';
 const path = 'packages/contracts/schema.json';
 if (mode === 'generate') writeFileSync(path, output);
 else if (readFileSync(path, 'utf8') !== output) throw new Error('Contract schema drift: run pnpm contracts:generate');
 console.log(`Contract schemas ${mode === 'check' ? 'match runtime definitions' : 'generated'}`);
+if (mode === 'check') {
+  const openApi = spawnSync(process.execPath, ['scripts/openapi.mjs', 'check'], { stdio: 'inherit' });
+  if (openApi.status !== 0) process.exit(openApi.status || 1);
+}

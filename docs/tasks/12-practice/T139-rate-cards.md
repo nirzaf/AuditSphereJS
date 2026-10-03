@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 12-practice — Practice analytics and bookkeeping reports |
 | Owner area | `practice` |
@@ -45,16 +46,18 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Seed the required Partner 1000, Manager 750, Supervisor/Senior 500 and Associate/Junior 200 QAR/hour defaults.
-- [ ] Keep job grade/rate identity separate from the four access personas; REVIEWER is not one universal rate.
-- [ ] Permit authorized future rate revisions with nonoverlapping effective dates.
-- [ ] Persist the applied rate in each time entry so later rates do not recalculate history.
+- [x] Seed the required Partner 1000, Manager 750, Supervisor/Senior 500 and Associate/Junior 200 QAR/hour defaults.
+- [x] Keep job grade/rate identity separate from the four access personas; REVIEWER is not one universal rate.
+- [x] Permit authorized future rate revisions with nonoverlapping effective dates.
+- [x] Persist the applied rate in each time entry so later rates do not recalculate history.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** All four required defaults are represented exactly.
-- [ ] **AC2:** Overlapping effective rates are rejected.
-- [ ] **AC3:** Historical entries retain their original rate snapshot.
+- [x] **AC1:** All four required defaults are represented exactly.
+- [x] **AC2:** Overlapping effective rates are rejected.
+- [x] **AC3:** Historical entries retain their original rate snapshot.
+
+The persisted time-value snapshot and database guards are in scope here. User-facing time-entry, correction and approval workflows remain T140/T141.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 

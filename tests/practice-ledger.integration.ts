@@ -20,7 +20,8 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       await db.firm.create({ data: { id: firmId, name: 'Ledger firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Audit engagement' } });
-      await db.user.create({ data: { id: actorId, email: 'ledger@example.test', role: 'PREPARER' } });
+      await db.user.create({ data: { id: actorId, email: 'ledger@example.test', role: 'BILLING' } });
+      await db.membership.create({ data: { userId: actorId, firmId, clientId, engagementId, role: 'BILLING' } });
       await db.roleGrant.create({ data: { userId: actorId, capability: 'PRACTICE_MANAGE', firmId, clientId, engagementId, grantedBy: actorId } });
       await assert.rejects(createPracticeAccount(actorId, engagementId, { code: '100', name: 'Cash', kind: 'ASSET' }), /firm-wide/);
       for (const capability of ['PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_READ']) await db.roleGrant.create({ data: { userId: actorId, capability, firmId, grantedBy: actorId } });

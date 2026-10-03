@@ -8,7 +8,7 @@
 | Owner area | `practice` |
 | Completion unit | One focused, reviewable change and its evidence |
 
-**Current implementation status:** `IN_REVIEW` — domain/UI commands and the focused PostgreSQL 18.6 integration recipe pass locally; T017/T025/T067 prerequisite gates and independent review remain pending.
+**Current implementation status:** `DONE` — domain/UI commands and the focused PostgreSQL 18.6 integration recipe pass locally; the T067 prerequisite and T017 compatibility gate are closed, and an independent peer review (2026-10-02) passed with non-blocking observations recorded in the handoff. T069 billing work and live browser walkthrough remain separate.
 
 ## Outcome
 

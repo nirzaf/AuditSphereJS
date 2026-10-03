@@ -27,6 +27,22 @@ The production startup validator currently requires all four drive/folder variab
 
 The server reads environment configuration at startup and caches provider clients. Restart affected API/worker processes after identity or credential changes. Loading the acceptance harness's environment file does not change the separately running API.
 
+For local browser sign-in, `.env` is the API runtime configuration. The default `pnpm setup:local` profile selects development authentication, so a Microsoft token will be rejected until the local API is explicitly switched to Entra. `.env.m365.acceptance` contains the separate Graph storage-test credentials and does not configure the running API's identity provider. For the current nonproduction tenant, use the public values in [the tenant inventory](current-tenant.md) and set:
+
+```dotenv
+AUTH_PROVIDER=entra
+DEV_AUTH_ENABLED=false
+M365_TENANT_ID=<tenant UUID from current-tenant.md>
+ENTRA_API_AUDIENCE=<API client ID from current-tenant.md>
+ENTRA_API_SCOPE=access_as_user
+ENTRA_BROWSER_CLIENT_ID=<SPA client ID from current-tenant.md>
+ENTRA_BROWSER_API_SCOPE=api://<API client ID from current-tenant.md>/access_as_user
+ENTRA_BROWSER_REDIRECT_URI=http://localhost:4200
+WEB_ORIGIN=http://localhost:4200
+```
+
+Restart `pnpm dev` after changing `.env`. Before signing in, `GET http://localhost:3000/api/v1/identity/config` must report `provider: "entra"`, the expected tenant and SPA client IDs, the API scope, and the registered `http://localhost:4200` redirect. If it reports `development`, the API process has not loaded the Entra settings. The local staff mapping must use the same tenant ID and the designated staff fixture's immutable Entra object ID; a successful Microsoft redirect alone does not prove that mapping.
+
 The Angular SPA uses MSAL full-page redirect login and logout with authorization code + PKCE. `restoreSession()` awaits `handleRedirectPromise()` before any interactive request and then checks the returned account through `/api/v1/me`. A user-initiated sign-in sends `prompt=select_account` so an existing browser SSO session does not silently substitute a different staff or admin account. Do not combine popup and redirect interactions in this app. A redirect to Entra can succeed while `/api/v1/me` still returns 401 when the immutable tenant/object identity is not mapped to an active local `User`; do not resolve that denial by granting a business role implicitly.
 
 ## Staff assignment
@@ -42,7 +58,7 @@ pnpm exec tsx packages/server/scripts/map-entra-identity.ts --local-user-id <exi
 
 The first invocation is a dry run. `--apply` only binds an existing active `User` to the configured `M365_TENANT_ID` and immutable Entra object ID. It never creates users, memberships, role grants or business permissions, never changes the local role, and refuses inactive, already-bound, unknown or conflicting accounts. Repeating the exact mapping is idempotent. Restrict command history and operational records as appropriate for staff identifiers. Create engagement membership and least-privilege capability grants separately through the reviewed provisioning process; do not infer them from Entra directory roles. Do not use the tenant administrator identity for acceptance unless it is explicitly approved as the intended local test principal and its scope is bounded to synthetic data.
 
-The backend validates tenant, v2 issuer, audience, RS256 signature, expiry and delegated API scope before looking up the local user. It binds `(tenantId, entraObjectId)` to an active local `User`; setting `User.active=false` immediately denies `/api/v1/me` and engagement routes with 401. The authenticated user's self endpoint returns only local ID, email and active status. Engagement routes additionally require local membership and current scoped grants; missing membership or grant returns 403. Directory administrator claims do not grant local partner, reviewer or finance authority. Use a bounded nonproduction identity fixture for acceptance. The full live SPA-to-API assignment journey remains pending; no self-service provisioning screen is claimed.
+The backend validates tenant, v2 issuer, audience, RS256 signature, expiry and delegated API scope before looking up the local user. It binds `(tenantId, entraObjectId)` to an active local `User`; setting `User.active=false` immediately denies `/api/v1/me` and engagement routes with 401. The authenticated user's self endpoint returns only local ID, email and active status. Engagement routes additionally require local membership and current scoped grants; missing membership or grant returns 403. Directory administrator claims do not grant local partner, reviewer or finance authority. Use a bounded nonproduction identity fixture for acceptance. On an API 401, the SPA retries once after silently forcing MSAL to acquire a fresh token for the same account and scopes; a second 401 remains denied and requires staff-mapping review. This handles a cached API token invalidated by app-level session revocation without granting access or changing tenant configuration. No self-service provisioning screen is claimed.
 
 ## Private credentials
 

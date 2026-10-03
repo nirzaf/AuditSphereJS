@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-02T16:21:07.600Z",
+  "generatedAt": "2026-10-02T20:08:39.185Z",
   "sourceCommit": null,
   "counts": {
     "PARTIAL": 15,
@@ -290,10 +290,15 @@
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [
         "packages/server/src/platform/audit-chain.ts",
+        "packages/server/src/platform/audit.ts",
+        "packages/server/src/platform/authorization.ts",
+        "packages/server/src/platform/audit-controller.ts",
         "prisma/migrations/202610020001_audit_chain/migration.sql",
-        "tests/audit-chain.integration.ts"
+        "prisma/migrations/202610020020_audit_write_integrity/migration.sql",
+        "tests/audit-chain.integration.ts",
+        "tests/audit-write.integration.ts"
       ],
-      "evidence": "Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. No immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint is implemented."
+      "evidence": "Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. Audit writes now carry actor kind, resource identity, correlation and redacted before/after payloads with database-enforced traceability; service actors need no synthetic user id; application credentials hold no UPDATE/DELETE/TRUNCATE on audit rows; authorization denials are appended to a separate append-only SecurityEvent log that survives transaction rollback, and a scoped history read rechecks ENGAGEMENT_READ server-side. Not implemented: the canonical digest does not yet cover the new metadata columns, call sites still write plain USER events, and no immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint exists."
     },
     {
       "id": "C32",

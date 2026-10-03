@@ -4,15 +4,26 @@ import { FormsModule } from '@angular/forms';
 import { ModuleWorkspace } from './module-workspace';
 import { modules, screensFor } from './module-catalog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { fslis, TrialBalanceRow } from '@auditsphere/contracts';
-import { IDENTITY_ADAPTER, type InternalIdentity } from './identity';
+import {
+  fslis, finalizeSchema, mappingSchema, mappingsSavedSchema, trialBalanceFinalizedSchema, trialBalanceImportSchema,
+  trialBalanceImportsSchema, trialBalanceRowsPageSchema, trialBalanceSummarySchema, uploadSchema,
+} from '@auditsphere/contracts';
+import type { TrialBalanceImport, TrialBalanceRow, TrialBalanceSummaryLine } from '@auditsphere/contracts';
+import type { z } from 'zod';
+import { parseContractValue, requestAuthenticatedContractJson, requestContractJson } from './api-client';
+import { IDENTITY_ADAPTER, type InternalIdentity, type ReadableEngagement } from './identity';
 // Standalone is the default in Angular v20+; setting it explicitly is unnecessary.
 @Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule, ModuleWorkspace], templateUrl: './workspace.html' })
 export class Workspace implements OnDestroy {
-  readonly identityProvider = signal<'loading' | 'entra' | 'development'>('loading');
+  readonly identityProvider = signal<'loading' | 'unavailable' | 'entra' | 'development'>('loading');
+  readonly sessionRestoring = signal(false);
   readonly signedIn = signal(false);
   readonly currentUser = signal<InternalIdentity | null>(null);
-  engagementId = '00000000-0000-4000-8000-000000000002';
+  readonly engagementId = signal('');
+  readonly readableEngagements = signal<ReadableEngagement[]>([]);
+  readonly engagementsLoading = signal(false);
+  readonly engagementLoadError = signal('');
+  readonly workspaceAccess = computed(() => this.identityProvider() !== 'entra' || (this.signedIn() && this.readableEngagements().some(item => item.id === this.engagementId())));
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly identity = inject(IDENTITY_ADAPTER);
   private readonly router = inject(Router, { optional: true });
@@ -38,29 +49,45 @@ export class Workspace implements OnDestroy {
         }
         return;
       }
-      const module = modules.find(value => value === params.get('module')) ?? 'Fieldwork';
-      const screen = screensFor(module).find(value => value.id === params.get('view')) ?? screensFor(module)[0];
+      const requestedModule = params.get('module');
+      const module = modules.find(value => value === requestedModule) ?? 'Fieldwork';
+      const screens = screensFor(module);
+      const requestedView = params.get('view');
+      const screen = screens.find(value => value.id === requestedView) ?? screens[0];
       this.active.set(module); this.screenId.set(screen.id);
+      if (requestedModule !== module || requestedView !== screen.id) {
+        void this.router?.navigate([], { queryParams: { module, view: screen.id }, replaceUrl: true });
+      }
     });
     void this.identity.identityConfiguration().then(config => {
       this.identityProvider.set(config.provider);
-      if (config.provider === 'entra') void this.identity.restoreSession().then(user => {
-        if (!user) return;
-        this.currentUser.set(user); this.signedIn.set(true); this.message.set('Connected with Microsoft Entra ID.');
-      }).catch(error => this.message.set(error instanceof Error ? error.message : 'Microsoft sign-in could not be restored.'));
-    }).catch(() => this.message.set('Identity configuration is unavailable.'));
+      if (config.provider === 'entra') {
+        this.sessionRestoring.set(true);
+        void this.identity.restoreSession().then(user => {
+          if (!user) return;
+          this.currentUser.set(user); this.signedIn.set(true);
+          void this.loadReadableEngagements().then(() => this.message.set(this.readableEngagements().length ? 'Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.'))
+            .catch(error => this.message.set(error instanceof Error ? error.message : 'Assigned engagements could not be loaded.'));
+        }).catch(error => this.message.set(error instanceof Error ? error.message : 'Microsoft sign-in could not be restored.'))
+          .finally(() => this.sessionRestoring.set(false));
+      }
+      if (config.provider === 'development') this.engagementId.set('00000000-0000-4000-8000-000000000002');
+    }).catch(() => {
+      this.identityProvider.set('unavailable');
+      this.message.set('Identity configuration is unavailable. Check the AuditSphere API connection, then reload the workspace.');
+    });
   }
   readonly modules = modules;
   readonly screenId = signal('trial-balance');
   readonly screenList = computed(() => screensFor(this.active()));
   readonly summaryTypes = ['Balance sheet','Profit & loss'];
-  readonly fslis = fslis; readonly rows = signal<TrialBalanceRow[]>([]); readonly imports = signal<any[]>([]); readonly summary = signal<any[]>([]);
-  readonly message = signal('Select an engagement and connect to load authorized records.'); readonly busy = signal(false); readonly batch = signal<any>(null);
+  readonly fslis = fslis; readonly rows = signal<TrialBalanceRow[]>([]); readonly imports = signal<TrialBalanceImport[]>([]); readonly summary = signal<TrialBalanceSummaryLine[]>([]);
+  readonly message = signal('Select an engagement and connect to load authorized records.'); readonly busy = signal(false); readonly batch = signal<TrialBalanceImport | null>(null);
   readonly changes = signal<Record<string, { rowId: string; expectedVersion: number; fsli: string }>>({});
   readonly dirty = computed(() => Object.keys(this.changes()).length);
   token = ''; search = ''; offset = 0; total = signal(0); active = signal('Fieldwork');
-  get base() { return `/api/v1/engagements/${encodeURIComponent(this.engagementId)}/imports`; }
-  private timer = setInterval(() => { if (this.batch() && ['QUEUED','PARSING'].includes(this.batch().status)) void this.run(() => this.load(this.batch().id)); }, 2000);
+  get base() { return `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/imports`; }
+  private timer = setInterval(() => { const batch = this.batch(); if (batch && ['QUEUED','PARSING'].includes(batch.status)) void this.run(() => this.load(batch.id)); }, 2000);
   ngOnDestroy() { clearInterval(this.timer); this.navigation?.unsubscribe(); }
   navigate(module: string, view?: string) {
     if (this.dirty()) { this.message.set('Save or discard mappings before changing workspaces.'); return; }
@@ -68,26 +95,80 @@ export class Workspace implements OnDestroy {
     this.active.set(module); this.screenId.set(selected.id);
     void this.router?.navigate([], { queryParams: { module, view: selected.id } });
   }
-  async api(path: string, method = 'GET', body?: unknown): Promise<any> {
-    if (this.identityProvider() === 'entra') this.token = await this.identity.currentAccessToken();
-    const response = await fetch(this.base + path, { method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` }, ...(body ? { body: JSON.stringify(body) } : {}) });
-    const result = await response.json(); if (!response.ok) throw new Error(typeof result.error?.message === 'string' ? result.error.message : JSON.stringify(result.error?.message)); return result;
+  async api<TSchema extends z.ZodType>(path: string, responseSchema: TSchema, method = 'GET', body?: unknown): Promise<z.output<TSchema>> {
+    const init: RequestInit = {
+      method,
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.token}` },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    };
+    return this.identityProvider() === 'entra'
+      ? requestAuthenticatedContractJson(this.base + path, responseSchema, init, forceRefresh => this.identity.currentAccessToken(forceRefresh))
+      : requestContractJson(this.base + path, responseSchema, init);
   }
   async run(action: () => Promise<void>) { this.busy.set(true); try { await action(); } catch (e) { this.message.set(e instanceof Error ? e.message : 'Request failed'); } finally { this.busy.set(false); } }
-  connect() { void this.run(async () => { this.imports.set(await this.api('')); this.message.set('Connected. Upload a CSV or open an existing import.'); }); }
-  microsoftSignIn() { void this.run(async () => { await this.identity.signIn(); this.signedIn.set(true); this.currentUser.set(await this.identity.currentIdentity()); this.imports.set(await this.api('')); this.message.set('Connected with Microsoft Entra ID.'); }); }
-  microsoftSignOut() { void this.run(async () => {
-    let signOutConfirmed = true;
-    try { await this.identity.signOut(); } catch { signOutConfirmed = false; }
-    this.token = ''; this.signedIn.set(false); this.currentUser.set(null); this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
-    this.message.set(signOutConfirmed ? 'Signed out. Local engagement data and unsaved drafts were cleared.' : 'Local access and engagement data were cleared, but Microsoft sign-out could not be confirmed.');
+  async loadReadableEngagements() {
+    this.engagementsLoading.set(true);
+    this.engagementLoadError.set('');
+    this.readableEngagements.set([]);
+    this.selectEngagement('');
+    try {
+      const items = await this.identity.listReadableEngagements();
+      this.readableEngagements.set(items);
+      this.selectEngagement('');
+    } catch (error) {
+      this.engagementLoadError.set(error instanceof Error ? error.message : 'Assigned engagements could not be loaded.');
+      throw error;
+    } finally {
+      this.engagementsLoading.set(false);
+    }
+  }
+  retryReadableEngagements() { void this.run(async () => {
+    await this.loadReadableEngagements();
+    this.message.set(this.readableEngagements().length ? 'Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.');
   }); }
-  async load(id: string) { this.batch.set(await this.api('/' + id)); if (this.batch().status === 'FAILED') { this.message.set(this.batch().error); return; } if (['MAPPING_REQUIRED','FINALIZED'].includes(this.batch().status)) { const page = await this.api(`/${id}/rows?offset=${this.offset}&search=${encodeURIComponent(this.search)}`); this.rows.set(page.rows); this.total.set(page.total); this.summary.set(await this.api('/' + id + '/summary')); } }
+  selectEngagement(id: string) {
+    const selected = this.readableEngagements().some(item => item.id === id) ? id : '';
+    if (selected === this.engagementId()) return;
+    this.engagementId.set(selected);
+    this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
+    this.message.set(selected ? 'Engagement selected. Load its records to continue.' : 'Choose an engagement assigned to your account.');
+  }
+  connect() { void this.run(async () => {
+    if (!this.engagementId()) throw new Error('Choose an assigned engagement before loading records.');
+    this.imports.set(await this.api('', trialBalanceImportsSchema)); this.message.set('Connected. Upload a CSV or open an existing import.');
+  }); }
+  microsoftSignIn() { void this.run(async () => {
+    await this.identity.signIn();
+    const user = await this.identity.currentIdentity();
+    this.currentUser.set(user); this.signedIn.set(true);
+    await this.loadReadableEngagements();
+    this.message.set(this.readableEngagements().length ? 'Signed in. Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.');
+  }); }
+  microsoftSignOut() { void this.run(async () => {
+    const entraSession = this.identityProvider() === 'entra';
+    let sessionRevocationConfirmed = !entraSession;
+    if (entraSession) {
+      try { await this.identity.revokeSessions(); sessionRevocationConfirmed = true; } catch { sessionRevocationConfirmed = false; }
+    }
+    this.token = ''; this.signedIn.set(false); this.currentUser.set(null); this.engagementsLoading.set(false); this.engagementLoadError.set(''); this.readableEngagements.set([]); this.engagementId.set(''); this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
+    let microsoftSignOutConfirmed = true;
+    try { await this.identity.signOut(); } catch { microsoftSignOutConfirmed = false; }
+    this.message.set(!entraSession
+      ? 'Signed out. Local engagement data and unsaved drafts were cleared.'
+      : sessionRevocationConfirmed && microsoftSignOutConfirmed
+        ? 'Signed out. Server-side session revocation was confirmed; local engagement data and unsaved drafts were cleared.'
+        : sessionRevocationConfirmed
+          ? 'Server-side session revocation was confirmed and local data was cleared, but Microsoft sign-out could not be confirmed.'
+          : microsoftSignOutConfirmed
+            ? 'Signed out with Microsoft, but the server could not confirm session revocation. Local engagement data and unsaved drafts were cleared.'
+            : 'Local access and engagement data were cleared, but neither server session revocation nor Microsoft sign-out could be confirmed.');
+  }); }
+  async load(id: string) { const batch = await this.api('/' + id, trialBalanceImportSchema); this.batch.set(batch); if (batch.status === 'FAILED') { this.message.set(batch.error ?? 'The import failed.'); return; } if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) { const page = await this.api(`/${id}/rows?offset=${this.offset}&search=${encodeURIComponent(this.search)}`, trialBalanceRowsPageSchema); this.rows.set(page.rows); this.total.set(page.total); this.summary.set(await this.api('/' + id + '/summary', trialBalanceSummarySchema)); } }
   open(id: string) { this.changes.set({}); this.offset = 0; void this.run(() => this.load(id)); }
-  upload(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 15_000_000) { this.message.set('CSV must be smaller than 15 MB.'); return; } void this.run(async () => { const batch = await this.api('', 'POST', { filename: file.name, csv: await file.text() }); this.imports.set(await this.api('')); await this.load(batch.id); this.message.set('Import queued. Worker validation runs in the background.'); }); }
+  upload(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 15_000_000) { this.message.set('CSV must be smaller than 15 MB.'); return; } void this.run(async () => { const body = parseContractValue(uploadSchema, { filename: file.name, csv: await file.text() }, 400); const batch = await this.api('', trialBalanceImportSchema, 'POST', body); this.imports.set(await this.api('', trialBalanceImportsSchema)); await this.load(batch.id); this.message.set('Import queued. Worker validation runs in the background.'); }); }
   edit(row: TrialBalanceRow, fsli: string) { if (!fsli) return; this.changes.update(value => ({ ...value, [row.id]: { rowId: row.id, expectedVersion: row.version, fsli } })); }
-  save() { void this.run(async () => { await this.api('/' + this.batch().id + '/mappings', 'PATCH', { idempotencyKey: crypto.randomUUID(), changes: Object.values(this.changes()) }); this.changes.set({}); await this.load(this.batch().id); this.message.set('Mappings saved. Versions checked by PostgreSQL.'); }); }
-  finalize() { void this.run(async () => { await this.api('/' + this.batch().id + '/finalize', 'POST', { expectedVersion: this.batch().version }); await this.load(this.batch().id); this.message.set('Import finalized and locked.'); }); }
-  page(delta: number) { if (this.dirty()) { this.message.set('Save or discard changes before changing pages.'); return; } this.offset = Math.max(0, this.offset + delta); void this.run(() => this.load(this.batch().id)); }
-  filter() { this.offset = 0; if (!this.dirty() && this.batch()) void this.run(() => this.load(this.batch().id)); }
+  save() { void this.run(async () => { const id = this.batch()!.id; const body = parseContractValue(mappingSchema, { idempotencyKey: crypto.randomUUID(), changes: Object.values(this.changes()) }, 400); await this.api('/' + id + '/mappings', mappingsSavedSchema, 'PATCH', body); this.changes.set({}); await this.load(id); this.message.set('Mappings saved. Versions checked by PostgreSQL.'); }); }
+  finalize() { void this.run(async () => { const batch = this.batch()!; const body = parseContractValue(finalizeSchema, { expectedVersion: batch.version }, 400); await this.api('/' + batch.id + '/finalize', trialBalanceFinalizedSchema, 'POST', body); await this.load(batch.id); this.message.set('Import finalized and locked.'); }); }
+  page(delta: number) { const batch = this.batch(); if (this.dirty()) { this.message.set('Save or discard changes before changing pages.'); return; } if (!batch) return; this.offset = Math.max(0, this.offset + delta); void this.run(() => this.load(batch.id)); }
+  filter() { const batch = this.batch(); this.offset = 0; if (!this.dirty() && batch) void this.run(() => this.load(batch.id)); }
 }

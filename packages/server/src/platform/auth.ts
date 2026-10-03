@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable, UnauthorizedException, Forbi
 import { timingSafeEqual } from 'node:crypto';
 import { db } from './db.js';
 import { configuredEntraIdentity } from './entra.js';
-import { requireCapability } from './authorization.js';
+import { activeGrants, grantCoversScope, isActive, requireCapability, roleCapabilityAllowed } from './authorization.js';
 import { sessionRevocationCutoff, wasSessionRevoked } from './session-revocation.js';
 import type { EntraIdentity } from './entra.js';
 export const fixtureUser = '00000000-0000-4000-8000-000000000001';
@@ -44,6 +44,31 @@ export async function currentInternalIdentity(userId: string) {
   const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, email: true, active: true } });
   if (!user?.active) throw new UnauthorizedException('Internal authentication required');
   return user;
+}
+
+/** List only engagements for which this user has both a current membership and ENGAGEMENT_READ. */
+export async function readableInternalEngagements(userId: string, at = new Date()) {
+  const [identity, memberships, grants] = await Promise.all([
+    db.user.findUnique({ where: { id: userId }, select: { active: true, role: true } }),
+    db.membership.findMany({
+      where: { userId },
+      select: {
+        role: true,
+        engagement: {
+          select: { id: true, name: true, version: true, firmId: true, clientId: true, client: { select: { name: true } } },
+        },
+      },
+    }),
+    activeGrants(db, userId, 'ENGAGEMENT_READ', at),
+  ]);
+  if (!identity?.active) return [];
+
+  return memberships.flatMap(({ engagement, role }) => {
+    const scope = { firmId: engagement.firmId, clientId: engagement.clientId, engagementId: engagement.id };
+    if (!roleCapabilityAllowed(role, 'ENGAGEMENT_READ', identity.role)) return [];
+    if (!grants.some((grant) => isActive(grant, at) && grantCoversScope(grant, scope))) return [];
+    return [{ id: engagement.id, name: engagement.name, clientId: engagement.clientId, clientName: engagement.client.name, version: engagement.version }];
+  }).sort((left, right) => left.clientName.localeCompare(right.clientName) || left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
 }
 
 @Injectable()

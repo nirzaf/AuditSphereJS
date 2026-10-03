@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, NotFoundException } from '@nest
 import { createHash } from 'node:crypto';
 import { db } from '../../platform/db.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
+import { withUnitOfWork, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { publishSchema } from '@auditsphere/contracts';
 import { mappingDigest } from './taxonomy.js';
 
@@ -14,12 +15,12 @@ export function rowDigest(rows: Array<{ code: string; name: string; fsli: string
   return digestOf(rows.map((row) => [row.code, row.name, row.fsli, row.current.toFixed(6), row.prior.toFixed(6)].join('\u0000')).join('\n'));
 }
 
-export async function publishBalances(engagementId: string, actorId: string, input: unknown) {
+export async function publishBalances(engagementId: string, actorId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = publishSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
   const hash = digestOf(JSON.stringify({ engagementId, body }));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
     const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
     if (receipt) {

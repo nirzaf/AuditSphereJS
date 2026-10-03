@@ -7,7 +7,7 @@
 | Task ID | T068 |
 | Requirement IDs | R077, R078 |
 | Implementing branch | `main` |
-| Status | `IN_REVIEW` |
+| Status | `DONE` |
 
 ## Intended and delivered outcome
 
@@ -64,7 +64,14 @@ Migration `202610020004_practice_period_reopen` is additive. The local PostgreSQ
 
 ## Review and next task
 
-Reviewer: pending
-Review result: implementation, local PostgreSQL checks, and hosted CI pass; independent review and prerequisite dispositions remain pending.
-Open blockers: T017 compatibility, T025 append-only audit, and T067 prerequisite gates are not DONE; no interactive close/reopen browser walkthrough is claimed.
-Next eligible task by dependency order: complete T017/T025/T067 gates and T068 review before T069 invoice foundation.
+Reviewer: independent peer review, ZCode agent (separate session from the implementing agent), 2026-10-02.
+Review result: PASS with observations. Reviewed commits `6c95f93` and `937dce1` against the task scope:
+
+- Close and reopen both take the practice-period row lock before reading and re-check the expected version in the `updateMany` predicate, so a concurrent close cannot interleave with journal creation, which locks the same period row first. The draft-free close check is therefore race-free against journal creation.
+- The database trigger independently enforces what the service checks: transitions require version+1, an actor and a reason of at least 10 characters; non-transition updates may not change identity, version, reason or actor; journals must begin as drafts inside an open, in-range period; posted journals are immutable; reversals must exactly invert a posted journal of the same firm. Service-level `practiceFailure` mapping covers every trigger message.
+- Reversal validates the target period is open and contains the accounting date in the service before insert; the trigger re-validates at posting. The original journal is never modified; duplicate reversal is blocked by the unique `reversalOf` constraint.
+- Observations (non-blocking, recorded for follow-up): the period guard takes a `FOR UPDATE` lock on the whole `Firm` row for every period write, serializing period administration per firm — acceptable at practice-ledger volumes and consistent with the engagement-row locking pattern used elsewhere, but worth revisiting if contention appears; `lastTransitionReason` defaults to an empty string on pre-existing rows, which only matters because the ≥10-character rule applies to transitions, not to legacy rows; the capability CHECK extension is additive and the seed grants reopen only to the explicitly labeled development fixture user.
+- Reviewer verification: `pnpm verify:task -- T067` (build:server + practice-ledger integration, PostgreSQL 18.6 Testcontainers) PASS; T068's own recorded `verify:task -- T068` run stands as executed by the implementer.
+
+Open blockers: none within this task's scope. Prerequisite dispositions: T017 is DONE (hosted run 37006033506); T067 is closed this date; T025 append-only audit writes landed separately as `IN_REVIEW` (evidence/T025/handoff.md) and does not gate this task's dependency list. No interactive close/reopen browser walkthrough was performed; the Angular spec verifies reason-form submission binding and route shape only.
+Next eligible task by dependency order: T069 invoice foundation.

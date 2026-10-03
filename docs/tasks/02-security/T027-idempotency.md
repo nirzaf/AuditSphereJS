@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` — scoped durable operation requests and PostgreSQL concurrency/authorization acceptance reviewed 2026-10-03 |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `platform` |
@@ -47,16 +48,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Key idempotency by authorized scope, action and caller key; store a normalized request hash and operation state.
-- [ ] Return the committed prior result for an identical retry; reject same-key/different-payload attempts.
-- [ ] Lock competing submissions and retain durable keys for invoices/releases/payments rather than relying solely on Redis TTL.
-- [ ] Record UNKNOWN external outcomes for reconciliation instead of claiming exactly-once email delivery.
+- [x] Key idempotency by authorized scope, action and caller key; store a normalized request hash and operation state.
+- [x] Return the committed prior result for an identical retry; reject same-key/different-payload attempts.
+- [x] Lock competing submissions and retain durable PostgreSQL keys for implemented invoice/payment commands; existing lifecycle commands also retain PostgreSQL receipts. No report-release command is implemented yet; its owning workflow must adopt this mechanism when delivered.
+- [x] Record UNKNOWN external outcomes for reconciliation instead of claiming exactly-once email delivery. No external dispatch is called by the invoice path; notification/outbox consumers must mark uncertain provider results through this interface.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Two simultaneous identical payment commands create one business result.
-- [ ] **AC2:** A changed body with a reused key returns conflict.
-- [ ] **AC3:** Redis loss does not permit duplicate financial posting.
+- [x] **AC1:** Two simultaneous identical payment commands create one business result. PostgreSQL 18.6 integration creates one payment row and one completed operation request.
+- [x] **AC2:** A changed body with a reused key returns conflict (HTTP 409).
+- [x] **AC3:** Redis loss does not permit duplicate financial posting. The integration sets `REDIS_URL` to an unavailable local port; the PostgreSQL payment command still creates one result.
 
 Run focused unit plus real-service integration tests for affected contracts, transactions and failure behavior.
 

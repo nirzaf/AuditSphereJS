@@ -25,6 +25,10 @@ test('risk bands are derived, append-only, and a red band needs current Partner 
       await db.client.create({ data: { id: clientId, firmId, name: 'Risk client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Risk engagement', state: 'FIELDWORK_EXECUTION' } });
       await db.user.createMany({ data: [{ id: managerId, email: 'manager@example.test', role: 'REVIEWER' }, { id: partnerId, email: 'partner@example.test', role: 'APPROVER' }] });
+      await db.membership.createMany({ data: [
+        { userId: managerId, firmId, clientId, engagementId, role: 'REVIEWER' },
+        { userId: partnerId, firmId, clientId, engagementId, role: 'APPROVER' },
+      ] });
       for (const capability of ['ENGAGEMENT_READ', 'RISK_MANAGE'] as const) {
         await db.roleGrant.create({ data: { userId: managerId, capability, firmId, clientId, engagementId, grantedBy: managerId } });
       }

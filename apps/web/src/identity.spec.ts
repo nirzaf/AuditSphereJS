@@ -36,7 +36,7 @@ describe('MSAL redirect adapter', () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(config)))
       .mockResolvedValueOnce(new Response(JSON.stringify(config)))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'local-user', email: 'auditor@example.test', active: true })));
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'local-user', email: 'auditor@example.test', active: true, passwordHash: 'never-expose' })));
     vi.stubGlobal('fetch', fetchMock);
     const identity = await import('./identity');
 
@@ -49,6 +49,20 @@ describe('MSAL redirect adapter', () => {
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
       '/api/v1/identity/config', '/api/v1/identity/config', '/api/v1/me',
     ]);
+  });
+
+  it('processes Entra redirects during application initialization', async () => {
+    msal.handleRedirectPromise.mockResolvedValue({ account });
+    msal.setActiveAccount.mockImplementation((value) => msal.getActiveAccount.mockReturnValue(value));
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response(JSON.stringify(config)))));
+    const identity = await import('./identity');
+
+    await identity.prepareIdentityRedirect();
+
+    expect(msal.initialize).toHaveBeenCalledOnce();
+    expect(msal.handleRedirectPromise).toHaveBeenCalledOnce();
+    expect(msal.setActiveAccount).toHaveBeenCalledWith(account);
+    expect(msal.getActiveAccount()).toBe(account);
   });
 
   it('uses redirect login and logout APIs without opening a popup', async () => {
@@ -70,24 +84,89 @@ describe('MSAL redirect adapter', () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(config)))
       .mockResolvedValueOnce(new Response(JSON.stringify({
-        error: { code: 401, message: { message: 'Internal authentication required', error: 'Unauthorized', statusCode: 401 } },
+        error: { code: 'UNAUTHENTICATED', status: 401, message: { message: 'Internal authentication required', error: 'Unauthorized', statusCode: 401 }, correlationId: 'identity-failure-123' },
+      }), { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        error: { code: 'UNAUTHENTICATED', status: 401, message: { message: 'Internal authentication required', error: 'Unauthorized', statusCode: 401 }, correlationId: 'identity-failure-123' },
       }), { status: 401 }));
     vi.stubGlobal('fetch', fetchMock);
     const identity = await import('./identity');
 
-    await expect(identity.currentIdentity()).rejects.toThrow(/verify your local Entra identity mapping/);
-    expect(msal.acquireTokenSilent).toHaveBeenCalledWith({ scopes: config.scopes, account });
+    await expect(identity.currentIdentity()).rejects.toThrow(/verify its local Entra identity mapping\. Reference: identity-failure-123/);
+    expect(msal.acquireTokenSilent).toHaveBeenNthCalledWith(1, { scopes: config.scopes, account });
+    expect(msal.acquireTokenSilent).toHaveBeenNthCalledWith(2, { scopes: config.scopes, account, forceRefresh: true });
+  });
+
+  it('refreshes a cached token once after a 401 and accepts the active mapped identity', async () => {
+    msal.getActiveAccount.mockReturnValue(account);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        error: { code: 'UNAUTHENTICATED', status: 401, message: { message: 'Internal authentication required', error: 'Unauthorized', statusCode: 401 } },
+      }), { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'local-user', email: 'auditor@example.test', active: true })));
+    vi.stubGlobal('fetch', fetchMock);
+    const identity = await import('./identity');
+
+    await expect(identity.currentIdentity()).resolves.toEqual({ id: 'local-user', email: 'auditor@example.test', active: true });
+
+    expect(msal.acquireTokenSilent).toHaveBeenNthCalledWith(1, { scopes: config.scopes, account });
+    expect(msal.acquireTokenSilent).toHaveBeenNthCalledWith(2, { scopes: config.scopes, account, forceRefresh: true });
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      '/api/v1/identity/config', '/api/v1/me', '/api/v1/identity/config', '/api/v1/me',
+    ]);
+  });
+
+  it('fails closed when an identity payload does not match its shared response contract', async () => {
+    msal.getActiveAccount.mockReturnValue(account);
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'local-user', email: 'auditor@example.test', active: 'yes' }))));
+    const identity = await import('./identity');
+
+    await expect(identity.currentIdentity()).rejects.toThrow('did not match its contract');
   });
 
   it('requests a typed list of engagements through the current access token', async () => {
     msal.getActiveAccount.mockReturnValue(account);
-    const items = [{ id: 'engagement-a', name: 'FY26 audit', clientId: 'client-a', clientName: 'Example Ltd' }];
-    vi.stubGlobal('fetch', vi.fn()
+    const items = [{ id: 'engagement-a', name: 'FY26 audit', clientId: 'client-a', clientName: 'Example Ltd', version: 4 }];
+    const fetchMock = vi.fn()
       .mockResolvedValueOnce(new Response(JSON.stringify(config)))
-      .mockResolvedValueOnce(new Response(JSON.stringify(items))));
+      .mockResolvedValueOnce(new Response(JSON.stringify(items)));
+    vi.stubGlobal('fetch', fetchMock);
     const identity = await import('./identity');
 
     await expect(identity.listReadableEngagements()).resolves.toEqual(items);
-    expect(fetch).toHaveBeenLastCalledWith('/api/v1/me/engagements', { headers: { Authorization: 'Bearer access-token' } });
+    const [url, init] = fetchMock.mock.calls.at(-1)!;
+    expect(url).toBe('/api/v1/me/engagements');
+    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer access-token');
+  });
+
+  it('persists the Entra session cutoff with the current access token', async () => {
+    msal.getActiveAccount.mockReturnValue(account);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ revokedBefore: '2026-10-03T00:00:00.000Z' })));
+    vi.stubGlobal('fetch', fetchMock);
+    const identity = await import('./identity');
+
+    await expect(identity.revokeSessions()).resolves.toBeUndefined();
+
+    const [url, init] = fetchMock.mock.calls.at(-1)!;
+    expect(url).toBe('/api/v1/me/revoke-sessions');
+    expect(init.method).toBe('POST');
+    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer access-token');
+  });
+
+  it('does not claim session revocation when the API rejects the request', async () => {
+    msal.getActiveAccount.mockReturnValue(account);
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ message: 'Internal authentication required' }), { status: 401 })));
+    const identity = await import('./identity');
+
+    await expect(identity.revokeSessions()).rejects.toThrow('The server could not confirm session revocation.');
   });
 });

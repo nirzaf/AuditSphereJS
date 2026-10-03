@@ -834,6 +834,140 @@
       "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
     },
     {
+      "name": "@fastify/cookie",
+      "version": "11.1.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-Dtrpk/YOGUsbRMvP/8ZqPpwnMRv0qSqodFdoQ2B589Obc7jw4s4Qla+cV72Bsm7WsZJnqlYFX/i7uSBq0xzg6g==",
+      "published": "2026-07-15T21:29:27.207Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fcookie/11.1.2",
+      "repository": "git+https://github.com/fastify/fastify-cookie.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "coverage": "npm run test:unit -- --coverage-report=html",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche",
+        "test:unit:verbose": "npm run test:unit -- -Rspec"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/csrf-protection",
+      "version": "8.0.1",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-NMK+TKyuWCmRJPwSiAVTQwKoeDspWRhoBgYtumJJy0PBZxjgcUAn1eCO8r5N/z0pgDMcMfy5HjxowXpOxwTWyw==",
+      "published": "2026-08-02T10:27:37.495Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fcsrf-protection/8.0.1",
+      "repository": "git+https://github.com/fastify/csrf-protection.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/helmet",
+      "version": "13.1.1",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-bSat5DTq8geASv8G6P0KW1UbltZ+xGD/zyd9S72pT7ogAHehcsWL85GdjMRCjDsExJvaEvgEZ52qU/2HXirVCw==",
+      "published": "2026-08-19T10:02:18.430Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fhelmet/13.1.1",
+      "repository": "git+https://github.com/fastify/fastify-helmet.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/multipart",
+      "version": "10.1.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-WHsqW5ffDXCbXXtdBQDryxu58fQvFPVGh4E4MlCO6hwCLNm0lYTCS6GKXUw2P64REDoECUNpMVvtMMstdIyBjQ==",
+      "published": "2026-09-22T13:22:49.773Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fmultipart/10.1.2",
+      "repository": "git+https://github.com/fastify/fastify-multipart.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "start": "CLIMEM=8999 node -r climem ./examples/example",
+        "climem": "climem 8999 localhost",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "@fastify/rate-limit",
+      "version": "11.2.0",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-X7osJd4XSvMoejYrnJkSZYYjY1eNYoBqhjlzf1RakC2204qExFqZFTKj5+T7VuzA/iUI9Z3UoSqQRkB2HpG0oQ==",
+      "published": "2026-07-29T14:38:39.112Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Frate-limit/11.2.0",
+      "repository": "git+https://github.com/fastify/fastify-rate-limit.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "redis": "docker run -p 6379:6379 --name rate-limit-redis -d --rm redis",
+        "lint:fix": "eslint --fix",
+        "test:unit": "c8 --100 node --test",
+        "test:typescript": "tstyche"
+      },
+      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
+    },
+    {
+      "name": "@fastify/static",
+      "version": "10.1.2",
+      "engines": {},
+      "peers": {},
+      "peerMeta": {},
+      "license": "MIT",
+      "deprecated": null,
+      "integrity": "sha512-G/g18cG9tLutT/OVyN1AIsHIl9L1UwmJ+S3dkyhVpplIx0nEMicd7RGQ+uJLyhKKF4a3tTcQydccn3Mop1fX+Q==",
+      "published": "2026-07-22T09:44:04.396Z",
+      "source": "https://registry.npmjs.org/%40fastify%2Fstatic/10.1.2",
+      "repository": "git+https://github.com/fastify/fastify-static.git",
+      "scripts": {
+        "lint": "eslint",
+        "test": "npm run test:unit && npm run test:typescript",
+        "example": "node example/server.js",
+        "coverage": "c8 --reporter html borp --coverage --check-coverage --lines 100",
+        "lint:fix": "eslint --fix",
+        "test:unit": "borp -C --check-coverage --lines 100",
+        "test:typescript": "tstyche",
+        "example:benchmark": "node example/server-benchmark.js"
+      },
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
       "name": "@nestjs/common",
       "version": "12.1.2",
       "engines": {},
@@ -1018,117 +1152,6 @@
         "coverage:ci-check-coverage": "borp --reporter=@jsumners/line-reporter --coverage --check-coverage --lines 100"
       },
       "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
-    },
-    {
-      "name": "@fastify/static",
-      "version": "10.1.2",
-      "engines": {},
-      "peers": {},
-      "peerMeta": {},
-      "license": "MIT",
-      "deprecated": null,
-      "integrity": "sha512-G/g18cG9tLutT/OVyN1AIsHIl9L1UwmJ+S3dkyhVpplIx0nEMicd7RGQ+uJLyhKKF4a3tTcQydccn3Mop1fX+Q==",
-      "published": "2026-07-22T09:44:04.396Z",
-      "source": "https://registry.npmjs.org/%40fastify%2Fstatic/10.1.2",
-      "repository": "git+https://github.com/fastify/fastify-static.git",
-      "scripts": {
-        "lint": "eslint",
-        "test": "npm run test:unit && npm run test:typescript",
-        "example": "node example/server.js",
-        "coverage": "c8 --reporter html borp --coverage --check-coverage --lines 100",
-        "lint:fix": "eslint --fix",
-        "test:unit": "borp -C --check-coverage --lines 100",
-        "test:typescript": "tstyche",
-        "example:benchmark": "node example/server-benchmark.js"
-      },
-      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
-    },
-    {
-      "name": "@fastify/helmet",
-      "version": "13.1.1",
-      "engines": {},
-      "peers": {},
-      "peerMeta": {},
-      "license": "MIT",
-      "deprecated": null,
-      "integrity": "sha512-bSat5DTq8geASv8G6P0KW1UbltZ+xGD/zyd9S72pT7ogAHehcsWL85GdjMRCjDsExJvaEvgEZ52qU/2HXirVCw==",
-      "published": "2026-08-19T10:02:18.430Z",
-      "source": "https://registry.npmjs.org/%40fastify%2Fhelmet/13.1.1",
-      "repository": "git+https://github.com/fastify/fastify-helmet.git",
-      "scripts": {
-        "lint": "eslint",
-        "test": "npm run test:unit && npm run test:typescript",
-        "lint:fix": "eslint --fix",
-        "test:unit": "c8 --100 node --test",
-        "test:typescript": "tstyche"
-      },
-      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
-    },
-    {
-      "name": "@fastify/cookie",
-      "version": "11.1.2",
-      "engines": {},
-      "peers": {},
-      "peerMeta": {},
-      "license": "MIT",
-      "deprecated": null,
-      "integrity": "sha512-Dtrpk/YOGUsbRMvP/8ZqPpwnMRv0qSqodFdoQ2B589Obc7jw4s4Qla+cV72Bsm7WsZJnqlYFX/i7uSBq0xzg6g==",
-      "published": "2026-07-15T21:29:27.207Z",
-      "source": "https://registry.npmjs.org/%40fastify%2Fcookie/11.1.2",
-      "repository": "git+https://github.com/fastify/fastify-cookie.git",
-      "scripts": {
-        "lint": "eslint",
-        "test": "npm run test:unit && npm run test:typescript",
-        "coverage": "npm run test:unit -- --coverage-report=html",
-        "lint:fix": "eslint --fix",
-        "test:unit": "c8 --100 node --test",
-        "test:typescript": "tstyche",
-        "test:unit:verbose": "npm run test:unit -- -Rspec"
-      },
-      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
-    },
-    {
-      "name": "@fastify/csrf-protection",
-      "version": "8.0.1",
-      "engines": {},
-      "peers": {},
-      "peerMeta": {},
-      "license": "MIT",
-      "deprecated": null,
-      "integrity": "sha512-NMK+TKyuWCmRJPwSiAVTQwKoeDspWRhoBgYtumJJy0PBZxjgcUAn1eCO8r5N/z0pgDMcMfy5HjxowXpOxwTWyw==",
-      "published": "2026-08-02T10:27:37.495Z",
-      "source": "https://registry.npmjs.org/%40fastify%2Fcsrf-protection/8.0.1",
-      "repository": "git+https://github.com/fastify/csrf-protection.git",
-      "scripts": {
-        "lint": "eslint",
-        "test": "npm run test:unit && npm run test:typescript",
-        "lint:fix": "eslint --fix",
-        "test:unit": "c8 --100 node --test",
-        "test:typescript": "tstyche"
-      },
-      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
-    },
-    {
-      "name": "@fastify/rate-limit",
-      "version": "11.2.0",
-      "engines": {},
-      "peers": {},
-      "peerMeta": {},
-      "license": "MIT",
-      "deprecated": null,
-      "integrity": "sha512-X7osJd4XSvMoejYrnJkSZYYjY1eNYoBqhjlzf1RakC2204qExFqZFTKj5+T7VuzA/iUI9Z3UoSqQRkB2HpG0oQ==",
-      "published": "2026-07-29T14:38:39.112Z",
-      "source": "https://registry.npmjs.org/%40fastify%2Frate-limit/11.2.0",
-      "repository": "git+https://github.com/fastify/fastify-rate-limit.git",
-      "scripts": {
-        "lint": "eslint",
-        "test": "npm run test:unit && npm run test:typescript",
-        "redis": "docker run -p 6379:6379 --name rate-limit-redis -d --rm redis",
-        "lint:fix": "eslint --fix",
-        "test:unit": "c8 --100 node --test",
-        "test:typescript": "tstyche"
-      },
-      "disposition": "CANDIDATE_REVIEWED_NOT_EXECUTED"
     },
     {
       "name": "reflect-metadata",

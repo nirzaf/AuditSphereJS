@@ -30,6 +30,11 @@ test('review notes need explicit authority, forbid self-review and freeze once r
         { id: reviewerId, email: 'reviewer@example.test', role: 'REVIEWER' },
         { id: bothId, email: 'both@example.test', role: 'APPROVER' },
       ] });
+      await db.membership.createMany({ data: [
+        { userId: authorId, firmId, clientId, engagementId, role: 'PREPARER' },
+        { userId: reviewerId, firmId, clientId, engagementId, role: 'REVIEWER' },
+        { userId: bothId, firmId, clientId, engagementId, role: 'APPROVER' },
+      ] });
       const grant = (userId: string, capability: string) => db.roleGrant.create({ data: { userId, capability, firmId, clientId, engagementId, grantedBy: userId } });
       await grant(authorId, 'ENGAGEMENT_READ'); await grant(authorId, 'REVIEW_RAISE');
       await grant(reviewerId, 'ENGAGEMENT_READ'); await grant(reviewerId, 'REVIEW_RESOLVE');

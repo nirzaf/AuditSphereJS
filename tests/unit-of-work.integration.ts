@@ -36,13 +36,18 @@ test('unit of work commits atomically, shares one transaction, rolls back and re
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri });
-    const { db, runUnitOfWork, lockForUpdate } = await import('@auditsphere/server');
+      const { db, runUnitOfWork, lockForUpdate, createProposal, createRisk } = await import('@auditsphere/server');
     const noWait = async () => {};
     try {
       await db.firm.create({ data: { id: firmId, name: 'UoW firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'UoW client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'UoW engagement' } });
-      await db.user.create({ data: { id: actorId, email: 'uow@example.test', role: 'PREPARER' } });
+      await db.user.create({ data: { id: actorId, email: 'uow@example.test', role: 'APPROVER' } });
+      await db.membership.create({ data: { userId: actorId, firmId, clientId, engagementId, role: 'APPROVER' } });
+      await db.roleGrant.createMany({ data: [
+        { userId: actorId, capability: 'COMMERCIAL_MANAGE', firmId, clientId, engagementId, grantedBy: actorId },
+        { userId: actorId, capability: 'RISK_MANAGE', firmId, clientId, engagementId, grantedBy: actorId },
+      ] });
       await assert.rejects(db.commandReceipt.create({ data: { key: deriveKey('orphan-receipt'), engagementId: deriveKey('missing-engagement'), actorId, hash: 'orphan', result: {} } }), /CommandReceipt_engagementId_fkey/);
 
       // AC1: an induced failure after the first write rolls back the whole command, and a deferred
@@ -65,6 +70,47 @@ test('unit of work commits atomically, shares one transaction, rolls back and re
       }, { wait: noWait }));
       assert.equal(await db.auditEvent.count({ where: { engagementId, action: 'UOW_PARENT' } }), 0);
       assert.equal(await db.auditEvent.count({ where: { engagementId, action: 'CHILD' } }), 0);
+
+      // Production module facades accept the explicit context and participate in the caller's
+      // transaction. A failure after both domain commands must roll back each module's records,
+      // audit events and the commercial operation receipt together.
+      const proposalKey = deriveKey(engagementId, 'REAL_FACADE_ROLLBACK');
+      await assert.rejects(runUnitOfWork(async (scope) => {
+        await createProposal(actorId, engagementId, {
+          idempotencyKey: proposalKey,
+          service: 'Synthetic assurance engagement',
+          periodStart: '2025-01-01',
+          periodEnd: '2025-12-31',
+          totalAmount: '120000.00',
+        }, scope);
+        await createRisk(actorId, engagementId, { title: 'Synthetic risk register item' }, scope);
+        throw new Error('rollback production facades');
+      }, { wait: noWait }), /rollback production facades/);
+      assert.equal(await db.commercialProposal.count({ where: { engagementId } }), 0);
+      assert.equal(await db.riskItem.count({ where: { engagementId, title: 'Synthetic risk register item' } }), 0);
+      assert.equal(await db.commandReceipt.count({ where: { key: proposalKey } }), 0);
+      assert.equal(await db.auditEvent.count({ where: { engagementId, action: { in: ['PROPOSAL_CREATED', 'RISK_CREATED'] } } }), 0);
+
+      // Retrying a real module command after a transient conflict creates one proposal and one
+      // durable receipt under its caller-supplied idempotency identifier.
+      const retryKey = deriveKey(engagementId, 'REAL_FACADE_RETRY');
+      let realFacadeAttempts = 0;
+      const retriedProposal = await runUnitOfWork(async (scope) => {
+        realFacadeAttempts += 1;
+        const proposal = await createProposal(actorId, engagementId, {
+          idempotencyKey: retryKey,
+          service: 'Synthetic assurance engagement',
+          periodStart: '2025-01-01',
+          periodEnd: '2025-12-31',
+          totalAmount: '120000.00',
+        }, scope);
+        if (realFacadeAttempts === 1) throw Object.assign(new Error('serialization failure'), { code: 'P2034' });
+        return proposal;
+      }, { maxAttempts: 3, wait: noWait }) as { id: string };
+      assert.equal(realFacadeAttempts, 2);
+      assert.equal(await db.commercialProposal.count({ where: { engagementId } }), 1);
+      assert.equal(await db.commandReceipt.count({ where: { key: retryKey } }), 1);
+      assert.equal(await db.commercialProposal.count({ where: { engagementId, id: retriedProposal.id } }), 1);
 
       // A successful command commits domain + audit + receipt together and flushes deferred work.
       let published = 0;

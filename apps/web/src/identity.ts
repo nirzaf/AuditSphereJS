@@ -1,17 +1,22 @@
 import { InjectionToken } from '@angular/core';
 import { PublicClientApplication } from '@azure/msal-browser';
-type PublicIdentity = { provider: 'entra' | 'development'; tenantId?: string; clientId?: string; scopes?: string[]; redirectUri?: string };
-export type InternalIdentity = { id: string; email: string; active: boolean };
-export type ReadableEngagement = { id: string; name: string; clientId: string; clientName: string };
+import {
+  identityConfigurationSchema,
+  internalIdentitySchema,
+  readableEngagementsSchema,
+  sessionRevocationResponseSchema,
+} from '@auditsphere/contracts';
+import type { IdentityConfiguration, InternalIdentity, ReadableEngagement } from '@auditsphere/contracts';
+import { ApiContractError, requestAuthenticatedContractJson, requestContractJson } from './api-client';
+export type { InternalIdentity, ReadableEngagement } from '@auditsphere/contracts';
 let scopes: string[] = [];
 let clientReady: Promise<PublicClientApplication> | undefined;
 let redirectReady: Promise<void> | undefined;
-export async function identityConfiguration(): Promise<PublicIdentity> {
-  const response = await fetch('/api/v1/identity/config');
-  if (!response.ok) throw new Error('Identity configuration is unavailable');
-  return response.json();
+export async function identityConfiguration(): Promise<IdentityConfiguration> {
+  return requestContractJson('/api/v1/identity/config', identityConfigurationSchema)
+    .catch(() => { throw new Error('Identity configuration is unavailable'); });
 }
-async function getClient(config: PublicIdentity) {
+async function getClient(config: IdentityConfiguration) {
   if (config.provider !== 'entra' || !config.clientId || !config.tenantId || !config.scopes?.length || !config.redirectUri) throw new Error('Microsoft Entra sign-in is not configured');
   if (!clientReady) {
     const instance = new PublicClientApplication({ auth: { clientId: config.clientId, authority: `https://login.microsoftonline.com/${config.tenantId}`, redirectUri: config.redirectUri, postLogoutRedirectUri: config.redirectUri }, cache: { cacheLocation: 'sessionStorage' } });
@@ -19,7 +24,7 @@ async function getClient(config: PublicIdentity) {
   }
   return clientReady;
 }
-async function processRedirect(config: PublicIdentity) {
+async function processRedirect(config: IdentityConfiguration) {
   const instance = await getClient(config);
   if (!redirectReady) redirectReady = instance.handleRedirectPromise().then(result => {
     if (result?.account) instance.setActiveAccount(result.account);
@@ -30,6 +35,15 @@ async function processRedirect(config: PublicIdentity) {
   });
   await redirectReady;
   return instance;
+}
+/** Process an Entra redirect before Angular Router can consume or rewrite its response fragment. */
+export async function prepareIdentityRedirect(): Promise<void> {
+  try {
+    const config = await identityConfiguration();
+    if (config.provider === 'entra') await processRedirect(config);
+  } catch {
+    // Keep startup available so Workspace can render its normal identity-configuration error state.
+  }
 }
 export async function restoreSession(): Promise<InternalIdentity | null> {
   const config = await identityConfiguration();
@@ -43,44 +57,43 @@ export async function signIn(): Promise<void> {
   const instance = await processRedirect(config);
   await instance.loginRedirect({ scopes, prompt: 'select_account' });
 }
-export async function currentAccessToken() {
+export async function currentAccessToken(forceRefresh = false) {
   const config = await identityConfiguration();
   const instance = await processRedirect(config);
   const account = instance.getActiveAccount();
   if (!account) throw new Error('Microsoft sign-in required');
-  return (await instance.acquireTokenSilent({ scopes, account })).accessToken;
+  return (await instance.acquireTokenSilent({ scopes, account, ...(forceRefresh ? { forceRefresh: true } : {}) })).accessToken;
 }
 export async function currentIdentity(): Promise<InternalIdentity> {
-  const response = await fetch('/api/v1/me', { headers: { Authorization: `Bearer ${await currentAccessToken()}` } });
-  const result: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    if (response.status === 401) {
-      throw new Error('AuditSphere could not confirm an active staff identity for this Microsoft sign-in. Sign in again; if this persists, ask your administrator to verify your local Entra identity mapping.');
+  try {
+    return await requestAuthenticatedContractJson('/api/v1/me', internalIdentitySchema, undefined, currentAccessToken);
+  } catch (error) {
+    if (error instanceof ApiContractError && error.status === 401) {
+      const reference = error.correlationId ? ` Reference: ${error.correlationId}.` : '';
+      throw new Error(`AuditSphere could not confirm an active staff identity for this Microsoft sign-in. Refresh the Microsoft session and sign in with the designated staff account; if the problem persists, ask an administrator to verify its local Entra identity mapping.${reference}`);
     }
-    const envelope = result !== null && typeof result === 'object' && !Array.isArray(result) ? result as Record<string, unknown> : {};
-    const error = envelope['error'] !== null && typeof envelope['error'] === 'object' && !Array.isArray(envelope['error']) ? envelope['error'] as Record<string, unknown> : {};
-    const message = error['message'];
-    throw new Error(typeof message === 'string' ? message : `AuditSphere identity check failed (HTTP ${response.status}).`);
+    if (error instanceof ApiContractError) throw new Error(error.message || `AuditSphere identity check failed (HTTP ${error.status}).`);
+    throw error;
   }
-  return result as InternalIdentity;
 }
 export async function listReadableEngagements(): Promise<ReadableEngagement[]> {
-  const response = await fetch('/api/v1/me/engagements', { headers: { Authorization: `Bearer ${await currentAccessToken()}` } });
-  const result: unknown = await response.json().catch(() => null);
-  if (!response.ok) {
-    const envelope = result !== null && typeof result === 'object' && !Array.isArray(result) ? result as Record<string, unknown> : {};
-    const detail = envelope['message'];
-    throw new Error(response.status === 401
-      ? 'Your Microsoft session is no longer active. Sign in again to refresh your engagement access.'
-      : typeof detail === 'string' ? detail : `Assigned engagements could not be loaded (HTTP ${response.status}).`);
+  try {
+    return await requestAuthenticatedContractJson('/api/v1/me/engagements', readableEngagementsSchema, undefined, currentAccessToken);
+  } catch (error) {
+    if (!(error instanceof ApiContractError)) throw error;
+    const reference = error.correlationId ? ` Reference: ${error.correlationId}.` : '';
+    throw new Error(error.status === 401
+      ? `Your Microsoft session is no longer active. Sign in again to refresh your engagement access.${reference}`
+      : error.message || `Assigned engagements could not be loaded (HTTP ${error.status}).`);
   }
-  if (!Array.isArray(result)) throw new Error('The assigned engagement response was invalid. Refresh the page and try again.');
-  return result.flatMap((item): ReadableEngagement[] => {
-    if (item === null || typeof item !== 'object' || Array.isArray(item)) return [];
-    const value = item as Record<string, unknown>;
-    if (typeof value['id'] !== 'string' || typeof value['name'] !== 'string' || typeof value['clientId'] !== 'string' || typeof value['clientName'] !== 'string') return [];
-    return [{ id: value['id'], name: value['name'], clientId: value['clientId'], clientName: value['clientName'] }];
-  });
+}
+/** Persist the Entra API-token cutoff before clearing the browser's local identity. */
+export async function revokeSessions(): Promise<void> {
+  try {
+    await requestAuthenticatedContractJson('/api/v1/me/revoke-sessions', sessionRevocationResponseSchema, { method: 'POST' }, currentAccessToken);
+  } catch {
+    throw new Error('The server could not confirm session revocation.');
+  }
 }
 export async function signOut() {
   const config = await identityConfiguration();
@@ -91,5 +104,5 @@ export async function signOut() {
 
 export const IDENTITY_ADAPTER = new InjectionToken('IDENTITY_ADAPTER', {
   providedIn: 'root',
-  factory: () => ({ identityConfiguration, restoreSession, signIn, signOut, currentAccessToken, currentIdentity, listReadableEngagements }),
+  factory: () => ({ identityConfiguration, restoreSession, signIn, signOut, revokeSessions, currentAccessToken, currentIdentity, listReadableEngagements }),
 });

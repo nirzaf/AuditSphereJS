@@ -1,4 +1,4 @@
-import { db } from '@auditsphere/server';
+import { db, ensurePracticeRateDefaultsForFirm } from '@auditsphere/server';
 import { fixtureUser } from '@auditsphere/server';
 async function main() {
   if (process.env.NODE_ENV === 'production') throw new Error('Development fixture forbidden in production');
@@ -8,6 +8,7 @@ async function main() {
   const firmId = existingEngagement?.firmId ?? '00000000-0000-4000-8000-00000000000a';
   const clientId = existingEngagement?.clientId ?? '00000000-0000-4000-8000-000000000003';
   await db.firm.upsert({ where: { id: firmId }, create: { id: firmId, name: 'Development fixture firm' }, update: {} });
+  await ensurePracticeRateDefaultsForFirm(firmId);
   await db.client.upsert({ where: { id: clientId }, create: { id: clientId, firmId, name: 'Development fixture client' }, update: {} });
   await db.user.upsert({ where: { id: fixtureUser }, create: { id: fixtureUser, email: 'preparer@example.test', role: 'PREPARER' }, update: {} });
   await db.engagement.upsert({ where: { id }, create: { id, firmId, clientId, name: 'Technical validation engagement', state: 'FIELDWORK_EXECUTION' }, update: {} });

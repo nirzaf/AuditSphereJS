@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { createHash } from 'node:crypto';
+import { Readable } from 'node:stream';
 import { GraphStorage, configuredGraphStorage, decodeGraphReference } from '../packages/server/src/platform/graph-storage.js';
 
 const config = { tenantId: 'tenant', clientId: 'client', clientSecret: 'secret' };
@@ -55,6 +57,7 @@ describe('Graph evidence storage', () => {
     const ref = await storage.put(evidence, 'unique.pdf', Buffer.from('bytes'));
     expect(calls.some((call) => call.url.includes('/drives/sp/items/evidence:/unique.pdf:/content'))).toBe(true);
     const decoded = decodeGraphReference(ref);
+    expect(decoded.repositoryFolderId).toBe(evidence.folderId);
     expect(decoded.versionId).toBe('1.0');
     expect(decoded.eTag).toBe('v1');
     expect(calls.find((call) => call.url.includes('/versions?'))?.url).not.toContain('eTag');
@@ -64,6 +67,62 @@ describe('Graph evidence storage', () => {
     expect(calls.filter((call) => call.url.includes('/token'))).toHaveLength(1);
     // The preauthenticated download URL authenticates itself; no bearer token is forwarded.
     expect(calls.find((call) => call.url === 'https://tenant.sharepoint.com/download')?.init?.headers).toBeUndefined();
+  });
+
+  it('streams a staged file to Graph with a fixed length and verifies its exact version bytes', async () => {
+    const payload = Buffer.from('%PDF-1.7\nstreamed-evidence');
+    let uploaded = Buffer.alloc(0);
+    let recycled = false;
+    const request = (async (url, init) => {
+      const target = String(url);
+      if (target.includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
+      if (init?.method === 'DELETE') {
+        expect(init.headers).toMatchObject({ 'If-Match': 'v1' });
+        recycled = true;
+        return new Response(null, { status: 204 });
+      }
+      if (init?.method === 'PUT') {
+        expect(init.headers).toMatchObject({ 'Content-Length': String(payload.byteLength), 'Content-Type': 'application/pdf' });
+        expect((init as RequestInit & { duplex?: string }).duplex).toBe('half');
+        expect(init.body).toBeInstanceOf(ReadableStream);
+        uploaded = Buffer.from(await new Response(init.body).arrayBuffer());
+        return Response.json({ id: 'streamed-file', eTag: 'v1' });
+      }
+      if (target.includes('/versions?')) return Response.json({ value: [{ id: '1.0', size: uploaded.byteLength }] });
+      if (target.endsWith('/versions/1.0')) return Response.json({ id: '1.0', size: uploaded.byteLength });
+      if (target.endsWith('/versions/1.0/content')) return new Response(null, { status: 302, headers: { location: 'https://tenant.sharepoint.com/streamed-download' } });
+      if (target === 'https://tenant.sharepoint.com/streamed-download') return new Response(new Uint8Array(uploaded));
+      throw new Error(`Unexpected Graph request: ${target}`);
+    }) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+    const ref = await storage.putStream(evidence, 'streamed.pdf', Readable.from([payload.subarray(0, 8), payload.subarray(8)]), payload.byteLength, createHash('sha256').update(payload).digest('hex'), 'application/pdf');
+
+    expect(uploaded).toEqual(payload);
+    expect(decodeGraphReference(ref)).toMatchObject({ repositoryFolderId: evidence.folderId, sizeBytes: payload.byteLength });
+    await storage.deleteStaged(evidence, ref);
+    expect(recycled).toBe(true);
+  });
+
+  it('recycles an unreferenced Graph stage by generated name only after folder and digest checks', async () => {
+    const payload = Buffer.from('%PDF-1.7\nunreferenced-stage');
+    let deleteCount = 0;
+    const request = (async (url, init) => {
+      const target = new URL(String(url));
+      if (target.hostname === 'login.microsoftonline.com') return Response.json({ access_token: 'token', expires_in: 3600 });
+      if (init?.method === 'DELETE') { deleteCount++; return new Response(null, { status: 204 }); }
+      if (target.pathname.includes('/items/evidence:/engagement_random.pdf')) return Response.json({ id: 'orphan', name: 'engagement_random.pdf', eTag: 'v1', size: payload.byteLength, parentReference: { id: evidence.folderId } });
+      if (target.pathname.endsWith('/versions')) return Response.json({ value: [{ id: '1.0' }] });
+      if (target.pathname.endsWith('/versions/1.0')) return Response.json({ id: '1.0', size: payload.byteLength });
+      if (target.pathname.endsWith('/versions/1.0/content')) return new Response(null, { status: 302, headers: { location: 'https://tenant.sharepoint.com/orphan-download' } });
+      if (target.hostname === 'tenant.sharepoint.com') return new Response(new Uint8Array(payload));
+      throw new Error(`Unexpected Graph request: ${target}`);
+    }) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+    await storage.deleteStagedByName(evidence, 'engagement_random.pdf', createHash('sha256').update(payload).digest('hex'));
+
+    expect(deleteCount).toBe(1);
+    await expect(storage.deleteStagedByName(evidence, 'engagement_random.pdf', '0'.repeat(64))).rejects.toThrow('SHA-256');
+    expect(deleteCount).toBe(1);
   });
 
   it('keeps an accepted version readable after the current item changes, and rejects substitution', async () => {
@@ -106,5 +165,9 @@ describe('Graph evidence storage', () => {
     await expect(storage.put(evidence, 'unique.pdf', Buffer.from('bytes'))).rejects.toThrow('no matching immutable version identity');
     const foreign = reference({ driveId: 'other', itemId: 'x', versionId: '1', eTag: 'v', sha256: '0'.repeat(64), sizeBytes: 1 });
     await expect(storage.get(evidence, foreign)).rejects.toThrow('does not belong to this client repository');
+
+    const foreignFolder = reference({ driveId: evidence.driveId, repositoryFolderId: 'another-client-folder', itemId: 'x', versionId: '1', eTag: 'v', sha256: '0'.repeat(64), sizeBytes: 1 });
+    const noNetworkStorage = new GraphStorage(config, (async () => { throw new Error('A repository mismatch must be rejected before Graph access'); }) as typeof fetch);
+    await expect(noNetworkStorage.get(evidence, foreignFolder)).rejects.toThrow('does not belong to this client repository folder');
   });
 });

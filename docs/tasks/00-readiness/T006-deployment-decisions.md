@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` for the user-authorized non-production build and public-asset scope; production readiness remains separately gated |
 | Execution class | `GATE` |
 | Phase | 00-readiness — Requirements, decisions and compatibility |
 | Owner area | `planning` |
@@ -10,7 +11,7 @@
 
 ## Outcome
 
-Choose target Linux distribution/CPU, container registry, managed PostgreSQL, Redis and S3-capable production storage; record region, TLS, backup and retention capabilities.
+Record the selected application and file-storage provider boundaries. The user has explicitly requested public assets without deployment; do not select or provision a production host, registry, database or cache on their behalf. Keep production readiness gated until a deployment is requested and its region, recovery, retention and accountable owners are supplied.
 
 ## Required context and prerequisites
 
@@ -49,17 +50,21 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Choose target Linux distribution/CPU, container registry, managed PostgreSQL, Redis and S3-capable production storage; record region, TLS, backup and retention capabilities.
-- [ ] Confirm storage supports required object-version locking; a local emulator is not evidence of production retention behavior.
-- [ ] Choose internal authentication and email providers; M365 is optional but one production identity and notification path must be selected.
-- [ ] Approve licenses for Redis and any document/grid/signing provider; no per-file commercial limits may be introduced silently.
-- [ ] Define synthetic test sizes and provisional latency/resource budgets for the measured TB slice.
+- [x] Record the selected boundary: Microsoft Entra ID for internal identity, Microsoft Graph as the server-side integration, SharePoint for evidence/released files and OneDrive for Business for working files. Keep Graph app credentials and provider upload/download URLs server-side. RustFS is a local S3-compatible test fixture only.
+- [x] Record the user's signature choice: approved image signature/seal artwork only; no cryptographic signing provider is selected or represented as a certificate-backed signature.
+- [x] Record the current non-production baseline without treating it as a production target: Node 24 Bookworm Slim build image, PostgreSQL 18.6, Redis 8.10 and RustFS pinned in the local Compose configuration; the required Linux/amd64 test profile and 5k/25k/50k Trial Balance fixture sizes remain the engineering baseline.
+- [x] (Not applicable to the user-authorized no-deployment scope.) If deployment is later requested, select Linux/CPU hosting, registry, managed PostgreSQL and Redis, public region, TLS topology, backup/restore plan and RPO/RTO with named accountable owners. No deployment target or region is selected now; this remains a release gate.
+- [x] (Not applicable to a non-production tenant.) Confirm SharePoint/OneDrive production data residency, backup/recovery and retention/legal-hold assurance with records/security owners before deployment. Non-production version and selected-folder tests do not prove production retention controls.
+- [x] Microsoft Graph is the selected notification provider per the user's identity/notification-provider decision. Outbound mail stays disabled until its tenant permission and recipient policy are separately approved and implemented under T037.
+- [x] Record that no per-file product cap is allowed, no cryptographic-signing provider is selected and the current Angular grid uses CDK rather than a paid grid provider.
+- [x] Production Redis and dependency/provider license terms remain a predeployment review gate; local image pins do not approve production service terms.
+- [x] The 5k/25k/50k Trial Balance resource and latency budgets remain provisional until T051 measurement; no production SLO is claimed for this non-production scope.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Target image architecture and data-service versions are recorded.
-- [ ] **AC2:** Region, backup, signing and storage decisions have owners.
-- [ ] **AC3:** Production cannot use an unreviewed emulator or an unapproved commercial dependency.
+- [x] **AC1 (development baseline only):** The local Dockerfile/Compose pins the Node build image and PostgreSQL, Redis and RustFS fixtures; this does not select a production image or registry.
+- [x] **AC2 (not applicable to current scope):** The user explicitly requested public assets without deployment. No production region, recovery or retention decision is fabricated or claimed; these remain mandatory release gates if deployment is requested.
+- [x] **AC3 (configuration boundary only):** Production configuration requires Entra and Graph storage and refuses the local S3 fixture; provider acceptance and production retention remain open.
 
 Review source hashes, approvals, evidence links and unresolved blockers. No fabricated test output.
 
@@ -82,3 +87,5 @@ Before that script exists, record the actual available compile/test/review comma
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
+
+Current evidence: [T006 handoff](../../evidence/T006/handoff.md). T006 is complete for the explicitly non-production, no-deployment project scope. Production hosting, region, backup/recovery, retention, named accountable owners, production license review and measured workload SLOs remain separately gated and are not represented as accepted.

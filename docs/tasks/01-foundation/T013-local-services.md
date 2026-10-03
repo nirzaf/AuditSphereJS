@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_REVIEW` — PostgreSQL/Redis/Mailpit Testcontainers and image-digest checks pass; T006 deployment and backup/recovery decisions remain open |
+| Current status | `DONE` — reproducible non-production PostgreSQL, Redis, RustFS and Mailpit services are documented and isolated-service checks pass; production readiness remains a separate gate |
 | Execution class | `CORE` |
 | Phase | 01-foundation — Workspace and executable foundation |
 | Owner area | `infrastructure` |
@@ -78,8 +78,8 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
 
-## Current partial evidence
+## Historical evidence
 
-`pnpm verify:task -- T013` passed on 2026-10-02: the PostgreSQL 18.6 Testcontainers integration asserts its actual `server_version`; two concurrently started Redis 8.10 Testcontainers instances assert distinct mapped ports, actual Redis 8.10.x version, `noeviction` and AOF enabled; and a digest-pinned Mailpit container accepts a synthetic SMTP message without external delivery. Compose and test containers now pin all three Linux/amd64 images by version and immutable digest. See [the focused evidence](../../evidence/T013/testcontainers-2026-10-02.md). T013 remains in review because T006 production-region and backup/recovery decisions remain open.
+The 2026-10-02 checks are retained as historical evidence in the [focused record](../../evidence/T013/testcontainers-2026-10-02.md) and the earlier [local smoke record](../../evidence/T013/local-smoke-2026-10-02.md). Fresh non-production acceptance, including concurrent RustFS bucket isolation, is recorded in [the 2026-10-03 handoff](../../evidence/T013/handoff.md). Production-region, backup/recovery and retention decisions remain release gates and are not claimed as accepted by T013.
 
 Local startup and non-destructive shutdown instructions are in the [local services runbook](../../runbooks/local-services.md).

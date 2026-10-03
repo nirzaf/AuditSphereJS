@@ -44,15 +44,15 @@
       "migEpic": "MIG-006"
     },
     "C06": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No acceptance/continuance rules or guarded engagement lifecycle.",
+      "status": "PARTIAL",
+      "targetFiles": ["packages/server/src/modules/commercial/proposals.ts", "packages/server/src/modules/governance/lifecycle.ts", "prisma/migrations/202610020022_commercial_onboarding/migration.sql"],
+      "evidence": "Real dual-key gate: Key 1 (accepted proposal with client evidence) and Key 2 (RISK_PARTNER_CLEAR clearance with reason) are persisted records; ISSUE_ENGAGEMENT_LETTER refuses either missing key and issues an immutable ISA 210 letter pinning the exact revision and fee. Not implemented: the full ISA 220 questionnaire tracks, continuance path and acceptance cases.",
       "migEpic": "MIG-006"
     },
     "C07": {
-      "status": "NOT_STARTED",
-      "targetFiles": [],
-      "evidence": "No fee agreement or invoice automation.",
+      "status": "PARTIAL",
+      "targetFiles": ["packages/server/src/modules/practice/invoices.ts", "packages/server/src/modules/practice/ledger-controller.ts"],
+      "evidence": "Canonical firm-numbered engagement invoices (ADVANCE_50/FINAL_50) with immutable payments and one receipt per settled invoice; the advance chain gates portal activation (INV-002). Not implemented: ledger posting of invoices, credit notes, AR aging, and fee agreement documents.",
       "migEpic": "MIG-006"
     },
     "C08": {
@@ -232,10 +232,15 @@
       "status": "PARTIAL",
       "targetFiles": [
         "packages/server/src/platform/audit-chain.ts",
+        "packages/server/src/platform/audit.ts",
+        "packages/server/src/platform/authorization.ts",
+        "packages/server/src/platform/audit-controller.ts",
         "prisma/migrations/202610020001_audit_chain/migration.sql",
-        "tests/audit-chain.integration.ts"
+        "prisma/migrations/202610020020_audit_write_integrity/migration.sql",
+        "tests/audit-chain.integration.ts",
+        "tests/audit-write.integration.ts"
       ],
-      "evidence": "Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. No immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint is implemented.",
+      "evidence": "Transactionally ordered audit sidecars, canonical event format, SHA-256 predecessor chain, independent checkpoint manifest interface and scoped verifier. Concurrent writes, rollback and tampering are tested against PostgreSQL. Audit writes now carry actor kind, resource identity, correlation and redacted before/after payloads with database-enforced traceability; service actors need no synthetic user id; application credentials hold no UPDATE/DELETE/TRUNCATE on audit rows; authorization denials are appended to a separate append-only SecurityEvent log that survives transaction rollback, and a scoped history read rechecks ENGAGEMENT_READ server-side. Not implemented: the canonical digest does not yet cover the new metadata columns, call sites still write plain USER events, and no immutable archive bundle, live signed checkpoint storage, retention assurance or release checkpoint exists.",
       "migEpic": "MIG-014"
     },
     "C31": {

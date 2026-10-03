@@ -1,7 +1,9 @@
 import { Component, computed, effect, input, signal, inject, ElementRef, Injector, afterNextRender } from '@angular/core';
 import { FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
-import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema, approveMappingSchema } from '@auditsphere/contracts';
+import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema, approveMappingSchema, createProposalSchema, acceptProposalSchema, issueInvoiceSchema, recordPaymentSchema, voidInvoiceSchema, recordRiskClearanceSchema } from '@auditsphere/contracts';
 import { Practice } from './practice';
+import { PracticeRates } from './practice-rates';
+import { authenticatedFetch } from './api-client';
 import { currentAccessToken } from './identity';
 import { LineEditor, type EditorRow } from './line-editor';
 import { moduleScreens, type ModuleScreen, type ScreenField } from './module-catalog';
@@ -33,7 +35,7 @@ const sessionDrafts = new Map<string, DraftValues>();
 let sessionIdentity = ''; // Memory only; clear drafts when the authenticated session changes.
 const record = (value: unknown): RecordValue => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : {};
 
-@Component({ selector: 'module-workspace', imports: [ReactiveFormsModule, Practice, LineEditor], templateUrl: './module-workspace.html' })
+@Component({ selector: 'module-workspace', imports: [ReactiveFormsModule, Practice, PracticeRates, LineEditor], templateUrl: './module-workspace.html' })
 export class ModuleWorkspace {
   readonly screenId = input.required<string>(); readonly engagementId = input.required<string>();
   readonly token = input(''); readonly entra = input(false);
@@ -43,7 +45,7 @@ export class ModuleWorkspace {
   readonly search = signal(''); readonly selected = signal<RecordValue | null>(null); readonly confirm = signal(false);
   readonly submitted=signal(false); readonly editorRevision=signal(0);
   readonly lines = signal<EditorRow[]>([]); readonly linesValid = signal(false);
-  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | null>(null);
+  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | 'presentProposal' | 'acceptProposal' | 'invoicePayment' | 'invoiceReceipt' | 'invoiceVoid' | null>(null);
   readonly suggestionSummary = signal<RecordValue>({});
   readonly suggestionRows = signal<RecordValue[]>([]);
   readonly suggestionsLoaded = signal(false);
@@ -91,9 +93,11 @@ export class ModuleWorkspace {
   invalid(field: ScreenField, form = this.form) { const control = form.controls[field.key]; return control?.invalid && control.touched; }
   private async request(path: string, method = 'GET', body?: unknown) {
     const engagementId = this.engagementId();
-    const token = this.entra() ? await currentAccessToken() : this.token();
-    if (!token) throw new Error('Connect to your engagement before loading or saving records.');
-    const response = await fetch(`/api/v1/engagements/${encodeURIComponent(engagementId)}${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(30_000) });
+    const token = this.entra() ? '' : this.token();
+    if (!this.entra() && !token) throw new Error('Connect to your engagement before loading or saving records.');
+    const url = `/api/v1/engagements/${encodeURIComponent(engagementId)}${path}`;
+    const init: RequestInit = { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }), signal: AbortSignal.timeout(30_000) };
+    const response = this.entra() ? await authenticatedFetch(url, init, currentAccessToken) : await fetch(url, init);
     const value: unknown = await response.json();
     if (!response.ok) {
       const detail = record(record(value)['error'])['message']; const nested = record(detail)['message'];
@@ -133,6 +137,8 @@ export class ModuleWorkspace {
     const screen = this.screen(); const body: RecordValue = { ...this.form.getRawValue() };
     if (screen.id === 'materiality') { body['idempotencyKey'] = this.commandKey; if (!body['destinationCode']) delete body['destinationCode']; }
     if (screen.id === 'publications') { body['expectedVersion'] = Number(body['expectedVersion']); body['idempotencyKey'] = this.commandKey; }
+    if (screen.id === 'advance') { body['kind'] = 'ADVANCE_50'; body['idempotencyKey'] = this.commandKey; }
+    if (screen.id === 'dual-key') { body['idempotencyKey'] = this.commandKey; }
     if (screen.lineKind === 'adjustment') {
       if (!this.linesValid()) { this.error.set('Review two or more balanced journal lines before confirming.'); return; }
       body['lines'] = this.lines().map(row => ({ accountCode: row['accountCode'], ...(row['fsli'] ? { fsli: row['fsli'] } : {}), debit: row['debit'] ?? '0', credit: row['credit'] ?? '0' }));
@@ -143,21 +149,21 @@ export class ModuleWorkspace {
     }
     // Session-only workspaces use one confirmation gate for the whole preparation; the
     // adjustments and taxonomy editors keep their own line lists outside that draft form.
-    const schema = screen.id === 'materiality' ? calculateMaterialitySchema : screen.id === 'risks' ? createRiskSchema : screen.id === 'reviews' ? raiseReviewNoteSchema : screen.id === 'publications' ? publishSchema : screen.lineKind === 'taxonomy' ? createTaxonomySchema : createAdjustmentJournalSchema;
+    const schema = screen.id === 'materiality' ? calculateMaterialitySchema : screen.id === 'risks' ? createRiskSchema : screen.id === 'reviews' ? raiseReviewNoteSchema : screen.id === 'publications' ? publishSchema : screen.id === 'proposals' ? createProposalSchema : screen.id === 'dual-key' ? recordRiskClearanceSchema : screen.id === 'advance' ? issueInvoiceSchema : screen.lineKind === 'taxonomy' ? createTaxonomySchema : createAdjustmentJournalSchema;
     const parsed = schema.safeParse(body);
     if (!parsed.success) { this.error.set(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(' � ')); return; }
     void this.run(async generation => {
-      await this.request(screen.id === 'publications' ? '/publications' : screen.endpoint!, 'POST', parsed.data);
+      await this.request(screen.id === 'publications' ? '/publications' : screen.id === 'dual-key' ? `${screen.endpoint}/risk-clearance` : screen.endpoint!, 'POST', parsed.data);
       if (generation !== this.generation) return;
       this.confirm.set(false); this.form.reset(Object.fromEntries(Object.keys(this.form.controls).map(key => [key,'']))); this.lines.set([]); this.linesValid.set(false); this.error.set(''); sessionDrafts.delete(`${this.engagementId()}:${screen.id}`);
       this.editorRevision.update(value=>value+1);this.submitted.set(false);this.message.set('Saved to the engagement.'); await this.read(generation);
     });
   }
-  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions') {
+  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | 'presentProposal' | 'acceptProposal' | 'invoicePayment' | 'invoiceReceipt' | 'invoiceVoid') {
     this.selected.set(row); this.action.set(action); this.error.set('');
     this.suggestionSummary.set({}); this.suggestionRows.set([]); this.suggestionsLoaded.set(false);
     this.commandKey=crypto.randomUUID();
-    const fields: ScreenField[] = action === 'mappingApprove' || action === 'suggestions' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
+    const fields: ScreenField[] = action === 'mappingApprove' || action === 'suggestions' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'acceptProposal' ? [{key:'evidenceRef',label:'Client acceptance evidence reference',required:true}] : action === 'invoicePayment' ? [{key:'amount',label:'Payment amount · QAR',type:'decimal',required:true},{key:'reference',label:'Payment reference',required:true}] : action === 'invoiceVoid' ? [{key:'reason',label:'Reason for voiding this unpaid invoice',type:'textarea',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
       {key:'likelihood',label:'Likelihood',type:'select',options:['1','2','3'],required:true}, {key:'magnitude',label:'Magnitude',type:'select',options:['1','2','3'],required:true},
       {key:'significant',label:'Significant risk',type:'select',options:['No','Yes'],required:true}, {key:'fraudRisk',label:'Fraud risk',type:'select',options:['No','Yes'],required:true},
     ] : [];
@@ -188,8 +194,26 @@ export class ModuleWorkspace {
       });
       return;
     }
-    if(action==='taxonomyApprove') {path=`/taxonomies/${encodeURIComponent(id)}/approve`;body={};}
-    else if(action==='mappingApprove') {path=`/imports/${encodeURIComponent(values['importId'])}/mapping-approval`;body={taxonomyVersionId:id,idempotencyKey:this.commandKey};const parsed=approveMappingSchema.safeParse(body);if(!parsed.success){this.error.set('Load an approved taxonomy version before approving mappings.');return;}}
+    if(action==='presentProposal') {path=`/commercial/proposals/${encodeURIComponent(id)}/present`;body={idempotencyKey:this.commandKey,expectedVersion:Number(row['version'] ?? 1)};if(!body['expectedVersion'])body['expectedVersion']=1;}
+    else if(action==='acceptProposal') {const parsed=acceptProposalSchema.safeParse({idempotencyKey:this.commandKey,expectedVersion:Number(row['version'] ?? 1),evidenceRef:values['evidenceRef']});if(!parsed.success){this.error.set('Record the client acceptance evidence reference.');return;}path=`/commercial/proposals/${encodeURIComponent(id)}/accept`;body=parsed.data;}
+    else if(action==='invoicePayment') {const parsed=recordPaymentSchema.safeParse({idempotencyKey:this.commandKey,amount:values['amount'],reference:values['reference']});if(!parsed.success){this.error.set('Record a positive payment amount and reference.');return;}path=`/practice/invoices/${encodeURIComponent(id)}/payment`;body=parsed.data;}
+    else if(action==='invoiceVoid') {const parsed=voidInvoiceSchema.safeParse({idempotencyKey:this.commandKey,reason:values['reason']});if(!parsed.success){this.error.set('Provide a reason of at least 10 characters to void this unpaid invoice.');return;}path=`/practice/invoices/${encodeURIComponent(id)}/void`;body=parsed.data;}
+    else if(action==='invoiceReceipt') {path=`/practice/invoices/${encodeURIComponent(id)}/receipt`;body={idempotencyKey:this.commandKey};}
+    else if(action==='taxonomyApprove') {path=`/taxonomies/${encodeURIComponent(id)}/approve`;body={expectedVersion:Number(row['version'])};}
+    else if(action==='mappingApprove') {
+      const importId=String(values['importId']??'').trim();if(!importId)return;
+      path=`/imports/${encodeURIComponent(importId)}/mapping-approval`;
+      void this.run(async generation=>{
+        const batch=record(await this.request(`/imports/${encodeURIComponent(importId)}`));
+        if(generation!==this.generation)return;
+        const parsed=approveMappingSchema.safeParse({taxonomyVersionId:id,expectedVersion:Number(batch['version']),idempotencyKey:this.commandKey});
+        if(!parsed.success){this.error.set('Load the current import and an approved taxonomy before approving mappings.');return;}
+        await this.request(path,'POST',parsed.data);
+        if(generation!==this.generation)return;
+        this.action.set(null);this.selected.set(null);this.message.set('Decision recorded on the engagement.');await this.read(generation);
+      });
+      return;
+    }
     else if (action === 'owner') { path = `/risks/${encodeURIComponent(id)}/owner`; }
     else if (action === 'post' || action === 'reverse') { path = `/adjustments/${encodeURIComponent(id)}/${action}`; body = {expectedVersion:row['version']}; }
     else if (action === 'transition') { path = '/lifecycle'; body = {...values, expectedVersion:row['version'], idempotencyKey:this.commandKey}; }

@@ -2,8 +2,34 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createConnection } from 'node:net';
 import { createInterface } from 'node:readline';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { GenericContainer, Wait } from 'testcontainers';
+import { PostgreSqlContainer } from '@testcontainers/postgresql';
+
+test('concurrent PostgreSQL test runs receive isolated databases and dynamic ports', { timeout: 120_000 }, async () => {
+  const image = 'postgres:18.6@sha256:5a5a84b19854a9ffaa54082c166ff4ec27473a361e496e5ea167f298f2da9722';
+  const start = () => new PostgreSqlContainer(image)
+    .withDatabase('auditsphere_isolation')
+    .withUsername('test_owner')
+    .withPassword(randomBytes(24).toString('hex'))
+    .start();
+  const containers = await Promise.all([start(), start()]);
+
+  try {
+    assert.notEqual(containers[0].getMappedPort(5432), containers[1].getMappedPort(5432), 'parallel database containers must receive isolated host ports');
+    const markers = await Promise.all(containers.map(async (container, index) => {
+      const result = await container.exec([
+        'psql', '-U', 'test_owner', '-d', 'auditsphere_isolation', '-qAt', '-v', 'ON_ERROR_STOP=1', '-c',
+        `CREATE TABLE run_marker (value TEXT NOT NULL); INSERT INTO run_marker VALUES ('parallel-${index}'); SELECT value FROM run_marker;`,
+      ]);
+      assert.equal(result.exitCode, 0, result.output);
+      return result.output.trim().split(/\r?\n/).at(-1);
+    }));
+    assert.deepEqual(markers, ['parallel-0', 'parallel-1']);
+  } finally {
+    await Promise.all(containers.map(container => container.stop()));
+  }
+});
 
 test('isolated queue Redis containers assert the selected version and durable queue settings', { timeout: 60_000 }, async () => {
   const start = () => new GenericContainer('redis:8.10@sha256:6f81e8915c60b065a524e6967e0ad1c639ba6efa84d669f823683ea04d9150ee')

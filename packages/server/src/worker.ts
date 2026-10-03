@@ -7,74 +7,87 @@ import { db } from './platform/db.js';
 import { ensureBucket, retrieve } from './platform/storage.js';
 import { resolveClientRepository } from './platform/repository.js';
 import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
-import { parseTrialBalanceStream, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
-import { importWhere, parseImportJob, parseImportOutboxId } from './modules/fieldwork/import-job.js';
-import { createHash } from 'node:crypto';
+import { createTrialBalanceImportProcessor } from './modules/fieldwork/import-worker.js';
+import { dispatchPendingOutbox } from './platform/outbox.js';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
 import { readConfiguration } from './platform/config.js';
-@Module({ imports: [RuntimeModule] }) class WorkerModule {}
+
+@Module({ imports: [RuntimeModule] })
+class WorkerModule {}
+
 export async function runWorker() {
   readConfiguration();
-  const app = await NestFactory.createApplicationContext(WorkerModule); app.enableShutdownHooks(); await app.get(Readiness).check(); await ensureBucket();
-  const u = new URL(process.env.REDIS_URL!); const connection = { host: u.hostname, port: Number(u.port || 6379), username: u.username ? decodeURIComponent(u.username) : undefined, password: u.password ? decodeURIComponent(u.password) : undefined, ...(u.protocol === 'rediss:' ? { tls: { servername: u.hostname, rejectUnauthorized: true } } : {}) };
+  const app = await NestFactory.createApplicationContext(WorkerModule);
+  app.enableShutdownHooks();
+  await app.get(Readiness).check();
+  await ensureBucket();
+
+  const redis = new URL(process.env.REDIS_URL!);
+  const connection = {
+    host: redis.hostname,
+    port: Number(redis.port || 6379),
+    username: redis.username ? decodeURIComponent(redis.username) : undefined,
+    password: redis.password ? decodeURIComponent(redis.password) : undefined,
+    ...(redis.protocol === 'rediss:' ? { tls: { servername: redis.hostname, rejectUnauthorized: true } } : {}),
+    maxRetriesPerRequest: null,
+  };
   const queue = new Queue('tb-import', { connection });
-  const worker = new Worker('tb-import', async job => {
-    const eventId = parseImportOutboxId(job.id);
-    const event = await db.outboxEvent.findFirst({ where: { id: eventId, type: 'tb.import' } });
-    if (!event?.importId) throw new Error('Scoped trial-balance outbox event not found');
-    const scope = parseImportJob({ importId: event.importId, firmId: event.firmId, clientId: event.clientId, engagementId: event.engagementId });
-    const where = importWhere(scope);
-    const outboxWhere = { id: event.id, type: 'tb.import', firmId: scope.firmId, clientId: scope.clientId, engagementId: scope.engagementId, importId: scope.importId };
-    const batch = await db.tbImport.findFirst({ where });
-    if (!batch) throw new Error('Scoped trial-balance import not found');
-    if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) { await db.outboxEvent.updateMany({ where: outboxWhere, data: { completedAt: new Date() } }); return; }
-    try {
-      const claimed = await db.tbImport.updateMany({ where: { ...where, status: { in: ['QUEUED', 'PARSING', 'FAILED'] } }, data: { status: 'PARSING', error: null } });
-      if (!claimed.count) return;
-      const document = await db.document.findFirst({ where: { id: batch.documentId, engagementId: scope.engagementId } });
-      if (!document) throw new Error('Scoped trial-balance evidence not found');
-      const repository = document.key.startsWith('graph:') ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence') : undefined;
-      const content = await retrieve(document.key, repository);
-      if (createHash('sha256').update(content).digest('hex') !== document.sha256) throw new Error('Evidence hash mismatch');
-      await db.$transaction(async tx => {
-        await tx.$queryRaw`SELECT id FROM "TbImport" WHERE id = ${batch.id}::uuid AND "firmId" = ${scope.firmId}::uuid AND "clientId" = ${scope.clientId}::uuid AND "engagementId" = ${scope.engagementId}::uuid FOR UPDATE`;
-        const latest = await tx.tbImport.findFirst({ where });
-        if (!latest) throw new Error('Scoped trial-balance import not found');
-        if (['MAPPING_REQUIRED', 'FINALIZED'].includes(latest.status)) return;
-        await tx.tbRow.deleteMany({ where: { importId: batch.id } });
-        const rowCount = await writeTrialBalanceChunks(parseTrialBalanceStream(content), async chunk => {
-          await tx.tbRow.createMany({ data: chunk.map(value => ({ ...value, importId: batch.id })) });
-        });
-        await tx.tbImport.updateMany({ where, data: { status: 'MAPPING_REQUIRED', rowCount } });
-        await tx.outboxEvent.updateMany({ where: outboxWhere, data: { completedAt: new Date() } });
-      }, { timeout: 120_000 });
-    } catch (error) {
-      const terminal = job.attemptsMade + 1 >= (job.opts.attempts || 1);
-      await db.$transaction(async tx => {
-        const changed = await tx.tbImport.updateMany({ where: { ...where, status: 'PARSING' }, data: { status: terminal ? 'FAILED' : 'QUEUED', error: error instanceof Error ? error.message.slice(0, 500) : 'Import failed' } });
-        if (terminal && changed.count) await tx.outboxEvent.updateMany({ where: outboxWhere, data: { completedAt: new Date() } });
-      });
-      throw error;
-    }
-  }, { connection, concurrency: 1 });
-  worker.on('failed', (job, error) => console.error('Import failed', job?.id, error.message));
+  const processImport = createTrialBalanceImportProcessor(async (document, batch) => {
+    const repository = document.key.startsWith('graph:')
+      ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence')
+      : undefined;
+    return retrieve(document.key, repository);
+  });
+  const worker = new Worker('tb-import', processImport, { connection, concurrency: 1 });
+  worker.on('failed', job => console.error('Trial-balance worker delivery failed', job?.id));
+
   let publishing = false;
-  const timer = setInterval(async () => {
-    if (publishing) return; publishing = true;
-    try { for (const event of await db.outboxEvent.findMany({ where: { completedAt: null, type: 'tb.import', importId: { not: null } }, orderBy: { createdAt: 'asc' }, take: 100 })) {
-      const scope = parseImportJob({ importId: event.importId, firmId: event.firmId, clientId: event.clientId, engagementId: event.engagementId });
-      const outboxWhere = { id: event.id, type: 'tb.import', firmId: scope.firmId, clientId: scope.clientId, engagementId: scope.engagementId, importId: scope.importId };
-      const batch = await db.tbImport.findFirst({ where: importWhere(scope) });
-      if (!batch || ['FAILED', 'MAPPING_REQUIRED', 'FINALIZED'].includes(batch.status)) { await db.outboxEvent.updateMany({ where: outboxWhere, data: { completedAt: new Date() } }); continue; }
-      if (await queue.getJob(event.id)) continue;
-      await queue.add('parse', { outboxEventId: event.id }, { jobId: event.id, attempts: 3, backoff: { type: 'exponential', delay: 2000 } });
-      await db.outboxEvent.updateMany({ where: outboxWhere, data: { publishedAt: new Date() } });
-    } } catch (error) { console.error('Outbox retry', error); } finally { publishing = false; }
-  }, 1000);
+  const relay = async () => {
+    if (publishing) return;
+    publishing = true;
+    try {
+      const result = await dispatchPendingOutbox(async dispatch => {
+        await queue.add(dispatch.name, dispatch.data, {
+          jobId: dispatch.jobId,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 2_000 },
+          removeOnComplete: true,
+          removeOnFail: true,
+        });
+      });
+      if (result.claimed) console.log('Outbox relay', JSON.stringify(result));
+    } catch {
+      console.error('Outbox relay pass failed; PostgreSQL intent remains available for recovery');
+    } finally {
+      publishing = false;
+    }
+  };
+  const timer = setInterval(() => { void relay(); }, 1_000);
+  void relay();
+
   // Unreferenced uploads are cleaned only after a grace period, and Graph evidence is never deleted.
   const sweepTimer = setInterval(() => {
-    sweepUnreferencedUploads({ olderThanMinutes: 60 }).then((result) => { if (result.scanned) console.log('Upload sweep', JSON.stringify({ scanned: result.scanned, cleaned: result.cleaned, reviewRequired: result.reviewRequired })); }).catch((error) => console.error('Upload sweep', error));
+    sweepUnreferencedUploads({ olderThanMinutes: 60 })
+      .then(result => {
+        if (result.scanned) {
+          console.log('Upload sweep', JSON.stringify({
+            scanned: result.scanned,
+            cleaned: result.cleaned,
+            reviewRequired: result.reviewRequired,
+          }));
+        }
+      })
+      .catch(() => console.error('Upload sweep failed'));
   }, 600_000);
-  const shutdown = async () => { clearInterval(timer); clearInterval(sweepTimer); await worker.close(); await queue.close(); await db.$disconnect(); await app.close(); };
-  process.once('SIGINT', shutdown); process.once('SIGTERM', shutdown);
+
+  const shutdown = async () => {
+    clearInterval(timer);
+    clearInterval(sweepTimer);
+    await worker.close();
+    await queue.close();
+    await db.$disconnect();
+    await app.close();
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 }

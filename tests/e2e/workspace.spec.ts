@@ -10,7 +10,7 @@ test('Practice exposes a firm ledger workspace without granting access from navi
 test('lazy client layout remains unavailable without portal authentication', async ({ page }) => {
   await page.goto('/portal');
   await expect(page.getByRole('heading', { name: 'Client portal' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeDisabled();
+  await expect(page.locator('form').getByRole('button', { name: 'Sign in' })).toBeDisabled();
   await page.keyboard.press('Tab');
   await expect(page.getByRole('link', { name: 'Skip to client portal' })).toBeFocused();
   await page.getByRole('link', { name: 'Return to the internal workspace' }).click();

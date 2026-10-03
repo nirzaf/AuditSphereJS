@@ -1,7 +1,9 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { db } from '../../platform/db.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
+import { withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { assessRiskSchema, assignRiskOwnerSchema, clearRiskSchema, createRiskSchema } from '@auditsphere/contracts';
+import type { PaginationQuery } from '@auditsphere/contracts';
 import { minimumRiskOwnerRank, riskBand, riskBandRuleVersion } from './materiality.js';
 
 /** Staffing ranks used for the band's minimum-owner rule. */
@@ -25,25 +27,31 @@ async function loadEngagement(engagementId: string) {
 
 const currentOrder = [{ assessedAt: 'desc' as const }, { id: 'desc' as const }];
 
-export async function createRisk(actorId: string, engagementId: string, input: unknown) {
+export async function createRisk(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = createRiskSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'RISK_MANAGE', firmScope(engagement));
-  const risk = await db.riskItem.create({ data: { firmId: engagement.firmId, clientId: engagement.clientId, engagementId, title: parsed.data.title, description: parsed.data.description ?? null, createdBy: actorId } });
-  await db.auditEvent.create({ data: { engagementId, actorId, action: 'RISK_CREATED', payload: { riskId: risk.id, title: risk.title } } });
-  return { riskId: risk.id, title: risk.title, currentBand: null, requiresPartnerClearance: false };
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'RISK_MANAGE', firmScope(engagement));
+    const risk = await tx.riskItem.create({ data: { firmId: engagement.firmId, clientId: engagement.clientId, engagementId, title: parsed.data.title, description: parsed.data.description ?? null, createdBy: actorId } });
+    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'RISK_CREATED', payload: { riskId: risk.id, title: risk.title } } });
+    return { riskId: risk.id, title: risk.title, currentBand: null, requiresPartnerClearance: false };
+  });
 }
 
-export async function assessRiskBand(actorId: string, engagementId: string, riskId: string, input: unknown) {
+export async function assessRiskBand(actorId: string, engagementId: string, riskId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = assessRiskSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'RISK_MANAGE', firmScope(engagement));
   const body = parsed.data;
   // The pure rule is the only source of the colour; an invalid score throws before persistence.
   const band = riskBand(body.likelihood, body.magnitude, body.significant, body.fraudRisk);
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'RISK_MANAGE', firmScope(engagement));
     const risk = await tx.riskItem.findFirst({ where: { id: riskId, engagementId } });
     if (!risk) throw new NotFoundException('Risk not found');
     const assessment = await tx.riskBandAssessment.create({ data: { riskId, likelihood: body.likelihood, magnitude: body.magnitude, significant: body.significant, fraudRisk: body.fraudRisk, band, ruleVersion: riskBandRuleVersion, assessedBy: actorId } });
@@ -52,12 +60,14 @@ export async function assessRiskBand(actorId: string, engagementId: string, risk
   });
 }
 
-export async function clearRiskBand(actorId: string, engagementId: string, assessmentId: string, input: unknown) {
+export async function clearRiskBand(actorId: string, engagementId: string, assessmentId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = clearRiskSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'RISK_PARTNER_CLEAR', firmScope(engagement));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'RISK_PARTNER_CLEAR', firmScope(engagement));
     const assessment = await tx.riskBandAssessment.findUnique({ where: { id: assessmentId }, include: { risk: true } });
     if (!assessment || assessment.risk.engagementId !== engagementId) throw new NotFoundException('Risk band assessment not found');
     if (assessment.band !== 'RED') throw new ConflictException('Partner clearance applies only to a red band assessment');
@@ -75,13 +85,15 @@ export async function clearRiskBand(actorId: string, engagementId: string, asses
  * Assigns the response owner, constrained by the assessed band and by clearance of a red band.
  * A user cannot assign a risk to themselves, and an assignment always binds the current assessment.
  */
-export async function assignRiskOwner(actorId: string, engagementId: string, riskId: string, input: unknown) {
+export async function assignRiskOwner(actorId: string, engagementId: string, riskId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = assignRiskOwnerSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'RISK_MANAGE', firmScope(engagement));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'RISK_MANAGE', firmScope(engagement));
     const risk = await tx.riskItem.findFirst({ where: { id: riskId, engagementId } });
     if (!risk) throw new NotFoundException('Risk not found');
     const current = await tx.riskBandAssessment.findFirst({ where: { riskId }, orderBy: currentOrder });
@@ -100,9 +112,9 @@ export async function assignRiskOwner(actorId: string, engagementId: string, ris
   });
 }
 
-export async function currentRisks(engagementId: string) {
+export async function currentRisks(engagementId: string, page: PaginationQuery = { offset: 0, limit: 50 }) {
   await loadEngagement(engagementId);
-  const risks = await db.riskItem.findMany({ where: { engagementId }, orderBy: { createdAt: 'asc' }, include: {
+  const risks = await db.riskItem.findMany({ where: { engagementId }, orderBy: { createdAt: 'asc' }, skip: page.offset, take: page.limit, include: {
     assessments: { orderBy: currentOrder, include: { clearances: true } },
     assignments: { orderBy: [{ assignedAt: 'desc' }, { id: 'desc' }] },
   } });

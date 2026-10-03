@@ -25,6 +25,9 @@ try {
   await client.query('GRANT SELECT, INSERT ON "AuditEvent", "EngagementTransition" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "IdentitySessionRevocation" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "SecurityEvent" TO auditsphere_api, auditsphere_worker');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "CommercialProposal" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT ON "RiskClearance", "EngagementLetterRecord", "EngagementInvoice", "InvoicePayment", "InvoiceReceipt" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "CommercialProposal", "RiskClearance", "EngagementLetterRecord", "EngagementInvoice" TO auditsphere_report, auditsphere_worker');
   await client.query('GRANT SELECT ON "EngagementTransition" TO auditsphere_report');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "RoleGrant" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "PracticeAccount", "PracticePeriod", "PracticeJournal", "PracticeJournalLine" TO auditsphere_api');

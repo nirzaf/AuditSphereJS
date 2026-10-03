@@ -35,3 +35,47 @@ it('requires an audit reason and binds period close and reopen to the loaded ver
   expect(view.message()).toContain('privileged authorization');
   fixture.destroy();
 });
+
+it('explains how to resolve a missing staff identity instead of showing raw authorization JSON', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+    error: { code: 'UNAUTHENTICATED', status: 401, message: { message: 'Internal authentication required', error: 'Unauthorized', statusCode: 401 } },
+  }), { status: 401 })));
+  const fixture = TestBed.createComponent(Practice);
+  fixture.componentRef.setInput('token', 'expired-session');
+  fixture.componentRef.setInput('engagementId', 'engagement-a');
+
+  fixture.componentInstance.refresh();
+  await vi.waitFor(() => expect(fixture.componentInstance.busy()).toBe(false));
+
+  expect(fixture.componentInstance.message()).toContain('sign in again');
+  expect(fixture.componentInstance.message()).toContain('local Entra identity mapping');
+  expect(fixture.nativeElement.textContent).not.toContain('statusCode');
+  expect(fixture.componentInstance.ledger()).toBeNull();
+  fixture.destroy();
+});
+
+it('distinguishes missing engagement assignment from missing firm-wide Practice permission', async () => {
+  const response = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: { message: 'Engagement access denied' } }), { status: 403 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: { message: 'PRACTICE_READ is not granted for this engagement' } }), { status: 403 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ error: { message: 'A firm-wide practice grant is required' } }), { status: 403 }));
+  vi.stubGlobal('fetch', response);
+  const fixture = TestBed.createComponent(Practice);
+  fixture.componentRef.setInput('token', 'active-session');
+  fixture.componentRef.setInput('engagementId', 'engagement-a');
+
+  fixture.componentInstance.refresh();
+  await vi.waitFor(() => expect(fixture.componentInstance.busy()).toBe(false));
+  expect(fixture.componentInstance.message()).toContain('not assigned to this engagement');
+
+  fixture.componentInstance.refresh();
+  await vi.waitFor(() => expect(response).toHaveBeenCalledTimes(2));
+  await vi.waitFor(() => expect(fixture.componentInstance.busy()).toBe(false));
+  expect(fixture.componentInstance.message()).toContain('firm-wide Practice permission');
+
+  fixture.componentInstance.refresh();
+  await vi.waitFor(() => expect(response).toHaveBeenCalledTimes(3));
+  await vi.waitFor(() => expect(fixture.componentInstance.busy()).toBe(false));
+  expect(fixture.componentInstance.message()).toContain('firm-wide Practice permission');
+  fixture.destroy();
+});

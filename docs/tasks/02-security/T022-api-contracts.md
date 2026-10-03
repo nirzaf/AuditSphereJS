@@ -30,7 +30,7 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 ## Scope and implementation boundary
 
-**Allowed areas:** packages/server/src/platform/ relevant capability; packages/contracts/; related tests
+**Allowed areas:** packages/server/src/platform/ relevant capability; packages/contracts/; related tests. Transport-only annotations in the owning API controllers and Angular adapters may be updated to consume the shared schemas and inferred types; do not move domain rules, use cases or owned-record logic into the contract layer.
 
 **Non-goals:** Add the minimum shared mechanism; do not centralize every business rule in a platform service.
 
@@ -44,16 +44,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Put transport enums and request/response schemas in browser-safe contracts; exclude Prisma entities and credential fields.
-- [ ] Use the verified Nest 12 Standard Schema path for Zod or the approved explicit validation pipe if the exact package combination requires it.
-- [ ] Generate OpenAPI and one typed Angular transport surface; do not hand-maintain duplicate DTOs.
-- [ ] Adopt stable error codes, decimal strings, ISO timestamps, pagination limits and expectedVersion for mutation contracts.
+- [x] Put transport enums and request/response schemas in browser-safe contracts; exclude Prisma entities and credential fields.
+- [x] Use the verified Nest 12 Standard Schema path for Zod or the approved explicit validation pipe if the exact package combination requires it.
+- [x] Generate OpenAPI and one typed Angular transport surface; do not hand-maintain duplicate DTOs.
+- [x] Adopt stable error codes, decimal strings, ISO timestamps, pagination limits and expectedVersion for mutation contracts.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Invalid runtime payloads fail even when a TypeScript caller bypasses types.
-- [ ] **AC2:** Contract drift fails CI.
-- [ ] **AC3:** Sensitive persistence fields never appear in response serialization.
+- [x] **AC1:** Invalid runtime payloads fail even when a TypeScript caller bypasses types.
+- [x] **AC2:** Contract drift fails CI.
+- [x] **AC3:** Sensitive persistence fields never appear in response serialization.
 
 Run focused unit plus real-service integration tests for affected contracts, transactions and failure behavior.
 

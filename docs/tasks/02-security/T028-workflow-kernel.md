@@ -2,7 +2,7 @@
 
 | Field | Value |
 | :--- | :--- |
-| Initial status | `NOT_STARTED` |
+| Initial status | `IN_PROGRESS` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `workflow` |
@@ -56,16 +56,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Preserve all 11 named states and the source managerial-review-to-fieldwork rework edge.
-- [ ] Implement explicit commands/guards rather than PATCH state; keep fine-grained workprogram states independent so parallel reviews remain possible.
-- [ ] Add version-bound state history and a lightweight engagement barrier/revision policy for transitions racing child edits.
-- [ ] Return structured unmet-gate reasons; blocked leads remain a recorded outcome rather than disappearing.
+- [x] Preserve all 11 named states and the source managerial-review-to-fieldwork rework edge.
+- [x] Implement explicit commands/guards rather than PATCH state; lifecycle commands remain separate from fine-grained workprogram records so parallel reviews remain possible.
+- [ ] Complete version-bound state history and prove the engagement barrier against the release-versus-child-edit race (the kernel/history checks exist; AC2 race evidence remains open).
+- [x] Return structured unmet-gate reasons; rejected prospects are retained as a reasoned terminal outcome.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Every allowed source transition has a guard test; every unlisted jump is denied.
+- [x] **AC1:** PostgreSQL integration coverage exercises every declared command from every lifecycle source state, validates each gate and successful target or expected evidence blocker, and denies every unlisted jump.
 - [ ] **AC2:** A release transition racing a fieldwork edit cannot approve stale evidence.
-- [ ] **AC3:** No test fixture bypass endpoint is shipped to production.
+- [x] **AC3:** No test fixture bypass endpoint is shipped to production.
 
 Exercise source transitions, denied jumps, stale versions and child-edit/transition races.
 

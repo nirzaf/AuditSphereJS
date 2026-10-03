@@ -1,6 +1,6 @@
 # Phase 03 — Durable jobs, documents and realtime
 
-**12 task files:** T030–T041. All start `NOT_STARTED`.
+**12 task files:** T030–T041. The task files show their initial status; use the [execution ledger](../../guides/13-execution-ledger.md) for current status.
 
 [Pack home](../../README.md) · [Complete dependency order](../../guides/01-execution-order.md) · [Execution ledger](../../guides/13-execution-ledger.md)
 
@@ -10,7 +10,7 @@ Implement one file at a time and use its direct prerequisites. Required gates mu
 | :--- | :--- | :--- | :--- |
 | T030 | [Implement a durable outbox with operation reconciliation](T030-outbox.md) | CORE | T027, T025 |
 | T031 | [Configure BullMQ workers for reliable retries and shutdown](T031-queue-runtime.md) | CORE | T030, T013 |
-| T032 | [Implement private object storage and immutable document versions](T032-storage-metadata.md) | CORE | T018, T024, T006 |
+| T032 | [Implement private SharePoint/OneDrive storage and immutable document versions](T032-storage-metadata.md) | CORE | T018, T024, T006 |
 | T033 | [Implement bounded upload initiation and finalize-time authorization](T033-upload-pipeline.md) | CORE | T032, T021, T029 |
 | T034 | [Implement scoped document downloads and delivery receipts](T034-downloads.md) | CORE | T032, T021 |
 | T035 | [Prove a constrained HTML-to-PDF worker on the target image](T035-pdf-runtime.md) | CORE | T031, T032, T004 |

@@ -59,11 +59,18 @@ test('per-client repository bindings resolve per purpose and document versions a
       await assert.rejects(db.document.create({ data: { engagementId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', key: 'repository/orphan.csv', sha256: 'c'.repeat(64), filename: 'orphan.csv' } }), /Document_engagementId_fkey|foreign key/i);
       await assert.rejects(db.tbImport.create({ data: { firmId, clientId: clientA, engagementId, documentId: otherDocumentId, sha256: 'd'.repeat(64) } }), /TbImport_document_scope_fkey/);
       await assert.rejects(db.storedObject.create({ data: { engagementId, documentId: otherDocumentId, key: 'repository/cross-engagement-object', reference: 'cross-engagement-test', sha256: 'e'.repeat(64), status: 'REFERENCED', resolvedAt: new Date() } }), /StoredObject_document_scope_fkey/);
-      await db.documentVersion.create({ data: { documentId, provider: 'graph', driveId: 'driveA', itemId: 'item-1', versionId: '1.0', eTag: 'etag-1', sha256: 'a'.repeat(64), sizeBytes: 5, createdBy: actorId } });
+      const firstReference = `graph:${Buffer.from(JSON.stringify({ driveId: 'driveA', itemId: 'item-1', versionId: '1.0', eTag: 'etag-1', sha256: 'a'.repeat(64), sizeBytes: 5 })).toString('base64url')}`;
+      await db.documentVersion.create({ data: { engagementId, documentId, sequence: 1, provider: 'graph', storageReference: firstReference, driveId: 'driveA', itemId: 'item-1', versionId: '1.0', eTag: 'etag-1', sha256: 'a'.repeat(64), sizeBytes: 5, createdBy: actorId } });
       assert.equal(await db.documentVersion.count({ where: { documentId } }), 1);
+      const otherReference = `graph:${Buffer.from(JSON.stringify({ driveId: 'driveB', itemId: 'item-2', versionId: '1.0', eTag: 'etag-2', sha256: 'b'.repeat(64), sizeBytes: 5 })).toString('base64url')}`;
+      const otherVersion = await db.documentVersion.create({ data: { engagementId: otherEngagementId, documentId: otherDocumentId, sequence: 1, provider: 'graph', storageReference: otherReference, driveId: 'driveB', itemId: 'item-2', versionId: '1.0', eTag: 'etag-2', sha256: 'b'.repeat(64), sizeBytes: 5, createdBy: actorId } });
+      await assert.rejects(db.tbImport.create({ data: { firmId, clientId: clientA, engagementId, documentId, documentVersionId: otherVersion.id, sha256: 'f'.repeat(64) } }), /TbImport_document_version_scope_fkey/);
       await assert.rejects(db.$executeRaw`UPDATE "DocumentVersion" SET "versionId" = '9.9' WHERE "documentId" = ${documentId}::uuid`, /append-only/);
       await assert.rejects(db.$executeRaw`DELETE FROM "DocumentVersion" WHERE "documentId" = ${documentId}::uuid`, /append-only/);
-      await assert.rejects(db.$executeRaw`INSERT INTO "DocumentVersion" (id,"documentId",provider,"driveId","itemId","versionId","eTag",sha256,"sizeBytes","createdBy") VALUES (gen_random_uuid(), ${documentId}::uuid, 'graph', 'd', 'i', '2.0', 'e', 'not-a-hash', 1, ${actorId}::uuid)`, /document_version_sha256_check/);
+      const invalidDocumentId = '0a0a0a0a-0a0a-40a0-80a0-0a0a0a0a0a0a';
+      await db.document.create({ data: { id: invalidDocumentId, engagementId, key: 'repository/invalid.csv', sha256: 'c'.repeat(64), filename: 'invalid.csv' } });
+      const invalidReference = `graph:${Buffer.from(JSON.stringify({ driveId: 'driveA', itemId: 'item-invalid', versionId: '1.0', eTag: 'etag-invalid', sha256: 'c'.repeat(64), sizeBytes: 1 })).toString('base64url')}`;
+      await assert.rejects(db.$executeRaw`INSERT INTO "DocumentVersion" (id,"engagementId","documentId","sequence",provider,"storageReference","driveId","itemId","versionId","eTag",sha256,"sizeBytes","createdBy") VALUES (gen_random_uuid(), ${engagementId}::uuid, ${invalidDocumentId}::uuid, 1, 'graph', ${invalidReference}, 'd', 'i', '2.0', 'e', 'not-a-hash', 1, ${actorId}::uuid)`, /document_version_sha256_check/);
       await assert.rejects(db.$executeRaw`INSERT INTO "ClientRepository" (id,"firmId","clientId",purpose,provider,"driveId","folderId") VALUES (gen_random_uuid(), ${firmId}::uuid, ${clientC}::uuid, 'index', 'graph', 'd', 'f')`, /client_repository_purpose_check/);
 
       console.log('client repositories isolated per purpose and document versions append-only');

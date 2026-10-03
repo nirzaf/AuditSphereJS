@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_REVIEW` — implementation, PostgreSQL 18.6 integration recipe (`pnpm verify:task -- T025`) and handoff complete; independent review pending |
+| Current status | `DONE` — implementation, PostgreSQL 18.6 task verifier, affected checks and Codex review completed 2026-10-03 |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `audit` |

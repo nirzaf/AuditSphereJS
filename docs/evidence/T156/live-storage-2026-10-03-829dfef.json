@@ -1,0 +1,41 @@
+{
+  "testedCommit": "829dfef871315a48cdb29fa0610103bcbc9ad1a6",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156",
+  "provider": "Microsoft Graph live nonproduction tenant",
+  "runId": "70341f81-6387-495f-ae7f-830f7bb09d48",
+  "testsPassed": 2,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "results": [
+    {
+      "provider": "SHAREPOINT",
+      "checkedAtUtc": "2026-10-02T22:25:13.423Z",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 131,
+      "sha256": "95b0249d496365ea1b2fd08fb77e2d1acfb3249d1a02d3c53e2467d006b7aad7",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "35aa512a5cfaef57f83d271e9a30d3bfaa30e4da0b62725592e3ee9efa1f2a3d",
+      "outsideFolderWriteStatus": 403,
+      "deletedAcceptedVersionOutcome": "READ_FAILS_CLOSED",
+      "syntheticFixtureDeleted": true
+    },
+    {
+      "provider": "ONEDRIVE",
+      "checkedAtUtc": "2026-10-02T22:25:21.537Z",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 129,
+      "sha256": "69eb05f621188c22bec854b572d1ab5d10bc429338b00356ea3c6aa4c145e678",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "bbe98641d78dcfb1321bb51196255ae20d0096b9612dc296d2ca6f7513e55913",
+      "outsideFolderWriteStatus": 403,
+      "deletedAcceptedVersionOutcome": "READ_FAILS_CLOSED",
+      "syntheticFixtureDeleted": true
+    }
+  ],
+  "limitations": [
+    "Does not establish Entra SPA sign-in or local business authorization.",
+    "Token expiry, consent revocation/recovery, throttling and ambiguous provider outcomes remain untested.",
+    "Does not establish legal retention, legal hold, records policy or archive sealing.",
+    "No tenant settings, permissions, credentials, production folders or application deployment were changed."
+  ]
+}

@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_PROGRESS` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `identity` |
@@ -52,7 +52,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Add MSAL redirect sign-out and clear app-held token, identity, records and unsaved drafts even if Microsoft logout cannot be confirmed. Access-token expiry is enforced by token validation and silent renewal.
 - [x] Persist an append-only self-revocation cutoff and reject previously issued Entra API tokens on every authenticated request; the static development credential cannot invoke this endpoint.
 - [x] Provide an authenticated engagement selector backed by current PostgreSQL membership and `ENGAGEMENT_READ` grants; hide business workspaces until the user explicitly selects a returned engagement.
-- [ ] Complete interactive Entra SPA acceptance; no live SPA sign-in acceptance is claimed.
+- [x] Complete interactive Entra SPA acceptance and browser-initiated self-revocation with the mapped nonproduction Staff Fixture and one scoped `ENGAGEMENT_READ` grant; see the dated T019 handoff.
 
 ## Acceptance criteria and required tests
 
@@ -81,6 +81,6 @@ Before that script exists, record the actual available compile/test/review comma
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
-Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior and authorized engagement discovery. The Angular workspace hides protected business views while signed out or unassigned. T018 ownership prerequisites are complete. On 2026-10-03, a dedicated Staff Fixture identity was mapped to a single synthetic `LEAD_INGESTION` engagement with one `ENGAGEMENT_READ` grant. Live SPA acceptance is still pending the account owner's password/MFA completion and verification of the returned identity and engagement selector; browser-initiated revocation acceptance also remains open.
+Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior and authorized engagement discovery. The Angular workspace hides protected business views while signed out or unassigned. T018 ownership prerequisites are complete. On 2026-10-03, the mapped Staff Fixture completed interactive sign-in, selected its single synthetic `LEAD_INGESTION` engagement, loaded scoped reads, and signed out through the app's server-side revocation flow. T019 is `DONE`; wider Microsoft 365 and downstream workflow acceptance remain separate.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

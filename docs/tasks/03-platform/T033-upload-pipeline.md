@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_PROGRESS` |
 | Execution class | `CORE` |
 | Phase | 03-platform — Durable jobs, documents and realtime |
 | Owner area | `documents` |
@@ -47,16 +48,19 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Create short-lived authorized upload sessions bound to user, engagement, category and maximum size.
-- [ ] Stream through Fastify multipart or issue a constrained storage upload; check actual byte size/type/hash before attaching it.
-- [ ] Recheck portal access, workflow state and source version during finalize, not only before issuing a URL.
-- [ ] Abandon/reap uncommitted staging objects; reject macros/encrypted unsupported workbooks and executable content under the approved file policy.
+- [x] Create short-lived internal-staff upload sessions bound to user, engagement, category and maximum size.
+- [x] Stream through Fastify multipart to the server-side provider adapter; keep Graph credentials and any preauthenticated upload URL inside the server boundary. Check actual byte size/type/hash before attaching it. Fastify bytes stream through a bounded validator into a private mode-0600 temporary file, then stream from disk to the provider; no full-file Buffer is assembled.
+- [ ] Recheck portal access, workflow state and source version during finalize, not only before issuing a URL. Internal staff authorization, engagement state, immutable object reference and digest are rechecked; the portal/PBC identity and source-version boundary is owned by the not-yet-implemented PBC flow.
+- [x] Abandon/reap uncommitted staging objects after a grace period. Persisted cleanup claims serialize sweepers with finalization, recover stale claims, and verify Graph folder, generated name, current version, etag, size and digest before recycle-bin deletion.
+- [ ] Complete hostile-file inspection under the approved file policy. The endpoint allows PDF/CSV only and rejects unsupported macro-enabled workbook MIME before session creation; encrypted PDFs, active content and document malware scanning remain unverified.
 
 ## Acceptance criteria and required tests
 
 - [ ] **AC1:** An upload started before portal freeze cannot become new attached evidence after freeze.
 - [ ] **AC2:** Spoofed MIME, oversized payload and cross-client upload completion fail.
-- [ ] **AC3:** Interrupted upload leaves no falsely approved document record.
+- [x] **AC3:** An initiated/interrupted transfer remains unfinalized and creates no document/version record; PostgreSQL integration test asserts this.
+
+AC1 remains open: finalization rechecks internal staff authorization and engagement state, but the portal/PBC workflow and client upload freeze are not implemented. AC2 is partial: tests cover unsupported XLSM MIME, PDF MIME spoofing, declared/actual size mismatch, nonmember access and bounded multipart limits; cross-client portal completion needs its owning PBC model.
 
 Test real/emulated storage behavior, boundary failures and immutable hash/version references; provider-specific assurance requires real-provider evidence.
 

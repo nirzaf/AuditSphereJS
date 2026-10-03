@@ -36,6 +36,9 @@ test('audit chains serialize concurrent writes, roll back, and detect event/chec
       }), /rollback/);
       assert.deepEqual(await captureAuditCheckpoint(engagementId), checkpoint);
       assert.equal((await verifyAuditChain(engagementId, { ...checkpoint, digest: 'f'.repeat(64) })).valid, false);
+      const sourceEventBeforeCheckpointMismatch = await db.auditEvent.findFirstOrThrow({ where: { engagementId, action: 'EVENT_0' }, select: { payload: true } });
+      assert.equal((await verifyAuditChain(engagementId, { ...checkpoint, digest: 'e'.repeat(64) })).valid, false, 'an independent checkpoint mismatch is surfaced');
+      assert.deepEqual(await db.auditEvent.findFirstOrThrow({ where: { engagementId, action: 'EVENT_0' }, select: { payload: true } }), sourceEventBeforeCheckpointMismatch, 'checkpoint verification does not modify source events');
       await db.auditEvent.create({ data: { engagementId, actorId, action: 'AFTER_CHECKPOINT', payload: {} } });
       assert.equal((await verifyAuditChain(engagementId, checkpoint)).valid, true, 'independent historical checkpoints remain verifiable');
 

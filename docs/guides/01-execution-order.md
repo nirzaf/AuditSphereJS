@@ -64,7 +64,7 @@ T149–T156 are optional Microsoft 365 capabilities. If Microsoft is chosen for 
 | :--- | :--- | :--- | :--- |
 | T030 | [Implement a durable outbox with operation reconciliation](../tasks/03-platform/T030-outbox.md) | CORE | T027, T025 |
 | T031 | [Configure BullMQ workers for reliable retries and shutdown](../tasks/03-platform/T031-queue-runtime.md) | CORE | T030, T013 |
-| T032 | [Implement private object storage and immutable document versions](../tasks/03-platform/T032-storage-metadata.md) | CORE | T018, T024, T006 |
+| T032 | [Implement private SharePoint/OneDrive storage and immutable document versions](../tasks/03-platform/T032-storage-metadata.md) | CORE | T018, T024, T006 |
 | T033 | [Implement bounded upload initiation and finalize-time authorization](../tasks/03-platform/T033-upload-pipeline.md) | CORE | T032, T021, T029 |
 | T034 | [Implement scoped document downloads and delivery receipts](../tasks/03-platform/T034-downloads.md) | CORE | T032, T021 |
 | T035 | [Prove a constrained HTML-to-PDF worker on the target image](../tasks/03-platform/T035-pdf-runtime.md) | CORE | T031, T032, T004 |

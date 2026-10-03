@@ -1,0 +1,46 @@
+{
+  "testedCommit": "c43810b5b4fdb0a3599d5a6fae46bbb4f8a850f4",
+  "workingTreeWasDirty": true,
+  "sourceSha256": {
+    "packages/server/src/platform/graph-storage.ts": "07836e3f8cf11a911bd12986f20e81950509ad25c43fa8cb3b7f75059caadb9c",
+    "tests/live/m365-storage.acceptance.ts": "0c4aa941bea6d8507849d947f3473c0588b7b59b6713375a2007302c67be85a6"
+  },
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156",
+  "provider": "Microsoft Graph live nonproduction tenant",
+  "runId": "f6f0f539-941e-4bbf-b21e-db6e10344380",
+  "checkedAtUtc": "2026-10-03T18:25:53.124Z",
+  "testsPassed": 2,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "results": [
+    {
+      "provider": "SHAREPOINT",
+      "checkedAtUtc": "2026-10-03T18:25:44.232Z",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 131,
+      "sha256": "8031e07aae889891d4bb1965d25d17459826bc0ed1983c38d1e2cf4564944881",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "0c422ba460328cc7d757dac636f25cbd6c2bad3078133e79824d58b810bf1ea9",
+      "outsideFolderWriteStatus": 403,
+      "deletedAcceptedVersionOutcome": "READ_FAILS_CLOSED",
+      "syntheticFixtureDeleted": true
+    },
+    {
+      "provider": "ONEDRIVE",
+      "checkedAtUtc": "2026-10-03T18:25:53.124Z",
+      "result": "ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 129,
+      "sha256": "570e5ae75d40c90bc15faa557b94ef84ae6ac3f75792176be411176aa7750803",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "cce0b65d74ced8bd9af7065db46294ebc48b66281d5830d196655b39ce2aaa90",
+      "outsideFolderWriteStatus": 403,
+      "deletedAcceptedVersionOutcome": "READ_FAILS_CLOSED",
+      "syntheticFixtureDeleted": true
+    }
+  ],
+  "limitations": [
+    "Covers the enabled SharePoint/OneDrive storage subset only, not full optional T156 acceptance.",
+    "Does not establish consent revocation/recovery, throttling, unknown outcomes, legal retention, legal hold or production readiness.",
+    "No tenant settings, permissions, credentials, production folders or application deployment were changed."
+  ]
+}

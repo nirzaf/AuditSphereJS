@@ -1,13 +1,12 @@
 import { Redis } from 'ioredis';
 import { randomUUID } from 'node:crypto';
 import { ConflictException, BadRequestException } from '@nestjs/common';
-import { z } from 'zod';
+import { editLeaseSchema } from '@auditsphere/contracts';
 const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true, maxRetriesPerRequest: 1 });
 redis.on('error', error => console.error('Redis lease coordination unavailable:', error.message));
-const schema = z.discriminatedUnion('action', [z.object({ action: z.literal('acquire') }), z.object({ action: z.enum(['renew','release']), token: z.uuid() })]);
 // These leases improve collaboration only. PostgreSQL version checks remain mandatory.
 export async function editLease(resourceId: string, actorId: string, body: unknown) {
-  const parsed = schema.safeParse(body); if (!parsed.success) throw new BadRequestException(parsed.error.issues);
+  const parsed = editLeaseSchema.safeParse(body); if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const key = `audit:edit:tb:${resourceId}`;
   if (parsed.data.action === 'acquire') {
     const token = randomUUID();

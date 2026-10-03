@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `security` |
@@ -45,16 +46,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Apply reviewed origin allowlists, secure cookie settings, CSRF checks for cookie-auth routes and bounded bearer-token audiences.
-- [ ] Configure trusted proxy hops explicitly and avoid trusting arbitrary forwarded headers.
-- [ ] Rate-limit login/invites, uploads and expensive endpoints with separate policies.
-- [ ] Reject unsafe content types and unbounded filters/sorts; create an error-redaction regression suite.
+- [x] Apply reviewed origin allowlists, secure cookie settings, CSRF checks for cookie-auth routes and bounded bearer-token audiences.
+- [x] Configure trusted proxy hops explicitly and avoid trusting arbitrary forwarded headers.
+- [x] Rate-limit login/invites, uploads and expensive endpoints with separate policies.
+- [x] Reject unsafe content types and unbounded filters/sorts; create an error-redaction regression suite.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Cross-origin state-changing portal requests fail without valid CSRF/origin evidence.
-- [ ] **AC2:** Spoofed forwarded IP headers cannot bypass throttles.
-- [ ] **AC3:** Auth failures do not reveal account existence or secrets.
+- [x] **AC1:** Cross-origin state-changing portal requests fail without valid CSRF/origin evidence.
+- [x] **AC2:** Spoofed forwarded IP headers cannot bypass throttles.
+- [x] **AC3:** Auth failures do not reveal account existence or secrets.
 
 Run negative API/browser/file fixtures, scope checks and secret-redaction assertions with the tested artifact.
 

@@ -100,3 +100,101 @@
 - Using the built-in browser, clicked through all 37 Commercial, Governance, Fieldwork, Reporting and Practice screens. Every screen resolved to its expected module/view route. Since the Staff Fixture has not completed interactive sign-in, each protected screen remained at the staff identity gate; no engagement records or mutation controls were exposed.
 - The Microsoft sign-in tab remains on the password prompt for the dedicated Staff Fixture. The account owner must enter the password and complete any MFA. No credential or token was entered or recorded by the test operator. The authenticated `/api/v1/me` identity, assigned engagement selector, read-only data views and denied-mutation behavior remain unverified in the browser.
 - This is route/access-gate smoke evidence only. It does not complete T019 or establish live SPA acceptance; browser-initiated session revocation remains open as well.
+
+## Authenticated staff browser acceptance — 2026-10-03
+
+- The earlier sign-in returned to the app without an active account because the SPA processed the MSAL redirect from the workspace component after Angular startup. Redirect handling now runs through `provideAppInitializer` before initial routing. The API app manifest was inspected read-only and already specifies `requestedAccessTokenVersion: 2`, matching the server's v2 issuer validation; no Entra app setting, permission or consent was changed.
+- Local authentication initially failed because the runtime PostgreSQL role lacked access to the `IdentitySessionRevocation` table. Applied the outstanding reviewed migration `202610020022_commercial_onboarding` with `pnpm db:migrate`, then ran `pnpm db:roles` to provision the existing least-privilege grant. The API role can now query the table; it contained zero revocations. No application data was modified by the browser test.
+- Using the built-in browser, selected the dedicated Staff Fixture account. The SPA returned to the workspace showing the mapped PREPARER identity and exactly one authorized engagement: Synthetic Browser Acceptance Client / Synthetic Browser Acceptance Engagement. The selector was produced by `/api/v1/me/engagements`; no token or authorization response was inspected or recorded.
+- Selected the synthetic engagement and exercised real read paths: Trial Balance imports loaded successfully with zero imports; Governance Materiality and Reporting Review Notes each loaded zero engagement records; Commercial Quotes & Proposals loaded zero proposals. No upload, approval, posting or other business mutation was submitted.
+- Further read-only browser checks found zero Risk records, zero taxonomy versions and zero adjustment journals; lifecycle history was empty and the server reported the authoritative stage `LEAD_INGESTION` with `OPEN_PROPOSAL` as the available next command. Published balances reported no accepted balance version. Audit integrity returned one record marked `Valid: Yes`, with read-only review. The transition review button was not submitted.
+- Practice `GET` was correctly denied because this account has no firm-wide Practice grant and showed no ledger data. The observed server error text did not match the UI's previous capability-specific error pattern; the Practice screen now explains the required firm-wide permission. No Practice grant was added.
+- Verification on 2026-10-03: `pnpm verify:task -- T019` passed (3 focused PostgreSQL/Fastify checks); `pnpm verify:affected` passed (boundaries, typecheck, production builds, 82/82 Vitest tests); Angular CLI MCP `web:test` passed 48/48; Angular CLI MCP `web:build` passed. The Practice denial-message regression is included in the 48 Angular tests.
+- The live SPA identity, engagement selector and read-only route checks are accepted for this nonproduction Staff Fixture. T019 remains `IN_PROGRESS` while browser-initiated session-revocation acceptance is open; that endpoint was not invoked because it revokes the mapped user's previously issued API tokens. No tenant permissions, app registrations, Graph grants, SharePoint data or client records changed.
+
+## Browser-initiated session revocation closure — 2026-10-03
+
+### Identity and outcome
+
+- Task: T019; requirements R003–R005.
+- Outcome: app sign-out now calls the protected `POST /api/v1/me/revoke-sessions` with the current Entra access token before clearing SPA identity, engagement data and drafts, then starts MSAL logout. If server revocation fails, local state still clears and the UI reports the failure. The cutoff applies to AuditSphere API tokens issued before it; it does not revoke the Microsoft account or global refresh-token session.
+
+### Files and contracts
+
+- `apps/web/src/identity.ts`: added the self-revocation request through the existing Entra token adapter.
+- `apps/web/src/workspace.ts`: calls revocation before local cleanup and MSAL logout; success and failure are reported distinctly.
+- `apps/web/src/identity.spec.ts` and `apps/web/src/workspace-auth.spec.ts`: cover bearer request shape, denied API response, ordering, local cleanup and the unconfirmed-revocation path.
+- `docs/tasks/02-security/T019-internal-auth.md`, `docs/guides/13-execution-ledger.md`, `docs/evidence/UI-MODULES.md`, `docs/IMPLEMENTATION-STATUS.md` and `docs/microsoft365/`: record the acceptance. No schema, API contract, dependency or tenant permission changed.
+
+### Executed verification
+
+| Command / test | Tested artifact and fixture | Actual result / exit status | Evidence |
+| :--- | :--- | :--- | :--- |
+| Angular CLI MCP `run_target web:test` via `node scripts/angular-mcp.mjs` | Angular 22 SPA and auth specs | Passed: 7 files, 51 tests | Run output, 2026-10-03 |
+| Angular CLI MCP `run_target web:build` via `node scripts/angular-mcp.mjs` | Angular 22 application build | Passed; output at `dist/web` | Run output, 2026-10-03 |
+| `pnpm verify:task -- T019` | Entra validation plus PostgreSQL session cutoff, identity mapping and Fastify boundary | Passed; all recorded focused checks passed | Run output, 2026-10-03 |
+| `pnpm verify:affected` | Import boundaries, server/test typechecks, Angular build, Vitest | Passed: 18 files, 82 tests | Run output, 2026-10-03 |
+| `pnpm lint` | ESLint and module/browser boundaries | Passed; four existing unused-disable warnings in untouched `visual-prototype-simulation/worker/worker-configuration.d.ts` | Run output, 2026-10-03 |
+| `git diff --check` | Current working tree | Passed with no whitespace errors | Run output, 2026-10-03 |
+| Built-in browser Staff Fixture sign-out | Mapped nonproduction PREPARER and synthetic engagement | Returned to the signed-out workspace; local aggregate check found exactly one `IdentitySessionRevocation` row for the fixture | Browser and PostgreSQL, 2026-10-03 |
+
+### Acceptance and boundaries
+
+- AC1–AC4 are covered by the existing Entra and PostgreSQL/Fastify tests recorded above; the real PostgreSQL cutoff test rejects prior tokens and accepts tokens issued after the cutoff.
+- Live browser sign-in, scoped engagement discovery, Trial Balance import read, Materiality read, lifecycle state read, Proposal read, Review Notes read and Audit Integrity verification succeeded. The Workprograms preparation form's repeating step was added and removed without submission or persistence. Practice ledger returned its expected denial because the fixture has no firm-wide Practice grant.
+- No CSV, proposal, lifecycle command, approval, journal, payment or client record was created. No Entra registration, tenant permission, Graph grant, SharePoint/OneDrive content or credential changed. The only database write from the browser closure was the intended append-only revocation record for the mapped test user.
+- No package, migration or runtime contract was added. Failure to record the cutoff remains visible while local state is cleared.
+
+### Review and next task
+
+- Status: DONE after the recorded task checks and live browser acceptance.
+- Open blockers for T019: none. Broader Microsoft 365 expiry, throttling, storage and provider acceptance remain under T156 and are not implied by this task.
+- Next eligible dependency task: T021, subject to its own acceptance matrix and verification recipe.
+
+## Local database migration follow-up — 2026-10-03
+
+- The Fieldwork workspace screenshot showed the signed-in Staff Fixture account could not load assigned engagements and displayed an internal server error. The local database was missing the additive staff-authority/team-assignment migrations needed by the current membership and grant query. Applied the pending migrations with `pnpm db:migrate`; `pnpm exec prisma migrate status` now reports all 43 migrations applied.
+- Read-only query through `readableInternalEngagements` now returns exactly one assigned synthetic engagement for `auditp0-staff@easyguide.onmicrosoft.com`, with one active membership and one active `ENGAGEMENT_READ` grant.
+- `pnpm verify:task -- T019` passes the Entra session, identity mapping and Fastify identity-boundary checks. The development API and Angular server are running; `GET /health/live` returns `ok` and `GET /` returns HTTP 200.
+- This follow-up did not inspect or reuse the browser's bearer token and does not claim a post-migration visual browser confirmation. No tenant permissions or business records were changed.
+
+## Cached Entra token retry follow-up — 2026-10-03
+
+- Outcome: authenticated SPA requests now perform one retry after HTTP 401 using MSAL silent acquisition with `forceRefresh: true`, retaining the active account and configured API scopes. This lets a newly signed-in session recover when MSAL initially returns a cached token invalidated by the app-level revocation cutoff. A second 401 still fails closed and produces guidance to verify the designated staff account and immutable local Entra mapping.
+- Updated paths: `apps/web/src/api-client.ts`, `identity.ts`, `workspace.ts`, `module-workspace.ts`, `practice.ts`; regression coverage in `api-client.spec.ts`, `identity.spec.ts` and `practice.spec.ts`; Microsoft 365 setup, tenant and troubleshooting guides.
+- Identity boundary check: local Staff Fixture remains active as `PREPARER`, tenant-matched, with one membership and one scoped `ENGAGEMENT_READ` grant. Its stored cutoff is from 2026-10-03 02:37 UTC and predates the current check. `/health/ready` and `/api/v1/identity/config` return successfully. No bearer token was read or recorded and no account authority was expanded.
+- Verification: Angular CLI MCP `web:test` passed 58/58; Angular CLI MCP `web:build` passed to `dist/web`; `pnpm verify:affected` passed (boundaries, server and test typechecks, Angular build and 84/84 Vitest tests).
+- Browser state: the built-in localhost tab was reloaded and showed the signed-out gate. Post-change Entra token acceptance is pending the user completing sign-in as `auditp0-staff@easyguide.onmicrosoft.com`; the user's password/MFA remain user-operated. This is not a new claim of live identity acceptance.
+
+## Identity-boundary verification environment correction — 2026-10-03
+
+- The T019 Fastify boundary fixture now sets `AUTH_PROVIDER=development` explicitly alongside its one-test-only development token. Before this correction, the local `.env` could select `entra`, making the integration fixture send a development token through the Entra verifier and fail with 401 before exercising `/me` or `/me/engagements`.
+- `pnpm verify:task -- T019` passed after the correction, including the PostgreSQL identity-mapping, session-revocation and Fastify identity-boundary checks. `pnpm verify:affected` passed (boundaries, server/test typechecks, Angular build and 84 Vitest tests); `pnpm lint` passed with four existing unused-disable warnings in the untouched visual prototype declarations; `git diff --check` passed.
+- The built-in browser currently shows the signed-out gate. The Staff Fixture's live post-change Entra sign-in remains unverified until the user completes the Microsoft sign-in; no bearer token was inspected or recorded.
+
+## Live Staff Fixture identity recheck — 2026-10-03
+
+- From the signed-out app, the Microsoft account picker offered the existing Staff Fixture. Selecting it returned to the SPA with the active internal identity label and authorized-engagement selector populated.
+- The selector contained the one synthetic Browser Acceptance engagement. Selecting it moved the app into that engagement; no identity-mapping error appeared.
+- The Practice workspace then displayed the existing firm-wide Practice permission requirement. No Practice grant was added and no ledger data was loaded.
+- A read-only PostgreSQL check confirmed the Staff Fixture is active with role PREPARER, its immutable Entra object ID is mapped under the API's configured tenant, and it has one membership and one current scoped ENGAGEMENT_READ grant.
+- This verifies the fresh sign-in and mapping path. The browser started signed out, so it does not exercise the expired cached-token/forced-refresh branch. The user's password, MFA and token contents were not inspected. Client X remains unmapped as an internal staff identity.
+
+## Assignment error and browser state recheck — 2026-10-03
+
+- The active Staff Fixture remains mapped to the configured Entra tenant as an active PREPARER with one membership and one current scoped `ENGAGEMENT_READ` grant. A read-only query through the API's Prisma runtime connection returned exactly the synthetic Browser Acceptance engagement.
+- `GET /health/ready`, `GET /api/v1/identity/config`, and the same identity configuration through the Angular `/api` proxy returned HTTP 200. `pnpm verify:task -- T019` passed the Entra validation, session cutoff, identity mapping and Fastify identity/assignment boundary checks.
+- In the built-in browser, the older open tab retained an identity-configuration failure screen; a fresh tab loaded the correct Entra sign-in gate without that API error. The fresh tab has its own MSAL session and is awaiting user-operated sign-in as `auditp0-staff@easyguide.onmicrosoft.com`; no password, MFA or access token was handled. No new post-sign-in visual acceptance is claimed.
+- The reported assignment 500 did not reproduce in the PostgreSQL-backed Fastify route test or the direct runtime query. Refresh the older tab, then select the Staff Fixture account. If a fresh staff sign-in still returns an error, capture the displayed HTTP status/correlation ID and check the API log without copying a bearer token.
+## API error reference visibility — 2026-10-03
+
+- Browser API failures now retain the server `correlationId` as a safe reference. Generic assignment failures display it, and the actionable 401 identity message includes it when the server supplies one; bearer tokens and request bodies remain hidden.
+- Verification after this change: Angular CLI MCP `web:test` 9 files / 61 tests; `web:build` passed; `pnpm verify:task -- T019` passed all recorded Entra and Fastify identity checks; `pnpm verify:affected` passed (21 Vitest files / 93 tests); `pnpm lint` passed with the same four unrelated warnings; `git diff --check` passed.
+- Current browser state is the fresh Fieldwork Trial Balance sign-in gate, which has loaded identity configuration successfully. A new-tab Entra roundtrip is not claimed until the user completes sign-in.
+
+## Cached staff identity restoration gate — 2026-10-03
+
+- Reproduced a refresh timing issue in the built-in browser: the mapped Staff Fixture was briefly rendered as signed out while MSAL was restoring its cached account; a subsequent observation confirmed the same account and its scoped synthetic engagement. This was a presentation race, not a missing local identity mapping or grant.
+- The workspace now holds its sign-in control and protected screens behind an explicit `sessionRestoring` signal until `/api/v1/me` confirms the cached account. A regression test holds restoration pending and verifies the sign-in action stays hidden, then confirms the mapped user appears after resolution.
+- Verification: Angular tests passed (10 files / 66 tests), Angular production build passed, `pnpm verify:task -- T019` passed its Entra/session, PostgreSQL identity-mapping, and Fastify identity-boundary checks, and `pnpm verify:affected` passed (boundaries, server/test typechecks, Angular build, 22 Vitest files / 97 tests). Targeted ESLint passed. `git diff --check` returned 0; Git printed only existing LF-to-CRLF working-copy notices.
+- After a page refresh in the built-in browser, `auditp0-staff@easyguide.onmicrosoft.com` was restored, and the one assigned Synthetic Browser Acceptance engagement appeared. The Practice screen continued to request its separate firm-wide Practice permission, as intended. No user, membership, grant, tenant permission, or business record was changed.

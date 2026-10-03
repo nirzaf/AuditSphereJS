@@ -1,6 +1,7 @@
 import { Component, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { authenticatedFetch } from './api-client';
 import { currentAccessToken } from './identity';
 
 @Component({ selector: 'practice-ledger', imports: [FormsModule, ReactiveFormsModule], template: `
@@ -33,10 +34,31 @@ export class Practice {
   lines = [{ accountId: '', debit: '0', credit: '0' }, { accountId: '', debit: '0', credit: '0' }];
   addLine() { this.lines.push({ accountId: '', debit: '0', credit: '0' }); }
   private async request(path = '', method = 'GET', body?: unknown) {
-    const token = this.entra() ? await currentAccessToken() : this.token();
-    const response = await fetch(`/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice${path}`, { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) });
-    const value = await response.json();
-    if (!response.ok) throw new Error(JSON.stringify(value.error?.message ?? 'Request failed'));
+    const token = this.entra() ? '' : this.token();
+    const url = `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice${path}`;
+    const init: RequestInit = { method, headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, ...(body ? { body: JSON.stringify(body) } : {}) };
+    const response = this.entra() ? await authenticatedFetch(url, init, currentAccessToken) : await fetch(url, init);
+    const value: unknown = await response.json().catch(() => null);
+    if (!response.ok) {
+      const envelope = value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+      const error = envelope['error'] !== null && typeof envelope['error'] === 'object' && !Array.isArray(envelope['error']) ? envelope['error'] as Record<string, unknown> : {};
+      const detail = error['message'] !== null && typeof error['message'] === 'object' && !Array.isArray(error['message']) ? error['message'] as Record<string, unknown> : {};
+      const serverMessage = typeof error['message'] === 'string' ? error['message'] : typeof detail['message'] === 'string' ? detail['message'] : '';
+      const missingPracticeGrant = /^PRACTICE_(READ|MANAGE|POST|REOPEN_PERIOD) is not granted/.test(serverMessage)
+        || serverMessage === 'A firm-wide practice grant is required';
+      const message = response.status === 401
+        ? 'AuditSphere could not confirm this Microsoft identity. Refresh the Microsoft session and sign in again with the designated staff account; if this persists, ask an administrator to verify its local Entra identity mapping.'
+        : response.status === 403 && missingPracticeGrant
+          ? 'Your account needs the firm-wide Practice permission required for this action.'
+          : response.status === 403
+            ? 'Your account is not assigned to this engagement or lacks an engagement permission. Ask an administrator to check your assignment.'
+          : typeof error['message'] === 'string'
+            ? error['message']
+            : typeof detail['message'] === 'string'
+              ? detail['message']
+              : `The ledger request failed (HTTP ${response.status}). Try again.`;
+      throw new Error(message);
+    }
     return value;
   }
   private async run(work: () => Promise<void>) { this.busy.set(true); try { await work(); } catch(e) { this.message.set(e instanceof Error ? e.message : 'Request failed'); } finally { this.busy.set(false); } }

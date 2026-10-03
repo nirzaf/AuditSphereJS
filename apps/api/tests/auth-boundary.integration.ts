@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -16,6 +16,7 @@ const clientA = 'c3c3c3c3-c3c3-4c3c-8c3c-c3c3c3c3c3c3';
 const clientB = 'd4d4d4d4-d4d4-4d4d-8d4d-d4d4d4d4d4d4';
 const engagementA = 'e5e5e5e5-e5e5-4e5e-8e5e-e5e5e5e5e5e5';
 const engagementB = 'f6f6f6f6-f6f6-4f6f-8f6f-f6f6f6f6f6f6';
+const engagementC = '17171717-1717-4717-8717-171717171717';
 const fixtureUser = '00000000-0000-4000-8000-000000000001';
 const grantor = '18181818-1818-4818-8818-181818181818';
 
@@ -26,7 +27,7 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
   try {
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
-    Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, DEV_AUTH_ENABLED: 'true', DEV_AUTH_TOKEN: 'auth-boundary-local-test-token' });
+    Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', AUTH_PROVIDER: 'development', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, DEV_AUTH_ENABLED: 'true', DEV_AUTH_TOKEN: 'auth-boundary-local-test-token' });
     const { db, InternalGuard, InternalIdentityGuard, InternalIdentityController, GovernanceController } = await import('@auditsphere/server');
     disconnect = () => db.$disconnect();
     await db.firm.createMany({ data: [{ id: firmA, name: 'Firm A' }, { id: firmB, name: 'Firm B' }] });
@@ -34,12 +35,14 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     await db.engagement.createMany({ data: [
       { id: engagementA, firmId: firmA, clientId: clientA, name: 'Engagement A' },
       { id: engagementB, firmId: firmB, clientId: clientB, name: 'Engagement B' },
+      { id: engagementC, firmId: firmA, clientId: clientA, name: 'Engagement C without read grant' },
     ] });
     await db.user.createMany({ data: [
       { id: fixtureUser, email: 'auth-fixture@example.test', role: 'PREPARER' },
       { id: grantor, email: 'auth-grantor@example.test', role: 'ADMIN' },
     ] });
-    await db.membership.create({ data: { userId: fixtureUser, firmId: firmA, clientId: clientA, engagementId: engagementA } });
+    await db.membership.create({ data: { userId: fixtureUser, firmId: firmA, clientId: clientA, engagementId: engagementA, role: 'PREPARER' } });
+    await db.membership.create({ data: { userId: fixtureUser, firmId: firmA, clientId: clientA, engagementId: engagementC, role: 'PREPARER' } });
     await db.roleGrant.create({ data: { userId: fixtureUser, capability: 'ENGAGEMENT_READ', firmId: firmA, clientId: clientA, engagementId: engagementA, grantedBy: grantor } });
 
     @Module({ controllers: [GovernanceController, InternalIdentityController], providers: [InternalGuard, InternalIdentityGuard] })
@@ -55,6 +58,9 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     const identity = await fetch(`${origin}/api/v1/me`, { headers });
     assert.equal(identity.status, 200);
     assert.deepEqual(await identity.json(), { id: fixtureUser, email: 'auth-fixture@example.test', active: true });
+    const assignedEngagements = await fetch(`${origin}/api/v1/me/engagements`, { headers });
+    assert.equal(assignedEngagements.status, 200);
+    assert.deepEqual(await assignedEngagements.json(), [{ id: engagementA, name: 'Engagement A', clientId: clientA, clientName: 'Client A', version: 1 }], 'the selector returns only engagements with both membership and a current ENGAGEMENT_READ grant, including the current mutation version');
     const revoked = await fetch(`${origin}/api/v1/me/revoke-sessions`, { method: 'POST', headers });
     assert.equal(revoked.status, 409, 'static development credentials cannot claim Entra session revocation');
     assert.equal(await db.identitySessionRevocation.count({ where: { userId: fixtureUser } }), 0);
@@ -81,6 +87,47 @@ test('HTTP guard rejects a valid foreign engagement UUID without membership and 
     assert.equal(foreignCommand.status, 403, 'a valid foreign engagement UUID cannot be mutated');
     assert.equal((await db.engagement.findUniqueOrThrow({ where: { id: engagementB } })).state, 'LEAD_INGESTION', 'denied command must not change foreign state');
     assert.equal(await db.engagementTransition.count({ where: { engagementId: engagementB } }), 0, 'denied command must not append transition history');
+
+    const assignedStaffId = randomUUID();
+    await db.user.create({ data: { id: assignedStaffId, email: `${assignedStaffId}@assignment.test`, role: 'PREPARER' } });
+    const assignmentBody = {
+      idempotencyKey: randomUUID(), userId: assignedStaffId, role: 'PREPARER', capabilities: ['ENGAGEMENT_READ'], expectedVersion: 1,
+      expiresAt: new Date(Date.now() + 60_000).toISOString(), reason: 'Assign synthetic staff for route acceptance',
+    };
+    const unapprovedAssignment = await fetch(`${origin}/api/v1/engagements/${engagementA}/staff-assignments`, {
+      method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(assignmentBody),
+    });
+    assert.equal(unapprovedAssignment.status, 403, 'an authenticated preparer cannot assign engagement access');
+
+    await db.user.update({ where: { id: fixtureUser }, data: { role: 'APPROVER' } });
+    await db.membership.update({ where: { userId_engagementId: { userId: fixtureUser, engagementId: engagementA } }, data: { role: 'APPROVER' } });
+    await db.roleGrant.create({ data: { userId: fixtureUser, capability: 'TEAM_ASSIGNMENT_MANAGE', firmId: firmA, clientId: clientA, engagementId: engagementA, grantedBy: grantor } });
+    const assigned = await fetch(`${origin}/api/v1/engagements/${engagementA}/staff-assignments`, {
+      method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(assignmentBody),
+    });
+    assert.equal(assigned.status, 201, 'an assigned approver with the explicit team grant can assign staff');
+    assert.deepEqual(await assigned.json(), {
+      userId: assignedStaffId, engagementId: engagementA, role: 'PREPARER', capabilities: ['ENGAGEMENT_READ'], expiresAt: assignmentBody.expiresAt, version: 2,
+    });
+    const assignmentReplay = await fetch(`${origin}/api/v1/engagements/${engagementA}/staff-assignments`, {
+      method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(assignmentBody),
+    });
+    assert.equal(assignmentReplay.status, 201);
+    assert.equal(await db.roleGrant.count({ where: { userId: assignedStaffId, engagementId: engagementA, revokedAt: null } }), 1, 'HTTP replay does not duplicate grants');
+    const unassignedScope = await fetch(`${origin}/api/v1/engagements/${engagementC}/staff-assignments`, {
+      method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ ...assignmentBody, idempotencyKey: randomUUID(), userId: randomUUID() }),
+    });
+    assert.equal(unassignedScope.status, 403, 'a team grant in one engagement cannot be used in another');
+    const revokedAssignment = await fetch(`${origin}/api/v1/engagements/${engagementA}/staff-assignments/${assignedStaffId}/revoke`, {
+      method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ idempotencyKey: randomUUID(), expectedVersion: 2, reason: 'Remove synthetic assignment after route test' }),
+    });
+    assert.equal(revokedAssignment.status, 201);
+    assert.equal((await db.membership.findUnique({ where: { userId_engagementId: { userId: assignedStaffId, engagementId: engagementA } } })), null);
+
+    await db.roleGrant.updateMany({ where: { userId: fixtureUser, engagementId: engagementA }, data: { revokedAt: new Date(), revokedBy: grantor, reason: 'Acceptance test grant revocation' } });
+    const afterGrantRevocation = await fetch(`${origin}/api/v1/me/engagements`, { headers });
+    assert.equal(afterGrantRevocation.status, 200);
+    assert.deepEqual(await afterGrantRevocation.json(), [], 'revoked read grants remove engagements from the selector immediately');
     await db.user.update({ where: { id: fixtureUser }, data: { active: false } });
     const disabledIdentity = await fetch(`${origin}/api/v1/me`, { headers });
     assert.equal(disabledIdentity.status, 401, 'disabled local users lose identity access');

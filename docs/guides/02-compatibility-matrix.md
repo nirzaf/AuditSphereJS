@@ -41,7 +41,7 @@ The public evidence reviewed is inconsistent about Prisma 8 GA status. **Do not 
 | PostgreSQL/Prisma | NUMERIC roundtrip, transaction rollback, scoped FKs, pool timeouts and runtime grants. |
 | Queue Redis | Enqueue/process/retry, noeviction, worker recovery and durable PostgreSQL reconciliation. |
 | Browser/PDF | Matching Playwright/browser image, fonts and CPU/memory/network limits. |
-| API contracts | Runtime malformed payload rejected, OpenAPI emitted, generated browser client compiled. |
+| API contracts | Runtime malformed payload rejected, Nest OpenAPI artifact matches controller decorators, canonical Zod-inferred browser transport compiles. |
 | Optional providers | Test tenant/signing/storage-provider calls with minimum permissions, revoked credentials and retry cases. |
 
 ## Update policy
@@ -49,3 +49,5 @@ The public evidence reviewed is inconsistent about Prisma 8 GA status. **Do not 
 Freeze the exact successful set in package manifests, lockfile and image digests. Use one dependency change at a time and repeat affected checks. Same-major labels do not prove compatibility. A patched dependency may require a coordinated transitive update; no `--force`, unsupported peer override, pre-release or arbitrary lockfile editing to silence failures. Only approve installation scripts needed for known packages, using the actual pnpm 12 policy syntax. [S18](https://pnpm.io/settings)
 
 The generation environment could not perform npm registry installation or run the full selected Node application target. This pack therefore deliberately does not include a made-up resolved package.json/lockfile or claim executable compatibility. T005/T017 are required work, not optional caution text.
+
+**Post-freeze dependency change (2026-10-03):** `@fastify/multipart@10.1.2` was added for T033 after hosted T017 run 37006033506. Its exact license/advisory metadata and a Fastify 5 bounded-stream runtime smoke are recorded in [T033 evidence](../evidence/T033/multipart-adapter-2026-10-03.md). The prior full hosted T017 run does not cover this updated lockfile; repeat the full compatibility gate before calling the current dependency baseline frozen.

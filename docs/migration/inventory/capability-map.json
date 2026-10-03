@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-01T17:47:22.243Z",
+  "generatedAt": "2026-10-03T05:57:53.898Z",
   "generator": "scripts/migration/capability-map.mjs",
   "sourceRoot": "",
   "note": "Symbol resolution is textual. Unresolved symbols are preserved so the parity matrix reports gaps instead of hiding them.",

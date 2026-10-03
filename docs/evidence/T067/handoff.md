@@ -9,3 +9,7 @@ The default policy supports deferred fees until release and no tax only; selecti
 Additive migration 202610020003 fixes the ledger trigger search paths so temporary relations supplied by a caller cannot replace authoritative period/account/journal tables. A disposable-database test supplies a fake open period and a caller-selected temporary search path; posting to the actual closed period must still fail.
 
 Invoices, payment allocations, credit notes, bank reconciliation, period reopening, monthly P/L, AR aging, chart administration and professional policy acceptance remain unfinished. This foundation is not full T066–T072 completion or C32 parity.
+
+## Closure record — 2026-10-02
+
+T067's scoped outcome (draft journals and balanced posting transactions) is complete: draft creation, transactional posting under an approved firm policy, immutable posted rows, exact reversals, and — via T068 — reasoned period close and privileged reopen. The focused recipe `pnpm verify:task -- T067` (build:server + tests/practice-ledger.integration.ts against PostgreSQL 18.6 Testcontainers) passed on this date. Independent peer review of the underlying ledger commits (including `6c95f93`, `937dce1`) passed with non-blocking observations recorded in `docs/evidence/T068/handoff.md`. Invoices, payment allocations, credit notes, bank reconciliation, monthly P/L, AR aging, chart administration and professional policy acceptance are NOT part of this task; they remain with T069+ and the C32 parity record.

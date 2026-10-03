@@ -48,15 +48,15 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 ## Implementation checklist
 
 - [ ] Practice/Billing owns invoices, allocations and ledger effects; Commercial and Reporting call its public facade.
-- [ ] Store fee snapshot, milestone, issue/due dates, amounts and immutable issued versions.
-- [ ] Enforce a unique milestone invoice per engagement/contract version; create final amount as remaining agreed fee under approved rounding.
+- [x] Store fee snapshot, milestone, issue/due dates, amounts and immutable issued versions.
+- [x] Enforce a unique milestone invoice per engagement/contract version; create final amount as remaining agreed fee under approved rounding.
 - [ ] Add reviewed numbering, void/credit policies and a billing permission separate from audit review.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Concurrent requests cannot duplicate an advance/final milestone invoice.
-- [ ] **AC2:** An issued invoice cannot be edited without a controlled correction.
-- [ ] **AC3:** Commercial and Reporting do not write invoice tables directly.
+- [x] **AC1:** Concurrent requests cannot duplicate an advance/final milestone invoice.
+- [x] **AC2:** An issued invoice cannot be edited without a controlled correction. PostgreSQL rejects direct invoice/line edits; an unpaid invoice can only be corrected through reasoned void with exact journal reversal and a new numbered revision. Paid credit-note correction remains a separate workflow.
+- [x] **AC3:** Commercial and Reporting do not write invoice tables directly.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 

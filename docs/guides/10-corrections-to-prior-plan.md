@@ -18,6 +18,8 @@ The unchanged [original architecture](../sources/architecture-original-reference
 | Header debit and credit totals are sufficient or only checked in app code. | Balance actual lines and serialize draft line changes/posting on parent journals; posted lines are immutable. |
 | URL authorization is sufficient for uploads. | Finalize-time policy/state/version checks race safely with release and archive freeze. |
 | Missing archive artifacts can delay read-only protection. | Freeze application writes when due, independently of external sealing success; make failed sealing visible and recoverable. |
+| The shared authorization task can implement feature-level access before those feature records and commands exist. | T021 provides active identity, membership-role ceilings, scoped grants and command checks. T091/T106 own preparer-to-workprogram assignment, T129/T130 own final package release authorization, and T037/T062/T076/T112 own outbound communication checks. This clarifies implementation ownership only; these source requirements remain open until their owner tasks pass. |
+| `openapi-typescript@7.13.0` is the default typed client generator. | T005's preserved registry metadata records its `typescript: ^5.x` peer, which does not match Angular 22's selected TypeScript 6 range. T022 uses browser-safe Zod contracts for inferred types and runtime parsing, Nest 12 Standard Schema for API validation/serialization and Swagger conversion, and a checked-in OpenAPI artifact; no additional generator dependency is installed. |
 | S3-compatible storage implies equivalent permanent regulatory retention. | Verify object version locking, retention/legal holds, credentials and selected provider behavior. The 60-day business timer is not a storage retention duration. |
 | Hash chaining or PNG signatures alone establish immutability/authenticity. | Hash append order must be concurrent-safe with external checkpoints; signature assurance requires a separately approved verifiable mechanism when needed. |
 | Every requirement has one obvious interpretation. | D01–D12 preserve fee timing, LOR, portal closure, numerical/sampling and scope conflicts with approval gates. |
@@ -27,5 +29,7 @@ The unchanged [original architecture](../sources/architecture-original-reference
 ## Change management
 
 Do not silently rewrite the preserved source or claim these clarifications were already in it. Technical additions such as idempotency, immutable versions, outbox recovery and access-race tests are explicit engineering controls needed to implement the source reliably. Unspecified professional policy remains pending until its owner decides.
+
+T022 has a transport-only reach across the platform, owning module controllers and Angular API adapters: these are the places where shared runtime schemas, response allowlists and inferred client types must be bound to real operations. Such edits are limited to transport contracts and serialization; domain services, policy and record ownership remain with their modules.
 
 See [compatibility evidence](02-compatibility-matrix.md), [library register](03-library-register.md) and [source links](11-source-and-version-evidence.md) for verification references.

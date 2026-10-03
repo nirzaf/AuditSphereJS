@@ -15,13 +15,20 @@ test('audit writes carry traceability, resist mutation and erasure, and denial e
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, recordAuditEvent, recordSecurityEvent, requireCapability, captureAuditCheckpoint, verifyAuditChain } = await import('@auditsphere/server');
+    const { db, recordAuditEvent, recordSecurityEvent, requireCapability, captureAuditCheckpoint, verifyAuditChain, AuditController } = await import('@auditsphere/server');
     try {
-      const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID(), outsiderId = randomUUID();
+      const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID(), outsiderId = randomUUID(), readerId = randomUUID(), deniedReaderId = randomUUID();
       await db.firm.create({ data: { id: firmId, name: 'Audit-write firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Audit-write client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Audit-write engagement' } });
+      await db.user.createMany({ data: [
+        { id: readerId, email: 'audit-reader@example.test', role: 'REVIEWER' },
+        { id: deniedReaderId, email: 'audit-outsider@example.test', role: 'REVIEWER' },
+      ] });
+      await db.membership.create({ data: { userId: readerId, firmId, clientId, engagementId, role: 'REVIEWER' } });
+      await db.roleGrant.create({ data: { userId: readerId, capability: 'ENGAGEMENT_READ', firmId, clientId, engagementId, grantedBy: readerId } });
       const scope = { firmId, clientId, engagementId };
+      const auditController = new AuditController();
 
       // USER events name their actor and carry resource identity plus redacted before/after.
       await recordAuditEvent(db, {
@@ -46,6 +53,12 @@ test('audit writes carry traceability, resist mutation and erasure, and denial e
       const firstCheckpoint = await captureAuditCheckpoint(engagementId);
       assert.equal(firstCheckpoint.sequence, '1');
       assert.deepEqual(await verifyAuditChain(engagementId, firstCheckpoint), { valid: true });
+      assert.deepEqual(await auditController.checkpoint(engagementId, readerId), firstCheckpoint);
+      assert.deepEqual(await auditController.verify(engagementId, readerId), { valid: true });
+      assert.equal((await auditController.events(engagementId, readerId)).length, 1);
+      await assert.rejects(auditController.checkpoint(engagementId, deniedReaderId), /ENGAGEMENT_READ is not granted/);
+      await assert.rejects(auditController.verify(engagementId, deniedReaderId), /ENGAGEMENT_READ is not granted/);
+      await assert.rejects(auditController.events(engagementId, deniedReaderId), /ENGAGEMENT_READ is not granted/);
 
       // SERVICE events name the initiating operation instead of a fake user id, and chain normally.
       await recordAuditEvent(db, { engagementId, action: 'IMPORT_PARSED', actorKind: 'SERVICE', correlationId: 'outbox:job-9', payload: { importId: 'import-1' } });

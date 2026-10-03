@@ -25,7 +25,7 @@ test('adjustment journals stay balanced, separate from the firm ledger, and post
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri });
-    const { db, createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, adjustmentJournalDetail, listAdjustmentJournals, adjustedBalances } = await import('@auditsphere/server');
+    const { db, runUnitOfWork, createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, adjustmentJournalDetail, listAdjustmentJournals, adjustedBalances } = await import('@auditsphere/server');
     try {
       await db.firm.create({ data: { id: firmId, name: 'Adjustment firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Adjustment client' } });
@@ -34,6 +34,11 @@ test('adjustment journals stay balanced, separate from the firm ledger, and post
         { id: preparerId, email: 'preparer@adjust.test', role: 'PREPARER' },
         { id: reviewerId, email: 'reviewer@adjust.test', role: 'REVIEWER' },
         { id: bothId, email: 'both@adjust.test', role: 'APPROVER' },
+      ] });
+      await db.membership.createMany({ data: [
+        { userId: preparerId, firmId, clientId, engagementId, role: 'PREPARER' },
+        { userId: reviewerId, firmId, clientId, engagementId, role: 'REVIEWER' },
+        { userId: bothId, firmId, clientId, engagementId, role: 'APPROVER' },
       ] });
       const grant = (userId: string, capability: string) => db.roleGrant.create({ data: { userId, capability, firmId, clientId, engagementId, grantedBy: userId } });
       await grant(preparerId, 'ENGAGEMENT_READ'); await grant(preparerId, 'ADJUSTMENT_MANAGE');
@@ -45,6 +50,15 @@ test('adjustment journals stay balanced, separate from the firm ledger, and post
       await assert.rejects(createAdjustmentJournal(preparerId, engagementId, { reference: 'ADJ-1', memo: 'Accrual', lines: [{ accountCode: '5000', debit: '150.000000' }, { accountCode: '2000', credit: '100.000000' }] }), /must balance/);
       await assert.rejects(createAdjustmentJournal(preparerId, engagementId, { reference: 'ADJ-1', memo: 'Accrual', lines: [{ accountCode: '5000', debit: '5.000000', credit: '5.000000' }, { accountCode: '2000', credit: '5.000000' }] }), /exactly one of debit or credit/);
       await assert.rejects(createAdjustmentJournal(preparerId, engagementId, { reference: 'ADJ-1', memo: 'Accrual', lines: [{ accountCode: '5000' }, { accountCode: '2000', credit: '0' }] }), /exactly one of debit or credit/);
+
+      // The fieldwork facade joins an explicit caller transaction; a later caller failure rolls
+      // back its journal, lines, and audit record together without opening an independent commit.
+      await assert.rejects(runUnitOfWork(async (scope) => {
+        await createAdjustmentJournal(preparerId, engagementId, { reference: 'UOW-ROLLBACK', memo: 'Rollback proof', lines: balanced }, scope);
+        throw new Error('rollback adjustment facade');
+      }), /rollback adjustment facade/);
+      assert.equal(await db.adjustmentJournal.count({ where: { engagementId, reference: 'UOW-ROLLBACK' } }), 0);
+      assert.equal(await db.auditEvent.count({ where: { engagementId, action: 'ADJUSTMENT_DRAFTED' } }), 0);
 
       const draft = await createAdjustmentJournal(preparerId, engagementId, { reference: 'ADJ-1', memo: 'Accrue the unbilled supplier invoice', lines: balanced }) as { journalId: string; status: string; lineCount: number };
       assert.equal(draft.status, 'DRAFT');

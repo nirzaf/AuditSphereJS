@@ -2,7 +2,10 @@ import { BadRequestException, ConflictException, ForbiddenException, NotFoundExc
 import { db } from '../../platform/db.js';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
+import { withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { createAdjustmentJournalSchema, postAdjustmentJournalSchema, reverseAdjustmentJournalSchema } from '@auditsphere/contracts';
+import type { PaginationQuery } from '@auditsphere/contracts';
 
 /**
  * Client audit adjustment journals (C15).
@@ -13,9 +16,13 @@ import { createAdjustmentJournalSchema, postAdjustmentJournalSchema, reverseAdju
  * freezes posted journals and their lines.
  */
 const scopeOf = (engagement: { firmId: string; clientId: string; id: string }): Scope => ({ firmId: engagement.firmId, clientId: engagement.clientId, engagementId: engagement.id });
+const adjustmentEditableStates = ['FIELDWORK_EXECUTION', 'MANAGERIAL_REVIEW'];
+function assertAdjustmentEditable(state: string) {
+  if (!adjustmentEditableStates.includes(state)) throw new ConflictException('Client audit adjustments are frozen outside fieldwork and managerial review');
+}
 
-async function loadEngagement(engagementId: string) {
-  const engagement = await db.engagement.findUnique({ where: { id: engagementId } });
+async function loadEngagement(client: typeof db | Prisma.TransactionClient, engagementId: string) {
+  const engagement = await client.engagement.findUnique({ where: { id: engagementId } });
   if (!engagement) throw new NotFoundException('Engagement not found');
   return engagement;
 }
@@ -40,13 +47,15 @@ const lineTotals = (lines: Array<{ debit: { toFixed: (n: number) => string }; cr
   credit: Decimal6.sum(lines.map((line) => Decimal6.from(line.credit.toFixed(6)))),
 });
 
-export async function createAdjustmentJournal(actorId: string, engagementId: string, input: unknown) {
+export async function createAdjustmentJournal(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = createAdjustmentJournalSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'ADJUSTMENT_MANAGE', scopeOf(engagement));
   const lines = validateLines(parsed.data.lines);
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await loadEngagement(tx, engagementId);
+    await requireCapability(tx, actorId, 'ADJUSTMENT_MANAGE', scopeOf(engagement));
+    assertAdjustmentEditable(engagement.state);
     const existing = await tx.adjustmentJournal.findUnique({ where: { engagementId_reference: { engagementId, reference: parsed.data.reference } } });
     if (existing) throw new ConflictException('An adjustment with this reference already exists');
     const journal = await tx.adjustmentJournal.create({ data: { firmId: engagement.firmId, clientId: engagement.clientId, engagementId, reference: parsed.data.reference, memo: parsed.data.memo, createdBy: actorId } });
@@ -56,12 +65,14 @@ export async function createAdjustmentJournal(actorId: string, engagementId: str
   });
 }
 
-export async function postAdjustmentJournal(actorId: string, engagementId: string, journalId: string, input: unknown) {
+export async function postAdjustmentJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = postAdjustmentJournalSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'ADJUSTMENT_POST', scopeOf(engagement));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await loadEngagement(tx, engagementId);
+    await requireCapability(tx, actorId, 'ADJUSTMENT_POST', scopeOf(engagement));
+    assertAdjustmentEditable(engagement.state);
     const journal = await tx.adjustmentJournal.findFirst({ where: { id: journalId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId }, include: { lines: true } });
     if (!journal) throw new NotFoundException('Adjustment journal not found');
     if (journal.status !== 'DRAFT') throw new ConflictException('Only a draft adjustment can be posted');
@@ -75,12 +86,14 @@ export async function postAdjustmentJournal(actorId: string, engagementId: strin
   });
 }
 
-export async function reverseAdjustmentJournal(actorId: string, engagementId: string, journalId: string, input: unknown) {
+export async function reverseAdjustmentJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = reverseAdjustmentJournalSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'ADJUSTMENT_POST', scopeOf(engagement));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await loadEngagement(tx, engagementId);
+    await requireCapability(tx, actorId, 'ADJUSTMENT_POST', scopeOf(engagement));
+    assertAdjustmentEditable(engagement.state);
     const original = await tx.adjustmentJournal.findFirst({ where: { id: journalId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId }, include: { lines: { orderBy: { position: 'asc' } }, reversedBy: true } });
     if (!original) throw new NotFoundException('Adjustment journal not found');
     if (original.reversedBy) throw new ConflictException('This adjustment has already been reversed');
@@ -106,7 +119,7 @@ export async function reverseAdjustmentJournal(actorId: string, engagementId: st
  * originals are excluded, and each reversal journal offsets its original.
  */
 export async function adjustedBalances(actorId: string, engagementId: string) {
-  const engagement = await loadEngagement(engagementId);
+  const engagement = await loadEngagement(db, engagementId);
   await requireCapability(db, actorId, 'ENGAGEMENT_READ', scopeOf(engagement));
   const publication = await db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
   if (!publication) throw new ConflictException('Publish an accepted balance version before reviewing adjusted balances');
@@ -147,15 +160,15 @@ export async function adjustedBalances(actorId: string, engagementId: string) {
   };
 }
 
-export async function listAdjustmentJournals(engagementId: string, options: { status?: string } = {}) {
-  await loadEngagement(engagementId);
+export async function listAdjustmentJournals(engagementId: string, options: { status?: string } = {}, page: PaginationQuery = { offset: 0, limit: 50 }) {
+  await loadEngagement(db, engagementId);
   const statuses = ['DRAFT', 'POSTED', 'REVERSED'];
   if (options.status && !statuses.includes(options.status)) throw new BadRequestException('Unknown status filter');
-  return db.adjustmentJournal.findMany({ where: { engagementId, ...(options.status ? { status: options.status } : {}) }, orderBy: { createdAt: 'asc' } });
+  return db.adjustmentJournal.findMany({ where: { engagementId, ...(options.status ? { status: options.status } : {}) }, orderBy: { createdAt: 'asc' }, skip: page.offset, take: page.limit });
 }
 
 export async function adjustmentJournalDetail(engagementId: string, journalId: string) {
-  await loadEngagement(engagementId);
+  await loadEngagement(db, engagementId);
   const journal = await db.adjustmentJournal.findFirst({ where: { id: journalId, engagementId }, include: { lines: { orderBy: { position: 'asc' } } } });
   if (!journal) throw new NotFoundException('Adjustment journal not found');
   return { ...journal, lines: journal.lines.map((line) => ({ ...line, debit: line.debit.toFixed(6), credit: line.credit.toFixed(6) })) };

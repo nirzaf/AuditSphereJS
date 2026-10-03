@@ -1,133 +1,246 @@
 generator client {
-  provider = "prisma-client"
-  output = "../packages/server/src/generated/prisma"
+  provider     = "prisma-client"
+  output       = "../packages/server/src/generated/prisma"
   moduleFormat = "esm"
 }
+
 datasource db {
   provider = "postgresql"
 }
+
 /// Firm is the top ownership boundary. Firm data must never be visible across firms.
 model Firm {
-  id        String   @id @default(uuid()) @db.Uuid
-  name      String
-  createdAt DateTime @default(now())
-  clients   Client[]
-  roleGrants RoleGrant[]
-  taxonomies TaxonomyVersion[]
+  id                       String                         @id @default(uuid()) @db.Uuid
+  name                     String
+  createdAt                DateTime                       @default(now())
+  clients                  Client[]
+  roleGrants               RoleGrant[]
+  taxonomies               TaxonomyVersion[]
+  invoiceNumberSequence    InvoiceNumberSequence?
+  practiceRateCards        PracticeRateCard[]
+  practiceGradeAssignments PracticeStaffGradeAssignment[]
+  practiceTimeEntries      PracticeTimeEntry[]
 }
+
 /// Client belongs to exactly one firm. Ids are only unique inside their firm so child
 /// records can carry a composite (firmId, clientId) reference and the database itself
 /// rejects cross-firm relationships.
 model Client {
-  id          String       @id @default(uuid()) @db.Uuid
-  firmId      String       @db.Uuid
-  name        String
-  createdAt   DateTime     @default(now())
-  firm        Firm         @relation(fields: [firmId], references: [id])
-  engagements Engagement[]
-  repositories ClientRepository[]
+  id                   String               @id @default(uuid()) @db.Uuid
+  firmId               String               @db.Uuid
+  name                 String
+  createdAt            DateTime             @default(now())
+  firm                 Firm                 @relation(fields: [firmId], references: [id])
+  engagements          Engagement[]
+  repositories         ClientRepository[]
   mappingMemoryEntries MappingMemoryEntry[]
-  roleGrants   RoleGrant[]
+  roleGrants           RoleGrant[]
+
   @@unique([firmId, id])
 }
+
 /// Engagement is scoped to a firm and one of that firm's clients. The composite foreign
 /// key means an engagement cannot point at another firm's client.
 model Engagement {
-  id          String       @id @default(uuid()) @db.Uuid
-  firmId      String       @db.Uuid
-  clientId    String       @db.Uuid
-  name        String
-  currency    String       @default("QAR")
-  state       String       @default("LEAD_INGESTION")
-  version     Int          @default(1)
-  client      Client       @relation(fields: [firmId, clientId], references: [firmId, id])
-  memberships Membership[]
-  imports     TbImport[]
-  roleGrants  RoleGrant[]
-  transitions EngagementTransition[]
-  publications BalancePublication[]
-  mappingApprovals MappingApproval[]
+  id                     String                  @id @default(uuid()) @db.Uuid
+  firmId                 String                  @db.Uuid
+  clientId               String                  @db.Uuid
+  name                   String
+  currency               String                  @default("QAR")
+  state                  String                  @default("LEAD_INGESTION")
+  version                Int                     @default(1)
+  client                 Client                  @relation(fields: [firmId, clientId], references: [firmId, id])
+  memberships            Membership[]
+  portalMemberships      PortalMembership[]
+  imports                TbImport[]
+  roleGrants             RoleGrant[]
+  transitions            EngagementTransition[]
+  publications           BalancePublication[]
+  mappingApprovals       MappingApproval[]
   materialityAssessments MaterialityAssessment[]
-  risks RiskItem[]
-  storedObjects StoredObject[]
-  documents Document[]
-  reviewNotes ReviewNote[]
-  adjustmentJournals AdjustmentJournal[]
-  auditEvents AuditEvent[]
-  auditChainHead AuditChainHead?
-  commandReceipts CommandReceipt[]
-  outboxEvents OutboxEvent[]
+  risks                  RiskItem[]
+  storedObjects          StoredObject[]
+  documents              Document[]
+  reviewNotes            ReviewNote[]
+  adjustmentJournals     AdjustmentJournal[]
+  auditEvents            AuditEvent[]
+  auditChainHead         AuditChainHead?
+  commandReceipts        CommandReceipt[]
+  operationRequests      OperationRequest[]
+  backgroundOperations   BackgroundOperation[]
+  outboxEvents           OutboxEvent[]
+  documentLinks          DocumentLink[]
+  documentUploadSessions DocumentUploadSession[]
+  proposals              CommercialProposal[]
+  riskClearances         RiskClearance[]
+  letterRecord           EngagementLetterRecord?
+  invoices               EngagementInvoice[]
+  practiceTimeEntries    PracticeTimeEntry[]
+
   @@unique([firmId, clientId, id])
 }
+
 model User {
-  id            String       @id @default(uuid()) @db.Uuid
-  email         String       @unique
-  role          String
-  active        Boolean      @default(true)
-  tenantId      String?      @db.Uuid
-  entraObjectId String?      @db.Uuid
-  memberships   Membership[]
-  grants        RoleGrant[]
-  sessionRevocations IdentitySessionRevocation[]
-  practicePeriodTransitions PracticePeriod[] @relation("PracticePeriodTransitionActor")
+  id                           String                         @id @default(uuid()) @db.Uuid
+  email                        String                         @unique
+  role                         String
+  active                       Boolean                        @default(true)
+  tenantId                     String?                        @db.Uuid
+  entraObjectId                String?                        @db.Uuid
+  memberships                  Membership[]
+  grants                       RoleGrant[]
+  sessionRevocations           IdentitySessionRevocation[]
+  operationRequests            OperationRequest[]
+  practicePeriodTransitions    PracticePeriod[]               @relation("PracticePeriodTransitionActor")
+  practiceRateCardsCreated     PracticeRateCard[]             @relation("PracticeRateCardCreator")
+  practiceGradeAssignments     PracticeStaffGradeAssignment[] @relation("PracticeGradeStaff")
+  practiceGradeAssignmentsMade PracticeStaffGradeAssignment[] @relation("PracticeGradeAssigner")
+  practiceTimeEntries          PracticeTimeEntry[]
+  invoiceLedgerPostingsCreated InvoiceLedgerPosting[]         @relation("InvoiceLedgerPostingCreator")
+  documentLinksCreated         DocumentLink[]                  @relation("DocumentLinkCreator")
+  documentUploadSessions       DocumentUploadSession[]
+
   @@unique([tenantId, entraObjectId])
 }
+
+/// Client identities are isolated from staff identity, membership and role grants.
+/// One client principal may have independently revocable memberships across engagements.
+model PortalUser {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  email              String                  @unique
+  passwordHash       String?
+  mustChangePassword Boolean                 @default(true)
+  active             Boolean                 @default(true)
+  createdAt          DateTime                @default(now())
+  lastLoginAt        DateTime?
+  memberships        PortalMembership[]
+  sessions           PortalSession[]
+  credentialTokens   PortalCredentialToken[]
+}
+
+/// A CLIENT principal can only act within the explicitly bound engagement tuple.
+/// Payment/release/archive timestamps are written by their owning workflow gates.
+model PortalMembership {
+  id               String                  @id @default(uuid()) @db.Uuid
+  portalUserId     String                  @db.Uuid
+  firmId           String                  @db.Uuid
+  clientId         String                  @db.Uuid
+  engagementId     String                  @db.Uuid
+  advanceClearedAt DateTime?
+  releasedAt       DateTime?
+  archivedAt       DateTime?
+  revokedAt        DateTime?
+  version          Int                     @default(1)
+  createdAt        DateTime                @default(now())
+  portalUser       PortalUser              @relation(fields: [portalUserId], references: [id], onDelete: Restrict)
+  engagement       Engagement              @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  credentialTokens PortalCredentialToken[]
+
+  @@unique([portalUserId, engagementId])
+  @@unique([portalUserId, id])
+  @@unique([firmId, clientId, engagementId, id])
+  @@index([firmId, clientId, engagementId])
+}
+
+/// High-entropy invitation and password-reset links are stored only as SHA-256 digests.
+model PortalCredentialToken {
+  id                 String            @id @default(uuid()) @db.Uuid
+  portalUserId       String            @db.Uuid
+  portalMembershipId String?           @db.Uuid
+  tokenHash          String            @unique
+  purpose            String
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  createdAt          DateTime          @default(now())
+  portalUser         PortalUser        @relation(fields: [portalUserId], references: [id], onDelete: Restrict)
+  membership         PortalMembership? @relation(fields: [portalUserId, portalMembershipId], references: [portalUserId, id], onDelete: Restrict)
+
+  @@index([portalUserId, purpose, expiresAt])
+}
+
+/// Opaque client web sessions; staff bearer-token middleware never consults this table.
+model PortalSession {
+  id                 String     @id @default(uuid()) @db.Uuid
+  portalUserId       String     @db.Uuid
+  tokenHash          String     @unique
+  csrfHash           String
+  mustChangePassword Boolean    @default(true)
+  expiresAt          DateTime
+  revokedAt          DateTime?
+  createdAt          DateTime   @default(now())
+  portalUser         PortalUser @relation(fields: [portalUserId], references: [id], onDelete: Restrict)
+
+  @@index([portalUserId, expiresAt])
+}
+
 /// Append-only revocation cutoff for Entra access tokens issued to one local user.
 model IdentitySessionRevocation {
-  id           String   @id @default(uuid()) @db.Uuid
-  userId       String   @db.Uuid
-  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Restrict)
   revokedBefore DateTime
-  createdAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
   @@index([userId, revokedBefore])
 }
+
 /// A capability granted to a user over a scope and valid only inside its window.
 /// Grants are historical: revocation sets revokedAt and never deletes the row. A revoked or
 /// expired grant never authorizes, and scope is checked again inside every write transaction.
 model RoleGrant {
-  id           String    @id @default(uuid()) @db.Uuid
-  userId       String    @db.Uuid
-  user         User      @relation(fields: [userId], references: [id])
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @db.Uuid
+  user         User        @relation(fields: [userId], references: [id])
   capability   String
-  firmId       String?   @db.Uuid
-  firm         Firm?     @relation(fields: [firmId], references: [id], onDelete: Restrict)
-  clientId     String?   @db.Uuid
-  client       Client?   @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict)
-  engagementId String?   @db.Uuid
+  firmId       String?     @db.Uuid
+  firm         Firm?       @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  clientId     String?     @db.Uuid
+  client       Client?     @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict)
+  engagementId String?     @db.Uuid
   engagement   Engagement? @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
-  grantedBy    String    @db.Uuid
-  grantedAt    DateTime  @default(now())
+  grantedBy    String      @db.Uuid
+  grantedAt    DateTime    @default(now())
   expiresAt    DateTime?
   revokedAt    DateTime?
-  revokedBy    String?   @db.Uuid
+  revokedBy    String?     @db.Uuid
   reason       String?
+
   @@index([userId, capability])
   @@index([engagementId])
 }
+
 model Membership {
   userId       String     @db.Uuid
   firmId       String     @db.Uuid
   clientId     String     @db.Uuid
   engagementId String     @db.Uuid
+  role         String     @default("PREPARER")
   user         User       @relation(fields: [userId], references: [id])
   engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+
   @@id([userId, engagementId])
   @@index([firmId, clientId, engagementId])
 }
+
 model Document {
-  id           String            @id @default(uuid()) @db.Uuid
-  engagementId String            @db.Uuid
-  engagement   Engagement        @relation(fields: [engagementId], references: [id], onDelete: Restrict)
-  key          String            @unique
-  sha256       String
-  filename     String
-  version      Int               @default(1)
-  createdAt    DateTime          @default(now())
-  versions     DocumentVersion[]
+  id            String            @id @default(uuid()) @db.Uuid
+  engagementId  String            @db.Uuid
+  engagement    Engagement        @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  key           String            @unique
+  sha256        String
+  filename      String
+  category      String            @default("02_Trial Balance & Schedules")
+  version       Int               @default(1)
+  createdAt     DateTime          @default(now())
+  versions      DocumentVersion[]
   storedObjects StoredObject[]
-  imports      TbImport[]
+  imports       TbImport[]
+  links         DocumentLink[]
+  uploadSessions DocumentUploadSession[]
+
   @@unique([engagementId, id])
 }
+
 /// Binds one client to one provider repository. Replaces the previous single global
 /// drive/folder configuration so evidence cannot be written into another client's site.
 model ClientRepository {
@@ -141,51 +254,133 @@ model ClientRepository {
   createdAt DateTime  @default(now())
   retiredAt DateTime?
   client    Client    @relation(fields: [firmId, clientId], references: [firmId, id])
+
   @@unique([firmId, clientId, purpose, provider])
   @@index([clientId, purpose])
 }
+
 /// The immutable provider identity of one stored document byte-for-byte. Append-only: a
 /// provider change creates a new version row and never rewrites the previous identity.
 model DocumentVersion {
-  id         String   @id @default(uuid()) @db.Uuid
-  documentId String   @db.Uuid
-  document   Document @relation(fields: [documentId], references: [id])
-  provider   String
-  driveId    String
-  itemId     String
-  versionId  String
-  eTag       String
-  sha256     String
-  sizeBytes  Int
-  createdBy  String   @db.Uuid
-  createdAt  DateTime @default(now())
-  @@unique([documentId, versionId])
+  id               String     @id @default(uuid()) @db.Uuid
+  engagementId     String     @db.Uuid
+  documentId       String     @db.Uuid
+  document         Document   @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentVersion_document_scope_fkey")
+  imports          TbImport[]
+  sequence         Int
+  provider         String
+  storageReference String     @unique
+  driveId          String?
+  itemId           String?
+  versionId        String
+  eTag             String?
+  sha256           String
+  sizeBytes        Int
+  createdBy        String     @db.Uuid
+  createdAt        DateTime   @default(now())
+  links            DocumentLink[]
+  uploadSessions   DocumentUploadSession[]
+
+  @@unique([driveId, itemId, versionId])
+  @@unique([documentId, sequence])
+  @@unique([engagementId, documentId, id])
+  @@index([engagementId, documentId, sequence])
   @@index([driveId, itemId])
 }
+
+/// A short-lived staff-authorized upload. Bytes remain unreferenced storage until finalize
+/// rechecks engagement authority/state and creates the document/version/link atomically.
+model DocumentUploadSession {
+  id                  String          @id @default(uuid()) @db.Uuid
+  firmId              String          @db.Uuid
+  clientId            String          @db.Uuid
+  engagementId        String          @db.Uuid
+  actorId             String          @db.Uuid
+  category            String
+  originalFilename    String
+  declaredContentType String
+  declaredSizeBytes   Int
+  maxSizeBytes        Int             @default(15728640)
+  expectedSha256      String?
+  status              String          @default("INITIATED")
+  storageKey          String          @unique
+  storageReference    String?
+  actualSha256        String?
+  actualSizeBytes     Int?
+  version             Int             @default(1)
+  createdAt           DateTime        @default(now())
+  expiresAt           DateTime
+  uploadedAt          DateTime?
+  finalizedAt         DateTime?
+  documentId          String?         @db.Uuid
+  documentVersionId   String?         @db.Uuid
+  engagement          Engagement      @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict, map: "DocumentUploadSession_engagement_scope_fkey")
+  actor               User            @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  document            Document?       @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentUploadSession_document_scope_fkey")
+  documentVersion     DocumentVersion? @relation(fields: [engagementId, documentId, documentVersionId], references: [engagementId, documentId, id], onDelete: Restrict, map: "DocumentUploadSession_version_scope_fkey")
+
+  @@unique([engagementId, id])
+  @@unique([firmId, clientId, engagementId, id])
+  @@index([actorId, engagementId, status, expiresAt])
+  @@index([status, expiresAt])
+}
+
 /// TbImport carries the engagement's firm/client scope so a staged dataset cannot be
 /// attached to another firm's engagement, even by a caller that knows a foreign id.
 model TbImport {
-  id           String     @id @default(uuid()) @db.Uuid
-  firmId       String     @db.Uuid
-  clientId     String     @db.Uuid
-  engagementId String     @db.Uuid
-  engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
-  documentId   String     @db.Uuid
-  document     Document   @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "TbImport_document_scope_fkey")
-  sha256       String
-  status       String     @default("QUEUED")
-  error        String?
-  rowCount     Int        @default(0)
-  version      Int        @default(1)
-  rows         TbRow[]
-  mappingApprovals MappingApproval[]
-  publication  BalancePublication?
-  outboxEvents OutboxEvent[]
-  createdAt    DateTime   @default(now())
+  id                String              @id @default(uuid()) @db.Uuid
+  firmId            String              @db.Uuid
+  clientId          String              @db.Uuid
+  engagementId      String              @db.Uuid
+  engagement        Engagement          @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  documentId        String              @db.Uuid
+  document          Document            @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "TbImport_document_scope_fkey")
+  documentVersionId String?             @db.Uuid
+  documentVersion   DocumentVersion?    @relation(fields: [engagementId, documentId, documentVersionId], references: [engagementId, documentId, id], onDelete: Restrict, map: "TbImport_document_version_scope_fkey")
+  sha256            String
+  status            String              @default("QUEUED")
+  error             String?
+  rowCount          Int                 @default(0)
+  version           Int                 @default(1)
+  rows              TbRow[]
+  mappingApprovals  MappingApproval[]
+  publication       BalancePublication?
+  outboxEvents      OutboxEvent[]
+  documentLinks     DocumentLink[]
+  createdAt         DateTime            @default(now())
+
   @@unique([engagementId, sha256])
   @@unique([firmId, clientId, engagementId, id])
+  @@unique([engagementId, id])
   @@index([firmId, clientId, engagementId])
 }
+
+/// Immutable evidence attachment metadata pinned to one exact provider version. Revocation is a
+/// one-way tombstone; the original target and document identity can never be rewritten.
+model DocumentLink {
+  id                String          @id @default(uuid()) @db.Uuid
+  engagementId      String          @db.Uuid
+  engagement        Engagement      @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  documentId        String          @db.Uuid
+  document          Document        @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentLink_document_scope_fkey")
+  documentVersionId String          @db.Uuid
+  documentVersion   DocumentVersion @relation(fields: [engagementId, documentId, documentVersionId], references: [engagementId, documentId, id], onDelete: Restrict, map: "DocumentLink_version_scope_fkey")
+  targetType        String
+  targetImportId    String?         @db.Uuid
+  targetImport      TbImport?       @relation(fields: [engagementId, targetImportId], references: [engagementId, id], onDelete: Restrict, map: "DocumentLink_import_scope_fkey")
+  label             String          @db.VarChar(200)
+  createdBy         String          @db.Uuid
+  creator           User            @relation("DocumentLinkCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+  version           Int             @default(1)
+  revokedAt         DateTime?       @db.Timestamptz(6)
+  revokedBy         String?         @db.Uuid
+  revokeReason      String?         @db.VarChar(1000)
+
+  @@index([engagementId, targetType, targetImportId, createdAt])
+  @@index([engagementId, documentId])
+}
+
 model TbRow {
   id       String   @id @default(uuid()) @db.Uuid
   importId String   @db.Uuid
@@ -197,35 +392,39 @@ model TbRow {
   prior    Decimal  @db.Decimal(28, 6)
   fsli     String?
   version  Int      @default(1)
+
   @@unique([importId, code])
   @@index([importId, position])
 }
+
 /// An immutable, accepted accounting version published from exactly one finalized import.
 /// Downstream planning and statements consume a publication; a FINALIZED staging import is not
 /// itself an accepted dataset.
 model BalancePublication {
-  id           String                @id @default(uuid()) @db.Uuid
-  firmId       String                @db.Uuid
-  clientId     String                @db.Uuid
-  engagementId String                @db.Uuid
-  engagement   Engagement            @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
-  importId     String                @unique @db.Uuid
-  sourceImport TbImport              @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict)
-  mappingApprovalId String?          @db.Uuid
-  mappingApproval MappingApproval?   @relation(fields: [firmId, clientId, engagementId, mappingApprovalId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "BalancePublication_mapping_approval_scope_fkey")
-  sequence     Int
-  currency     String
-  rowCount     Int
-  digest       String
-  publishedBy  String                @db.Uuid
-  publishedAt  DateTime              @default(now())
-  rows         PublishedBalanceRow[]
+  id                     String                  @id @default(uuid()) @db.Uuid
+  firmId                 String                  @db.Uuid
+  clientId               String                  @db.Uuid
+  engagementId           String                  @db.Uuid
+  engagement             Engagement              @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  importId               String                  @unique @db.Uuid
+  sourceImport           TbImport                @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict)
+  mappingApprovalId      String?                 @db.Uuid
+  mappingApproval        MappingApproval?        @relation(fields: [firmId, clientId, engagementId, mappingApprovalId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "BalancePublication_mapping_approval_scope_fkey")
+  sequence               Int
+  currency               String
+  rowCount               Int
+  digest                 String
+  publishedBy            String                  @db.Uuid
+  publishedAt            DateTime                @default(now())
+  rows                   PublishedBalanceRow[]
   materialityAssessments MaterialityAssessment[]
+
   @@unique([engagementId, sequence])
   @@unique([firmId, clientId, engagementId, importId])
   @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, publishedAt])
 }
+
 /// The exact published balances. Immutable once written; PostgreSQL rejects update and delete.
 model PublishedBalanceRow {
   id            String             @id @default(uuid()) @db.Uuid
@@ -237,9 +436,11 @@ model PublishedBalanceRow {
   fsli          String
   current       Decimal            @db.Decimal(28, 6)
   prior         Decimal            @db.Decimal(28, 6)
+
   @@unique([publicationId, code])
   @@index([publicationId, position])
 }
+
 /// Append-only lifecycle history. Every guarded command writes exactly one row in the same
 /// transaction as the state change; PostgreSQL rejects later mutation of this table.
 model EngagementTransition {
@@ -254,28 +455,32 @@ model EngagementTransition {
   evidence     Json
   version      Int
   createdAt    DateTime   @default(now())
+
   @@index([engagementId, createdAt])
 }
+
 /// A firm's versioned mapping taxonomy. An approved version is immutable: a change is a new
 /// version, never an edit, so historical mappings keep their meaning.
 model TaxonomyVersion {
-  id                String           @id @default(uuid()) @db.Uuid
-  firmId            String           @db.Uuid
-  firm              Firm             @relation(fields: [firmId], references: [id])
-  name              String
-  version           Int
-  status            String           @default("DRAFT")
-  createdBy         String           @db.Uuid
-  createdAt         DateTime         @default(now())
-  approvedBy        String?          @db.Uuid
-  approvedAt        DateTime?
-  lines             TaxonomyLine[]
-  mappingApprovals  MappingApproval[]
+  id                     String                  @id @default(uuid()) @db.Uuid
+  firmId                 String                  @db.Uuid
+  firm                   Firm                    @relation(fields: [firmId], references: [id])
+  name                   String
+  version                Int
+  status                 String                  @default("DRAFT")
+  createdBy              String                  @db.Uuid
+  createdAt              DateTime                @default(now())
+  approvedBy             String?                 @db.Uuid
+  approvedAt             DateTime?
+  lines                  TaxonomyLine[]
+  mappingApprovals       MappingApproval[]
   materialityAssessments MaterialityAssessment[]
+
   @@unique([firmId, name, version])
   @@unique([firmId, id])
   @@index([firmId, status])
 }
+
 /// One taxonomy line. The code is the value stored on mapped trial-balance rows; the statement
 /// section is what benchmark derivation uses.
 model TaxonomyLine {
@@ -286,32 +491,36 @@ model TaxonomyLine {
   label             String
   statementSection  String
   sortOrder         Int
+
   @@unique([taxonomyVersionId, code])
   @@index([taxonomyVersionId, sortOrder])
 }
+
 /// The approval that binds one import's mapping to an exact taxonomy version. The digest covers
 /// the mapped rows, so any later row change makes the approval stale.
 model MappingApproval {
-  id                String          @id @default(uuid()) @db.Uuid
-  firmId            String          @db.Uuid
-  clientId          String          @db.Uuid
-  engagementId      String          @db.Uuid
-  engagement        Engagement      @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
-  importId          String          @db.Uuid
-  importBatch       TbImport        @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "MappingApproval_import_scope_fkey")
-  taxonomyVersionId String          @db.Uuid
-  taxonomyVersion   TaxonomyVersion @relation(fields: [firmId, taxonomyVersionId], references: [firmId, id], onDelete: Restrict, map: "MappingApproval_taxonomy_scope_fkey")
-  digest            String
-  rowCount          Int
-  approvedBy        String          @db.Uuid
-  approvedAt        DateTime        @default(now())
-  publications      BalancePublication[]
+  id                   String               @id @default(uuid()) @db.Uuid
+  firmId               String               @db.Uuid
+  clientId             String               @db.Uuid
+  engagementId         String               @db.Uuid
+  engagement           Engagement           @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  importId             String               @db.Uuid
+  importBatch          TbImport             @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "MappingApproval_import_scope_fkey")
+  taxonomyVersionId    String               @db.Uuid
+  taxonomyVersion      TaxonomyVersion      @relation(fields: [firmId, taxonomyVersionId], references: [firmId, id], onDelete: Restrict, map: "MappingApproval_taxonomy_scope_fkey")
+  digest               String
+  rowCount             Int
+  approvedBy           String               @db.Uuid
+  approvedAt           DateTime             @default(now())
+  publications         BalancePublication[]
   mappingMemoryEntries MappingMemoryEntry[]
+
   @@unique([importId, taxonomyVersionId])
   @@unique([firmId, clientId, id])
   @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, approvedAt])
 }
+
 /// One append-only planning-materiality calculation bound to an exact published accounting version
 /// and taxonomy version. A newer publication makes it stale; an approved assessment is frozen.
 model MaterialityAssessment {
@@ -342,41 +551,47 @@ model MaterialityAssessment {
   calculatedAt        DateTime           @default(now())
   approvedBy          String?            @db.Uuid
   approvedAt          DateTime?
+
   @@index([engagementId, calculatedAt])
 }
+
 /// One engagement risk. Its band is an append-only assessment series; the newest is current.
 model RiskItem {
-  id           String              @id @default(uuid()) @db.Uuid
-  firmId       String              @db.Uuid
-  clientId     String              @db.Uuid
-  engagementId String              @db.Uuid
-  engagement   Engagement          @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  id           String                @id @default(uuid()) @db.Uuid
+  firmId       String                @db.Uuid
+  clientId     String                @db.Uuid
+  engagementId String                @db.Uuid
+  engagement   Engagement            @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
   title        String
   description  String?
-  createdBy    String              @db.Uuid
-  createdAt    DateTime            @default(now())
+  createdBy    String                @db.Uuid
+  createdAt    DateTime              @default(now())
   assessments  RiskBandAssessment[]
   assignments  RiskOwnerAssignment[]
+
   @@index([engagementId, createdAt])
 }
+
 /// Append-only band assessment. The database rejects a band that does not follow from its inputs.
 model RiskBandAssessment {
-  id          String                @id @default(uuid()) @db.Uuid
-  riskId      String                @db.Uuid
-  risk        RiskItem              @relation(fields: [riskId], references: [id])
+  id          String                 @id @default(uuid()) @db.Uuid
+  riskId      String                 @db.Uuid
+  risk        RiskItem               @relation(fields: [riskId], references: [id])
   likelihood  Int
   magnitude   Int
   significant Boolean
   fraudRisk   Boolean
   band        String
   ruleVersion String
-  assessedBy  String                @db.Uuid
-  assessedAt  DateTime              @default(now())
+  assessedBy  String                 @db.Uuid
+  assessedAt  DateTime               @default(now())
   clearances  RiskPartnerClearance[]
   assignments RiskOwnerAssignment[]
-  @@index([riskId, assessedAt])
+
   @@unique([id, riskId])
+  @@index([riskId, assessedAt])
 }
+
 /// Who responds to a risk, bound to the exact band assessment and the owner's staffing rank. Append-only.
 model RiskOwnerAssignment {
   id                 String             @id @default(uuid()) @db.Uuid
@@ -388,8 +603,10 @@ model RiskOwnerAssignment {
   ownerStaffingLevel String
   assignedBy         String             @db.Uuid
   assignedAt         DateTime           @default(now())
+
   @@index([riskId, assignedAt])
 }
+
 /// Mandatory Partner clearance of one exact red band assessment. Append-only.
 model RiskPartnerClearance {
   id           String             @id @default(uuid()) @db.Uuid
@@ -399,58 +616,66 @@ model RiskPartnerClearance {
   note         String
   clearedAt    DateTime           @default(now())
 }
+
 /// Tracks every object the application asks storage to write, so a duplicate or interrupted
 /// upload leaves a record instead of untracked bytes. Referenced objects are the evidence;
 /// pending/duplicate ones are cleaned only after a grace period and never when they are evidence.
 model StoredObject {
-  id           String    @id @default(uuid()) @db.Uuid
-  engagementId String    @db.Uuid
+  id           String     @id @default(uuid()) @db.Uuid
+  engagementId String     @db.Uuid
   engagement   Engagement @relation(fields: [engagementId], references: [id])
-  key          String    @unique
+  key          String     @unique
   reference    String?
   sha256       String
-  status       String    @default("PENDING")
-  documentId   String?   @db.Uuid
-  document     Document? @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "StoredObject_document_scope_fkey")
-  createdAt    DateTime  @default(now())
+  status       String     @default("PENDING")
+  documentId   String?    @db.Uuid
+  document     Document?  @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "StoredObject_document_scope_fkey")
+  createdAt    DateTime   @default(now())
+  cleanupStartedAt DateTime?
   resolvedAt   DateTime?
+
   @@index([status, createdAt])
 }
+
 /// Approved-mapping memory: the last taxonomy code approved for one client's account code.
 /// Written only from an approved mapping, so a suggestion always has provenance.
 model MappingMemoryEntry {
-  id               String   @id @default(uuid()) @db.Uuid
-  firmId           String   @db.Uuid
-  clientId         String   @db.Uuid
-  client           Client   @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict, map: "MappingMemoryEntry_client_scope_fkey")
+  id               String          @id @default(uuid()) @db.Uuid
+  firmId           String          @db.Uuid
+  clientId         String          @db.Uuid
+  client           Client          @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict, map: "MappingMemoryEntry_client_scope_fkey")
   accountCode      String
   accountName      String
   taxonomyLineCode String
-  sourceApprovalId String   @db.Uuid
-  sourceApproval MappingApproval @relation(fields: [firmId, clientId, sourceApprovalId], references: [firmId, clientId, id], onDelete: Restrict, map: "MappingMemoryEntry_source_approval_scope_fkey")
-  timesApplied     Int      @default(1)
-  lastApprovedAt   DateTime @default(now())
+  sourceApprovalId String          @db.Uuid
+  sourceApproval   MappingApproval @relation(fields: [firmId, clientId, sourceApprovalId], references: [firmId, clientId, id], onDelete: Restrict, map: "MappingMemoryEntry_source_approval_scope_fkey")
+  timesApplied     Int             @default(1)
+  lastApprovedAt   DateTime        @default(now())
+
   @@unique([firmId, clientId, accountCode])
   @@index([firmId, clientId])
 }
+
 /// A reviewer's anchored note on a workpackage. Raising needs REVIEW_RAISE; resolving needs
 /// REVIEW_RESOLVE and can never be done by the person who raised it. A resolved note is frozen.
 model ReviewNote {
-  id           String    @id @default(uuid()) @db.Uuid
-  firmId       String    @db.Uuid
-  clientId     String    @db.Uuid
-  engagementId String    @db.Uuid
+  id           String     @id @default(uuid()) @db.Uuid
+  firmId       String     @db.Uuid
+  clientId     String     @db.Uuid
+  engagementId String     @db.Uuid
   engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
   workpackage  String
   body         String
-  status       String    @default("OPEN")
-  raisedBy     String    @db.Uuid
-  raisedAt     DateTime  @default(now())
-  resolvedBy   String?   @db.Uuid
+  status       String     @default("OPEN")
+  raisedBy     String     @db.Uuid
+  raisedAt     DateTime   @default(now())
+  resolvedBy   String?    @db.Uuid
   resolution   String?
   resolvedAt   DateTime?
+
   @@index([engagementId, status])
 }
+
 /// A client audit adjustment. Drafts are editable; a posted journal is immutable and is corrected
 /// only by a reversal journal. This is the client's book, never the firm's own ledger.
 model AdjustmentJournal {
@@ -471,9 +696,11 @@ model AdjustmentJournal {
   reverses          AdjustmentJournal?      @relation("AdjustmentReversal", fields: [reversesJournalId], references: [id])
   reversedBy        AdjustmentJournal?      @relation("AdjustmentReversal")
   lines             AdjustmentJournalLine[]
+
   @@unique([engagementId, reference])
   @@index([engagementId, createdAt])
 }
+
 model AdjustmentJournalLine {
   id          String            @id @default(uuid()) @db.Uuid
   journalId   String            @db.Uuid
@@ -483,26 +710,167 @@ model AdjustmentJournalLine {
   fsli        String?
   debit       Decimal           @default(0) @db.Decimal(28, 6)
   credit      Decimal           @default(0) @db.Decimal(28, 6)
+
   @@unique([journalId, position])
 }
+
+model CommercialProposal {
+  id                String                  @id @default(uuid()) @db.Uuid
+  firmId            String                  @db.Uuid
+  clientId          String                  @db.Uuid
+  engagementId      String                  @db.Uuid
+  engagement        Engagement              @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  service           String
+  periodStart       DateTime                @db.Date
+  periodEnd         DateTime                @db.Date
+  totalAmount       Decimal                 @db.Decimal(20, 2)
+  currency          String                  @default("QAR")
+  status            String                  @default("DRAFT")
+  revision          Int                     @default(1)
+  presentedSnapshot Json?
+  clientResponse    Json?
+  createdBy         String                  @db.Uuid
+  createdAt         DateTime                @default(now())
+  letter            EngagementLetterRecord?
+  invoices          EngagementInvoice[]
+
+  @@unique([firmId, clientId, engagementId, id])
+  @@index([engagementId, createdAt])
+}
+
+model RiskClearance {
+  id           String     @id @default(uuid()) @db.Uuid
+  firmId       String     @db.Uuid
+  clientId     String     @db.Uuid
+  engagementId String     @db.Uuid
+  engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  reason       String
+  clearedBy    String     @db.Uuid
+  clearedAt    DateTime   @default(now())
+}
+
+model EngagementLetterRecord {
+  id           String             @id @default(uuid()) @db.Uuid
+  firmId       String             @db.Uuid
+  clientId     String             @db.Uuid
+  engagementId String             @unique @db.Uuid
+  engagement   Engagement         @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  proposalId   String             @db.Uuid
+  proposal     CommercialProposal @relation(fields: [proposalId], references: [id], onDelete: Restrict)
+  letterText   String
+  issuedBy     String             @db.Uuid
+  issuedAt     DateTime           @default(now())
+
+  @@unique([firmId, clientId, engagementId])
+  @@unique([proposalId])
+}
+
+model EngagementInvoice {
+  id               String                  @id @default(uuid()) @db.Uuid
+  firmId           String                  @db.Uuid
+  clientId         String                  @db.Uuid
+  engagementId     String                  @db.Uuid
+  engagement       Engagement              @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  proposalId       String                  @db.Uuid
+  proposal         CommercialProposal      @relation(fields: [proposalId], references: [id], onDelete: Restrict)
+  proposalRevision Int
+  contractFee      Decimal                 @db.Decimal(20, 2)
+  revision         Int                     @default(1)
+  number           Int
+  kind             String
+  amount           Decimal                 @db.Decimal(20, 2)
+  currency         String                  @default("QAR")
+  dueOn            DateTime?               @db.Date
+  status           String                  @default("ISSUED")
+  issuedBy         String                  @db.Uuid
+  issuedAt         DateTime                @default(now())
+  payments         InvoicePayment[]
+  receipt          InvoiceReceipt?
+  lines            EngagementInvoiceLine[]
+  void             InvoiceVoid?
+  ledgerPosting    InvoiceLedgerPosting?
+
+  @@unique([firmId, number])
+  @@unique([id, firmId, engagementId])
+  @@unique([firmId, engagementId, proposalId, kind, revision])
+  @@index([engagementId, issuedAt])
+}
+
+model InvoiceNumberSequence {
+  firmId     String   @id @db.Uuid
+  firm       Firm     @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  nextNumber Int      @default(1)
+  updatedAt  DateTime @default(now()) @updatedAt
+}
+
+model EngagementInvoiceLine {
+  id          String            @id @default(uuid()) @db.Uuid
+  invoiceId   String            @db.Uuid
+  invoice     EngagementInvoice @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  position    Int
+  description String
+  amount      Decimal           @db.Decimal(20, 2)
+
+  @@unique([invoiceId, position])
+}
+
+model InvoicePayment {
+  id           String            @id @default(uuid()) @db.Uuid
+  firmId       String            @db.Uuid
+  invoiceId    String            @db.Uuid
+  engagementId String            @db.Uuid
+  invoice      EngagementInvoice @relation(fields: [invoiceId, firmId, engagementId], references: [id, firmId, engagementId], onDelete: Restrict)
+  amount       Decimal           @db.Decimal(20, 2)
+  reference    String
+  recordedBy   String            @db.Uuid
+  recordedAt   DateTime          @default(now())
+}
+
+model InvoiceReceipt {
+  id           String            @id @default(uuid()) @db.Uuid
+  invoiceId    String            @unique @db.Uuid
+  firmId       String            @db.Uuid
+  engagementId String            @db.Uuid
+  invoice      EngagementInvoice @relation(fields: [invoiceId, firmId, engagementId], references: [id, firmId, engagementId], onDelete: Restrict)
+  issuedBy     String            @db.Uuid
+  issuedAt     DateTime          @default(now())
+
+  @@unique([invoiceId, firmId, engagementId])
+}
+
+model InvoiceVoid {
+  id           String            @id @default(uuid()) @db.Uuid
+  invoiceId    String            @unique @db.Uuid
+  firmId       String            @db.Uuid
+  engagementId String            @db.Uuid
+  invoice      EngagementInvoice @relation(fields: [invoiceId, firmId, engagementId], references: [id, firmId, engagementId], onDelete: Restrict)
+  reason       String
+  voidedBy     String            @db.Uuid
+  voidedAt     DateTime          @default(now())
+
+  @@unique([invoiceId, firmId, engagementId])
+}
+
 model AuditEvent {
-  id           String   @id @default(uuid()) @db.Uuid
-  engagementId String   @db.Uuid
-  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
-  actorId      String?  @db.Uuid
-  actorKind    String   @default("USER")
-  action       String
-  payload      Json
+  id              String            @id @default(uuid()) @db.Uuid
+  engagementId    String            @db.Uuid
+  engagement      Engagement        @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  actorId         String?           @db.Uuid
+  actorKind       String            @default("USER")
+  action          String
+  payload         Json
   resourceType    String?
   resourceId      String?
   resourceVersion Int?
   correlationId   String?
   beforeState     Json?
   afterState      Json?
-  createdAt    DateTime @default(now())
-  chainRecord  AuditChainRecord?
+  createdAt       DateTime          @default(now())
+  chainRecord     AuditChainRecord?
+
   @@unique([engagementId, id])
 }
+
 model SecurityEvent {
   id            String   @id @default(uuid()) @db.Uuid
   // Claimed scope and actor are recorded as attempted, without foreign keys: probes with
@@ -514,108 +882,275 @@ model SecurityEvent {
   detail        Json     @default("{}")
   createdAt     DateTime @default(now())
 }
+
 model AuditChainHead {
-  engagementId String @id @db.Uuid
-  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
-  sequence BigInt
-  digest String
+  engagementId String     @id @db.Uuid
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  sequence     BigInt
+  digest       String
 }
+
 model PracticeAccount {
-  id String @id @default(uuid()) @db.Uuid
-  firmId String @db.Uuid
-  code String
-  name String
-  kind String
-  active Boolean @default(true)
+  id      String  @id @default(uuid()) @db.Uuid
+  firmId  String  @db.Uuid
+  code    String
+  name    String
+  kind    String
+  active  Boolean @default(true)
   posting Boolean @default(true)
+
   @@unique([firmId, code])
   @@unique([firmId, id])
 }
-model FirmPostingPolicy {
-  firmId String @id @db.Uuid
-  policyVersion String
-  approvedBy String @db.Uuid
-  approvedAt DateTime @default(now())
-  revenueTreatment String
-  taxTreatment String
+
+/// Effective-dated standard charge-out prices. Job grades are separate from access personas.
+/// A rate row is append-only except that one open-ended interval can be closed once when a
+/// later rate is scheduled. Time entries retain their own immutable rate/value snapshot.
+model PracticeRateCard {
+  id            String              @id @default(uuid()) @db.Uuid
+  firmId        String              @db.Uuid
+  grade         String              @db.VarChar(48)
+  currency      String              @default("QAR") @db.VarChar(3)
+  hourlyRate    Decimal             @db.Decimal(28, 6)
+  effectiveFrom DateTime            @db.Date
+  effectiveTo   DateTime?           @db.Date
+  version       Int                 @default(1)
+  createdAt     DateTime            @default(now()) @db.Timestamptz(6)
+  createdBy     String?             @db.Uuid
+  firm          Firm                @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  creator       User?               @relation("PracticeRateCardCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  timeEntries   PracticeTimeEntry[]
+
+  @@unique([firmId, id])
+  @@unique([firmId, grade, effectiveFrom])
+  @@index([firmId, grade, effectiveFrom])
 }
+
+/// A staff member's effective-dated professional job grade. It is independent of their
+/// PREPARER/REVIEWER/APPROVER/BILLING/ADMIN access role.
+model PracticeStaffGradeAssignment {
+  id            String              @id @default(uuid()) @db.Uuid
+  firmId        String              @db.Uuid
+  userId        String              @db.Uuid
+  grade         String              @db.VarChar(48)
+  effectiveFrom DateTime            @db.Date
+  effectiveTo   DateTime?           @db.Date
+  version       Int                 @default(1)
+  createdAt     DateTime            @default(now()) @db.Timestamptz(6)
+  assignedBy    String              @db.Uuid
+  firm          Firm                @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  user          User                @relation("PracticeGradeStaff", fields: [userId], references: [id], onDelete: Restrict)
+  assigner      User                @relation("PracticeGradeAssigner", fields: [assignedBy], references: [id], onDelete: Restrict)
+  timeEntries   PracticeTimeEntry[]
+
+  @@unique([firmId, id])
+  @@unique([firmId, userId, effectiveFrom])
+  @@index([firmId, userId, effectiveFrom])
+}
+
+/// Minimal immutable practice time-value record. T140 adds the time-entry workflow fields;
+/// this row already freezes the staff grade, selected rate, currency and computed QAR value.
+model PracticeTimeEntry {
+  id                     String                       @id @default(uuid()) @db.Uuid
+  firmId                 String                       @db.Uuid
+  clientId               String                       @db.Uuid
+  engagementId           String                       @db.Uuid
+  staffUserId            String                       @db.Uuid
+  gradeAssignmentId      String                       @db.Uuid
+  rateCardId             String                       @db.Uuid
+  workDate               DateTime                     @db.Date
+  minutes                Int
+  grade                  String                       @db.VarChar(48)
+  currency               String                       @default("QAR") @db.VarChar(3)
+  hourlyRateSnapshot     Decimal                      @db.Decimal(28, 6)
+  chargeOutValueSnapshot Decimal                      @db.Decimal(28, 6)
+  createdAt              DateTime                     @default(now()) @db.Timestamptz(6)
+  firm                   Firm                         @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  engagement             Engagement                   @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  staff                  User                         @relation(fields: [staffUserId], references: [id], onDelete: Restrict)
+  gradeAssignment        PracticeStaffGradeAssignment @relation(fields: [firmId, gradeAssignmentId], references: [firmId, id], onDelete: Restrict)
+  rateCard               PracticeRateCard             @relation(fields: [firmId, rateCardId], references: [firmId, id], onDelete: Restrict)
+
+  @@unique([firmId, id])
+  @@index([firmId, staffUserId, workDate])
+  @@index([firmId, engagementId, workDate])
+}
+
+model FirmPostingPolicy {
+  firmId           String   @id @db.Uuid
+  policyVersion    String
+  approvedBy       String   @db.Uuid
+  approvedAt       DateTime @default(now())
+  revenueTreatment String
+  taxTreatment     String
+}
+
 model PracticePeriod {
-  id String @id @default(uuid()) @db.Uuid
-  firmId String @db.Uuid
-  startsOn DateTime @db.Date
-  endsOn DateTime @db.Date
-  closed Boolean @default(false)
-  version Int @default(1)
-  lastTransitionReason String @default("")
-  lastTransitionBy String? @db.Uuid
-  lastTransitionActor User? @relation("PracticePeriodTransitionActor", fields: [lastTransitionBy], references: [id], onDelete: Restrict)
+  id                   String   @id @default(uuid()) @db.Uuid
+  firmId               String   @db.Uuid
+  startsOn             DateTime @db.Date
+  endsOn               DateTime @db.Date
+  closed               Boolean  @default(false)
+  version              Int      @default(1)
+  lastTransitionReason String   @default("")
+  lastTransitionBy     String?  @db.Uuid
+  lastTransitionActor  User?    @relation("PracticePeriodTransitionActor", fields: [lastTransitionBy], references: [id], onDelete: Restrict)
+
   @@unique([firmId, id])
 }
+
 model PracticeJournal {
-  id String @id @default(uuid()) @db.Uuid
-  firmId String @db.Uuid
-  periodId String @db.Uuid
-  accountingDate DateTime @db.Date
-  reference String
-  memo String
-  status String @default("DRAFT")
-  version Int @default(1)
-  createdBy String @db.Uuid
-  postedBy String? @db.Uuid
-  postedAt DateTime?
-  reversalOf String? @unique @db.Uuid
-  reversal PracticeJournal? @relation("PracticeJournalReversal", fields: [firmId, reversalOf], references: [firmId, id], onDelete: Restrict, map: "PracticeJournal_reversal_scope_fkey")
-  reversedJournals PracticeJournal[] @relation("PracticeJournalReversal")
-  lines PracticeJournalLine[]
+  id               String                @id @default(uuid()) @db.Uuid
+  firmId           String                @db.Uuid
+  periodId         String                @db.Uuid
+  accountingDate   DateTime              @db.Date
+  reference        String
+  memo             String
+  status           String                @default("DRAFT")
+  version          Int                   @default(1)
+  createdBy        String                @db.Uuid
+  postedBy         String?               @db.Uuid
+  postedAt         DateTime?
+  reversalOf       String?               @unique @db.Uuid
+  reversal         PracticeJournal?      @relation("PracticeJournalReversal", fields: [firmId, reversalOf], references: [firmId, id], onDelete: Restrict, map: "PracticeJournal_reversal_scope_fkey")
+  reversedJournals PracticeJournal[]     @relation("PracticeJournalReversal")
+  lines            PracticeJournalLine[]
+  invoicePosting   InvoiceLedgerPosting?
+
   @@unique([firmId, reference])
   @@unique([firmId, id])
 }
+
+/// Immutable link from an issued invoice to its one posted deferred-fee recognition journal.
+model InvoiceLedgerPosting {
+  id           String            @id @default(uuid()) @db.Uuid
+  firmId       String            @db.Uuid
+  engagementId String            @db.Uuid
+  invoiceId    String            @db.Uuid
+  journalId    String            @db.Uuid
+  createdBy    String            @db.Uuid
+  createdAt    DateTime          @default(now())
+  invoice      EngagementInvoice @relation(fields: [invoiceId, firmId, engagementId], references: [id, firmId, engagementId], onDelete: Restrict, map: "invoice_ledger_posting_invoice_scope_fkey")
+  journal      PracticeJournal   @relation(fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict, map: "invoice_ledger_posting_journal_scope_fkey")
+  creator      User              @relation("InvoiceLedgerPostingCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@unique([firmId, id])
+  @@unique([invoiceId, firmId, engagementId])
+  @@unique([firmId, journalId])
+}
+
 model PracticeJournalLine {
-  id String @id @default(uuid()) @db.Uuid
-  firmId String @db.Uuid
-  journalId String @db.Uuid
-  journal PracticeJournal @relation(fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
-  accountId String @db.Uuid
-  position Int
-  debit Decimal @db.Decimal(28, 6)
-  credit Decimal @db.Decimal(28, 6)
+  id        String          @id @default(uuid()) @db.Uuid
+  firmId    String          @db.Uuid
+  journalId String          @db.Uuid
+  journal   PracticeJournal @relation(fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
+  accountId String          @db.Uuid
+  position  Int
+  debit     Decimal         @db.Decimal(28, 6)
+  credit    Decimal         @db.Decimal(28, 6)
+
   @@unique([journalId, position])
 }
+
 model AuditChainRecord {
-  eventId String @id @db.Uuid
-  engagementId String @db.Uuid
-  event AuditEvent @relation(fields: [engagementId, eventId], references: [engagementId, id], onDelete: Restrict, map: "AuditChainRecord_event_scope_fkey")
-  sequence BigInt
-  formatVersion Int
+  eventId        String     @id @db.Uuid
+  engagementId   String     @db.Uuid
+  event          AuditEvent @relation(fields: [engagementId, eventId], references: [engagementId, id], onDelete: Restrict, map: "AuditChainRecord_event_scope_fkey")
+  sequence       BigInt
+  formatVersion  Int
   previousDigest String
-  digest String
-  canonicalText String
+  digest         String
+  canonicalText  String
+
   @@unique([engagementId, eventId])
   @@unique([engagementId, sequence])
 }
-model OutboxEvent {
-  id          String    @id @default(uuid()) @db.Uuid
-  firmId      String    @db.Uuid
-  clientId    String    @db.Uuid
-  engagementId String   @db.Uuid
-  engagement  Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
-  importId    String?   @db.Uuid
-  import      TbImport? @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_import_scope_fkey")
-  type        String
-  payload     Json
-  publishedAt DateTime?
-  /// completedAt is an instant; migration 202610010004 created it as timestamptz. Matching the
-  /// database here removes schema drift without altering stored values.
-  completedAt DateTime? @db.Timestamptz
-  createdAt   DateTime  @default(now())
-  @@index([completedAt, type, createdAt], map: "OutboxEvent_unfinished_scope")
+
+/// Durable worker state is committed together with its outbox event and originating business row.
+/// Provider calls with ambiguous outcomes move to UNKNOWN and are never silently re-delivered.
+model BackgroundOperation {
+  id           String       @id @db.Uuid
+  firmId       String       @db.Uuid
+  clientId     String       @db.Uuid
+  engagementId String       @db.Uuid
+  type         String       @db.VarChar(120)
+  state        String       @default("QUEUED") @db.VarChar(16)
+  attemptCount Int          @default(0)
+  result       Json?
+  errorCode    String?      @db.VarChar(120)
+  unknownCode  String?      @db.VarChar(120)
+  startedAt    DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
+  completedAt  DateTime?    @db.Timestamptz(6)
+  failedAt     DateTime?    @db.Timestamptz(6)
+  engagement   Engagement   @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  outboxEvent  OutboxEvent?
+
+  @@unique([firmId, clientId, engagementId, id], map: "background_operations_scope_id_key")
+  @@index([state, updatedAt], map: "background_operations_state_updated")
+  @@map("background_operations")
 }
+
+model OutboxEvent {
+  id                     String              @id @default(uuid()) @db.Uuid
+  operationId            String              @unique @db.Uuid
+  firmId                 String              @db.Uuid
+  clientId               String              @db.Uuid
+  engagementId           String              @db.Uuid
+  engagement             Engagement          @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  operation              BackgroundOperation @relation(fields: [firmId, clientId, engagementId, operationId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_operation_scope_fkey")
+  importId               String?             @db.Uuid
+  import                 TbImport?           @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_import_scope_fkey")
+  type                   String              @db.VarChar(120)
+  payloadVersion         Int                 @default(1)
+  payload                Json
+  publishedAt            DateTime?
+  dispatchClaimToken     String?             @db.Uuid
+  dispatchClaimExpiresAt DateTime?           @db.Timestamptz(6)
+  dispatchAttempts       Int                 @default(0)
+  lastDispatchErrorCode  String?             @db.VarChar(120)
+  /// completedAt is business-operation completion, never merely successful queue insertion.
+  completedAt            DateTime?           @db.Timestamptz(6)
+  failedAt               DateTime?           @db.Timestamptz(6)
+  createdAt              DateTime            @default(now())
+
+  @@unique([firmId, clientId, engagementId, operationId], map: "OutboxEvent_operation_scope_id_key")
+  @@index([completedAt, type, createdAt], map: "OutboxEvent_unfinished_scope")
+  @@index([type, createdAt], map: "OutboxEvent_dispatchable")
+}
+
 model CommandReceipt {
-  key          String   @id @db.Uuid
-  engagementId String   @db.Uuid
+  key          String     @id @db.Uuid
+  engagementId String     @db.Uuid
   engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
-  actorId      String   @db.Uuid
+  actorId      String     @db.Uuid
   hash         String
   result       Json
+
   @@index([engagementId])
+}
+
+/// Durable, scope/action-keyed result for a submitted command. Synchronous business
+/// writes create and complete this row in the same PostgreSQL transaction as their effects.
+model OperationRequest {
+  id           String     @id @default(uuid()) @db.Uuid
+  firmId       String     @db.Uuid
+  clientId     String     @db.Uuid
+  engagementId String     @db.Uuid
+  actorId      String     @db.Uuid
+  action       String     @db.VarChar(120)
+  callerKey    String     @db.VarChar(255)
+  requestHash  String     @db.Char(64)
+  state        String     @default("IN_PROGRESS") @db.VarChar(16)
+  result       Json?
+  unknownCode  String?    @db.VarChar(120)
+  startedAt    DateTime   @default(now()) @db.Timestamptz(6)
+  completedAt  DateTime?  @db.Timestamptz(6)
+  updatedAt    DateTime   @updatedAt @db.Timestamptz(6)
+  engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  actor        User       @relation(fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@unique([firmId, clientId, engagementId, actorId, action, callerKey], map: "operation_requests_scope_action_key")
+  @@index([state, updatedAt], map: "operation_requests_state_updated")
+  @@map("operation_requests")
 }

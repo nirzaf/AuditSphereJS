@@ -7,7 +7,7 @@
 | Task ID | T025 |
 | Requirement IDs | R072 |
 | Implementing branch | `main` |
-| Status | `IN_REVIEW` |
+| Status | `DONE` |
 
 ## Intended and delivered outcome
 
@@ -44,10 +44,26 @@ Delivered in this change:
 
 ## Review follow-up
 
-An implementation review found that the first redaction helper returned unvisited deep subtrees unchanged and did not sanitize the general `payload` field. Both paths are fixed and covered: an over-depth subtree becomes `[REDACTED]`, while non-sensitive values remain available, and the PostgreSQL test verifies that a payload `apiKey` is stored only as `[REDACTED]`. The focused PostgreSQL test also writes five audit events concurrently, captures sequence 7 and verifies the resulting chain. This resolves those findings; T025 stays `IN_REVIEW` because T021/T024 prerequisites, independent review, and the recorded digest/call-site limitations are still open.
+An implementation review found that the first redaction helper returned unvisited deep subtrees unchanged and did not sanitize the general `payload` field. Both paths are fixed and covered: an over-depth subtree becomes `[REDACTED]`, while non-sensitive values remain available, and the PostgreSQL test verifies that a payload `apiKey` is stored only as `[REDACTED]`. The focused PostgreSQL test also writes five audit events concurrently, captures sequence 7 and verifies the resulting chain. The prerequisites later closed; see the completion review below. The digest and call-site limitations remain disclosed.
 
 ## Acceptance criteria
 
 - AC1: PASS. An application-shaped role (`SELECT, INSERT` only) is denied `UPDATE`, `DELETE` and `TRUNCATE` on `AuditEvent` and `SecurityEvent` with `permission denied`; the table owner is denied by the row-level immutability triggers; `TRUNCATE "AuditEvent"` is additionally blocked by the sidecar foreign key even with user triggers disabled.
 - AC2: PASS. A transaction that writes an audit event and then fails authorization leaves no event, leaves the chain head unchanged, and still records `CAPABILITY_DENIED` in `SecurityEvent`.
 - AC3: PASS. A SERVICE event with a null actor and a correlation id (`outbox:job-9`) is accepted, five simultaneous USER audit writes produce a verifiable sequence-7 chain, and USER events without an actor plus SERVICE events without a correlation are rejected by database CHECK constraints.
+
+## Completion review — 2026-10-03
+
+- Reviewed the task checklist and preserved requirement R072 (source line 552: “Maintain an immutable, timestamped audit log of all system actions, reviews, and sign-offs.”). T017, T021 and T024 are `DONE` in the execution ledger.
+- Reviewed the scoped read routes: `checkpoint`, `verify` and `events` all pass through the same server-side engagement-scope and `ENGAGEMENT_READ` check. `tests/audit-write.integration.ts` proves an authorized reader succeeds and a reader without a grant is denied for all three methods.
+- `pnpm verify:task -- T025`: PASS; server build and two PostgreSQL 18.6 Testcontainers integration suites, 2/2.
+- The API-owned audit-read integration starts a real Fastify app and confirms successful checkpoint, verification and event responses, ISO timestamp/metadata serialization, then 403 denial on all three routes after `ENGAGEMENT_READ` revocation.
+- `pnpm verify:affected`: PASS; boundaries, server/test typechecks, Angular production build, 18 Vitest files and 82 tests.
+- `pnpm lint`: PASS; 0 errors and 4 existing unused-disable warnings in `visual-prototype-simulation/worker/worker-configuration.d.ts`.
+- `pnpm contracts:check`: PASS; runtime schemas and OpenAPI match.
+- Review disposition: Codex self-review completed. No independent reviewer was available in this task; the repository instructions require review but do not define an independent-review gate. The previously recorded digest and incremental call-site limitations remain explicit and are not represented as complete hash coverage.
+- Status: DONE; no unresolved acceptance criterion remains for T025.
+
+## Test harness environment follow-up — 2026-10-03
+
+The complete `pnpm test:integration` run exposed that the audit-read API test inherited `AUTH_PROVIDER=entra` from a developer `.env` loaded by the server package, so its intended local development bearer was treated as an Entra token and received 401. The test fixture now sets `AUTH_PROVIDER=development` explicitly, matching its `DEV_AUTH_TOKEN` fixture and avoiding dependence on workstation configuration. `pnpm verify:task -- T025` now passes both audit-write and live Fastify audit-read PostgreSQL suites (2/2).

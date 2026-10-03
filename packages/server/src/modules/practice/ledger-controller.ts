@@ -1,19 +1,94 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, Post, Query, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  apiProblemSchema, invoiceReceiptSchema, invoiceIssuedResultSchema, invoicePaymentResultSchema,
+  invoiceReceiptResultSchema, invoiceViewSchema, invoicesSchema, issueInvoiceSchema, invoiceVoidResultSchema, voidInvoiceSchema, practiceAccountSchema,
+  practiceAccountViewSchema, practiceJournalViewSchema, practiceLedgerSchema, practicePeriodTransitionResultSchema,
+  practicePeriodViewSchema, practicePostingPolicyViewSchema,
+  practiceJournalSchema, practicePeriodSchema, practicePeriodTransitionSchema,
+  practicePostingPolicySchema, practiceReverseJournalSchema, practiceVersionSchema,
+  recordPaymentSchema, paginationQuerySchema,
+} from '@auditsphere/contracts';
+import type { InvoiceReceiptRequest, PaginationQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
+import { issueInvoice, issueInvoiceReceipt, listInvoices, recordInvoicePayment, voidInvoice } from './invoices.js';
+import { toPracticeAccountView, toPracticeInvoiceView, toPracticeJournalView, toPracticeLedgerView, toPracticePeriodView } from './practice-response.js';
 
-@ApiTags('Practice ledger') @ApiBearerAuth() @UseGuards(InternalGuard)
+@ApiTags('Practice ledger') @ApiBearerAuth() @ApiDefaultResponse({ standardSchema: apiProblemSchema }) @UseGuards(InternalGuard) @UsePipes(new StandardSchemaValidationPipe()) @UseInterceptors(StandardSchemaSerializerInterceptor)
 @Controller('engagements/:engagementId/practice')
 export class PracticeLedgerController {
-  @Get() read(@ReqActor() actorId: string, @Param('engagementId') engagementId: string) { return practiceLedger(actorId, engagementId); }
-  @Post('posting-policy') policy(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body() body: unknown) { return approveFirmPostingPolicy(actorId, engagementId, body); }
-  @Post('accounts') account(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body() body: unknown) { return createPracticeAccount(actorId, engagementId, body); }
-  @Post('periods') period(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body() body: unknown) { return createPracticePeriod(actorId, engagementId, body); }
-  @Post('journals') journal(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body() body: unknown) { return createPracticeJournal(actorId, engagementId, body); }
-  @Post('journals/:id/post') post(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return postPracticeJournal(actorId, engagementId, id, body); }
-  @Post('journals/:id/reverse') reverse(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return reversePracticeJournal(actorId, engagementId, id, body); }
-  @Post('periods/:id/close') close(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return closePracticePeriod(actorId, engagementId, id, body); }
-  @Post('periods/:id/reopen') reopen(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body() body: unknown) { return reopenPracticePeriod(actorId, engagementId, id, body); }
+  @Get()
+  @ApiOkResponse({ standardSchema: practiceLedgerSchema })
+  @SerializeOptions({ schema: practiceLedgerSchema })
+  async read(@ReqActor() actorId: string, @Param('engagementId') engagementId: string) { return toPracticeLedgerView(await practiceLedger(actorId, engagementId)); }
+
+  @Post('posting-policy')
+  @ApiCreatedResponse({ standardSchema: practicePostingPolicyViewSchema })
+  @SerializeOptions({ schema: practicePostingPolicyViewSchema })
+  async policy(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: practicePostingPolicySchema }) body: unknown) {
+    const result = await approveFirmPostingPolicy(actorId, engagementId, body);
+    return { policyVersion: result.policyVersion, revenueTreatment: result.revenueTreatment, taxTreatment: result.taxTreatment, approvedAt: result.approvedAt instanceof Date ? result.approvedAt.toISOString() : new Date(result.approvedAt).toISOString() };
+  }
+
+  @Post('accounts')
+  @ApiCreatedResponse({ standardSchema: practiceAccountViewSchema })
+  @SerializeOptions({ schema: practiceAccountViewSchema })
+  async account(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: practiceAccountSchema }) body: unknown) { return toPracticeAccountView(await createPracticeAccount(actorId, engagementId, body)); }
+
+  @Post('periods')
+  @ApiCreatedResponse({ standardSchema: practicePeriodViewSchema })
+  @SerializeOptions({ schema: practicePeriodViewSchema })
+  async period(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: practicePeriodSchema }) body: unknown) { return toPracticePeriodView(await createPracticePeriod(actorId, engagementId, body)); }
+
+  @Post('journals')
+  @ApiCreatedResponse({ standardSchema: practiceJournalViewSchema })
+  @SerializeOptions({ schema: practiceJournalViewSchema })
+  async journal(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: practiceJournalSchema }) body: unknown) { return toPracticeJournalView(await createPracticeJournal(actorId, engagementId, body)); }
+
+  @Post('journals/:id/post')
+  @ApiCreatedResponse({ standardSchema: practiceJournalViewSchema })
+  @SerializeOptions({ schema: practiceJournalViewSchema })
+  async post(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: practiceVersionSchema }) body: unknown) { return toPracticeJournalView(await postPracticeJournal(actorId, engagementId, id, body)); }
+
+  @Post('journals/:id/reverse')
+  @ApiCreatedResponse({ standardSchema: practiceJournalViewSchema })
+  @SerializeOptions({ schema: practiceJournalViewSchema })
+  async reverse(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: practiceReverseJournalSchema }) body: unknown) { return toPracticeJournalView(await reversePracticeJournal(actorId, engagementId, id, body)); }
+
+  @Post('periods/:id/close')
+  @ApiCreatedResponse({ standardSchema: practicePeriodTransitionResultSchema })
+  @SerializeOptions({ schema: practicePeriodTransitionResultSchema })
+  close(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: practicePeriodTransitionSchema }) body: unknown) { return closePracticePeriod(actorId, engagementId, id, body); }
+
+  @Post('periods/:id/reopen')
+  @ApiCreatedResponse({ standardSchema: practicePeriodTransitionResultSchema })
+  @SerializeOptions({ schema: practicePeriodTransitionResultSchema })
+  reopen(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: practicePeriodTransitionSchema }) body: unknown) { return reopenPracticePeriod(actorId, engagementId, id, body); }
+
+  @Get('invoices')
+  @ApiOkResponse({ standardSchema: invoiceViewSchema, isArray: true })
+  @SerializeOptions({ schema: invoiceViewSchema })
+  async invoices(@Param('engagementId') engagementId: string, @Query({ schema: paginationQuerySchema }) page: PaginationQuery) { return (await listInvoices(engagementId, page)).map(toPracticeInvoiceView); }
+
+  @Post('invoices')
+  @ApiCreatedResponse({ standardSchema: invoiceIssuedResultSchema })
+  @SerializeOptions({ schema: invoiceIssuedResultSchema })
+  issue(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: issueInvoiceSchema }) body: unknown) { return issueInvoice(actorId, engagementId, body); }
+
+  @Post('invoices/:id/payment')
+  @ApiCreatedResponse({ standardSchema: invoicePaymentResultSchema })
+  @SerializeOptions({ schema: invoicePaymentResultSchema })
+  payment(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: recordPaymentSchema }) body: unknown) { return recordInvoicePayment(actorId, engagementId, id, body); }
+
+  @Post('invoices/:id/receipt')
+  @ApiCreatedResponse({ standardSchema: invoiceReceiptResultSchema })
+  @SerializeOptions({ schema: invoiceReceiptResultSchema })
+  receipt(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: invoiceReceiptSchema }) body: InvoiceReceiptRequest) { return issueInvoiceReceipt(actorId, engagementId, id, body.idempotencyKey); }
+
+  @Post('invoices/:id/void')
+  @ApiCreatedResponse({ standardSchema: invoiceVoidResultSchema })
+  @SerializeOptions({ schema: invoiceVoidResultSchema })
+  void(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: voidInvoiceSchema }) body: unknown) { return voidInvoice(actorId, engagementId, id, body); }
 }

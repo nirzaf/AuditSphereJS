@@ -10,7 +10,7 @@
 
 ## Outcome
 
-Provide authorized download endpoints or short-lived presigned URLs after a fresh scope check.
+Provide an authorized application download endpoint that streams the exact immutable SharePoint/OneDrive version after a fresh scope check. Do not expose Graph credentials or preauthenticated provider download URLs to the browser.
 
 ## Required context and prerequisites
 
@@ -48,9 +48,9 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Provide authorized download endpoints or short-lived presigned URLs after a fresh scope check.
+- [ ] Provide authorized download endpoints that stream the stored immutable provider version after a fresh scope check.
 - [ ] Use attachment disposition for untrusted content and safe filename encoding.
-- [ ] Track access separately from document creation and report release; generating a URL is not proof of client delivery.
+- [ ] Track access separately from document creation and report release; a download response is not proof of client receipt.
 - [ ] Provide hash/version metadata for regulator exports and browser integrity display.
 
 ## Acceptance criteria and required tests

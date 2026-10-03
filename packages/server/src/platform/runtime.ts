@@ -1,5 +1,6 @@
 import { Injectable, Inject, Module } from '@nestjs/common';
 import { db } from './db.js';
+import { ClockModule } from './clock.js';
 export const DATABASE = Symbol('DATABASE');
 @Injectable()
 export class Readiness {
@@ -13,5 +14,5 @@ export class Readiness {
     return { status: 'ready' };
   }
 }
-@Module({ providers: [{ provide: DATABASE, useValue: db }, Readiness], exports: [DATABASE, Readiness] })
+@Module({ imports: [ClockModule], providers: [{ provide: DATABASE, useValue: db }, Readiness], exports: [DATABASE, Readiness, ClockModule] })
 export class RuntimeModule {}

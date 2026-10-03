@@ -25,7 +25,11 @@ test('materiality assessments bind a published version, enforce segregation of d
       await db.firm.create({ data: { id: firmId, name: 'Materiality firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Materiality client' } });
       await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Materiality engagement', state: 'FIELDWORK_EXECUTION' } });
-      await db.user.createMany({ data: [{ id: preparerId, email: 'preparer@example.test', role: 'PREPARER' }, { id: partnerId, email: 'partner@example.test', role: 'APPROVER' }] });
+      await db.user.createMany({ data: [{ id: preparerId, email: 'approver-calculator@example.test', role: 'APPROVER' }, { id: partnerId, email: 'independent-partner@example.test', role: 'APPROVER' }] });
+      await db.membership.createMany({ data: [
+        { userId: preparerId, firmId, clientId, engagementId, role: 'APPROVER' },
+        { userId: partnerId, firmId, clientId, engagementId, role: 'APPROVER' },
+      ] });
       for (const capability of ['ENGAGEMENT_READ', 'FIELDWORK_WRITE', 'FIELDWORK_FINALIZE', 'TB_PUBLISH', 'MAPPING_APPROVE', 'TAXONOMY_MANAGE', 'MATERIALITY_MANAGE', 'MATERIALITY_APPROVE'] as const) {
         await db.roleGrant.create({ data: { userId: preparerId, capability, firmId, clientId, engagementId, grantedBy: preparerId } });
       }
@@ -40,8 +44,8 @@ test('materiality assessments bind a published version, enforce segregation of d
         { code: 'Corporate tax', label: 'Corporate tax', statementSection: 'EXPENSE', sortOrder: 3 },
         { code: 'Cash and equivalents', label: 'Cash and equivalents', statementSection: 'ASSETS', sortOrder: 4 },
         { code: 'Trade payables', label: 'Trade payables', statementSection: 'LIABILITIES', sortOrder: 5 },
-      ] }) as { id: string };
-      await approveTaxonomyVersion(preparerId, engagementId, taxonomy.id);
+      ] }) as { id: string; version: number };
+      await approveTaxonomyVersion(preparerId, engagementId, taxonomy.id, { expectedVersion: taxonomy.version });
 
       const makePublished = async (sequence: number, revenue: string, expenses: string, cash: string, payables: string) => {
         const importId = `20000000-0000-4000-8000-0000000000${String(sequence).padStart(2, '0')}`;
@@ -53,7 +57,8 @@ test('materiality assessments bind a published version, enforce segregation of d
           { importId, position: 3, code: '1000', name: 'Cash', fsli: 'Cash and equivalents', current: cash, prior: '0.000000' },
           { importId, position: 4, code: '2000', name: 'Payables', fsli: 'Trade payables', current: payables, prior: '0.000000' },
         ] });
-        await approveImportMapping(preparerId, engagementId, importId, { idempotencyKey: randomUUID() });
+        const batch = await db.tbImport.findUniqueOrThrow({ where: { id: importId } });
+        await approveImportMapping(preparerId, engagementId, importId, { expectedVersion: batch.version, idempotencyKey: randomUUID() });
         await db.tbImport.update({ where: { id: importId }, data: { status: 'FINALIZED', version: 2 } });
         const publication = await publishBalances(engagementId, preparerId, { importId, expectedVersion: 2, idempotencyKey: randomUUID() }) as { publicationId: string; sequence: number };
         return publication;

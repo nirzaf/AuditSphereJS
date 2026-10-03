@@ -3,7 +3,9 @@ import { createHash } from 'node:crypto';
 import { db } from '../../platform/db.js';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
+import { withUnitOfWork, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { calculateMaterialitySchema, approveMaterialitySchema } from '@auditsphere/contracts';
+import type { PaginationQuery } from '@auditsphere/contracts';
 import { calculateMateriality, deriveBenchmark, materialityInputHash, materialityPolicyVersion, validateMateriality, type MappedBenchmarkLine } from './materiality.js';
 
 /**
@@ -15,12 +17,6 @@ import { calculateMateriality, deriveBenchmark, materialityInputHash, materialit
  */
 const digestOf = (value: string) => createHash('sha256').update(value).digest('hex');
 const firmScope = (engagement: { firmId: string; clientId: string; id: string }): Scope => ({ firmId: engagement.firmId, clientId: engagement.clientId, engagementId: engagement.id });
-
-async function loadEngagement(engagementId: string) {
-  const engagement = await db.engagement.findUnique({ where: { id: engagementId } });
-  if (!engagement) throw new NotFoundException('Engagement not found');
-  return engagement;
-}
 
 /** Builds the benchmark lines from one published version using the taxonomy recorded at publication. */
 async function publishedBenchmarkLines(tx: Parameters<Parameters<typeof db.$transaction>[0]>[0], publicationId: string, mappingApprovalId: string | null) {
@@ -37,15 +33,16 @@ async function publishedBenchmarkLines(tx: Parameters<Parameters<typeof db.$tran
   return { approval, lines };
 }
 
-export async function calculateMaterialityAssessment(actorId: string, engagementId: string, input: unknown) {
+export async function calculateMaterialityAssessment(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = calculateMaterialitySchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'MATERIALITY_MANAGE', firmScope(engagement));
   const hash = digestOf(JSON.stringify({ engagementId, body }));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'MATERIALITY_MANAGE', firmScope(engagement));
     const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
     if (receipt) {
       if (receipt.hash !== hash || receipt.actorId !== actorId || receipt.engagementId !== engagementId) throw new ConflictException('Idempotency key reused');
@@ -87,15 +84,16 @@ export async function calculateMaterialityAssessment(actorId: string, engagement
   });
 }
 
-export async function approveMaterialityAssessment(actorId: string, engagementId: string, assessmentId: string, input: unknown) {
+export async function approveMaterialityAssessment(actorId: string, engagementId: string, assessmentId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const parsed = approveMaterialitySchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
-  const engagement = await loadEngagement(engagementId);
-  await requireCapability(db, actorId, 'MATERIALITY_APPROVE', firmScope(engagement));
   const hash = digestOf(JSON.stringify({ engagementId, assessmentId, body }));
-  return db.$transaction(async (tx) => {
+  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'MATERIALITY_APPROVE', firmScope(engagement));
     const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
     if (receipt) {
       if (receipt.hash !== hash || receipt.actorId !== actorId || receipt.engagementId !== engagementId) throw new ConflictException('Idempotency key reused');
@@ -130,8 +128,8 @@ export async function latestMaterialityAssessment(engagementId: string) {
   };
 }
 
-export async function listMaterialityAssessments(engagementId: string) {
-  const assessments = await db.materialityAssessment.findMany({ where: { engagementId }, orderBy: { calculatedAt: 'desc' } });
+export async function listMaterialityAssessments(engagementId: string, page: PaginationQuery = { offset: 0, limit: 50 }) {
+  const assessments = await db.materialityAssessment.findMany({ where: { engagementId }, orderBy: { calculatedAt: 'desc' }, skip: page.offset, take: page.limit });
   const latest = await db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
   return assessments.map((assessment) => ({ ...assessment, stale: !latest || latest.id !== assessment.publicationId }));
 }

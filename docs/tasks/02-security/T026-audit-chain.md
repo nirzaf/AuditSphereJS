@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` — PostgreSQL concurrency/tamper acceptance, checkpoint-signature tests and repository checks reviewed 2026-10-03 |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `audit` |
@@ -44,16 +45,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Define canonical serialization, stable timestamps and per-firm/per-engagement chain ordering.
-- [ ] Serialize chain-head advancement transactionally so concurrent events cannot share the same predecessor accidentally.
-- [ ] Build a verifier and signed/locked checkpoint manifest interface; describe this as tamper-evident, not superuser-proof magic.
-- [ ] Retain event format versions and test replay of older checkpoint formats.
+- [x] Define canonical serialization, stable timestamps and per-engagement chain ordering for engagement-scoped audit events.
+- [x] Serialize chain-head advancement transactionally so concurrent events cannot share the same predecessor accidentally.
+- [x] Build a verifier and signed checkpoint manifest interface; describe this as tamper-evident, not superuser-proof magic.
+- [x] Retain event format versions and test replay of historical checkpoints after later events are appended.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Concurrent inserts verify as one valid ordered chain for the chosen scope.
-- [ ] **AC2:** Tampered or removed test events are detected.
-- [ ] **AC3:** Independent checkpoint hash mismatch is surfaced without modifying the source events.
+- [x] **AC1:** Concurrent inserts verify as one valid ordered chain for the chosen engagement scope.
+- [x] **AC2:** Tampered or removed test events are detected.
+- [x] **AC3:** Independent checkpoint hash mismatch is surfaced without modifying the source events.
 
 Test application-role denial and simultaneous writes against PostgreSQL; validate exact audit/checkpoint lineage.
 
