@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { test, expect } from '@playwright/test';
-test('live CSV import, mapping and finalized summary', async ({ page }) => {
+test('live CSV import and mapping enforce reviewer-only finalization', async ({ page }) => {
   test.skip(!process.env.RUN_LIVE_E2E, 'Requires seeded PostgreSQL, Redis, RustFS and worker');
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -16,8 +16,9 @@ test('live CSV import, mapping and finalized summary', async ({ page }) => {
   await page.getByRole('button', { name: 'Save 2 mappings' }).click();
   await expect(page.getByRole('status')).toContainText('Mappings saved');
   await page.getByRole('button', { name: 'Finalize', exact: true }).click();
-  await expect(page.locator('.metrics .status')).toHaveText('FINALIZED');
-  await expect(page.getByLabel('FSLI for 100', { exact: true })).toBeDisabled();
+  await expect(page.getByRole('status')).toContainText('FIELDWORK_FINALIZE is not granted for this engagement');
+  await expect(page.locator('.metrics .status')).toHaveText('MAPPING_REQUIRED');
+  await expect(page.getByLabel('FSLI for 100', { exact: true })).toBeEnabled();
   expect(errors).toEqual([]);
   await page.setViewportSize({ width: 1440, height: 1100 });
   await page.screenshot({ path: 'docs/workspace-preview.png', fullPage: true });
