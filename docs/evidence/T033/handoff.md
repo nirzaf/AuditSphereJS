@@ -4,7 +4,7 @@
 
 Task ID: T033  
 Requirement IDs: R020, R022, R041, R052  
-Implementing commits on `main`: prior upload implementation; current malware-scanning follow-up pending push
+Implementing commits on `main`: prior upload implementation; malware-scanning follow-up `caf8aa7`
 Status: IN_PROGRESS
 
 ## Intended and delivered outcome
