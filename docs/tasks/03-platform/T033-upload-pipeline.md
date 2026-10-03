@@ -52,7 +52,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Stream through Fastify multipart to the server-side provider adapter; keep Graph credentials and any preauthenticated upload URL inside the server boundary. Check actual byte size/type/hash before attaching it. Fastify bytes stream through a bounded validator into a private mode-0600 temporary file, then stream from disk to the provider; no full-file Buffer is assembled.
 - [ ] Recheck portal access, workflow state and source version during finalize, not only before issuing a URL. Internal staff authorization, engagement state, immutable object reference and digest are rechecked; the portal/PBC identity and source-version boundary is owned by the not-yet-implemented PBC flow.
 - [x] Abandon/reap uncommitted staging objects after a grace period. Persisted cleanup claims serialize sweepers with finalization, recover stale claims, and verify Graph folder, generated name, current version, etag, size and digest before recycle-bin deletion.
-- [ ] Complete hostile-file inspection under the approved file policy. The endpoint allows PDF/CSV only and rejects unsupported macro-enabled workbook MIME before session creation; encrypted PDFs, active content and document malware scanning remain unverified.
+- [ ] Complete hostile-file inspection under the approved file policy. PDF/CSV content is screened through the digest-pinned ClamAV 1.5.4 service before any object metadata or provider write; detections fail the session, scanner outages fail closed, and tests exercise unit, real-daemon and upload-boundary paths. Encrypted PDF rejection and active-content inspection remain unverified, so the full file-policy criterion stays open.
 
 ## Acceptance criteria and required tests
 

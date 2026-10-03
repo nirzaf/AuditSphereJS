@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, NotFoundException, PayloadTooLargeException } from '@nestjs/common';
+import { BadRequestException, ConflictException, NotFoundException, PayloadTooLargeException, ServiceUnavailableException } from '@nestjs/common';
 import { createHash, randomUUID } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -12,6 +12,7 @@ import { requireCapability, type Scope } from './authorization.js';
 import { resolveClientRepository } from './repository.js';
 import { storageProvider, storeFile } from './storage.js';
 import { decodeGraphReference } from './graph-storage.js';
+import { MalwareDetectedError, MalwareScannerUnavailableError, scanFileWithClamAv } from './clamav.js';
 import { lockForUpdate, runUnitOfWork } from './unit-of-work.js';
 
 const MAX_UPLOAD_BYTES = 15_000_000;
@@ -94,6 +95,17 @@ export async function receiveDocumentUpload(actorId: string, sessionId: string, 
     const contentType = identifyContent(prefix, session.originalFilename, session.declaredContentType, hasNul, validUtf8);
     const digest = hash.digest('hex');
     if (session.expectedSha256 && session.expectedSha256 !== digest) throw new BadRequestException('Uploaded file failed SHA-256 validation.');
+    try {
+      await scanFileWithClamAv(temporaryFile, {
+        host: process.env.CLAMAV_HOST ?? '127.0.0.1',
+        port: Number(process.env.CLAMAV_PORT ?? 3310),
+      });
+    } catch (error) {
+      await db.documentUploadSession.updateMany({ where: { id: session.id, actorId, status: 'INITIATED' }, data: { status: 'FAILED', version: { increment: 1 } } });
+      if (error instanceof MalwareDetectedError) throw new BadRequestException('Uploaded file was rejected by security scanning.');
+      if (error instanceof MalwareScannerUnavailableError) throw new ServiceUnavailableException('Security scanning is unavailable; the file was not stored.');
+      throw error;
+    }
     const engagement = await db.engagement.findUnique({ where: { id: session.engagementId } });
     if (!engagement || engagement.firmId !== session.firmId || engagement.clientId !== session.clientId) throw new NotFoundException('Upload session not found');
     await requireCapability(db, actorId, 'FIELDWORK_WRITE', scopeOf(engagement));

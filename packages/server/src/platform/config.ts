@@ -3,6 +3,8 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.url().refine(value => URL.canParse(value) && ['postgres:', 'postgresql:'].includes(new URL(value).protocol)), REDIS_URL: z.url().refine(value => URL.canParse(value) && ['redis:', 'rediss:'].includes(new URL(value).protocol)),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
+  CLAMAV_HOST: z.string().min(1).default('127.0.0.1'),
+  CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   DEV_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
   STORAGE_PROVIDER: z.enum(['graph', 'local-s3']).optional(),
@@ -24,7 +26,7 @@ export function readConfiguration(env = process.env) {
     if (config.DEV_AUTH_ENABLED === 'true' || env.DEV_AUTH_TOKEN) throw new Error('Development authentication is forbidden in production');
     if (config.AUTH_PROVIDER !== 'entra' || config.STORAGE_PROVIDER !== 'graph') throw new Error('Production requires Entra identity and Graph storage');
     if (new URL(config.WEB_ORIGIN).protocol !== 'https:') throw new Error('Production WEB_ORIGIN requires HTTPS');
-    for (const key of ['M365_TENANT_ID', 'M365_CLIENT_ID', 'M365_CLIENT_SECRET', 'ENTRA_API_AUDIENCE', 'ENTRA_API_SCOPE', 'ENTRA_BROWSER_CLIENT_ID', 'ENTRA_BROWSER_API_SCOPE', 'ENTRA_BROWSER_REDIRECT_URI', 'SHAREPOINT_DRIVE_ID', 'SHAREPOINT_FOLDER_ID', 'ONEDRIVE_DRIVE_ID', 'ONEDRIVE_FOLDER_ID']) if (!env[key]) throw new Error(`Missing production configuration: ${key}`);
+    for (const key of ['M365_TENANT_ID', 'M365_CLIENT_ID', 'M365_CLIENT_SECRET', 'ENTRA_API_AUDIENCE', 'ENTRA_API_SCOPE', 'ENTRA_BROWSER_CLIENT_ID', 'ENTRA_BROWSER_API_SCOPE', 'ENTRA_BROWSER_REDIRECT_URI', 'SHAREPOINT_DRIVE_ID', 'SHAREPOINT_FOLDER_ID', 'ONEDRIVE_DRIVE_ID', 'ONEDRIVE_FOLDER_ID', 'CLAMAV_HOST', 'CLAMAV_PORT']) if (!env[key]) throw new Error(`Missing production configuration: ${key}`);
   }
   return config;
 }

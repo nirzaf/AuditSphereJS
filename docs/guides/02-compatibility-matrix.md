@@ -40,6 +40,7 @@ The public evidence reviewed is inconsistent about Prisma 8 GA status. **Do not 
 | Fastify plugins | CORS, cookie/CSRF, multipart limits and realtime initialization on the real adapter. |
 | PostgreSQL/Prisma | NUMERIC roundtrip, transaction rollback, scoped FKs, pool timeouts and runtime grants. |
 | Queue Redis | Enqueue/process/retry, noeviction, worker recovery and durable PostgreSQL reconciliation. |
+| Document malware scanner | Pinned ClamAV container starts healthy; bounded INSTREAM accepts a clean fixture, rejects EICAR, and upload storage stays fail-closed when unavailable. |
 | Browser/PDF | Matching Playwright/browser image, fonts and CPU/memory/network limits. |
 | API contracts | Runtime malformed payload rejected, Nest OpenAPI artifact matches controller decorators, canonical Zod-inferred browser transport compiles. |
 | Optional providers | Test tenant/signing/storage-provider calls with minimum permissions, revoked credentials and retry cases. |

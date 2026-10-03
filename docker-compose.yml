@@ -20,6 +20,10 @@ services:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       retries: 20
+  clamav:
+    image: clamav/clamav:1.5.4-debian13-slim@sha256:9bb8712a50f0e75166e936c452cd82dd5e5be0b85586598930b5bbb84a99a578
+    restart: unless-stopped
+    ports: ["127.0.0.1:3310:3310"]
   mailpit:
     image: ghcr.io/axllent/mailpit:v1.31.3@sha256:13de4ffbd28f3089be6dff32afbc8210edb5a593d738fa877ae7272cc73aeb67
     ports: ["127.0.0.1:1025:1025", "127.0.0.1:8025:8025"]

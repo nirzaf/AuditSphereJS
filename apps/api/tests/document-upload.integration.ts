@@ -4,6 +4,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { createServer, type Server } from 'node:net';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -21,10 +22,48 @@ const otherActorId = 'a7000000-0000-4000-8000-000000000007';
 const localFixtureId = '00000000-0000-4000-8000-000000000001';
 const testTenant = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
+async function startTestMalwareScanner() {
+  const server: Server = createServer(socket => {
+    let input = Buffer.alloc(0);
+    let commandSeen = false;
+    let fileBytes = Buffer.alloc(0);
+    socket.on('data', chunk => {
+      input = Buffer.concat([input, chunk]);
+      if (!commandSeen) {
+        const end = input.indexOf(0);
+        if (end < 0) return;
+        assert.equal(input.subarray(0, end).toString('ascii'), 'zINSTREAM');
+        input = input.subarray(end + 1);
+        commandSeen = true;
+      }
+      while (input.length >= 4) {
+        const length = input.readUInt32BE(0);
+        if (input.length < 4 + length) return;
+        input = input.subarray(4);
+        if (length === 0) {
+          const infected = fileBytes.includes(Buffer.from('EICAR-STANDARD-ANTIVIRUS-TEST-FILE'));
+          socket.end(Buffer.from(infected ? 'stream: Eicar-Test-Signature FOUND\0' : 'stream: OK\0'));
+          return;
+        }
+        fileBytes = Buffer.concat([fileBytes, input.subarray(0, length)]);
+        input = input.subarray(length);
+      }
+    });
+  });
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => { server.off('error', reject); resolve(); });
+  });
+  const address = server.address();
+  if (!address || typeof address === 'string') throw new Error('Test malware scanner failed to bind');
+  return { server, port: address.port };
+}
+
 test('document upload sessions validate bytes and recheck authorization/workflow before attachment', { timeout: 120_000 }, async () => {
   const container = await new PostgreSqlContainer('postgres:18.6').withDatabase('auditsphere_document_uploads').withUsername('test_owner').withPassword(randomBytes(24).toString('hex')).start();
   const originalFetch = globalThis.fetch;
-  const originalEnv = new Map(['AUTH_PROVIDER', 'DEV_AUTH_ENABLED', 'DEV_AUTH_TOKEN'].map(name => [name, process.env[name]]));
+  const originalEnv = new Map(['AUTH_PROVIDER', 'DEV_AUTH_ENABLED', 'DEV_AUTH_TOKEN', 'CLAMAV_HOST', 'CLAMAV_PORT'].map(name => [name, process.env[name]]));
+  let scanner: Server | undefined;
   const objects = new Map<string, Buffer>();
   const recycledItemIds: string[] = [];
   let objectNumber = 0;
@@ -60,9 +99,11 @@ test('document upload sessions validate bytes and recheck authorization/workflow
   }) as typeof fetch;
 
   try {
+    const testScanner = await startTestMalwareScanner();
+    scanner = testScanner.server;
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
-    Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, STORAGE_PROVIDER: 'graph', M365_TENANT_ID: testTenant, M365_CLIENT_ID: 'synthetic-client', M365_CLIENT_SECRET: 'synthetic-secret', AUTH_PROVIDER: 'development', DEV_AUTH_ENABLED: 'true', DEV_AUTH_TOKEN: 'document-upload-integration-token' });
+    Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, STORAGE_PROVIDER: 'graph', M365_TENANT_ID: testTenant, M365_CLIENT_ID: 'synthetic-client', M365_CLIENT_SECRET: 'synthetic-secret', AUTH_PROVIDER: 'development', DEV_AUTH_ENABLED: 'true', DEV_AUTH_TOKEN: 'document-upload-integration-token', CLAMAV_HOST: '127.0.0.1', CLAMAV_PORT: String(testScanner.port) });
     const { db, initiateDocumentUpload, receiveDocumentUpload, finalizeDocumentUpload, sweepUnreferencedUploads, decodeGraphReference, DocumentUploadsController, InternalIdentityGuard } = await import('@auditsphere/server');
     try {
       await db.firm.create({ data: { id: firmId, name: 'Upload session firm' } });
@@ -101,6 +142,27 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       const mismatchedBytes = Buffer.from('%PDF-1.7\nsmall');
       await assert.rejects(receiveDocumentUpload(actorId, mismatchedSize.id, { filename: 'mismatched.pdf', mimetype: 'application/pdf', file: (async function* () { yield mismatchedBytes; })() }), /size does not match/);
       assert.equal(await db.document.count({ where: { engagementId } }), 0, 'declared and observed sizes must match before bytes are attached');
+
+      const eicarBytes = Buffer.from('%PDF-1.7\nEICAR-STANDARD-ANTIVIRUS-TEST-FILE\n');
+      const infected = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'infected.pdf', contentType: 'application/pdf', sizeBytes: eicarBytes.byteLength }) as { id: string };
+      const storedBeforeScan = await db.storedObject.count({ where: { engagementId } });
+      await assert.rejects(receiveDocumentUpload(actorId, infected.id, { filename: 'infected.pdf', mimetype: 'application/pdf', file: (async function* () { yield eicarBytes; })() }), /security scanning/);
+      assert.equal((await db.documentUploadSession.findUniqueOrThrow({ where: { id: infected.id } })).status, 'FAILED', 'a positive malware result permanently fails the initiated session');
+      assert.equal(await db.storedObject.count({ where: { engagementId } }), storedBeforeScan, 'malware is rejected before a storage record or provider write is created');
+      assert.equal(await db.document.count({ where: { engagementId } }), 0);
+      assert.equal(await db.documentVersion.count({ where: { engagementId } }), 0);
+      assert.equal(objects.size, 0, 'infected bytes never reach Graph');
+
+      const offlineBytes = Buffer.from('%PDF-1.7\nscanner-offline');
+      const unavailable = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'scanner-offline.pdf', contentType: 'application/pdf', sizeBytes: offlineBytes.byteLength }) as { id: string };
+      const scannerPort = process.env.CLAMAV_PORT;
+      process.env.CLAMAV_PORT = '1';
+      try {
+        await assert.rejects(receiveDocumentUpload(actorId, unavailable.id, { filename: 'scanner-offline.pdf', mimetype: 'application/pdf', file: (async function* () { yield offlineBytes; })() }), /Security scanning is unavailable/);
+      } finally { process.env.CLAMAV_PORT = scannerPort ?? String(testScanner.port); }
+      assert.equal((await db.documentUploadSession.findUniqueOrThrow({ where: { id: unavailable.id } })).status, 'FAILED', 'scanner outages fail closed and cannot be retried as an active upload');
+      assert.equal(await db.storedObject.count({ where: { engagementId } }), storedBeforeScan, 'scanner outages are detected before creating storage metadata');
+      assert.equal(objects.size, 0, 'scanner outages never trigger Graph writes');
 
       const failedProviderBytes = Buffer.from('%PDF-1.7\nprovider-failure');
       const failedProvider = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'provider-failure.pdf', contentType: 'application/pdf', sizeBytes: failedProviderBytes.byteLength }) as { id: string };
@@ -178,6 +240,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
   } finally {
     globalThis.fetch = originalFetch;
     for (const [name, value] of originalEnv) { if (value === undefined) delete process.env[name]; else process.env[name] = value; }
+    if (scanner) await new Promise<void>(resolve => scanner!.close(() => resolve()));
     await container.stop();
   }
 });
