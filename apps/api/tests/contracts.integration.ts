@@ -495,10 +495,12 @@ test('Nest API contracts reject invalid input, strip sensitive output and genera
       Object.entries(methods)
         .filter(([method]) => ['get', 'post', 'put', 'patch', 'delete'].includes(method))
         .flatMap(([method, value]) => Object.entries(value.responses ?? {})
-          .filter(([status, response]) => status.startsWith('2') && !(response as { content?: { 'application/json'?: { schema?: unknown } } }).content?.['application/json']?.schema)
+          .filter(([status, response]) => status.startsWith('2') && !Object.values((response as { content?: Record<string, { schema?: unknown }> }).content ?? {}).some((mediaType) => mediaType.schema))
           .map(([status]) => method.toUpperCase() + ' ' + path + ' ' + status)),
     );
-    assert.deepEqual(missingSuccessSchemas, [], 'every documented success response has a JSON schema');
+    assert.deepEqual(missingSuccessSchemas, [], 'every documented success response has a schema for its media type');
+    const documentDownload = document.paths['/api/v1/documents/{documentId}/versions/{versionId}/download']?.get;
+    assert.deepEqual((documentDownload?.responses?.['200'] as { content?: Record<string, { schema?: unknown }> })?.content?.['application/octet-stream']?.schema, { type: 'string', format: 'binary' }, 'document downloads are represented as binary bytes rather than JSON');
 
     const proposals = document.paths['/api/v1/engagements/{engagementId}/commercial/proposals']?.get;
     const pageParameters = (proposals?.parameters ?? []) as Array<{ name: string; in: string; schema?: { minimum?: number; maximum?: number } }>;

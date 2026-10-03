@@ -16,7 +16,10 @@ type DownloadReply = {
 @UseGuards(InternalIdentityGuard)
 export class DocumentDownloadsController {
   @Get()
-  @ApiOkResponse({ description: 'Verified immutable document bytes.' })
+  @ApiOkResponse({
+    description: 'Verified immutable document bytes.',
+    content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
+  })
   async download(@ReqActor() actorId: string, @Param('documentId') documentId: string, @Param('versionId') versionId: string, @Res({ passthrough: true }) reply: DownloadReply) {
     if (!/^[0-9a-f-]{36}$/i.test(documentId) || !/^[0-9a-f-]{36}$/i.test(versionId)) throw new NotFoundException('Document version not found');
     const prepared = await prepareDocumentVersionDownload(actorId, documentId, versionId);
