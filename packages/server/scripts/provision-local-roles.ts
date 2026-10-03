@@ -23,6 +23,10 @@ try {
   // deliberately extended, so least privilege is not silently widened by a migration.
   await client.query('GRANT SELECT, INSERT, UPDATE, DELETE ON "Firm", "Client", "User", "Membership", "Engagement", "Document", "TbImport", "TbRow", "OutboxEvent", "CommandReceipt" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "AuditEvent", "EngagementTransition" TO auditsphere_api');
+  // API commands create durable operation intent in the same business transaction; workers
+  // claim and transition it. Neither role can delete operation history.
+  await client.query('GRANT INSERT ON "background_operations" TO auditsphere_api');
+  await client.query('GRANT SELECT, UPDATE ON "background_operations" TO auditsphere_worker');
   await client.query('GRANT SELECT, INSERT ON "IdentitySessionRevocation" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "SecurityEvent" TO auditsphere_api, auditsphere_worker');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "CommercialProposal" TO auditsphere_api');

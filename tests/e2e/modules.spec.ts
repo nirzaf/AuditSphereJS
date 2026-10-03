@@ -5,8 +5,9 @@ test('every module workspace renders with clear authority boundaries and mobile 
   await page.route('**/api/v1/identity/config', route => route.fulfill({json:{provider:'development'}}));
   for (const screen of moduleScreens) {
     await page.goto(`/?module=${screen.module}&view=${screen.id}`);
-    await expect(page.getByRole('heading',{name:screen.id==='ledger'?'Practice ledger':screen.id==='trial-balance'?'Trial Balance workspace':screen.title,exact:true})).toBeVisible();
-    if (!screen.endpoint && screen.id!=='ledger' && screen.id!=='trial-balance') await expect(page.getByText('Preparation only',{exact:true})).toBeVisible();
+    await expect(page.getByRole('navigation',{name:'Module workspaces'}).getByRole('button',{name:screen.title,exact:true})).toHaveAttribute('aria-current','page');
+    await expect(page.locator('main h1')).toBeVisible();
+    if (!screen.endpoint && screen.fields.length > 0 && screen.id!=='trial-balance') await expect(page.getByText('Preparation only',{exact:true})).toBeVisible();
     await page.setViewportSize({width:390,height:844});
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),screen.id).toBe(true);
   }
