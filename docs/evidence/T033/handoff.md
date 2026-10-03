@@ -24,7 +24,7 @@ This is not full T033 acceptance. Portal/PBC uploads are not available, so porta
 
 ## Dependency evidence
 
-Added exact `@fastify/multipart@10.1.2` under `apps/api`; license is MIT and the dependency metadata gate passed. The package is exercised with the pinned Fastify `5.12.5` adapter. The 10.1.0 aborted-upload advisory and selected patched version are recorded in the library register and [multipart adapter evidence](multipart-adapter-2026-10-03.md). The prior hosted T017 run predates this lockfile change; full compatibility revalidation must run on the updated lockfile before the compatibility baseline is current again.
+Added exact `@fastify/multipart@10.1.2` under `apps/api`; license is MIT and the dependency metadata gate passed. The package is exercised with the pinned Fastify `5.12.5` adapter. The 10.1.0 aborted-upload advisory and selected patched version are recorded in the library register and [multipart adapter evidence](multipart-adapter-2026-10-03.md). The full T017 check passed locally against the updated lockfile and Linux image; dated versions, hashes, suite totals and limitations are recorded in [T017 recheck evidence](../T017/local-run-2026-10-04.md). Hosted CI still verifies each pushed revision.
 
 ## Decisions
 
@@ -59,5 +59,5 @@ The migration is additive. No production database was changed; integration tests
 
 Reviewer: pending independent review.  
 Review result: T033 remains IN_PROGRESS.  
-Open blockers: portal/PBC upload authorization and freeze recheck (PBC task T075); T064 category folder bindings; encrypted/active content inspection and malware scanning; live Graph staging-cleanup acceptance; complete negative-path/API acceptance; repeat T017 hosted compatibility check with the changed lockfile.
+Open blockers: portal/PBC upload authorization and freeze recheck (PBC task T075); T064 category folder bindings; encrypted/active content inspection and malware scanning; live Graph staging-cleanup acceptance; remaining negative-path/API acceptance. The updated lockfile compatibility check passed locally; hosted CI remains the per-push verification.
 Next eligible task: continue T033 until these criteria are implemented or an approved dependency boundary assigns portal uploads to T075 with an explicit task-pack correction.
