@@ -11,6 +11,15 @@ import { createTrialBalanceImportProcessor } from './modules/fieldwork/import-wo
 import { dispatchPendingOutbox } from './platform/outbox.js';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
 import { readConfiguration } from './platform/config.js';
+import {
+  durableQueueJobOptions,
+  onceAsync,
+  publishWithTimeout,
+  redisConnectionOptions,
+  registerWorkerShutdown,
+  safeQueueErrorCode,
+  trialBalanceWorkerOptions,
+} from './platform/queue-runtime.js';
 
 @Module({ imports: [RuntimeModule] })
 class WorkerModule {}
@@ -18,42 +27,43 @@ class WorkerModule {}
 export async function runWorker() {
   readConfiguration();
   const app = await NestFactory.createApplicationContext(WorkerModule);
-  app.enableShutdownHooks();
   await app.get(Readiness).check();
   await ensureBucket();
 
-  const redis = new URL(process.env.REDIS_URL!);
-  const connection = {
-    host: redis.hostname,
-    port: Number(redis.port || 6379),
-    username: redis.username ? decodeURIComponent(redis.username) : undefined,
-    password: redis.password ? decodeURIComponent(redis.password) : undefined,
-    ...(redis.protocol === 'rediss:' ? { tls: { servername: redis.hostname, rejectUnauthorized: true } } : {}),
-    maxRetriesPerRequest: null,
-  };
-  const queue = new Queue('tb-import', { connection });
+  const queue = new Queue('tb-import', {
+    connection: redisConnectionOptions(process.env.REDIS_URL!, 'producer'),
+  });
+  queue.on('error', error => console.error('Trial-balance producer Redis error', safeQueueErrorCode(error)));
   const processImport = createTrialBalanceImportProcessor(async (document, batch) => {
     const repository = document.key.startsWith('graph:')
       ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence')
       : undefined;
     return retrieve(document.key, repository);
   });
-  const worker = new Worker('tb-import', processImport, { connection, concurrency: 1 });
-  worker.on('failed', job => console.error('Trial-balance worker delivery failed', job?.id));
+  const worker = new Worker('tb-import', processImport, {
+    connection: redisConnectionOptions(process.env.REDIS_URL!, 'worker'),
+    ...trialBalanceWorkerOptions,
+  });
+  worker.on('error', error => console.error('Trial-balance worker Redis error', safeQueueErrorCode(error)));
+  worker.on('failed', (job, error) => console.error('Trial-balance worker delivery failed', JSON.stringify({
+    jobId: job?.id,
+    operationId: job?.data.operationId,
+    attempt: job ? job.attemptsMade + 1 : undefined,
+    errorCode: safeQueueErrorCode(error),
+  })));
 
+  let relayInFlight: Promise<void> | undefined;
+  let sweepInFlight: Promise<void> | undefined;
   let publishing = false;
   const relay = async () => {
     if (publishing) return;
     publishing = true;
     try {
       const result = await dispatchPendingOutbox(async dispatch => {
-        await queue.add(dispatch.name, dispatch.data, {
+        await publishWithTimeout(() => queue.add(dispatch.name, dispatch.data, {
           jobId: dispatch.jobId,
-          attempts: 3,
-          backoff: { type: 'exponential', delay: 2_000 },
-          removeOnComplete: true,
-          removeOnFail: true,
-        });
+          ...durableQueueJobOptions,
+        }));
       });
       if (result.claimed) console.log('Outbox relay', JSON.stringify(result));
     } catch {
@@ -62,12 +72,13 @@ export async function runWorker() {
       publishing = false;
     }
   };
-  const timer = setInterval(() => { void relay(); }, 1_000);
-  void relay();
+  const relayOnce = () => relayInFlight ??= relay().finally(() => { relayInFlight = undefined; });
+  const timer = setInterval(() => { void relayOnce(); }, 1_000);
+  void relayOnce();
 
   // Unreferenced uploads are cleaned only after a grace period, and Graph evidence is never deleted.
   const sweepTimer = setInterval(() => {
-    sweepUnreferencedUploads({ olderThanMinutes: 60 })
+    sweepInFlight ??= sweepUnreferencedUploads({ olderThanMinutes: 60 })
       .then(result => {
         if (result.scanned) {
           console.log('Upload sweep', JSON.stringify({
@@ -77,17 +88,22 @@ export async function runWorker() {
           }));
         }
       })
-      .catch(() => console.error('Upload sweep failed'));
+      .catch(() => console.error('Upload sweep failed'))
+      .then(() => { sweepInFlight = undefined; });
   }, 600_000);
 
-  const shutdown = async () => {
+  const shutdown = onceAsync(async () => {
     clearInterval(timer);
     clearInterval(sweepTimer);
+    await Promise.allSettled([relayInFlight, sweepInFlight].filter((job): job is Promise<void> => !!job));
+    // close() stops new claims and waits for the current import to reach its transaction boundary.
     await worker.close();
     await queue.close();
     await db.$disconnect();
     await app.close();
-  };
-  process.once('SIGINT', shutdown);
-  process.once('SIGTERM', shutdown);
+  });
+  registerWorkerShutdown(process.once.bind(process), shutdown, () => {
+    console.error('Worker shutdown failed');
+    process.exitCode = 1;
+  });
 }

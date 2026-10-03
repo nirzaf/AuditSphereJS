@@ -8,6 +8,8 @@
 | Owner area | `async` |
 | Completion unit | One focused, reviewable change and its evidence |
 
+> Current status: `IN_PROGRESS`. Producer waits are now bounded, worker Redis reconnects persist, and failed jobs are retained with stable operation correlation. Remaining: a workflow-owned cooperative cancellation command/checkpoint and live signal/stalled-recovery acceptance beyond the existing outbox loss/restart test.
+
 ## Outcome
 
 Use the peer-compatible @nestjs/bullmq/BullMQ pair with persisted noeviction Redis and bounded queue payloads.
@@ -45,10 +47,10 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Use the peer-compatible @nestjs/bullmq/BullMQ pair with persisted noeviction Redis and bounded queue payloads.
-- [ ] Give producer calls fast failure and workers persistent reconnection; separate job retry limits from connection retry behavior.
-- [ ] Isolate CPU-heavy processors from the API; cap concurrency by tested resource budgets.
-- [ ] Handle stalled jobs, failed jobs, cancellation checkpoints and graceful SIGTERM without dropping durable work.
+- [x] Use the peer-compatible @nestjs/bullmq/BullMQ pair with persisted noeviction Redis and bounded queue payloads.
+- [x] Give producer calls fast failure and workers persistent reconnection; separate job retry limits from connection retry behavior.
+- [x] Isolate CPU-heavy processors from the API; cap concurrency by tested resource budgets.
+- [ ] Handle stalled jobs, failed jobs, cancellation checkpoints and graceful SIGTERM without dropping durable work. Stalled/failed retention and graceful drain are implemented; cooperative user cancellation remains open because no owning workflow or authorized cancellation command exists yet.
 
 ## Acceptance criteria and required tests
 
