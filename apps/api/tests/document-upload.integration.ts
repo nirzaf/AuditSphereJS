@@ -28,6 +28,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
   const objects = new Map<string, Buffer>();
   const recycledItemIds: string[] = [];
   let objectNumber = 0;
+  let failNextProviderUpload = false;
   globalThis.fetch = (async (input, init) => {
     const target = new URL(typeof input === 'string' ? input : input instanceof URL ? input.href : input.url);
     if (target.hostname === '127.0.0.1' || target.hostname === 'localhost') return originalFetch(input, init);
@@ -39,6 +40,10 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       return new Response(null, { status: 204 });
     }
     if (init?.method === 'PUT') {
+      if (failNextProviderUpload) {
+        failNextProviderUpload = false;
+        return Response.json({ error: 'synthetic provider outage' }, { status: 503 });
+      }
       const itemId = `upload-item-${++objectNumber}`;
       const body = init.body;
       objects.set(itemId, body instanceof ReadableStream
@@ -96,6 +101,15 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       const mismatchedBytes = Buffer.from('%PDF-1.7\nsmall');
       await assert.rejects(receiveDocumentUpload(actorId, mismatchedSize.id, { filename: 'mismatched.pdf', mimetype: 'application/pdf', file: (async function* () { yield mismatchedBytes; })() }), /size does not match/);
       assert.equal(await db.document.count({ where: { engagementId } }), 0, 'declared and observed sizes must match before bytes are attached');
+
+      const failedProviderBytes = Buffer.from('%PDF-1.7\nprovider-failure');
+      const failedProvider = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'provider-failure.pdf', contentType: 'application/pdf', sizeBytes: failedProviderBytes.byteLength }) as { id: string };
+      failNextProviderUpload = true;
+      await assert.rejects(receiveDocumentUpload(actorId, failedProvider.id, { filename: 'provider-failure.pdf', mimetype: 'application/pdf', file: (async function* () { yield failedProviderBytes; })() }), /Graph upload failed \(503\)/);
+      assert.equal((await db.documentUploadSession.findUniqueOrThrow({ where: { id: failedProvider.id } })).status, 'FAILED', 'provider rejection never leaves a session that can be finalized');
+      assert.equal(await db.document.count({ where: { engagementId } }), 0, 'provider failure cannot attach partial evidence');
+      assert.equal(await db.documentVersion.count({ where: { engagementId } }), 0, 'provider failure cannot create immutable version metadata');
+      assert.equal((await db.storedObject.findFirstOrThrow({ where: { engagementId, status: 'UPLOADING', sha256: createHash('sha256').update(failedProviderBytes).digest('hex') } })).status, 'UPLOADING', 'unknown provider outcome remains tracked for the grace-period cleanup/reconciliation path');
 
       const pdfBytes = Buffer.from('%PDF-1.7\nfixture');
       const frozen = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'frozen.pdf', contentType: 'application/pdf', sizeBytes: pdfBytes.byteLength, expectedSha256: createHash('sha256').update(pdfBytes).digest('hex') }) as { id: string };

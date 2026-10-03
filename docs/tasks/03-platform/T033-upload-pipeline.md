@@ -60,7 +60,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [ ] **AC2:** Spoofed MIME, oversized payload and cross-client upload completion fail.
 - [x] **AC3:** An initiated/interrupted transfer remains unfinalized and creates no document/version record; PostgreSQL integration test asserts this.
 
-AC1 remains open: finalization rechecks internal staff authorization and engagement state, but the portal/PBC workflow and client upload freeze are not implemented. AC2 is partial: tests cover unsupported XLSM MIME, PDF MIME spoofing, declared/actual size mismatch, nonmember access and bounded multipart limits; cross-client portal completion needs its owning PBC model.
+AC1 remains open: finalization rechecks internal staff authorization and engagement state, but the portal/PBC workflow and client upload freeze are not implemented. AC2 is partial: tests cover unsupported XLSM MIME, PDF MIME spoofing, declared/actual size mismatch, nonmember access and bounded multipart limits; cross-client portal completion needs its owning PBC model. AC3 passes: interrupted sessions and an injected Graph 503 both remain unattached; provider failure creates no document/version and leaves the uncertain staging row tracked for cleanup/reconciliation.
 
 Test real/emulated storage behavior, boundary failures and immutable hash/version references; provider-specific assurance requires real-provider evidence.
 

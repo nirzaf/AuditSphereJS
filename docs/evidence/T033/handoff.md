@@ -4,7 +4,7 @@
 
 Task ID: T033  
 Requirement IDs: R020, R022, R041, R052  
-Implementing commit/branch: uncommitted changes on `main`  
+Implementing commits on `main`: prior upload implementation plus pending provider-failure regression test
 Status: IN_PROGRESS
 
 ## Intended and delivered outcome
@@ -40,6 +40,7 @@ No new D01–D12 implementation default was introduced. The endpoint is internal
 | `node --import tsx --test tests/graph-storage.test.ts` | Streamed Graph upload, cleanup by exact reference/name, hash and version mismatch denial | Exit 0; 6 tests passed | Task-run output, 2026-10-03 |
 | `node --import tsx --test tests/upload-race.integration.ts` | PostgreSQL 18.6 + RustFS concurrent identical Trial Balance uploads and stale-object sweep | Exit 0; 1 integration test passed | Task-run output, 2026-10-03 |
 | `pnpm verify:task -- T033` (final rerun) | Fresh generated Prisma client, server compilation, contract/OpenAPI drift, Fastify multipart bounds and PostgreSQL 18.6 upload API/session/staging flow | Exit 0; multipart 2/2 and upload API/PostgreSQL integration 1/1; unsupported `.xlsm` creates no session | Task-run output, 2026-10-03 |
+| `pnpm verify:task -- T033` (provider failure rerun) | PostgreSQL 18.6 upload flow with an injected Graph 503 | Exit 0; multipart 2/2 and upload API/PostgreSQL integration 1/1; provider rejection fails the session, creates no document/version and preserves the tracked staging outcome | Local run, 2026-10-04 UTC |
 | `pnpm verify:affected` (final rerun) | Boundaries, server/tests typecheck, Angular production build and Vitest | Exit 0; 22 files, 99 tests passed; production web build emitted `dist/web` | Task-run output, 2026-10-03 |
 | `pnpm exec eslint packages/server/src/platform/document-uploads.ts packages/server/src/platform/storage.ts packages/server/src/platform/graph-storage.ts packages/server/src/modules/fieldwork/uploads.ts packages/server/src/modules/fieldwork/service.ts tests/graph-storage.test.ts tests/upload-race.integration.ts apps/api/tests/document-upload.integration.ts` | Changed upload, storage and integration-test files | Exit 0 | Task-run output, 2026-10-03 |
 | `pnpm db:migrate` | Local development PostgreSQL schema only; preserves existing rows | Exit 0; applied additive `202610030011_stored_object_cleanup_claims` | Prisma migration output, 2026-10-03 |
@@ -48,7 +49,7 @@ No new D01–D12 implementation default was introduced. The endpoint is internal
 
 - **AC1 — OPEN:** Internal staff finalize rechecks authorization and `FIELDWORK_EXECUTION` state after bytes arrive. The portal/PBC client identity, membership and upload freeze model is absent; therefore the required client portal freeze scenario is not implemented or claimed.
 - **AC2 — PARTIAL:** MIME spoof, mismatched size, nonmember initiation/session ownership and Fastify oversize limits are denied. Cross-client portal upload completion is not implemented/tested because PBC requests own that authorization boundary.
-- **AC3 — PARTIAL:** An interrupted INITIATED session creates no `Document` or `DocumentVersion`; finalization locks and verifies the `StoredObject` row and cleanup state. Aged unreferenced stages are claimed and cleaned, including safe Graph recycle-bin cleanup; direct provider failure injection and live Graph cleanup acceptance remain open.
+- **AC3 — PASS:** An interrupted INITIATED session and an injected Graph 503 create no `Document` or `DocumentVersion`. The provider rejection marks the session failed and preserves the `UPLOADING` object row for the grace-period cleanup/reconciliation path. Finalization locks and verifies the `StoredObject` row and cleanup state. Live Graph cleanup acceptance remains open.
 
 ## Recovery and authorization
 
@@ -58,5 +59,5 @@ The migration is additive. No production database was changed; integration tests
 
 Reviewer: pending independent review.  
 Review result: T033 remains IN_PROGRESS.  
-Open blockers: portal/PBC upload authorization and freeze recheck (PBC task T075); T064 category folder bindings; encrypted/active content inspection and malware scanning; live Graph staging-cleanup acceptance; direct provider failure injection; complete negative-path/API acceptance; repeat T017 hosted compatibility check with the changed lockfile.
+Open blockers: portal/PBC upload authorization and freeze recheck (PBC task T075); T064 category folder bindings; encrypted/active content inspection and malware scanning; live Graph staging-cleanup acceptance; complete negative-path/API acceptance; repeat T017 hosted compatibility check with the changed lockfile.
 Next eligible task: continue T033 until these criteria are implemented or an approved dependency boundary assigns portal uploads to T075 with an explicit task-pack correction.
