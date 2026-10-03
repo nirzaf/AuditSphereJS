@@ -49,8 +49,9 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Implement production Entra identity validation and the authenticated `GET /api/v1/me` self endpoint; development token use remains explicit and isolated.
 - [x] Validate issuer, audience, RS256 signature, token lifetime, authorized tenant and delegated API scope; bind by immutable tenant/object identifiers, not email.
 - [x] Deny inactive local users and rely on engagement membership plus scoped PostgreSQL grants for business permissions; directory administrator claims grant no audit authority.
-- [x] Add MSAL popup sign-out and clear app-held token, identity, records and unsaved drafts even if Microsoft logout cannot be confirmed. Access-token expiry is enforced by token validation and silent renewal.
+- [x] Add MSAL redirect sign-out and clear app-held token, identity, records and unsaved drafts even if Microsoft logout cannot be confirmed. Access-token expiry is enforced by token validation and silent renewal.
 - [x] Persist an append-only self-revocation cutoff and reject previously issued Entra API tokens on every authenticated request; the static development credential cannot invoke this endpoint.
+- [x] Provide an authenticated engagement selector backed by current PostgreSQL membership and `ENGAGEMENT_READ` grants; hide business workspaces until the user explicitly selects a returned engagement.
 - [ ] Complete interactive Entra SPA acceptance; no live SPA sign-in acceptance is claimed.
 
 ## Acceptance criteria and required tests
@@ -58,6 +59,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] **AC1:** Entra unit tests reject wrong-audience, wrong-issuer, expired, foreign-tenant, invalid-scope and malformed credentials.
 - [x] **AC2:** PostgreSQL/Fastify integration returns 401 for an inactive local user on `/api/v1/me` and a protected engagement route.
 - [x] **AC3:** The authenticated read-only fixture is denied a lifecycle command with 403 and the engagement remains unchanged.
+- [x] **AC4:** The real PostgreSQL/Fastify boundary returns only memberships with active in-scope read grants, excludes foreign or ungranted engagements, and removes a grant-revoked engagement from the selector.
 
 Test valid/invalid/expired credentials and cross-firm/client/engagement access through actual API boundaries.
 
@@ -79,6 +81,6 @@ Before that script exists, record the actual available compile/test/review comma
 
 Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
 
-Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior. T018 ownership prerequisites are complete. T019 remains `IN_PROGRESS` until mapped-user and browser-initiated revocation acceptance are proven; no live identity mapping or synthetic engagement grant has been authorized.
+Current implementation evidence: [T019 handoff](../../evidence/T019/handoff.md). Local signed-token, PostgreSQL and Fastify checks prove revocation cutoff behavior and authorized engagement discovery. The Angular workspace hides protected business views while signed out or unassigned. T018 ownership prerequisites are complete. On 2026-10-03, a dedicated Staff Fixture identity was mapped to a single synthetic `LEAD_INGESTION` engagement with one `ENGAGEMENT_READ` grant. Live SPA acceptance is still pending the account owner's password/MFA completion and verification of the returned identity and engagement selector; browser-initiated revocation acceptance also remains open.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

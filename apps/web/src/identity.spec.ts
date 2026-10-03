@@ -59,9 +59,35 @@ describe('MSAL redirect adapter', () => {
     await identity.signIn();
     await identity.signOut();
 
-    expect(msal.loginRedirect).toHaveBeenCalledWith({ scopes: config.scopes });
+    expect(msal.loginRedirect).toHaveBeenCalledWith({ scopes: config.scopes, prompt: 'select_account' });
     expect(msal.logoutRedirect).toHaveBeenCalledWith({ account, postLogoutRedirectUri: config.redirectUri });
     expect(msal).not.toHaveProperty('loginPopup');
     expect(msal).not.toHaveProperty('logoutPopup');
+  });
+
+  it('turns an unmapped or inactive staff identity into actionable, non-technical guidance', async () => {
+    msal.getActiveAccount.mockReturnValue(account);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify({
+        error: { code: 401, message: { message: 'Internal authentication required', error: 'Unauthorized', statusCode: 401 } },
+      }), { status: 401 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const identity = await import('./identity');
+
+    await expect(identity.currentIdentity()).rejects.toThrow(/verify your local Entra identity mapping/);
+    expect(msal.acquireTokenSilent).toHaveBeenCalledWith({ scopes: config.scopes, account });
+  });
+
+  it('requests a typed list of engagements through the current access token', async () => {
+    msal.getActiveAccount.mockReturnValue(account);
+    const items = [{ id: 'engagement-a', name: 'FY26 audit', clientId: 'client-a', clientName: 'Example Ltd' }];
+    vi.stubGlobal('fetch', vi.fn()
+      .mockResolvedValueOnce(new Response(JSON.stringify(config)))
+      .mockResolvedValueOnce(new Response(JSON.stringify(items))));
+    const identity = await import('./identity');
+
+    await expect(identity.listReadableEngagements()).resolves.toEqual(items);
+    expect(fetch).toHaveBeenLastCalledWith('/api/v1/me/engagements', { headers: { Authorization: 'Bearer access-token' } });
   });
 });

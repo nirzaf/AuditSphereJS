@@ -1,6 +1,6 @@
 # Microsoft 365 configuration
 
-Last reviewed: 2026-10-02. These guides describe the current AuditSphereJS implementation and its nonproduction tenant setup.
+Last reviewed: 2026-10-03. These guides describe the current AuditSphereJS implementation and its nonproduction tenant setup.
 
 - [Tenant and app setup](tenant-setup.md): administrator sign-in, Entra registrations, consent and selected-folder grants.
 - [Application configuration](application-configuration.md): environment variables, credentials and local user/repository assignments.

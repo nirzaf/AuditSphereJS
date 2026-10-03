@@ -1,6 +1,6 @@
 # Configure AuditSphereJS for Microsoft 365
 
-Last reviewed: 2026-10-02. Variable names below are checked against `.env.production.example`, `platform/config.ts`, `platform/entra.ts` and `platform/repository.ts`.
+Last reviewed: 2026-10-03. Variable names below are checked against `.env.production.example`, `platform/config.ts`, `platform/entra.ts` and `platform/repository.ts`.
 
 ## Identity and storage variables
 
@@ -27,7 +27,7 @@ The production startup validator currently requires all four drive/folder variab
 
 The server reads environment configuration at startup and caches provider clients. Restart affected API/worker processes after identity or credential changes. Loading the acceptance harness's environment file does not change the separately running API.
 
-The Angular SPA uses MSAL full-page redirect login and logout with authorization code + PKCE. `restoreSession()` awaits `handleRedirectPromise()` before any interactive request and then checks the returned account through `/api/v1/me`. Do not combine popup and redirect interactions in this app. A redirect to Entra can succeed while `/api/v1/me` still returns 401 when the immutable tenant/object identity is not mapped to an active local `User`; do not resolve that denial by granting a business role implicitly.
+The Angular SPA uses MSAL full-page redirect login and logout with authorization code + PKCE. `restoreSession()` awaits `handleRedirectPromise()` before any interactive request and then checks the returned account through `/api/v1/me`. A user-initiated sign-in sends `prompt=select_account` so an existing browser SSO session does not silently substitute a different staff or admin account. Do not combine popup and redirect interactions in this app. A redirect to Entra can succeed while `/api/v1/me` still returns 401 when the immutable tenant/object identity is not mapped to an active local `User`; do not resolve that denial by granting a business role implicitly.
 
 ## Staff assignment
 
@@ -36,8 +36,8 @@ Map the intended staff identity to `User.tenantId` and `User.entraObjectId`, usi
 For the identity binding only, use the operator CLI after independently verifying the tenant object ID and the exact existing local user:
 
 ```powershell
-pnpm identity:map:entra -- --local-user-id <existing-local-user-uuid> --tenant-id <tenant-uuid> --object-id <entra-object-uuid>
-pnpm identity:map:entra -- --local-user-id <existing-local-user-uuid> --tenant-id <tenant-uuid> --object-id <entra-object-uuid> --apply
+pnpm exec tsx packages/server/scripts/map-entra-identity.ts --local-user-id <existing-local-user-uuid> --tenant-id <tenant-uuid> --object-id <entra-object-uuid>
+pnpm exec tsx packages/server/scripts/map-entra-identity.ts --local-user-id <existing-local-user-uuid> --tenant-id <tenant-uuid> --object-id <entra-object-uuid> --apply
 ```
 
 The first invocation is a dry run. `--apply` only binds an existing active `User` to the configured `M365_TENANT_ID` and immutable Entra object ID. It never creates users, memberships, role grants or business permissions, never changes the local role, and refuses inactive, already-bound, unknown or conflicting accounts. Repeating the exact mapping is idempotent. Restrict command history and operational records as appropriate for staff identifiers. Create engagement membership and least-privilege capability grants separately through the reviewed provisioning process; do not infer them from Entra directory roles. Do not use the tenant administrator identity for acceptance unless it is explicitly approved as the intended local test principal and its scope is bounded to synthetic data.
