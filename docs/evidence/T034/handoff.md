@@ -4,8 +4,8 @@
 
 Task ID: T034
 Requirement IDs: R006, R019, R052, R065, R067, R068
-Implementing commit/branch: pending commit on `main`
-Status: IN_REVIEW
+Implementing commits on `main`: `338eed9` (download implementation), `f69dfcc` (binary OpenAPI contract)
+Status: DONE
 
 ## Intended and delivered outcome
 
@@ -47,6 +47,11 @@ No dependency changes. Existing Node streams, filesystem, AWS SDK and Graph adap
 | `pnpm lint` | Repository ESLint and boundary checker | Passed, 0 errors; 4 existing unused-disable warnings remain under `visual-prototype-simulation/`, exit 0 | Local run, 2026-10-03 UTC |
 | `pnpm openapi:generate` | API decorator-derived OpenAPI | Passed; tracked OpenAPI artifact updated | Local run, 2026-10-03 UTC |
 | `pnpm contracts:check` | Canonical contracts and generated OpenAPI | Passed, schemas and OpenAPI match runtime, exit 0 | Local run, 2026-10-03 UTC |
+| `node --import tsx --test apps/api/tests/contracts.integration.ts` | Generated OpenAPI media-type schemas, including binary document downloads | Passed, 1/1 test, exit 0 | Local run, 2026-10-04 UTC |
+| `pnpm verify:affected` | Import boundaries, server/test typechecks, Angular production build and Vitest suite | Passed, 22 files / 99 tests, exit 0 | Local run, 2026-10-04 UTC |
+| `pnpm verify:task -- T034` | Server build plus PostgreSQL 18.6 / Fastify download endpoint, synthetic client and Graph bytes | Passed, 1 integration test / 1 assertion group, exit 0 | Local run, 2026-10-04 UTC |
+| `pnpm openapi:generate` and `pnpm contracts:check` | API decorator-derived OpenAPI and canonical contracts | Passed; binary response schema generated and checked, exit 0 | Local run, 2026-10-04 UTC |
+| GitHub Actions run [37154389028](https://github.com/nirzaf/AuditSphereJS/actions/runs/37154389028) | Commit `f69dfcc`; full CI, Linux image/runtime smoke, and public web-asset job | Passed, all steps/jobs green | Hosted run, 2026-10-04 UTC |
 | `M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156` | Live current-version-to-private-file read in selected synthetic SharePoint and OneDrive folders, external edit, root denial and deletion fail-closed check | Passed, 2 tests / 0 failures / 0 skipped, exit 0 | Redacted [2026-10-04 run evidence](../T156/live-storage-2026-10-04-streaming.json); live credential remains private and ignored |
 | `git diff --check` | Working-tree changes | Passed, exit 0 (Git reported only expected LF-to-CRLF checkout notices) | Local run, 2026-10-04 Riyadh time |
 
@@ -65,6 +70,6 @@ The endpoint creates no durable artifact and makes no storage writes. Failed pro
 ## Review and next task
 
 Reviewer: Codex evidence review
-Review result: Focused implementation/tests reviewed; no code blocker found. Final source-control and hosted CI verification pending.
+Review result: Implementation, authorization and failure-path tests, generated binary OpenAPI schema, provider adapter evidence, and full hosted CI were reviewed; all T034 acceptance criteria pass.
 Open blockers: client-portal and report-release delivery are separate incomplete tasks; T156 remains partial for token expiry, consent revocation/recovery, throttling, retention and unknown provider outcomes.
 Next eligible task by dependency order: T035, subject to its task prerequisites.
