@@ -58,4 +58,19 @@ describe('bounded Trial Balance CSV parsing', () => {
     expect({ total, sizes }).toEqual({ total: 2_505, sizes: [1_000, 1_000, 505] });
     await expect(writeTrialBalanceChunks(rows(), async () => {}, 0)).rejects.toThrow('Invalid trial-balance chunk size');
   });
+
+  it('checks cooperative cancellation between bounded row batches', async () => {
+    async function* rows() {
+      for (let position = 0; position < 2_500; position += 1) {
+        yield { position, code: String(position), name: 'Account', current: '1', prior: '-1' };
+      }
+    }
+    const controller = new AbortController();
+    const persistedChunkSizes: number[] = [];
+    await expect(writeTrialBalanceChunks(rows(), async chunk => {
+      persistedChunkSizes.push(chunk.length);
+      controller.abort();
+    }, 1_000, controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(persistedChunkSizes).toEqual([1_000]);
+  });
 });

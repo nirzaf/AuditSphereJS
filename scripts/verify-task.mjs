@@ -26,7 +26,7 @@ const tasks = {
   T028: ['build:server', 'contracts:check', 'lifecycle', 'api-contracts'],
   T029: ['build:server', 'config', 'api-security', 'identity', 'security-boundary', 'portal-auth'],
   T030: ['build:server', 'outbox-contract', 'outbox-reconciliation', 'idempotency-postgres'],
-  T031: ['build:server', 'queue-runtime-unit', 'queue-runtime', 'outbox-reconciliation'],
+  T031: ['build:server', 'queue-runtime-unit', 'trial-balance-csv', 'queue-runtime', 'outbox-reconciliation'],
   T066: ['build:server', 'practice-ledger'],
   T067: ['build:server', 'practice-ledger'],
   T068: ['build:server', 'practice-ledger'],

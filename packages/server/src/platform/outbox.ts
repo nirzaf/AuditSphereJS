@@ -268,6 +268,20 @@ export async function failBackgroundOperation(client: Prisma.TransactionClient, 
   if (event.count !== 1) throw new ConflictException('Outbox event changed before failure was recorded');
 }
 
+export async function cancelBackgroundOperation(client: Prisma.TransactionClient, operationId: string): Promise<void> {
+  const now = new Date();
+  const operation = await client.backgroundOperation.updateMany({
+    where: { id: operationId, state: 'RUNNING' },
+    data: { state: 'CANCELLED', cancelledAt: now, updatedAt: now },
+  });
+  if (operation.count !== 1) throw new ConflictException('Only a running background operation can be cancelled');
+  const event = await client.outboxEvent.updateMany({
+    where: { operationId, completedAt: null, failedAt: null },
+    data: { failedAt: now, lastDispatchErrorCode: 'OPERATION_CANCELLED' },
+  });
+  if (event.count !== 1) throw new ConflictException('Outbox event changed before cancellation was recorded');
+}
+
 export async function markBackgroundOperationUnknown(operationId: string, unknownCode: string): Promise<void> {
   if (!/^[A-Z0-9_.:-]{1,120}$/.test(unknownCode)) throw new TypeError('Unknown outcome requires a stable reconciliation code');
   const changed = await db.backgroundOperation.updateMany({

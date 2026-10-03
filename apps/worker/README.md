@@ -19,7 +19,10 @@ SIGINT/SIGTERM stop relay and sweep timers, wait for in-flight maintenance, stop
 and let an active processor finish its transaction boundary before closing Redis and PostgreSQL.
 BullMQ stalled-job detection is configured explicitly, allowing a replacement worker to reclaim
 jobs after an unclean process loss. No API cancellation endpoint is currently exposed; user-driven
-cancellation policy remains outside the worker runtime until its owning workflow defines it.
+cancellation policy remains outside the worker API until its owning workflow defines authority.
+The worker process can cancel a currently active BullMQ job through `Worker.cancelJob`; the
+Trial Balance processor observes its `AbortSignal` between bounded write batches, rolls back the
+active PostgreSQL transaction, marks the operation `CANCELLED`, and leaves no partial rows.
 
 Run `pnpm verify:task -- T031` for the Redis reconnection, bounded producer failure, retained-job,
 outbox recovery, shutdown, and API event-loop isolation checks.

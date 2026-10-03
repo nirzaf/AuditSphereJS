@@ -4,6 +4,7 @@ import type { Prisma } from '../../generated/prisma/client.js';
 import { db } from '../../platform/db.js';
 import {
   claimBackgroundOperation,
+  cancelBackgroundOperation,
   completeBackgroundOperation,
   failBackgroundOperation,
   parseTrialBalanceOutbox,
@@ -31,7 +32,7 @@ const operationResult = (batch: Pick<ScopedImport, 'status' | 'rowCount'>): Pris
  * completion are committed together, so an acknowledgement lost after commit is a harmless replay.
  */
 export function createTrialBalanceImportProcessor(loadEvidence: LoadTrialBalanceEvidence) {
-  return async (job: QueueJob): Promise<void> => {
+  return async (job: QueueJob, _token?: string, signal?: AbortSignal): Promise<void> => {
     const queued = parseTrialBalanceOutboxJob(job.data);
     if (job.id !== queued.operationId || queued.outboxEventId !== queued.operationId) {
       throw new Error('Trial-balance job identity does not match its durable operation');
@@ -114,7 +115,7 @@ export function createTrialBalanceImportProcessor(loadEvidence: LoadTrialBalance
         await tx.tbRow.deleteMany({ where: { importId: batch.id } });
         const rowCount = await writeTrialBalanceChunks(parseTrialBalanceStream(content), async chunk => {
           await tx.tbRow.createMany({ data: chunk.map(value => ({ ...value, importId: batch.id })) });
-        });
+        }, 1_000, signal);
         const updated = await tx.tbImport.updateMany({
           where: { ...where, status: 'PARSING' },
           data: { status: 'MAPPING_REQUIRED', rowCount, error: null },
@@ -123,7 +124,8 @@ export function createTrialBalanceImportProcessor(loadEvidence: LoadTrialBalance
         await completeBackgroundOperation(tx, expected.operationId, { status: 'MAPPING_REQUIRED', rowCount });
       }, { timeout: 120_000 });
     } catch (error) {
-      const terminal = job.attemptsMade + 1 >= (job.opts.attempts || 1);
+      const cancelled = signal?.aborted === true;
+      const terminal = cancelled || job.attemptsMade + 1 >= (job.opts.attempts || 1);
       await db.$transaction(async tx => {
         const currentOperation = await tx.backgroundOperation.findUnique({ where: { id: expected.operationId } });
         if (!currentOperation || currentOperation.state !== 'RUNNING') return;
@@ -138,16 +140,18 @@ export function createTrialBalanceImportProcessor(loadEvidence: LoadTrialBalance
           where: { ...where, status: { in: ['QUEUED', 'PARSING'] } },
           data: {
             status: terminal ? 'FAILED' : 'QUEUED',
-            error: error instanceof Error ? error.message.slice(0, 500) : 'Import failed',
+            error: cancelled ? 'Background operation cancelled' : error instanceof Error ? error.message.slice(0, 500) : 'Import failed',
           },
         });
         if (!changed.count) {
           await failBackgroundOperation(tx, expected.operationId, 'TB_IMPORT_STATE_INVALID');
           return;
         }
-        if (terminal) await failBackgroundOperation(tx, expected.operationId, 'TB_IMPORT_FAILED');
+        if (cancelled) await cancelBackgroundOperation(tx, expected.operationId);
+        else if (terminal) await failBackgroundOperation(tx, expected.operationId, 'TB_IMPORT_FAILED');
         else await retryBackgroundOperation(tx, expected.operationId);
       });
+      if (cancelled) return;
       throw error;
     }
   };

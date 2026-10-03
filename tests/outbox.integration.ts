@@ -39,6 +39,9 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
   let worker: Worker | undefined;
   let crashedWorker: Worker | undefined;
   let db: typeof import('../packages/server/src/platform/db.js').db | undefined;
+  let workerEvidence: string | Buffer = csv;
+  let cancellationImportId: string | undefined;
+  let cancellationOperationId: string | undefined;
   try {
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 90_000, stdio: 'pipe' });
     Object.assign(process.env, env, { REDIS_URL: redisUrl });
@@ -141,7 +144,12 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     assert.deepEqual(recovery, { claimed: 1, published: 1, failed: 0 });
     assert.ok(await queue.getJob(event.operationId));
 
-    worker = new Worker(queueName, processorModule.createTrialBalanceImportProcessor(async () => csv), { connection, concurrency: 1 });
+    worker = new Worker(queueName, processorModule.createTrialBalanceImportProcessor(async (_document, batch) => {
+      if (batch.id === cancellationImportId && cancellationOperationId) {
+        setTimeout(() => worker?.cancelJob(cancellationOperationId!, 'T031 cooperative cancellation acceptance'), 25);
+      }
+      return workerEvidence;
+    }), { connection, concurrency: 1 });
     const waitForCompletion = async () => {
       const deadline = Date.now() + 20_000;
       while (Date.now() < deadline) {
@@ -160,6 +168,50 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     const completedBatch = await db.tbImport.findUniqueOrThrow({ where: { id: importId } });
     assert.equal(completedBatch.status, 'MAPPING_REQUIRED');
     assert.equal(completedBatch.rowCount, 2);
+
+    // Cancel a large CSV while it is being persisted. The signal is checked at each 1,000-row
+    // boundary, the open PostgreSQL transaction rolls back, and the durable operation is terminal.
+    const cancelCsv = 'code,name,current,prior\n' + Array.from(
+      { length: 50_000 }, (_, index) => `${String(index).padStart(5, '0')},Account ${index},1,-1`,
+    ).join('\n');
+    const cancelDigest = createHash('sha256').update(cancelCsv).digest('hex');
+    cancellationImportId = randomUUID();
+    const cancellationDocumentId = randomUUID();
+    await db.$transaction(async tx => {
+      await tx.document.create({
+        data: { id: cancellationDocumentId, engagementId, key: `acceptance:${randomUUID()}`, sha256: cancelDigest, filename: 'cancel-trial-balance.csv' },
+      });
+      await tx.tbImport.create({
+        data: { id: cancellationImportId!, ...scope, documentId: cancellationDocumentId, sha256: cancelDigest, status: 'QUEUED' },
+      });
+      cancellationOperationId = await outbox.createTrialBalanceImportOutbox(tx, { ...scope, importId: cancellationImportId! });
+    });
+    workerEvidence = cancelCsv;
+    const cancelEvent = await db.outboxEvent.findFirstOrThrow({ where: { importId: cancellationImportId } });
+    const cancelled = new Promise<void>((resolve, reject) => {
+      const deadline = setTimeout(() => reject(new Error('Worker did not reach the cancellation checkpoint')), 30_000);
+      const poll = async () => {
+        const operation = await db!.backgroundOperation.findUniqueOrThrow({ where: { id: cancellationOperationId } });
+        if (operation.state === 'CANCELLED') {
+          clearTimeout(deadline);
+          resolve();
+        } else setTimeout(() => { void poll(); }, 50);
+      };
+      void poll();
+    });
+    await queue.add('parse', {
+      outboxEventId: cancelEvent.id,
+      operationId: cancellationOperationId,
+      payloadVersion: 1,
+    }, { jobId: cancellationOperationId, attempts: 1, removeOnComplete: true, removeOnFail: true });
+    await cancelled;
+    assert.equal(await db.tbRow.count({ where: { importId: cancellationImportId } }), 0, 'cancelled transaction leaves no partial parsed rows');
+    const cancelledImport = await db.tbImport.findUniqueOrThrow({ where: { id: cancellationImportId } });
+    assert.equal(cancelledImport.status, 'FAILED');
+    assert.equal(cancelledImport.error, 'Background operation cancelled');
+    const cancelledEvent = await db.outboxEvent.findUniqueOrThrow({ where: { id: cancellationOperationId } });
+    assert.ok(cancelledEvent.failedAt);
+    assert.equal(cancelledEvent.lastDispatchErrorCode, 'OPERATION_CANCELLED');
 
     const unknownOperationId = randomUUID();
     const staleDate = new Date(Date.now() - 20 * 60_000);

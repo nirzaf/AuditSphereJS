@@ -95,6 +95,7 @@ export async function writeTrialBalanceChunks(
   rows: AsyncIterable<TrialBalanceRow>,
   write: (chunk: readonly TrialBalanceRow[]) => Promise<void>,
   chunkSize = 1_000,
+  signal?: AbortSignal,
 ): Promise<number> {
   if (!Number.isInteger(chunkSize) || chunkSize < 1 || chunkSize > 5_000) {
     throw new Error('Invalid trial-balance chunk size');
@@ -102,16 +103,20 @@ export async function writeTrialBalanceChunks(
   let chunk: TrialBalanceRow[] = [];
   let total = 0;
   for await (const row of rows) {
+    signal?.throwIfAborted();
     chunk.push(row);
     if (chunk.length === chunkSize) {
       await write(chunk);
       total += chunk.length;
       chunk = [];
+      signal?.throwIfAborted();
     }
   }
   if (chunk.length) {
+    signal?.throwIfAborted();
     await write(chunk);
     total += chunk.length;
+    signal?.throwIfAborted();
   }
   return total;
 }

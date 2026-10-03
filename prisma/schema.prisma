@@ -1083,6 +1083,7 @@ model BackgroundOperation {
   updatedAt    DateTime     @updatedAt @db.Timestamptz(6)
   completedAt  DateTime?    @db.Timestamptz(6)
   failedAt     DateTime?    @db.Timestamptz(6)
+  cancelledAt  DateTime?    @db.Timestamptz(6)
   engagement   Engagement   @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
   outboxEvent  OutboxEvent?
 

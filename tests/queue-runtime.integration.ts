@@ -16,7 +16,7 @@ import {
 const redisImage = 'redis:8.10@sha256:6f81e8915c60b065a524e6967e0ad1c639ba6efa84d669f823683ea04d9150ee';
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-test('BullMQ producers fail fast, workers reconnect, failed jobs stay inspectable, and CPU jobs do not stall the API loop', { timeout: 180_000 }, async () => {
+test('BullMQ producers fail fast, workers reconnect, failed jobs stay inspectable, and CPU jobs do not stall the API loop', { timeout: 90_000 }, async () => {
   const redis = await new GenericContainer(redisImage)
     .withExposedPorts(6379)
     .withCommand(['redis-server', '--appendonly', 'yes', '--maxmemory-policy', 'noeviction'])
@@ -30,8 +30,13 @@ test('BullMQ producers fail fast, workers reconnect, failed jobs stay inspectabl
   });
   queue.on('error', () => undefined);
   let worker: Worker | undefined;
+  let rescueWorker: Worker | undefined;
+  let drainQueue: Queue | undefined;
+  let stalledQueue: Queue | undefined;
   let api: ReturnType<typeof createServer> | undefined;
   let child: ReturnType<typeof spawn> | undefined;
+  let drainChild: ReturnType<typeof spawn> | undefined;
+  let stalledChild: ReturnType<typeof spawn> | undefined;
   try {
     await queue.waitUntilReady();
     const unavailable = new Queue(`${queueName}-offline`, {
@@ -102,6 +107,92 @@ test('BullMQ producers fail fast, workers reconnect, failed jobs stay inspectabl
     while (!completed.includes(recoveredId) && Date.now() < recoveredDeadline) await sleep(25);
     assert.ok(completed.includes(recoveredId), 'worker reconnects and resumes job processing');
 
+    // Windows does not deliver SIGTERM to Node's signal handler; Linux CI exercises the real
+    // signal path. The same registered shutdown callback is covered by the unit-level test.
+    if (process.platform !== 'win32') {
+    const drainQueueName = `drain-${randomUUID().replaceAll('-', '')}`;
+    drainQueue = new Queue(drainQueueName, { connection: redisConnectionOptions(redisUrl, 'producer') });
+    drainQueue.on('error', () => undefined);
+    const drainJobId = randomUUID();
+    await drainQueue.add('drain', { operationId: drainJobId }, { jobId: drainJobId });
+    const drainScript = [
+      "import { Worker } from 'bullmq';",
+      `const connection = { host: ${JSON.stringify(redis.getHost())}, port: ${redis.getMappedPort(6379)}, maxRetriesPerRequest: null };`,
+      `const worker = new Worker(${JSON.stringify(drainQueueName)}, async () => { console.log('JOB_STARTED'); await new Promise(resolve => setTimeout(resolve, 600)); }, { connection, lockDuration: 2_000, stalledInterval: 500 });`,
+      "worker.on('error', () => undefined);",
+      "worker.on('completed', () => console.log('JOB_COMPLETED'));",
+      "let shuttingDown = false;",
+      "const shutdown = async () => { if (shuttingDown) return; shuttingDown = true; await worker.close(); console.log('SHUTDOWN_DRAINED'); };",
+      "process.once('SIGTERM', () => { void shutdown(); });",
+    ].join('\n');
+    drainChild = spawn(process.execPath, ['--input-type=module', '-e', drainScript], {
+      cwd: 'packages/server',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let drainOutput = '';
+    drainChild.stdout?.on('data', chunk => { drainOutput += String(chunk); });
+    drainChild.stderr?.on('data', chunk => { drainOutput += String(chunk); });
+    const drainStartDeadline = Date.now() + 10_000;
+    while (!drainOutput.includes('JOB_STARTED') && Date.now() < drainStartDeadline) await sleep(20);
+    assert.ok(drainOutput.includes('JOB_STARTED'), `shutdown worker did not start its durable job: ${drainOutput}`);
+    const drainExit = once(drainChild, 'exit');
+    drainChild.kill('SIGTERM');
+    const drainDeadline = Date.now() + 10_000;
+    while (!drainOutput.includes('SHUTDOWN_DRAINED') && Date.now() < drainDeadline) await sleep(20);
+    assert.ok(drainOutput.includes('JOB_COMPLETED') && drainOutput.includes('SHUTDOWN_DRAINED'), `SIGTERM did not drain the active job: ${drainOutput}`);
+    if (drainChild.exitCode === null) await drainExit;
+    await drainQueue.close();
+    drainQueue = undefined;
+    }
+
+    const stalledQueueName = `stalled-${randomUUID().replaceAll('-', '')}`;
+    stalledQueue = new Queue(stalledQueueName, { connection: redisConnectionOptions(redisUrl, 'producer') });
+    stalledQueue.on('error', () => undefined);
+    const stalledJobId = randomUUID();
+    await stalledQueue.add('stalled', { operationId: stalledJobId }, { jobId: stalledJobId, attempts: 2 });
+    const stalledScript = [
+      "import { Worker } from 'bullmq';",
+      `const connection = { host: ${JSON.stringify(redis.getHost())}, port: ${redis.getMappedPort(6379)}, maxRetriesPerRequest: null };`,
+      `const worker = new Worker(${JSON.stringify(stalledQueueName)}, async () => { console.log('STALL_STARTED'); await new Promise(() => undefined); }, { connection, lockDuration: 1_000, stalledInterval: 250, maxStalledCount: 1 });`,
+      "worker.on('error', () => undefined);",
+    ].join('\n');
+    stalledChild = spawn(process.execPath, ['--input-type=module', '-e', stalledScript], {
+      cwd: 'packages/server',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stalledOutput = '';
+    stalledChild.stdout?.on('data', chunk => { stalledOutput += String(chunk); });
+    stalledChild.stderr?.on('data', chunk => { stalledOutput += String(chunk); });
+    const stalledStartDeadline = Date.now() + 10_000;
+    while (!stalledOutput.includes('STALL_STARTED') && Date.now() < stalledStartDeadline) await sleep(20);
+    assert.ok(stalledOutput.includes('STALL_STARTED'), `crash worker did not claim its job: ${stalledOutput}`);
+    stalledChild.kill('SIGKILL');
+    if (stalledChild.exitCode === null) await once(stalledChild, 'exit');
+    const recoveredStalled: string[] = [];
+    const stalledSignal = new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => reject(new Error('Replacement worker did not reclaim the stalled job')), 15_000);
+      rescueWorker = new Worker(stalledQueueName, async job => { recoveredStalled.push(String(job.data.operationId)); }, {
+        connection: redisConnectionOptions(redisUrl, 'worker'),
+        concurrency: 1,
+        lockDuration: 1_000,
+        stalledInterval: 250,
+        maxStalledCount: 1,
+      });
+      rescueWorker.on('error', () => undefined);
+      rescueWorker.on('completed', async () => {
+        if (recoveredStalled.includes(stalledJobId)) {
+          clearTimeout(timeout);
+          await rescueWorker?.close();
+          resolve();
+        }
+      });
+      void rescueWorker.waitUntilReady();
+    });
+    await stalledSignal;
+    assert.deepEqual(recoveredStalled, [stalledJobId]);
+    await stalledQueue.close();
+    stalledQueue = undefined;
+
     // A CPU-bound synthetic processor runs in the worker process. The API event loop is a
     // separate process and must continue answering while that processor is busy.
     api = createServer((_request, response) => { response.writeHead(200); response.end('ok'); });
@@ -142,6 +233,11 @@ test('BullMQ producers fail fast, workers reconnect, failed jobs stay inspectabl
     await exit;
   } finally {
     if (child && child.exitCode === null) child.kill('SIGTERM');
+    if (drainChild && drainChild.exitCode === null) drainChild.kill('SIGKILL');
+    if (stalledChild && stalledChild.exitCode === null) stalledChild.kill('SIGKILL');
+    if (rescueWorker) await rescueWorker.close(true).catch(() => undefined);
+    if (drainQueue) await drainQueue.close().catch(() => undefined);
+    if (stalledQueue) await stalledQueue.close().catch(() => undefined);
     if (worker) await worker.close(true).catch(() => undefined);
     await queue.close().catch(() => undefined);
     if (api?.listening) await new Promise<void>(resolve => api!.close(() => resolve()));
