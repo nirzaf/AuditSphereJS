@@ -1,29 +1,110 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const workflow = readFileSync(".github/workflows/ci.yml", "utf8");
 const workspacePolicy = readFileSync("pnpm-workspace.yaml", "utf8");
-const section = (name, nextName) => {
+
+// Discover top-level jobs (two-space indentation) and slice each job's section.
+const jobNames = [...workflow.matchAll(/^  ([a-z][\w-]*):\s*$/gm)].map((match) => match[1]);
+assert.ok(jobNames.length >= 2, "Workflow must declare its jobs");
+const section = (name) => {
   const start = workflow.indexOf(`  ${name}:`);
   assert.notEqual(start, -1, `Missing workflow job: ${name}`);
-  const end = nextName
-    ? workflow.indexOf(`  ${nextName}:`, start + 1)
-    : workflow.length;
-  return workflow.slice(start, end === -1 ? workflow.length : end);
+  const next = jobNames
+    .map((other) => ({ name: other, index: workflow.indexOf(`  ${other}:`, start + 1) }))
+    .filter((entry) => entry.index > start)
+    .sort((left, right) => left.index - right.index)[0];
+  return workflow.slice(start, next ? next.index : workflow.length);
 };
 
-const verify = section("verify", "publish-web-assets");
-const publish = section("publish-web-assets");
+const expectedJobs = ["static", "unit", "integration", "e2e", "image"];
+for (const job of expectedJobs) assert.ok(jobNames.includes(job), `Missing verification job: ${job}`);
+assert.ok(jobNames.includes("publish-web-assets"), "Missing publish-web-assets job");
+const verifyJobs = jobNames.filter((name) => name !== "publish-web-assets");
+assert.deepEqual(verifyJobs, expectedJobs, "Verification jobs must be exactly the read-only set");
 
-assert.match(
+for (const name of verifyJobs) {
+  const job = section(name);
+  assert.match(
+    job,
+    /^    permissions:\r?\n      contents: read\s*$/m,
+    `${name} must be read-only`,
+  );
+  assert.match(
+    job,
+    /pnpm install --frozen-lockfile/,
+    `${name} must reject lockfile drift`,
+  );
+  assert.match(
+    job,
+    /uses: pnpm\/setup@v3[\s\S]*?version: 12\.8\.1[\s\S]*?runtime: node@24\.21\.0[\s\S]*?install: false[\s\S]*?cache: false/,
+    `${name} must set up exact runtimes without installing or restoring a dependency cache`,
+  );
+  assert.doesNotMatch(
+    job,
+    /GH_TOKEN|secrets\./,
+    `Untrusted verification code in ${name} must not receive credentials`,
+  );
+}
+
+assert.doesNotMatch(
   workflow,
-  /^permissions:\r?\n  contents: read\s*$/m,
-  "Workflow default permissions must be read-only",
+  /cache:\s*pnpm|package-manager-cache:\s*true|cache:\s*true/,
+  "Verification must never restore a dependency cache",
+);
+
+// The integration matrix shards must reference files that actually exist, so the shard
+// lists cannot silently rot when suites are added or renamed.
+const integration = section("integration");
+const shardFiles = [...integration.matchAll(/^            (\S+\.ts)$/gm)].map((match) => match[1]);
+assert.ok(shardFiles.length >= 30, "Integration must shard the full suite list");
+const declared = new Set(shardFiles);
+const packageScripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
+const suiteFiles = packageScripts["test:integration"].split(" ").filter((file) => file.endsWith(".ts"));
+for (const file of suiteFiles) {
+  assert.ok(declared.has(file), `Integration suite ${file} is missing from the CI shards`);
+  assert.ok(existsSync(file), `Shard references missing test file: ${file}`);
+}
+
+const e2e = section("e2e");
+assert.match(
+  e2e,
+  /pnpm exec playwright install --with-deps chromium/,
+  "The e2e job must install the pinned Chromium runtime",
 );
 assert.match(
-  verify,
-  /^    permissions:\r?\n      contents: read\s*$/m,
-  "Verification job must be read-only",
+  e2e,
+  /Allow Chromium sandbox user namespaces on Ubuntu 24/,
+  "The e2e job must keep the Ubuntu 24 sandbox allowance",
+);
+assert.match(
+  e2e,
+  /RUN_LIVE_E2E: "1"/,
+  "The e2e job must enable the live end-to-end suite",
+);
+assert.match(
+  e2e,
+  /if: always\(\)[\s\S]*?name: e2e-diagnostics-\$\{\{ github\.sha \}\}/,
+  "The e2e job must always upload its diagnostics",
+);
+
+const image = section("image");
+assert.match(
+  image,
+  /pnpm verify:task -- T035/,
+  "The image job must run the PDF runtime gate",
+);
+assert.match(
+  image,
+  /uses: actions\/upload-artifact@v6[\s\S]*?name: verified-build-\$\{\{ github\.sha \}\}/,
+  "The image job must upload the verified build artifact",
+);
+
+const publish = section("publish-web-assets");
+assert.match(
+  publish,
+  /^    needs: \[static, unit, integration, e2e, image\]\s*$/m,
+  "Publication must wait for every verification job",
 );
 assert.match(
   publish,
@@ -32,43 +113,8 @@ assert.match(
 );
 assert.match(
   publish,
-  /^    needs: verify\s*$/m,
-  "Asset publication must wait for successful verification",
-);
-assert.match(
-  publish,
   /if: github\.event_name != 'pull_request' && github\.ref == 'refs\/heads\/main'/,
   "Asset publication must be limited to main pushes",
-);
-assert.match(
-  verify,
-  /pnpm install --frozen-lockfile/,
-  "CI must reject lockfile drift",
-);
-assert.match(
-  verify,
-  /run: node scripts\/verify-ci-workflow\.mjs/,
-  "CI must execute its permission and cache policy assertions",
-);
-assert.match(
-  verify,
-  /run: pnpm exec node scripts\/verify-pnpm-install-policy\.mjs/,
-  "CI must execute the install denial-path fixtures",
-);
-assert.match(
-  verify,
-  /uses: pnpm\/setup@v3[\s\S]*?version: 12\.8\.1[\s\S]*?runtime: node@24\.21\.0[\s\S]*?install: false[\s\S]*?cache: false/,
-  "CI must set up exact runtimes without installing or restoring a dependency cache",
-);
-assert.doesNotMatch(
-  verify,
-  /cache:\s*pnpm|package-manager-cache:\s*true|cache:\s*true/,
-  "Verification must start without a dependency cache",
-);
-assert.match(
-  verify,
-  /uses: actions\/upload-artifact@v6[\s\S]*?name: verified-build-\$\{\{ github\.sha \}\}/,
-  "Verified artifact must be uploaded by the read-only job",
 );
 assert.match(
   publish,
@@ -80,11 +126,12 @@ assert.match(
   /GH_TOKEN:\s*\$\{\{ github\.token \}\}/,
   "Publisher token must be scoped to the publication job",
 );
-assert.doesNotMatch(
-  verify,
-  /GH_TOKEN|secrets\./,
-  "Untrusted verification code must not receive publishing credentials",
+assert.match(
+  workflow,
+  /^permissions:\r?\n  contents: read\s*$/m,
+  "Workflow default permissions must be read-only",
 );
+
 assert.match(
   workspacePolicy,
   /^strictPeerDependencies:\s*true\s*$/m,
@@ -106,4 +153,4 @@ assert.match(
   "Install scripts must use the explicit build allowlist",
 );
 
-console.log("CI workflow security and clean-install invariants passed.");
+console.log("CI workflow security, sharding and clean-install invariants passed.");

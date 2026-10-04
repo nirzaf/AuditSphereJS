@@ -6,9 +6,12 @@ concurrency:
   group: verify-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  verify:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
+  # Every verification job is read-only, installs from the frozen lockfile with the pinned
+  # pnpm/runtime (no dependency cache, per the T016 supply-chain policy), and receives no
+  # credentials. scripts/verify-ci-workflow.mjs asserts these invariants on every change.
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
     permissions:
       contents: read
     steps:
@@ -24,11 +27,114 @@ jobs:
         run: node scripts/verify-ci-workflow.mjs
       - name: Verify dependency install denial paths
         run: pnpm exec node scripts/verify-pnpm-install-policy.mjs
+      - run: pnpm build:server
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm contracts:check
+      - run: pnpm audit --audit-level=moderate
+
+  unit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          version: 12.8.1
+          runtime: node@24.21.0
+          install: false
+          cache: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:server
+      - run: pnpm test:unit
+
+  integration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+        - files: |
+            tests/foundation.integration.ts
+            tests/database.integration.ts
+            packages/server/tests/rustfs-isolation.integration.ts
+            apps/api/tests/portal-auth.integration.ts
+            tests/authorization.integration.ts
+            tests/repository.integration.ts
+            packages/server/tests/pdf-renderer.integration.ts
+            tests/taxonomy.integration.ts
+            tests/upload-race.integration.ts
+            tests/unit-of-work.integration.ts
+            tests/practice-ledger.integration.ts
+            tests/idempotency.integration.ts
+            tests/notifications.integration.ts
+        - files: |
+            apps/api/tests/contracts.integration.ts
+            tests/identity-mapping.integration.ts
+            tests/lifecycle.integration.ts
+            apps/api/tests/security-hardening.integration.ts
+            tests/staff-access.integration.ts
+            tests/document-version.integration.ts
+            apps/api/tests/document-upload.integration.ts
+            tests/materiality-persistence.integration.ts
+            tests/review-notes.integration.ts
+            tests/audit-chain.integration.ts
+            tests/practice-expense-receipts.integration.ts
+            tests/outbox.integration.ts
+        - files: |
+            apps/api/tests/multipart-plugin.integration.ts
+            tests/local-services.integration.ts
+            apps/api/tests/auth-boundary.integration.ts
+            apps/api/tests/audit-read.integration.ts
+            tests/publication.integration.ts
+            tests/clamav.integration.ts
+            apps/api/tests/document-download.integration.ts
+            tests/risk.integration.ts
+            tests/adjustments.integration.ts
+            tests/audit-write.integration.ts
+            tests/commercial-onboarding.integration.ts
+            tests/queue-runtime.integration.ts
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          version: 12.8.1
+          runtime: node@24.21.0
+          install: false
+          cache: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:server
       - run: pnpm setup:local
       - run: pnpm infra:up
       - run: pnpm db:migrate
       - run: pnpm db:roles
+      - run: pnpm db:seed
+      - run: node --import tsx --test ${{ matrix.shard.files }}
+
+  e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          version: 12.8.1
+          runtime: node@24.21.0
+          install: false
+          cache: false
+      - run: pnpm install --frozen-lockfile
       - run: pnpm build:server
+      - run: pnpm setup:local
+      - run: pnpm infra:up
+      - run: pnpm db:migrate
+      - run: pnpm db:roles
       - run: pnpm db:seed
       - run: pnpm exec playwright install --with-deps chromium
       - name: Allow Chromium sandbox user namespaces on Ubuntu 24
@@ -45,13 +151,36 @@ jobs:
             sleep 1
           done
           exit 1
-      - run: pnpm verify:all
+      - run: pnpm test:e2e
         env:
           RUN_LIVE_E2E: "1"
+      - name: Upload diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: e2e-diagnostics-${{ github.sha }}-${{ strategy.job-index }}
+          path: |
+            api.log
+            worker.log
+            test-results/
+          retention-days: 7
+
+  image:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/setup@v3
+        with:
+          version: 12.8.1
+          runtime: node@24.21.0
+          install: false
+          cache: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build:server
       - run: pnpm verify:task -- T035
-      - run: pnpm contracts:check
-      - run: pnpm audit --audit-level=moderate
-      - run: pnpm build:linux
       - run: pnpm smoke:linux
       - name: Package verified build
         run: |
@@ -64,24 +193,15 @@ jobs:
           name: verified-build-${{ github.sha }}
           path: release/
           retention-days: 7
-      - name: Upload diagnostic evidence
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: diagnostics-${{ github.sha }}
-          path: |
-            api.log
-            worker.log
-            test-results/
-          retention-days: 7
       - name: Stop local infrastructure
         if: always()
         run: docker compose down
 
   publish-web-assets:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: verify
-    runs-on: ubuntu-latest
+    needs: [static, unit, integration, e2e, image]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     permissions:
       contents: write
     steps:
