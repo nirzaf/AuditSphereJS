@@ -177,6 +177,15 @@ async function evaluateEvidence(client: LifecycleClient, engagement: { id: strin
     const key2 = await client.riskClearance.findFirst({ where: { engagementId: engagement.id }, orderBy: { clearedAt: 'desc' } });
     if (!key2) fail('PARTNER_RISK_CLEARANCE_MISSING', 'Key 2 is missing: Partner risk clearance (ISA 220) must be recorded');
     else values.key2ClearanceId = key2.id;
+    // A race or drift that desynchronises the acceptance evidence cannot produce a false
+    // clearance: the accepted response must cite the exact presented revision.
+    if (key1) {
+      const snapshot = key1.presentedSnapshot as { revision?: number } | null;
+      const response = key1.clientResponse as { revision?: number } | null;
+      if (!snapshot || !response || snapshot.revision !== key1.revision || response.revision !== key1.revision) {
+        fail('CLIENT_ACCEPTANCE_STALE', 'The accepted proposal evidence does not match its presented revision; re-present and re-accept before issuing the letter');
+      }
+    }
   }
   if (command === 'ACTIVATE_PORTAL') {
     const invoice = await advanceInvoiceEvidence(client, engagement.id);

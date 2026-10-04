@@ -1,0 +1,3 @@
+* text=auto
+packages/server/tests/fixtures/*.html text eol=lf
+tests/fixtures/*.html text eol=lf
