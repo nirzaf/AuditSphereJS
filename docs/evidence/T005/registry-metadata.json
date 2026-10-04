@@ -1300,7 +1300,7 @@
     },
     {
       "name": "@azure/msal-browser",
-      "version": "5.23.0",
+      "version": "5.24.0",
       "engines": {
         "node": ">=0.8.0"
       },
@@ -1308,9 +1308,9 @@
       "peerMeta": {},
       "license": "MIT",
       "deprecated": null,
-      "integrity": "sha512-IRCwkRCK47hBXK+7bu67UZWY7HS0Jx1dZgi4C1HVbjlBum8Jy8fb2l87xFr6HxdQJWy951zRUHtwwDITHFAtaA==",
-      "published": "2026-09-23T16:19:45.541Z",
-      "source": "https://registry.npmjs.org/%40azure%2Fmsal-browser/5.23.0",
+      "integrity": "sha512-jS1stt81tslcVZi7fqVD+g6vr8w/IWqFl/vAB2dx/6EOroQDuCR4+z0o3C+d6a/GpLATvdoO+kwnDcYzsBXKQA==",
+      "published": "2026-10-02T19:44:39.968Z",
+      "source": "https://registry.npmjs.org/%40azure%2Fmsal-browser/5.24.0",
       "repository": "git+https://github.com/AzureAD/microsoft-authentication-library-for-js.git",
       "scripts": {
         "lint": "eslint src --ext .ts",
@@ -1675,6 +1675,23 @@
       "published": "2026-09-05T09:17:12.608Z",
       "source": "https://registry.npmjs.org/jose/6.2.12",
       "repository": "git+https://github.com/panva/jose.git",
+      "scripts": {},
+      "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
+    },
+    {
+      "name": "pdfjs-dist",
+      "version": "6.4.299",
+      "engines": {
+        "node": ">=22.13.0 || >=24"
+      },
+      "peers": {},
+      "peerMeta": {},
+      "license": "Apache-2.0",
+      "deprecated": null,
+      "integrity": "sha512-AVl138zALtfaAPvADulE0PZThbYzCBS79nL4pOSL/6Sm/4AH5A21BD9VHt97OlCuzJuCpmeZtAtkinisF4Vb1g==",
+      "published": "2026-10-03T16:47:40.337Z",
+      "source": "https://registry.npmjs.org/pdfjs-dist/6.4.299",
+      "repository": "git+https://github.com/mozilla/pdf.js.git",
       "scripts": {},
       "disposition": "EXISTING_PIN_REVIEWED_REQUIRES_TARGET_SMOKE"
     },

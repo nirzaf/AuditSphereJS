@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` — selected MSAL Browser and server Fetch paths match the Node 24 / Angular 22 stack; exact metadata and runtime acceptance are recorded in the [handoff](../../evidence/T150/handoff.md) |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |
@@ -45,18 +46,18 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Read exact MSAL Angular/browser/node, Azure Identity and Graph package engines/peers from current official metadata.
-- [ ] Choose either a supported Angular wrapper or direct reviewed msal-browser integration when wrapper peers exclude the selected Angular.
-- [ ] Run login/token acquisition and Graph client smoke tests on the exact Node/Angular pins; no forced peer bypass.
-- [ ] Record registry versions and lockfile updates in a dedicated integration dependency change.
+- [x] Read exact MSAL Angular/browser/node, Azure Identity and Graph package engines/peers from current official metadata; record selected and rejected candidates in [T150 evidence](../../evidence/T150/handoff.md).
+- [x] Keep the supported, direct `msal-browser` integration. It obtains public configuration asynchronously from the API before Router startup and uses explicit authenticated Fetch for the API; the Angular wrapper's published browser/rxjs peers are satisfied by the selected versions, but its synchronous application-instance provider adds no value to this adapter.
+- [x] Run browser redirect/token adapter, API token-validation, Graph Fetch-adapter and selected-folder live storage checks on the pinned stack; no forced peer bypass.
+- [x] Record exact registry versions and the `msal-browser` lockfile update. Do not install unused Node/Graph/Azure Identity SDKs.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Chosen identity packages have no unsatisfied peers.
-- [ ] **AC2:** Test tenant token validation succeeds and wrong-tenant/audience tokens fail.
-- [ ] **AC3:** Unsupported wrapper combinations stay blocked rather than type-cast away.
+- [x] **AC1:** The selected browser package has no published peer dependencies; runtime Node/Angular/RxJS pins pass install, engine/license review and dependency audit. The optional wrapper's exact peer range is satisfied by the selected browser/RxJS versions.
+- [x] **AC2:** Existing signed-token tests accept the configured tenant/audience and reject wrong-tenant and wrong-audience tokens; the dated T019 browser evidence verifies the mapped acceptance Staff Fixture sign-in, and T156 records credentialed Graph storage acceptance.
+- [x] **AC3:** No peer bypass or type cast is used. The wrapper's published support is Angular 22 and its required browser peer is `^5.24.0`; the selected browser is 5.24.0. Unused Node/Azure Identity/Graph SDK packages are not introduced.
 
-Require exact SDK peer/install evidence and least-privilege credentialed nonproduction tests for enabled endpoints.
+See the handoff for exact npm metadata, licenses, lockfile integrity, no-vulnerability result, direct runtime smoke and credentialed nonproduction evidence. Graph mail and directory features remain disabled under T149.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 
