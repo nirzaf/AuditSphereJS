@@ -209,6 +209,7 @@ jobs:
       - run: pnpm db:roles
       - run: pnpm db:seed
       - run: pnpm smoke:linux
+      - run: pnpm exec ng build web
       - name: Package verified build
         run: |
           mkdir -p release

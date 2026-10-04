@@ -128,6 +128,11 @@ assert.match(
 );
 assert.match(
   image,
+  /pnpm exec ng build web[\s\S]*?name: Package verified build[\s\S]*?dist\/web\/browser/,
+  "The image job must build the web asset before packaging it",
+);
+assert.match(
+  image,
   /Allow Chromium sandbox user namespaces on Ubuntu 24[\s\S]*?kernel\.apparmor_restrict_unprivileged_userns=0[\s\S]*?pnpm verify:task -- T035/,
   "The image job must enable sandboxed Chromium on Ubuntu 24 before the T035 gate",
 );
