@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { deflateSync } from 'node:zlib';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -31,6 +32,60 @@ function pdf(catalogEntries = '', trailerEntries = '', encryption = false, pageE
   const trailer = `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R ${encryption ? '/Encrypt 5 0 R' : ''} ${trailerEntries} >>\nstartxref\n${xrefOffset}\n%%EOF\n`;
   parts.push(...xref, trailer);
   return Buffer.from(parts.join(''), 'ascii');
+}
+
+function compressedCatalogPdf(catalogEntries = '') {
+  const catalog = `<< /Type /Catalog /Pages 2 0 R ${catalogEntries} >>`;
+  const objectStreamHeader = '1 0 ';
+  const compressedObjects = deflateSync(Buffer.from(`${objectStreamHeader}${catalog}`, 'ascii'));
+  const pageContent = Buffer.from('q Q', 'ascii');
+  const prefix = ['%PDF-1.5\n'];
+  const offsets = new Map<number, number>();
+  let length = Buffer.byteLength(prefix[0]);
+  const appendObject = (number: number, body: Buffer | string) => {
+    offsets.set(number, length);
+    const start = Buffer.from(`${number} 0 obj\n`, 'ascii');
+    const end = Buffer.from('\nendobj\n', 'ascii');
+    const contents = typeof body === 'string' ? Buffer.from(body, 'ascii') : body;
+    prefix.push(start.toString('binary'), contents.toString('binary'), end.toString('binary'));
+    length += start.length + contents.length + end.length;
+  };
+
+  appendObject(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+  appendObject(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << >> /Contents 4 0 R >>');
+  appendObject(4, Buffer.concat([
+    Buffer.from(`<< /Length ${pageContent.length} >>\nstream\n`, 'ascii'),
+    pageContent,
+    Buffer.from('\nendstream', 'ascii'),
+  ]));
+  const objectStream = Buffer.concat([
+    Buffer.from(`<< /Type /ObjStm /N 1 /First ${Buffer.byteLength(objectStreamHeader)} /Length ${compressedObjects.length} /Filter /FlateDecode >>\nstream\n`, 'ascii'),
+    compressedObjects,
+    Buffer.from('\nendstream', 'ascii'),
+  ]);
+  appendObject(5, objectStream);
+
+  const xrefOffset = length;
+  const xrefEntry = (type: number, field2: number, field3: number) => {
+    const entry = Buffer.alloc(7);
+    entry.writeUInt8(type, 0);
+    entry.writeUInt32BE(field2, 1);
+    entry.writeUInt16BE(field3, 5);
+    return entry;
+  };
+  const xref = Buffer.concat([
+    xrefEntry(0, 0, 0xffff),
+    xrefEntry(2, 5, 0),
+    ...[2, 3, 4, 5].map(number => xrefEntry(1, offsets.get(number)!, 0)),
+    xrefEntry(1, xrefOffset, 0),
+  ]);
+  const xrefObject = Buffer.concat([
+    Buffer.from(`6 0 obj\n<< /Type /XRef /Size 7 /Root 1 0 R /W [1 4 2] /Index [0 7] /Length ${xref.length} >>\nstream\n`, 'ascii'),
+    xref,
+    Buffer.from('\nendstream\nendobj\n', 'ascii'),
+  ]);
+  prefix.push(xrefObject.toString('binary'), `startxref\n${xrefOffset}\n%%EOF\n`);
+  return Buffer.from(prefix.join(''), 'binary');
 }
 
 async function inspect(bytes: Buffer) {
@@ -73,6 +128,14 @@ describe('bounded PDF active-content inspection', () => {
   it('rejects catalog JavaScript actions and embedded files', async () => {
     await assert.rejects(inspect(pdf('/Names << /JavaScript << /Names [(run) << /S /JavaScript /JS (app.alert\\(1\\)) >>] >> >>')), PdfPolicyRejectedError);
     await assert.rejects(inspect(pdf('/Names << /EmbeddedFiles << /Names [(payload) << /Type /Filespec /F (payload.txt) /EF << /F << /Type /EmbeddedFile /Length 0 >> >> >>] >> >>')), PdfPolicyRejectedError);
+  });
+
+  it('inspects compressed catalog objects without rejecting action-like visible text', async () => {
+    await assert.rejects(
+      inspect(compressedCatalogPdf('/OpenAction << /S /JavaScript /JS (app.alert\\(1\\)) >>')),
+      PdfPolicyRejectedError,
+    );
+    await inspect(compressedCatalogPdf('/Lang (JavaScript)'));
   });
 
   it('fails closed on malformed PDFs', async () => {
