@@ -35,6 +35,7 @@ D08 image-only signature/seal is implemented. D10 keeps statutory, internal-audi
 | `pnpm verify:affected` | Boundaries, server and test TypeScript, Angular production build, Vitest | PASS, exit 0: 26 files / 121 tests | Current local run |
 | `pnpm exec ng test web --watch=false` | Full Angular component suite | PASS, exit 0: 12 files / 77 tests | Current local run |
 | `pnpm lint` | Repository ESLint and import boundaries | PASS, exit 0; 0 errors and 4 warnings confined to untouched `visual-prototype-simulation/worker/worker-configuration.d.ts` | Current local run |
+| GitHub Actions run `37207565756` on `8a037c5b557eec98f66449a8b82a783deca50375` | Frozen install, CI policy, static checks, unit tests, all three integration shards including T036, Playwright e2e, T035 PDF/image runtime and Linux smoke | PASS, exit 0; all verification jobs passed and the public web asset publisher completed | [Hosted workflow](https://github.com/nirzaf/AuditSphereJS/actions/runs/37207565756); [published web assets](https://github.com/nirzaf/AuditSphereJS/releases/tag/build-8a037c5b557eec98f66449a8b82a783deca50375) |
 | `pnpm db:migrate` | Local `auditsphere` PostgreSQL at `127.0.0.1` | PASS, applied the two pending reviewed migrations; no reset | Local development DB |
 | `pnpm db:roles` | Local API/worker least-privilege roles | PASS; exact table grants added by the provisioner; private credentials remain in ignored `.env` | Local development DB |
 | Built-in browser: Reporting → Document templates | Existing mapped Staff Fixture, one synthetic engagement, only `ENGAGEMENT_READ` | PASS: empty catalog loaded; no drafts, asset metadata or manager controls; no mutation submitted | Browser acceptance 2026-10-04 |
@@ -53,6 +54,6 @@ Uploads are tracked before storage; invalid or incomplete uploads fail closed an
 ## Review and next task
 
 Reviewer: Codex implementation review
-Review result: local acceptance criteria and affected checks pass. Keep T036 in review until an administrator-provisioned firm-private SharePoint/OneDrive asset repository and its separate selected-folder grant are available for live Graph upload/download acceptance.
+Review result: local acceptance criteria, affected checks and hosted CI pass. The hosted workflow published the labelled nonproduction web bundle; no deployment occurred. Keep T036 in review until an administrator-provisioned firm-private SharePoint/OneDrive asset repository and its separate selected-folder grant are available for live Graph upload/download acceptance.
 Open blockers: live Graph asset repository binding/grant and provider roundtrip; no signing-provider task applies because the user selected image appearance only.
 Next eligible task: T037 is already complete; T038 remains next in dependency order after T036 review closure.
