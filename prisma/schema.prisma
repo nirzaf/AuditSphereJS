@@ -34,14 +34,54 @@ model Client {
   id                   String               @id @default(uuid()) @db.Uuid
   firmId               String               @db.Uuid
   name                 String
+  legalName            String?
+  taxId                String?
+  legalForm            String?
+  address              String?
+  status               String               @default("ACTIVE")
+  parentClientId       String?              @db.Uuid
+  parent               Client?              @relation("ClientHierarchy", fields: [parentClientId], references: [id], onDelete: Restrict)
+  children             Client[]             @relation("ClientHierarchy")
   createdAt            DateTime             @default(now())
   firm                 Firm                 @relation(fields: [firmId], references: [id])
   engagements          Engagement[]
   repositories         ClientRepository[]
   mappingMemoryEntries MappingMemoryEntry[]
   roleGrants           RoleGrant[]
+  contacts             ClientContact[]
 
   @@unique([firmId, id])
+}
+
+model ClientContact {
+  id        String   @id @default(uuid()) @db.Uuid
+  firmId    String   @db.Uuid
+  clientId  String   @db.Uuid
+  client    Client   @relation(fields: [firmId, clientId], references: [firmId, id], onDelete: Restrict)
+  name      String
+  email     String
+  role      String
+  isPrimary Boolean  @default(false)
+  createdBy String   @db.Uuid
+  createdAt DateTime @default(now())
+}
+
+model Lead {
+  id           String   @id @default(uuid()) @db.Uuid
+  firmId       String   @db.Uuid
+  source       String
+  legalName    String
+  contactName  String?
+  contactEmail String?
+  scope        String?
+  status       String   @default("NEW")
+  duplicateOfId String? @db.Uuid
+  duplicateOf  Lead?    @relation("LeadDuplicates", fields: [duplicateOfId], references: [id], onDelete: SetNull)
+  duplicates   Lead[]   @relation("LeadDuplicates")
+  createdBy    String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  @@index([firmId, status])
 }
 
 /// Engagement is scoped to a firm and one of that firm's clients. The composite foreign
