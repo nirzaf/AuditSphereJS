@@ -17,6 +17,25 @@ it('exposes only the five real business workspaces without demo messaging', asyn
   expect(fixture.nativeElement.textContent).not.toContain('Synthetic records');
   fixture.destroy();
 });
+it('shows the selected-engagement state instead of asking the user to select again', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ provider: 'development' }))));
+  const fixture = TestBed.createComponent(Workspace);
+  fixture.detectChanges(); await fixture.whenStable();
+  const view = fixture.componentInstance;
+  view.identityProvider.set('entra');
+  view.signedIn.set(true);
+  view.readableEngagements.set([{ id: 'engagement-1', name: 'Acceptance engagement', clientId: 'client-1', clientName: 'Acceptance client', version: 1 }]);
+  view.selectEngagement('engagement-1');
+  fixture.detectChanges();
+
+  expect(fixture.nativeElement.textContent).toContain('Engagement selected. The server checks your access again for every request.');
+  expect(fixture.nativeElement.textContent).not.toContain('Choose an engagement to continue;');
+
+  view.selectEngagement('');
+  fixture.detectChanges();
+  expect(fixture.nativeElement.textContent).toContain('Choose an engagement to continue;');
+  fixture.destroy();
+});
 it('replaces the retired Simulation URL with the real Fieldwork workspace', async () => {
   const navigate = vi.fn().mockResolvedValue(true);
   TestBed.configureTestingModule({ providers: [
