@@ -75,6 +75,7 @@ jobs:
             tests/upload-race.integration.ts
             tests/unit-of-work.integration.ts
             tests/practice-ledger.integration.ts
+            tests/practice-trial-balance.integration.ts
             tests/idempotency.integration.ts
             tests/notifications.integration.ts
         - files: |
