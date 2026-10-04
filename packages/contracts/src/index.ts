@@ -453,6 +453,38 @@ export const practiceFirmTrialBalanceDetailSchema = z.object({
   pageSize: z.number().int().positive().max(200), totalCount: z.number().int().nonnegative(),
   entries: z.array(practiceFirmTrialBalanceEntrySchema).max(200),
 });
+const practiceAccountingMonthSchema = z.string().regex(/^(?!0000)\d{4}-(0[1-9]|1[0-2])$/, 'Use an accounting month in YYYY-MM format.');
+export const practiceFirmProfitLossQuerySchema = z.object({
+  month: practiceAccountingMonthSchema,
+  compareMonth: practiceAccountingMonthSchema.optional(),
+}).refine(value => value.compareMonth === undefined || value.compareMonth !== value.month, { message: 'Comparison month must differ from the reporting month.', path: ['compareMonth'] });
+export const practiceFirmProfitLossDetailQuerySchema = practiceFirmProfitLossQuerySchema.extend({
+  period: z.enum(['CURRENT', 'COMPARISON']), snapshotHash: z.string().regex(/^[a-f0-9]{64}$/),
+  page: z.coerce.number().int().min(1).max(10_000).default(1), pageSize: z.coerce.number().int().min(1).max(200).default(50),
+});
+export const practiceFirmProfitLossRowSchema = z.object({
+  accountId: z.uuid(), code: z.string().trim().min(1).max(30), name: z.string().trim().min(1).max(150),
+  section: z.enum(['INCOME', 'EXPENSE']), currentAmount: moneySchema, currentEntryCount: z.number().int().nonnegative(),
+  comparisonAmount: moneySchema.nullable(), comparisonEntryCount: z.number().int().nonnegative().nullable(),
+});
+export const practiceFirmProfitLossTotalsSchema = z.object({ income: moneySchema, expenses: moneySchema, net: moneySchema });
+export const practiceFirmProfitLossSchema = z.object({
+  currency: z.literal('QAR'), parameters: z.object({ month: practiceAccountingMonthSchema, compareMonth: practiceAccountingMonthSchema.nullable() }),
+  asOf: z.iso.datetime(), rows: z.array(practiceFirmProfitLossRowSchema).max(10_000),
+  currentTotals: practiceFirmProfitLossTotalsSchema, comparisonTotals: practiceFirmProfitLossTotalsSchema.nullable(),
+  snapshotHash: z.string().regex(/^[a-f0-9]{64}$/),
+});
+export const practiceFirmProfitLossEntrySchema = z.object({
+  id: z.uuid(), journalId: z.uuid(), accountingDate: z.iso.date(), reference: z.string().trim().min(1).max(80),
+  memo: z.string().trim().min(1).max(500), position: z.number().int().nonnegative(), debit: moneySchema, credit: moneySchema,
+  reversalOf: z.uuid().nullable(), reversedBy: z.boolean(),
+});
+export const practiceFirmProfitLossDetailSchema = z.object({
+  parameters: z.object({ month: practiceAccountingMonthSchema, compareMonth: practiceAccountingMonthSchema.nullable() }),
+  period: z.enum(['CURRENT', 'COMPARISON']), asOf: z.iso.datetime(), snapshotHash: z.string().regex(/^[a-f0-9]{64}$/),
+  account: practiceFirmProfitLossRowSchema, page: z.number().int().positive(), pageSize: z.number().int().positive().max(200),
+  totalCount: z.number().int().nonnegative(), entries: z.array(practiceFirmProfitLossEntrySchema).max(200),
+});
 export const practiceLedgerSchema = z.object({
   currency: z.string().regex(/^[A-Z]{3}$/), accounts: z.array(practiceAccountViewSchema).max(10_000),
   periods: z.array(practicePeriodViewSchema).max(5_000), journals: z.array(practiceJournalViewSchema).max(100),
@@ -743,6 +775,13 @@ export const contractSchemas = {
   practiceFirmTrialBalance: practiceFirmTrialBalanceSchema,
   practiceFirmTrialBalanceEntry: practiceFirmTrialBalanceEntrySchema,
   practiceFirmTrialBalanceDetail: practiceFirmTrialBalanceDetailSchema,
+  practiceFirmProfitLossQuery: practiceFirmProfitLossQuerySchema,
+  practiceFirmProfitLossDetailQuery: practiceFirmProfitLossDetailQuerySchema,
+  practiceFirmProfitLossRow: practiceFirmProfitLossRowSchema,
+  practiceFirmProfitLossTotals: practiceFirmProfitLossTotalsSchema,
+  practiceFirmProfitLoss: practiceFirmProfitLossSchema,
+  practiceFirmProfitLossEntry: practiceFirmProfitLossEntrySchema,
+  practiceFirmProfitLossDetail: practiceFirmProfitLossDetailSchema,
   practiceJobGrade: practiceJobGradeSchema, practiceRateCardView: practiceRateCardViewSchema,
   practiceStaffView: practiceStaffViewSchema, practiceStaffGradeAssignmentView: practiceStaffGradeAssignmentViewSchema,
   practiceRateAdministration: practiceRateAdministrationSchema, createPracticeRateCard: createPracticeRateCardSchema,
@@ -857,6 +896,12 @@ export type PracticeFirmTrialBalanceQuery = z.infer<typeof practiceFirmTrialBala
 export type PracticeFirmTrialBalanceDetailQuery = z.infer<typeof practiceFirmTrialBalanceDetailQuerySchema>;
 export type PracticeFirmTrialBalance = z.infer<typeof practiceFirmTrialBalanceSchema>;
 export type PracticeFirmTrialBalanceDetail = z.infer<typeof practiceFirmTrialBalanceDetailSchema>;
+export type PracticeFirmProfitLossQuery = z.infer<typeof practiceFirmProfitLossQuerySchema>;
+export type PracticeFirmProfitLossDetailQuery = z.infer<typeof practiceFirmProfitLossDetailQuerySchema>;
+export type PracticeFirmProfitLoss = z.infer<typeof practiceFirmProfitLossSchema>;
+export type PracticeFirmProfitLossRow = z.infer<typeof practiceFirmProfitLossRowSchema>;
+export type PracticeFirmProfitLossTotals = z.infer<typeof practiceFirmProfitLossTotalsSchema>;
+export type PracticeFirmProfitLossDetail = z.infer<typeof practiceFirmProfitLossDetailSchema>;
 export type PracticeJobGrade = z.infer<typeof practiceJobGradeSchema>;
 export type PracticeRateAdministration = z.infer<typeof practiceRateAdministrationSchema>;
 export type PracticeRateCardView = z.infer<typeof practiceRateCardViewSchema>;

@@ -1890,6 +1890,636 @@
     ],
     "additionalProperties": false
   },
+  "practiceFirmProfitLossQuery": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "month": {
+        "type": "string",
+        "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+      },
+      "compareMonth": {
+        "type": "string",
+        "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+      }
+    },
+    "required": [
+      "month"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmProfitLossDetailQuery": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "month": {
+        "type": "string",
+        "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+      },
+      "compareMonth": {
+        "type": "string",
+        "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+      },
+      "period": {
+        "type": "string",
+        "enum": [
+          "CURRENT",
+          "COMPARISON"
+        ]
+      },
+      "snapshotHash": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "page": {
+        "default": 1,
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10000
+      },
+      "pageSize": {
+        "default": 50,
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200
+      }
+    },
+    "required": [
+      "month",
+      "period",
+      "snapshotHash",
+      "page",
+      "pageSize"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmProfitLossRow": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "accountId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "code": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 30
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 150
+      },
+      "section": {
+        "type": "string",
+        "enum": [
+          "INCOME",
+          "EXPENSE"
+        ]
+      },
+      "currentAmount": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "currentEntryCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "comparisonAmount": {
+        "anyOf": [
+          {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "comparisonEntryCount": {
+        "anyOf": [
+          {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          {
+            "type": "null"
+          }
+        ]
+      }
+    },
+    "required": [
+      "accountId",
+      "code",
+      "name",
+      "section",
+      "currentAmount",
+      "currentEntryCount",
+      "comparisonAmount",
+      "comparisonEntryCount"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmProfitLossTotals": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "income": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "expenses": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "net": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      }
+    },
+    "required": [
+      "income",
+      "expenses",
+      "net"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmProfitLoss": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "currency": {
+        "type": "string",
+        "const": "QAR"
+      },
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+          },
+          "compareMonth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "month",
+          "compareMonth"
+        ],
+        "additionalProperties": false
+      },
+      "asOf": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      },
+      "rows": {
+        "maxItems": 10000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "accountId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "section": {
+              "type": "string",
+              "enum": [
+                "INCOME",
+                "EXPENSE"
+              ]
+            },
+            "currentAmount": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "currentEntryCount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "comparisonAmount": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "comparisonEntryCount": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "accountId",
+            "code",
+            "name",
+            "section",
+            "currentAmount",
+            "currentEntryCount",
+            "comparisonAmount",
+            "comparisonEntryCount"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "currentTotals": {
+        "type": "object",
+        "properties": {
+          "income": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "expenses": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "net": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          }
+        },
+        "required": [
+          "income",
+          "expenses",
+          "net"
+        ],
+        "additionalProperties": false
+      },
+      "comparisonTotals": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "income": {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              },
+              "expenses": {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              },
+              "net": {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              }
+            },
+            "required": [
+              "income",
+              "expenses",
+              "net"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "snapshotHash": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "required": [
+      "currency",
+      "parameters",
+      "asOf",
+      "rows",
+      "currentTotals",
+      "comparisonTotals",
+      "snapshotHash"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmProfitLossEntry": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "journalId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "accountingDate": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+      },
+      "reference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "memo": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "position": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "debit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "credit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "reversalOf": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "reversedBy": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "id",
+      "journalId",
+      "accountingDate",
+      "reference",
+      "memo",
+      "position",
+      "debit",
+      "credit",
+      "reversalOf",
+      "reversedBy"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmProfitLossDetail": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "month": {
+            "type": "string",
+            "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+          },
+          "compareMonth": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!0000)\\d{4}-(0[1-9]|1[0-2])$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "month",
+          "compareMonth"
+        ],
+        "additionalProperties": false
+      },
+      "period": {
+        "type": "string",
+        "enum": [
+          "CURRENT",
+          "COMPARISON"
+        ]
+      },
+      "asOf": {
+        "type": "string",
+        "format": "date-time",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+      },
+      "snapshotHash": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "account": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "section": {
+            "type": "string",
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "currentAmount": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "currentEntryCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "comparisonAmount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comparisonEntryCount": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "accountId",
+          "code",
+          "name",
+          "section",
+          "currentAmount",
+          "currentEntryCount",
+          "comparisonAmount",
+          "comparisonEntryCount"
+        ],
+        "additionalProperties": false
+      },
+      "page": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "pageSize": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 200
+      },
+      "totalCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "entries": {
+        "maxItems": 200,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "journalId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "accountingDate": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "reference": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "memo": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "position": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "debit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "credit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "reversalOf": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reversedBy": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "journalId",
+            "accountingDate",
+            "reference",
+            "memo",
+            "position",
+            "debit",
+            "credit",
+            "reversalOf",
+            "reversedBy"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "parameters",
+      "period",
+      "asOf",
+      "snapshotHash",
+      "account",
+      "page",
+      "pageSize",
+      "totalCount",
+      "entries"
+    ],
+    "additionalProperties": false
+  },
   "practiceJobGrade": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "string",

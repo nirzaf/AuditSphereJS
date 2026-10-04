@@ -8,6 +8,13 @@ const create = async (screen: string, token = 'test-session') => {
   fixture.detectChanges(); await fixture.whenStable(); return fixture;
 };
 afterEach(() => { vi.unstubAllGlobals(); TestBed.resetTestingModule(); });
+it('mounts the real monthly firm statement through the Practice workspace catalog', async () => {
+  const fixture = await create('profit-loss');
+  expect(fixture.nativeElement.querySelector('practice-profit-loss')).not.toBeNull();
+  expect(fixture.nativeElement.textContent).toContain('Monthly Profit & Loss');
+  expect(moduleScreens.find(item => item.id === 'profit-loss')?.module).toBe('Practice');
+  fixture.destroy();
+});
 it('validates preparation drafts without sending a business mutation and isolates engagements', async () => {
   const request = vi.fn(); vi.stubGlobal('fetch',request);
   const fixture = await create('leads'); const view = fixture.componentInstance;

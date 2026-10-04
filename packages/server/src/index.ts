@@ -8,6 +8,7 @@ export { issueInvoice, recordInvoicePayment, issueInvoiceReceipt, voidInvoice, l
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
 export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';
 export { firmTrialBalance, firmTrialBalanceAccount } from './modules/practice/trial-balance.js';
+export { firmProfitLoss, firmProfitLossAccount } from './modules/practice/profit-loss.js';
 export { PracticeRatesController } from './modules/practice/rates-controller.js';
 export { ensurePracticeRateDefaultsForFirm, listPracticeRateAdministration, schedulePracticeRateCard, assignPracticeStaffGrade, recordAuthorizedPracticeTimeEntrySnapshot, calculatePracticeChargeOutValue } from './modules/practice/rates.js';
 export type { PracticeTimeSnapshotInput } from './modules/practice/rates.js';

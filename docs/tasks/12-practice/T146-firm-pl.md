@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 12-practice — Practice analytics and bookkeeping reports |
 | Owner area | `practice` |
@@ -42,16 +43,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Group posted firm income/expense accounts by the approved statement mapping and accounting month.
-- [ ] Separate withdrawals, balance-sheet movements and charge-out analytics from actual P/L.
-- [ ] Support comparisons and drill-down to journal sources.
-- [ ] Store report parameters and as-of context for reproducible export.
+- [x] Group posted firm income/expense accounts by the approved chart `kind` mapping and accounting month.
+- [x] Separate withdrawals, balance-sheet movements and charge-out analytics from actual P/L.
+- [x] Support selected-month comparisons and version-checked drill-down to posted journal sources.
+- [x] Store report parameters, PostgreSQL as-of context and content hash in deterministic CSV export.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Monthly P/L reconciles to the firm TB for mapped accounts.
-- [ ] **AC2:** Partner withdrawals do not reduce P/L unless the approved chart explicitly treats a transaction as expense.
-- [ ] **AC3:** Period filters use accounting dates, not server timestamps.
+- [x] **AC1:** Monthly P/L reconciles to the firm TB for mapped accounts.
+- [x] **AC2:** Partner withdrawals do not reduce P/L unless the approved chart explicitly treats a transaction as expense.
+- [x] **AC3:** Period filters use accounting dates, not server timestamps.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 

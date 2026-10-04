@@ -5,19 +5,21 @@ import {
   invoiceReceiptResultSchema, invoiceViewSchema, invoicesSchema, issueInvoiceSchema, invoiceVoidResultSchema, voidInvoiceSchema, practiceAccountSchema,
   practiceAccountViewSchema, practiceJournalViewSchema, practiceLedgerSchema, practicePeriodTransitionResultSchema,
   practiceFirmTrialBalanceQuerySchema, practiceFirmTrialBalanceSchema, practiceFirmTrialBalanceDetailQuerySchema, practiceFirmTrialBalanceDetailSchema,
+  practiceFirmProfitLossQuerySchema, practiceFirmProfitLossSchema, practiceFirmProfitLossDetailQuerySchema, practiceFirmProfitLossDetailSchema,
   practicePeriodViewSchema, practicePostingPolicyViewSchema,
   practiceJournalSchema, practicePeriodSchema, practicePeriodTransitionSchema,
   practicePostingPolicySchema, practiceReverseJournalSchema, practiceVersionSchema, practiceExpenseDraftSchema, practiceExpenseSettlementSchema,
   practiceExpenseReceiptViewSchema, practiceExpenseReceiptsSchema,
   recordPaymentSchema, paginationQuerySchema,
 } from '@auditsphere/contracts';
-import type { InvoiceReceiptRequest, PaginationQuery, PracticeFirmTrialBalanceQuery, PracticeFirmTrialBalanceDetailQuery } from '@auditsphere/contracts';
+import type { InvoiceReceiptRequest, PaginationQuery, PracticeFirmTrialBalanceQuery, PracticeFirmTrialBalanceDetailQuery, PracticeFirmProfitLossQuery, PracticeFirmProfitLossDetailQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
 import { issueInvoice, issueInvoiceReceipt, listInvoices, recordInvoicePayment, voidInvoice } from './invoices.js';
 import { attachPracticeExpenseReceipt, listPracticeExpenseReceipts } from './expense-receipts.js';
 import { firmTrialBalance, firmTrialBalanceAccount } from './trial-balance.js';
+import { firmProfitLoss, firmProfitLossAccount } from './profit-loss.js';
 import type { UploadFilePart } from '../../platform/document-uploads.js';
 import { toPracticeAccountView, toPracticeInvoiceView, toPracticeJournalView, toPracticeLedgerView, toPracticePeriodView } from './practice-response.js';
 
@@ -38,6 +40,20 @@ export class PracticeLedgerController {
   @SerializeOptions({ schema: practiceFirmTrialBalanceDetailSchema })
   trialBalanceAccount(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('accountId') accountId: string, @Query({ schema: practiceFirmTrialBalanceDetailQuerySchema }) query: PracticeFirmTrialBalanceDetailQuery) {
     return firmTrialBalanceAccount(actorId, engagementId, accountId, query);
+  }
+
+  @Get('reports/profit-loss')
+  @ApiOkResponse({ standardSchema: practiceFirmProfitLossSchema })
+  @SerializeOptions({ schema: practiceFirmProfitLossSchema })
+  profitLoss(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Query({ schema: practiceFirmProfitLossQuerySchema }) query: PracticeFirmProfitLossQuery) {
+    return firmProfitLoss(actorId, engagementId, query);
+  }
+
+  @Get('reports/profit-loss/accounts/:accountId')
+  @ApiOkResponse({ standardSchema: practiceFirmProfitLossDetailSchema })
+  @SerializeOptions({ schema: practiceFirmProfitLossDetailSchema })
+  profitLossAccount(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('accountId') accountId: string, @Query({ schema: practiceFirmProfitLossDetailQuerySchema }) query: PracticeFirmProfitLossDetailQuery) {
+    return firmProfitLossAccount(actorId, engagementId, accountId, query);
   }
 
   @Get('expenses/:journalId/receipts')

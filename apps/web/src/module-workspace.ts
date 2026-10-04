@@ -5,6 +5,7 @@ import { Practice } from './practice';
 import { PracticeRates } from './practice-rates';
 import { PracticeExpenses } from './practice-expenses';
 import { PracticeTrialBalance } from './practice-trial-balance';
+import { PracticeProfitLoss } from './practice-profit-loss';
 import { DocumentTemplates } from './document-templates';
 import { authenticatedFetch } from './api-client';
 import { currentAccessToken } from './identity';
@@ -38,7 +39,7 @@ const sessionDrafts = new Map<string, DraftValues>();
 let sessionIdentity = ''; // Memory only; clear drafts when the authenticated session changes.
 const record = (value: unknown): RecordValue => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as RecordValue : {};
 
-@Component({ selector: 'module-workspace', imports: [ReactiveFormsModule, Practice, PracticeRates, PracticeExpenses, PracticeTrialBalance, DocumentTemplates, LineEditor], templateUrl: './module-workspace.html' })
+@Component({ selector: 'module-workspace', imports: [ReactiveFormsModule, Practice, PracticeRates, PracticeExpenses, PracticeTrialBalance, PracticeProfitLoss, DocumentTemplates, LineEditor], templateUrl: './module-workspace.html' })
 export class ModuleWorkspace {
   readonly screenId = input.required<string>(); readonly engagementId = input.required<string>();
   readonly token = input(''); readonly entra = input(false);

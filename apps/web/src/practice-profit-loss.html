@@ -1,0 +1,82 @@
+<section class="practice-profit-loss" aria-labelledby="practice-profit-loss-title" [attr.aria-busy]="busy()">
+  <header class="report-header">
+    <div>
+      <div class="eyebrow">INTERNAL FIRM ACCOUNTING</div>
+      <h1 id="practice-profit-loss-title">Monthly Profit &amp; Loss</h1>
+      <p>Posted income and expense accounts, grouped by their firm chart classification and accounting month.</p>
+    </div>
+    <div class="report-actions">
+      <label for="profit-loss-month">Reporting month
+        <input id="profit-loss-month" type="month" [value]="month()" (change)="setMonth($event)" [disabled]="busy()">
+      </label>
+      <label for="profit-loss-comparison">Compare with <span class="optional">(optional)</span>
+        <input id="profit-loss-comparison" type="month" [value]="compareMonth()" (change)="setCompareMonth($event)" [disabled]="busy()">
+      </label>
+      <button type="button" class="primary" (click)="refresh()" [disabled]="busy() || !month()">{{ busy() ? 'Loading…' : 'Load report' }}</button>
+      <button type="button" (click)="downloadSnapshot()" [disabled]="busy() || !report()">Export snapshot</button>
+    </div>
+  </header>
+
+  <p class="report-status" role="status" aria-live="polite">{{ message() }}</p>
+
+  @if (report(); as value) {
+    <section class="report-summary" aria-label="Current month Profit and Loss totals">
+      <article><span>Income · {{ value.parameters.month }}</span><strong>{{ value.currentTotals.income }} <small>QAR</small></strong></article>
+      <article><span>Expenses · {{ value.parameters.month }}</span><strong>{{ value.currentTotals.expenses }} <small>QAR</small></strong></article>
+      <article class="net-total"><span>Net profit / (loss)</span><strong>{{ value.currentTotals.net }} <small>QAR</small></strong></article>
+    </section>
+
+    @if (value.comparisonTotals; as comparison) {
+      <section class="report-summary comparison" aria-label="Comparison month Profit and Loss totals">
+        <article><span>Income · {{ value.parameters.compareMonth }}</span><strong>{{ comparison.income }} <small>QAR</small></strong></article>
+        <article><span>Expenses · {{ value.parameters.compareMonth }}</span><strong>{{ comparison.expenses }} <small>QAR</small></strong></article>
+        <article class="net-total"><span>Comparison net profit / (loss)</span><strong>{{ comparison.net }} <small>QAR</small></strong></article>
+      </section>
+    }
+
+    <div class="report-table-scroll" tabindex="0" role="region" aria-label="Monthly Profit and Loss account rows">
+      <table>
+        <caption>Report snapshot {{ value.snapshotHash }} · database as of {{ value.asOf }} · accounting dates only</caption>
+        <thead><tr><th scope="col">Statement section</th><th scope="col">Account</th><th scope="col" class="money">{{ value.parameters.month }}</th>@if(value.parameters.compareMonth) { <th scope="col" class="money">{{ value.parameters.compareMonth }}</th> }</tr></thead>
+        <tbody>
+          @if (!value.rows.length) { <tr><td [attr.colspan]="value.parameters.compareMonth ? 4 : 3">No firm income or expense accounts are configured.</td></tr> }
+          @for (section of ['INCOME', 'EXPENSE']; track section) {
+            <tr class="section-row"><th scope="rowgroup" [attr.colspan]="value.parameters.compareMonth ? 4 : 3">{{ section === 'INCOME' ? 'Income' : 'Expenses' }}</th></tr>
+            @for (row of value.rows; track row.accountId) {
+              @if (row.section === section) {
+                <tr>
+                  <td>{{ row.section === 'INCOME' ? 'Income' : 'Expense' }}</td>
+                  <th scope="row">{{ row.code }} · {{ row.name }} <small>{{ row.currentEntryCount }} posted lines</small></th>
+                  <td class="money"><button type="button" class="amount-link" [attr.aria-label]="'View posted sources for ' + row.name + ', ' + value.parameters.month" (click)="selectAccount(row, 'CURRENT')">{{ row.currentAmount }}</button></td>
+                  @if(value.parameters.compareMonth) { <td class="money"><button type="button" class="amount-link" [attr.aria-label]="'View posted sources for ' + row.name + ', ' + value.parameters.compareMonth" (click)="selectAccount(row, 'COMPARISON')">{{ row.comparisonAmount }} <small>{{ row.comparisonEntryCount }} lines</small></button></td> }
+                </tr>
+              }
+            }
+          }
+        </tbody>
+        <tfoot>
+          <tr><th scope="row" colspan="2">Net profit / (loss)</th><td class="money">{{ value.currentTotals.net }}</td>@if(value.comparisonTotals) { <td class="money">{{ value.comparisonTotals.net }}</td> }</tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <section class="account-detail" aria-labelledby="profit-loss-detail-title">
+      @if(detail(); as selected) {
+        <header><div><div class="eyebrow">POSTED JOURNAL SOURCE</div><h2 id="profit-loss-detail-title">{{ selected.account.code }} · {{ selected.account.name }}</h2><p>{{ selected.period === 'CURRENT' ? selected.parameters.month : selected.parameters.compareMonth }} · {{ selected.totalCount }} posted lines · snapshot {{ selected.snapshotHash.slice(0, 12) }}</p></div></header>
+        @if(selected.entries.length) {
+          <div class="report-table-scroll" tabindex="0" role="region" aria-label="Profit and Loss journal source details"><table>
+            <caption>Accounting-date activity for {{ selected.account.name }}</caption>
+            <thead><tr><th scope="col">Accounting date</th><th scope="col">Reference</th><th scope="col">Memo</th><th scope="col" class="money">Debit</th><th scope="col" class="money">Credit</th><th scope="col">Lineage</th></tr></thead>
+            <tbody>@for(entry of selected.entries; track entry.id) { <tr><td>{{ entry.accountingDate }}</td><td>{{ entry.reference }}</td><td>{{ entry.memo }}</td><td class="money">{{ entry.debit }}</td><td class="money">{{ entry.credit }}</td><td>{{ entry.reversalOf ? 'Reversal' : entry.reversedBy ? 'Reversed' : 'Posted' }}</td></tr> }</tbody>
+          </table></div>
+        } @else { <p>No posted source journals for this account in the selected month.</p> }
+        <footer class="detail-pagination"><span>Page {{ selected.page }} · {{ selected.totalCount }} posted journal lines</span><div><button type="button" (click)="page(selected.page - 1)" [disabled]="busy() || selected.page <= 1">Previous</button><button type="button" (click)="page(selected.page + 1)" [disabled]="busy() || selected.page * selected.pageSize >= selected.totalCount">Next</button></div></footer>
+      } @else {
+        <h2 id="profit-loss-detail-title">Journal source detail</h2><p>Select a monthly amount to inspect its posted journal lines. The server checks that the report snapshot is still current before returning detail.</p>
+      }
+    </section>
+    <p class="report-footnote">Only chart accounts classified as income or expense are included. Partner withdrawals, balance-sheet movements and charge-out analytics remain separate from actual firm Profit &amp; Loss.</p>
+  } @else {
+    <section class="report-empty"><h2>Load the monthly firm statement</h2><p>Choose an accounting month and optional comparison. Draft journals and server timestamps do not affect the report.</p><button type="button" class="primary" (click)="refresh()" [disabled]="busy() || !month()">{{ busy() ? 'Loading…' : 'Load report' }}</button></section>
+  }
+</section>

@@ -49,6 +49,7 @@ export const moduleScreens: readonly ModuleScreen[] = [
   screen('Practice','receivables','Billing & receivables','Prepare allocations and collection follow-up.',[text('client','Client'),text('invoice','Invoice reference'),money('amount','Allocation amount · QAR'),date('due','Due date'),memo('followup','Collection follow-up',false)],['Advance and final invoices share the canonical ledger.','Receivable aging is based on actual allocated payments.']),
   screen('Practice','expenses','Operating expenses','Record firm expense and withdrawal journals through approved chart and period controls.',[],['Expense receipt-version attachment remains in progress.']),
   screen('Practice','statements','Firm trial balance','Review period opening balances, posted journal movement, closing balances and account activity.',[],['Post-only report from the authoritative firm ledger.','Account drill-down preserves reversal lineage; CSV exports a deterministic report snapshot.']),
+  screen('Practice','profit-loss','Monthly Profit & Loss','Compare posted firm income and expenses by accounting month and inspect journal sources.',[],['Only accounts classified as INCOME or EXPENSE in the firm chart appear.','Withdrawals, balance-sheet movements and charge-out analytics are excluded.','Exports retain report parameters, database as-of time and snapshot hash.']),
 ];
 export const modules: readonly ModuleName[] = ['Commercial','Governance','Fieldwork','Reporting','Practice'];
 export const screensFor = (module: string) => moduleScreens.filter(screen => screen.module === module);
