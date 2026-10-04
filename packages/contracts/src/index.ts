@@ -825,3 +825,60 @@ export type Invoice = z.infer<typeof invoiceViewSchema>;
 /** Presentation-only label order. Never use this for mutation authorization or progression:
  *  guarded transitions live in modules/governance/lifecycle.ts and require command evidence. */
 export function nextState(current: string): string | undefined { const i = states.indexOf(current as typeof states[number]); return i < 0 ? undefined : states[i + 1]; }
+
+/** T052: client legal profile and organizational hierarchy. */
+export const createClientSchema = z.object({
+  idempotencyKey: z.uuid(),
+  name: z.string().trim().min(3).max(200),
+  legalName: z.string().trim().min(3).max(200).optional(),
+  taxId: z.string().trim().min(3).max(60).optional(),
+  legalForm: z.string().trim().min(2).max(100).optional(),
+  address: z.string().trim().max(500).optional(),
+  parentClientId: z.uuid().optional(),
+});
+export const updateClientProfileSchema = z.object({
+  idempotencyKey: z.uuid(),
+  legalName: z.string().trim().min(3).max(200).optional(),
+  taxId: z.string().trim().min(3).max(60).optional(),
+  legalForm: z.string().trim().min(2).max(100).optional(),
+  address: z.string().trim().max(500).optional(),
+  status: z.enum(['ACTIVE', 'SUSPENDED', 'ARCHIVED']).optional(),
+});
+export const setClientParentSchema = z.object({ idempotencyKey: z.uuid(), parentClientId: z.uuid().nullable() });
+
+/** T053: contacts with MD/GM, CFO/FD and audit-liaison routing roles. */
+export const contactRoles = ['MANAGING_DIRECTOR', 'CFO_FD', 'AUDIT_LIAISON'] as const;
+export const contactRoleSchema = z.enum(contactRoles);
+/** Document categories route to exactly one contact role each (requirements 4.1.1). */
+export const documentCategories = ['PROPOSAL', 'ENGAGEMENT_LETTER', 'DELIVERABLE', 'INVOICE', 'RECEIPT', 'PBC', 'CONFIRMATION'] as const;
+export const documentCategorySchema = z.enum(documentCategories);
+export const documentCategoryRole: Record<(typeof documentCategories)[number], (typeof contactRoles)[number]> = {
+  PROPOSAL: 'MANAGING_DIRECTOR', ENGAGEMENT_LETTER: 'MANAGING_DIRECTOR', DELIVERABLE: 'MANAGING_DIRECTOR',
+  INVOICE: 'CFO_FD', RECEIPT: 'CFO_FD',
+  PBC: 'AUDIT_LIAISON', CONFIRMATION: 'AUDIT_LIAISON',
+};
+export const createContactSchema = z.object({
+  idempotencyKey: z.uuid(),
+  clientId: z.uuid(),
+  name: z.string().trim().min(2).max(200),
+  email: z.string().trim().email().max(200),
+  role: contactRoleSchema,
+  isPrimary: z.boolean(),
+});
+
+/** T054: multi-channel lead intake with gated profile-to-proposal progression. */
+export const leadSources = ['PHONE', 'WHATSAPP', 'EMAIL', 'WEB', 'REFERRAL'] as const;
+export const createLeadSchema = z.object({
+  idempotencyKey: z.uuid(),
+  source: z.enum(leadSources),
+  legalName: z.string().trim().min(3).max(200),
+  contactName: z.string().trim().max(200).optional(),
+  contactEmail: z.string().trim().email().max(200).optional(),
+  scope: z.string().trim().max(500).optional(),
+});
+export const profileLeadSchema = z.object({
+  idempotencyKey: z.uuid(),
+  contactName: z.string().trim().min(2).max(200),
+  contactEmail: z.string().trim().email().max(200),
+  scope: z.string().trim().min(3).max(500),
+});

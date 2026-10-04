@@ -4,8 +4,12 @@ import {
   acceptProposalSchema, apiProblemSchema, commercialDualKeyStatusSchema, commercialProposalActionResultSchema,
   commercialProposalCreatedResultSchema, commercialProposalViewSchema, createProposalSchema, proposalActionSchema,
   recordRiskClearanceSchema, commercialRiskClearanceResultSchema, paginationQuerySchema,
+  createClientSchema, updateClientProfileSchema, setClientParentSchema, createContactSchema, createLeadSchema, profileLeadSchema,
 } from '@auditsphere/contracts';
 import type { PaginationQuery } from '@auditsphere/contracts';
+import { createClient as createClientRecord, listClientDirectory, setClientParent, updateClientProfile } from './directory.js';
+import { addContact as addContactRecord, listContacts, resolveRecipient } from './contacts.js';
+import { advanceLeadToProposal as advanceLeadRecord, createLead as createLeadRecord, listLeads, profileLead as profileLeadRecord } from './leads.js';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { acceptProposal, createProposal, dualKeyStatus, listProposals, presentProposal, recordRiskClearance } from './proposals.js';
@@ -43,4 +47,31 @@ export class CommercialController {
   @ApiCreatedResponse({ standardSchema: commercialRiskClearanceResultSchema })
   @SerializeOptions({ schema: commercialRiskClearanceResultSchema })
   async clearance(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: recordRiskClearanceSchema }) body: unknown) { return toCommercialRiskClearanceResult(await recordRiskClearance(actorId, engagementId, body)); }
+
+  @Get('directory')
+  async directory(@Param('engagementId') engagementId: string) { return listClientDirectory(engagementId); }
+  @Post('clients')
+  @ApiCreatedResponse({ standardSchema: createClientSchema })
+  createClient(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: createClientSchema }) body: unknown) { return createClientRecord(actorId, engagementId, body); }
+  @Post('clients/:id/profile')
+  @ApiOkResponse({ standardSchema: updateClientProfileSchema })
+  updateProfile(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: updateClientProfileSchema }) body: unknown) { return updateClientProfile(actorId, engagementId, id, body); }
+  @Post('clients/:id/parent')
+  setParent(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: setClientParentSchema }) body: unknown) { return setClientParent(actorId, engagementId, id, body); }
+  @Get('contacts')
+  contacts(@Param('engagementId') engagementId: string) { return listContacts(engagementId); }
+  @Post('contacts')
+  @ApiCreatedResponse({ standardSchema: createContactSchema })
+  addContact(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: createContactSchema }) body: unknown) { return addContactRecord(actorId, engagementId, body); }
+  @Get('routing/:category')
+  routing(@Param('engagementId') engagementId: string, @Param('category') category: Parameters<typeof resolveRecipient>[1]) { return resolveRecipient(engagementId, category); }
+  @Get('leads')
+  leads(@Param('engagementId') engagementId: string) { return listLeads(engagementId); }
+  @Post('leads')
+  @ApiCreatedResponse({ standardSchema: createLeadSchema })
+  createLead(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: createLeadSchema }) body: unknown) { return createLeadRecord(actorId, engagementId, body); }
+  @Post('leads/:id/profile')
+  profileLead(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: profileLeadSchema }) body: unknown) { return profileLeadRecord(actorId, engagementId, id, body); }
+  @Post('leads/:id/advance')
+  advanceLead(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string) { return advanceLeadRecord(actorId, engagementId, id); }
 }
