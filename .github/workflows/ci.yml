@@ -69,6 +69,8 @@ jobs:
             tests/authorization.integration.ts
             tests/repository.integration.ts
             packages/server/tests/pdf-renderer.integration.ts
+            tests/document-version.integration.ts
+            tests/document-templates.integration.ts
             tests/taxonomy.integration.ts
             tests/upload-race.integration.ts
             tests/unit-of-work.integration.ts
@@ -81,14 +83,12 @@ jobs:
             tests/lifecycle.integration.ts
             apps/api/tests/security-hardening.integration.ts
             tests/staff-access.integration.ts
-            tests/document-version.integration.ts
             apps/api/tests/document-upload.integration.ts
             tests/materiality-persistence.integration.ts
             tests/review-notes.integration.ts
             tests/audit-chain.integration.ts
             tests/practice-expense-receipts.integration.ts
             tests/outbox.integration.ts
-            tests/document-templates.integration.ts
         - files: |
             apps/api/tests/multipart-plugin.integration.ts
             tests/local-services.integration.ts
@@ -204,6 +204,10 @@ jobs:
             sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
           fi
       - run: pnpm verify:task -- T035
+      - run: pnpm infra:up
+      - run: pnpm db:migrate
+      - run: pnpm db:roles
+      - run: pnpm db:seed
       - run: pnpm smoke:linux
       - name: Package verified build
         run: |

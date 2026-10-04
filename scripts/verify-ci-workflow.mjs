@@ -74,6 +74,12 @@ assert.match(
   /contains\(matrix\.shard\.files, 'pdf-renderer\.integration\.ts'\)[\s\S]*?pnpm exec playwright install --with-deps chromium/,
   "The PDF integration shard must install its pinned Chromium runtime",
 );
+const firstShardStart = integration.indexOf("        - files: |");
+const secondShardStart = integration.indexOf("        - files: |", firstShardStart + 1);
+const browserShard = integration.slice(firstShardStart, secondShardStart);
+for (const file of ["packages/server/tests/pdf-renderer.integration.ts", "tests/document-version.integration.ts", "tests/document-templates.integration.ts"]) {
+  assert.ok(browserShard.includes(file), `${file} must stay in the browser-enabled integration shard`);
+}
 assert.match(
   integration,
   /Allow Chromium sandbox user namespaces on Ubuntu 24[\s\S]*?contains\(matrix\.shard\.files, 'pdf-renderer\.integration\.ts'\)[\s\S]*?kernel\.apparmor_restrict_unprivileged_userns=0/,
@@ -114,6 +120,11 @@ assert.match(
   image,
   /pnpm exec playwright install --with-deps chromium[\s\S]*?pnpm verify:task -- T035/,
   "The image job must install the PDF renderer browser before the T035 gate",
+);
+assert.match(
+  image,
+  /pnpm infra:up[\s\S]*?pnpm db:migrate[\s\S]*?pnpm db:roles[\s\S]*?pnpm db:seed[\s\S]*?pnpm smoke:linux/,
+  "The Linux runtime smoke must run against migrated, seeded local services",
 );
 assert.match(
   image,
