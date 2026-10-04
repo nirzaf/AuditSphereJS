@@ -1,0 +1,45 @@
+{
+  "taskId": "T033",
+  "runId": "297e58ba-01e3-4d5a-a423-80dff3be79f3",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm test:m365:storage:live",
+  "scope": "Only the preconfigured synthetic nonproduction SharePoint and OneDrive acceptance folders",
+  "passed": true,
+  "testsPassed": 2,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "providers": [
+    {
+      "provider": "ONEDRIVE",
+      "checkedAt": "2026-10-04T02:52:45.317Z",
+      "result": "STREAMED_VERSION_ROUNDTRIP_GUARDED_STAGING_CLEANUP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 129,
+      "sha256": "1dd579e1dad98abb3fba37703bcadc01430fec4904f187fe92d6794e60c16f0f",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "473de4e6e6a7465d814752b80d068ffc2b49691d908f6a3fd009bf7c0aee4fe9",
+      "stagingIdentityHash": "7db84cd79151ccbea01bb184bf46581ed61b1d89cb70c61773b577af45739924",
+      "stagingSha256": "a9b9cf4103a667e59090e5cb61c40748cb58626c41ef280416892b00b81a032f",
+      "stagingCleanupOutcome": "RECYCLED_AND_READ_FAILS_CLOSED",
+      "deletedReadOutcome": "READ_FAILS_CLOSED",
+      "fixtureRetained": false
+    },
+    {
+      "provider": "SHAREPOINT",
+      "checkedAt": "2026-10-04T02:52:29.573Z",
+      "result": "STREAMED_VERSION_ROUNDTRIP_GUARDED_STAGING_CLEANUP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+      "byteCount": 131,
+      "sha256": "fb455aa9c62c5d064da47eac259792865f508f62c63a61c3c08c21e1bca8cfd2",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "3cf36da5421d2c15f7c19758ab26982ee427da8304105d7b85aa7f0596d2fa25",
+      "stagingIdentityHash": "792356efecfdf95b8c78902e3c5e7de0eec288083230350bb967d6c4d42a1fc6",
+      "stagingSha256": "b6ebd5be0ec494cc43f061593c19a5b9a08af2a19db8e5caaa575d65a2fe8844",
+      "stagingCleanupOutcome": "RECYCLED_AND_READ_FAILS_CLOSED",
+      "deletedReadOutcome": "READ_FAILS_CLOSED",
+      "fixtureRetained": false
+    }
+  ],
+  "limitations": [
+    "Exercises the server Graph adapter cleanup method directly, not the production maintenance worker against a credentialed database.",
+    "Does not prove portal/PBC freeze behavior, tenant grant revocation, retention or viewer safety.",
+    "No client or personal data was uploaded; both synthetic files were recycled and subsequent reads failed closed."
+  ]
+}

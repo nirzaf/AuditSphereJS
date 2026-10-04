@@ -34,7 +34,7 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
   const folderId = process.env[`M365_ACCEPTANCE_${purpose}_FOLDER_ID`];
   assert.ok(driveId && folderId, `Configure the designated ${purpose} acceptance drive and folder`);
   const repository = { driveId, folderId };
-  test(`live ${purpose}: version roundtrip, external edit, selected-folder denial and deleted-item behavior`, async () => {
+  test(`live ${purpose}: version roundtrip, guarded staging cleanup, external edit, selected-folder denial and deleted-item behavior`, async () => {
     const bytes = Buffer.from(`AuditSphereJS synthetic acceptance fixture\nRun ${runId}\nStorage ${purpose}\nNo client or personal data.\n`);
     const reference = await storage.put(repository, `auditspherejs-acceptance-${runId}.txt`, bytes);
     const identity = decodeGraphReference(reference);
@@ -53,6 +53,19 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
     assert.equal(identity.repositoryFolderId, folderId, 'Provider references must retain the exact configured repository folder');
     assert.ok(identity.versionId);
     await assert.rejects(storage.get({ driveId, folderId: 'root' }, reference), /does not belong to this client repository folder/, 'Version reads must reject a different repository folder before Graph access');
+    const stagedBytes = Buffer.from(`AuditSphereJS synthetic unreferenced staging fixture\nRun ${runId}\nStorage ${purpose}\nNo client or personal data.\n`);
+    const stagedReference = await storage.put(repository, `auditspherejs-staging-${runId}.txt`, stagedBytes);
+    const stagedIdentity = decodeGraphReference(stagedReference);
+    try {
+      assert.equal(stagedIdentity.repositoryFolderId, folderId);
+      assert.equal(stagedIdentity.sha256, sha256(stagedBytes));
+      await storage.deleteStaged(repository, stagedReference);
+      await assert.rejects(storage.get(repository, stagedReference), /Graph version metadata failed \(404\)/, 'A recycled staging object must fail closed on subsequent reads');
+    } finally {
+      // The provider's recycle operation is recoverable; repeating it after a successful
+      // removal is safe because the adapter treats a missing item as already cleaned.
+      await storage.deleteStaged(repository, stagedReference);
+    }
     // A separate provider write simulates an external, same-size current edit.
     // Only our newly created synthetic file is changed; the accepted v1 remains.
     const token = await acceptanceAccessToken();
@@ -82,9 +95,12 @@ for (const purpose of ['SHAREPOINT', 'ONEDRIVE'] as const) {
     await mkdir('test-results/m365-live', { recursive: true });
     await writeFile(`test-results/m365-live/${purpose.toLowerCase()}-${runId}.json`, JSON.stringify({
       runId, checkedAt: new Date().toISOString(), provider: purpose,
-      result: 'STREAMED_VERSION_ROUNDTRIP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED', byteCount: bytes.length, sha256: identity.sha256,
+      result: 'STREAMED_VERSION_ROUNDTRIP_GUARDED_STAGING_CLEANUP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED', byteCount: bytes.length, sha256: identity.sha256,
       repositoryIdentityHash: sha256(Buffer.from(`${driveId}\n${folderId}`)),
       versionIdentityHash: sha256(Buffer.from(`${identity.itemId}\n${identity.versionId}`)),
+      stagingIdentityHash: sha256(Buffer.from(`${stagedIdentity.itemId}\n${stagedIdentity.versionId}`)),
+      stagingSha256: stagedIdentity.sha256,
+      stagingCleanupOutcome: 'RECYCLED_AND_READ_FAILS_CLOSED',
       fixtureRetained: false,
       deletedReadOutcome,
       limitations: ['Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance'],
