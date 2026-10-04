@@ -3,12 +3,13 @@ import { createHash } from 'node:crypto';
 import type { z } from 'zod';
 import {
   practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema,
-  practicePeriodTransitionSchema, practicePostingPolicySchema, practiceReverseJournalSchema,
+  practicePeriodTransitionSchema, practicePostingPolicySchema, practiceReverseJournalSchema, practiceExpenseDraftSchema,
 } from '@auditsphere/contracts';
 import { db } from '../../platform/db.js';
 import { AccountingDate } from '../../platform/clock.js';
 import { runUnitOfWork, withUnitOfWork, lockForUpdate, type TransactionClient, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { activeGrants, isAssignedToScope, roleAllowsCapability, type Capability } from '../../platform/authorization.js';
+import { Decimal6 } from '../../platform/decimal6.js';
 
 function parse<T>(schema: z.ZodType<T>, input: unknown): T {
   const value = schema.safeParse(input);
@@ -96,6 +97,37 @@ export async function createPracticeJournal(actorId: string, engagementId: strin
     const accountIds = [...new Set(body.lines.map(l => l.accountId))];
     if (await tx.practiceAccount.count({ where: { firmId, id: { in: accountIds }, active: true, posting: true } }) !== accountIds.length) throw new BadRequestException('Unknown, inactive, nonposting or cross-firm account');
     return tx.practiceJournal.create({ data: { firmId, periodId: period.id, accountingDate: day, reference: body.reference, memo: body.memo, createdBy: actorId, lines: { create: body.lines.map((l, position) => ({ ...l, position })) } }, include: { lines: true } });
+  }, unitOfWork);
+}
+/** Create a classified expense/withdrawal draft through the canonical firm journal engine. */
+export async function createPracticeExpenseDraft(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
+  const body = parse(practiceExpenseDraftSchema, input);
+  return command(actorId, engagementId, 'PRACTICE_MANAGE', body, 'PRACTICE_EXPENSE_DRAFT_CREATED', async (tx, firmId) => {
+    const amount = Decimal6.from(body.amount);
+    if (!amount.isPositive()) throw new BadRequestException('Expense amount must be greater than zero');
+    await lockPracticePeriod(tx, body.periodId);
+    const period = await tx.practicePeriod.findFirst({ where: { id: body.periodId, firmId, closed: false } });
+    if (!period) throw new ConflictException('An open period in this firm is required');
+    const day = AccountingDate.fromISO(body.accountingDate).startOfUtcDay();
+    if (day < period.startsOn || day > period.endsOn) throw new BadRequestException('Accounting date is outside this period');
+    const accounts = await tx.practiceAccount.findMany({ where: { firmId, id: { in: [body.debitAccountId, body.creditAccountId] }, active: true, posting: true }, select: { id: true, kind: true } });
+    if (accounts.length !== 2) throw new BadRequestException('Expense accounts must be active posting accounts in this firm');
+    const debit = accounts.find(account => account.id === body.debitAccountId)!;
+    const credit = accounts.find(account => account.id === body.creditAccountId)!;
+    if (body.category === 'PARTNER_WITHDRAWAL') {
+      if (!['EQUITY', 'LIABILITY'].includes(debit.kind) || credit.kind !== 'ASSET') throw new BadRequestException('Partner withdrawals require an explicitly selected partner equity/current account and an asset counterpart; they are not operating expenses');
+    } else if (debit.kind !== 'EXPENSE' || !['ASSET', 'LIABILITY'].includes(credit.kind)) {
+      throw new BadRequestException('Operating expenses require an expense debit and an explicitly selected asset or liability counterpart');
+    }
+    const categoryLabel = body.category.replaceAll('_', ' ').toLowerCase();
+    return tx.practiceJournal.create({ data: {
+      firmId, periodId: period.id, accountingDate: day, reference: body.reference,
+      memo: `[${body.category}] ${body.description}`, createdBy: actorId,
+      lines: { create: [
+        { accountId: body.debitAccountId, position: 0, debit: amount.toFixed(), credit: '0' },
+        { accountId: body.creditAccountId, position: 1, debit: '0', credit: amount.toFixed() },
+      ] },
+    }, include: { lines: true }}).then(journal => ({ ...journal, category: body.category, categoryLabel }));
   }, unitOfWork);
 }
 export async function postPracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {

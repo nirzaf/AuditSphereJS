@@ -14,7 +14,7 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } = await import('@auditsphere/server');
+    const { db, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID();
       await db.firm.create({ data: { id: firmId, name: 'Ledger firm' } });
@@ -26,6 +26,8 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       await assert.rejects(createPracticeAccount(actorId, engagementId, { code: '100', name: 'Cash', kind: 'ASSET' }), /firm-wide/);
       for (const capability of ['PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_READ']) await db.roleGrant.create({ data: { userId: actorId, capability, firmId, grantedBy: actorId } });
       const cash = await createPracticeAccount(actorId, engagementId, { code: '100', name: 'Cash', kind: 'ASSET' });
+      const payable = await createPracticeAccount(actorId, engagementId, { code: '210', name: 'Accrued expenses', kind: 'LIABILITY' });
+      const drawings = await createPracticeAccount(actorId, engagementId, { code: '310', name: 'Partner drawings', kind: 'EQUITY' });
       await assert.rejects(createPracticeAccount(actorId, engagementId, { code: '100', name: 'Duplicate cash', kind: 'ASSET' }), (error: any) => error.getStatus?.() === 409 && /already exists/.test(error.message));
       const rent = await createPracticeAccount(actorId, engagementId, { code: '500', name: 'Rent', kind: 'EXPENSE' });
       const period = await createPracticePeriod(actorId, engagementId, { startsOn: '2026-01-01', endsOn: '2026-12-31' });
@@ -34,6 +36,27 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       const unbalanced = await create('BAD', '0.31', '0.30');
       await assert.rejects(postPracticeJournal(actorId, engagementId, unbalanced.id, { expectedVersion: 1, idempotencyKey: randomUUID() }), /Approved firm posting policy/);
       await approveFirmPostingPolicy(actorId, engagementId, { policyVersion: 'TEST-D07-1', revenueTreatment: 'DEFERRED_UNTIL_RELEASE', taxTreatment: 'NO_TAX', idempotencyKey: randomUUID() });
+      const expenseInput = { periodId: period.id, accountingDate: '2026-10-02', category: 'OFFICE_RENT_FACILITIES', reference: 'EXP-RENT-1', description: 'October office rent', amount: '1250.25', debitAccountId: rent.id, creditAccountId: payable.id, idempotencyKey: randomUUID() };
+      const expenseDraft = await createPracticeExpenseDraft(actorId, engagementId, expenseInput);
+      assert.equal(expenseDraft.status, 'DRAFT');
+      assert.equal(expenseDraft.memo, '[OFFICE_RENT_FACILITIES] October office rent');
+      assert.equal(expenseDraft.lines?.[0].debit.toString(), '1250.25');
+      assert.equal(expenseDraft.lines?.[1].credit.toString(), '1250.25');
+      for (const category of ['STAFF_SALARIES', 'BENEFITS_END_OF_SERVICE', 'OVERHEAD', 'PETTY_CASH'] as const) {
+        const draft = await createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, category, reference: `EXP-${category}`, idempotencyKey: randomUUID() });
+        assert.match(draft.memo, new RegExp(`^\\[${category}\\]`), `${category} is recorded with its own classification`);
+      }
+      const expensePosted = await postPracticeJournal(actorId, engagementId, expenseDraft.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
+      assert.equal(expensePosted.status, 'POSTED', 'expense recognition posts through the canonical policy/period/balance controls');
+      const expenseReversal = await reversePracticeJournal(actorId, engagementId, expenseDraft.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-02', reference: 'REV-EXP-RENT-1' });
+      assert.equal(expenseReversal.status, 'POSTED', 'expense correction preserves posted history through exact reversal');
+      const partnerWithdrawal = await createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, category: 'PARTNER_WITHDRAWAL', reference: 'EXP-DRAW-1', debitAccountId: drawings.id, creditAccountId: cash.id, idempotencyKey: randomUUID() });
+      assert.match(partnerWithdrawal.memo, /^\[PARTNER_WITHDRAWAL\]/);
+      const withdrawalPosted = await postPracticeJournal(actorId, engagementId, partnerWithdrawal.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
+      assert.equal(withdrawalPosted.status, 'POSTED', 'withdrawal reaches the ledger only as its explicit equity classification');
+      await reversePracticeJournal(actorId, engagementId, partnerWithdrawal.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-02', reference: 'REV-EXP-DRAW-1' });
+      await assert.rejects(createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, category: 'PARTNER_WITHDRAWAL', reference: 'EXP-DRAW-BAD', debitAccountId: rent.id, creditAccountId: cash.id, idempotencyKey: randomUUID() }), /partner equity\/current account/);
+      await assert.rejects(createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, amount: '-1', reference: 'EXP-NEG', idempotencyKey: randomUUID() }), /greater than zero/);
       await assert.rejects(postPracticeJournal(actorId, engagementId, unbalanced.id, { expectedVersion: 1, idempotencyKey: randomUUID() }), /balanced/);
       assert.equal((await db.practiceJournal.findUniqueOrThrow({ where: { id: unbalanced.id } })).status, 'DRAFT');
       const journal = await create('RENT');

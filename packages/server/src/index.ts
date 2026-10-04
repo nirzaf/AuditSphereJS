@@ -3,7 +3,7 @@ export { CommercialController } from './modules/commercial/commercial-controller
 export { createProposal, presentProposal, acceptProposal, recordRiskClearance, dualKeyStatus, listProposals } from './modules/commercial/proposals.js';
 export { issueInvoice, recordInvoicePayment, issueInvoiceReceipt, voidInvoice, listInvoices } from './modules/practice/invoices.js';
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
-export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';
+export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';
 export { PracticeRatesController } from './modules/practice/rates-controller.js';
 export { ensurePracticeRateDefaultsForFirm, listPracticeRateAdministration, schedulePracticeRateCard, assignPracticeStaffGrade, recordAuthorizedPracticeTimeEntrySnapshot, calculatePracticeChargeOutValue } from './modules/practice/rates.js';
 export type { PracticeTimeSnapshotInput } from './modules/practice/rates.js';

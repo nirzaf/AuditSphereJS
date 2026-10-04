@@ -44,16 +44,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Provide expense entry for office rent/facilities, salaries/benefits/end-of-service, overhead, petty cash and partner withdrawals.
-- [ ] Route each category through the approved chart/posting policy; partner withdrawals are not automatically an expense.
-- [ ] Attach supporting document versions and post via the canonical journal engine.
+- [x] Provide expense entry for office rent/facilities, salaries/benefits/end-of-service, overhead, petty cash and partner withdrawals.
+- [x] Route each category through the approved chart/posting policy; partner withdrawals are not automatically an expense.
+- [ ] Attach supporting document versions and post via the canonical journal engine. Canonical journal posting is implemented; supporting document-version attachment is still pending.
 - [ ] Track payment/settlement separately from recognition when required by the policy.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** All specified categories can be recorded.
-- [ ] **AC2:** Posted expense journals satisfy balance/period controls.
-- [ ] **AC3:** Partner withdrawal classification follows approved accounting rather than a UI label.
+- [x] **AC1:** All specified categories can be recorded.
+- [x] **AC2:** Posted expense journals satisfy balance/period controls.
+- [x] **AC3:** Partner withdrawal classification follows approved accounting rather than a UI label.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 

@@ -32,7 +32,7 @@ As inspected on 2026-10-02, `packages/server/src/modules/governance/materiality.
 
 ## D07 — Charge-out metric
 
-Preserve the source formula exactly: `charge-out value = sum(logged hours × effective role charge-out rate)` and `source engagement metric = contracted audit fee − charge-out value`. Label it **contracted-fee less charge-out value** (or **charge-out-based margin**), not actual payroll profit, statutory profit or realized cash. Do not substitute payroll, overhead, tax, invoice recognition or partner withdrawals. Those accounting policies remain outside this decision and require separate approval before firm-ledger behavior is implemented.
+Preserve the source formula exactly: `charge-out value = sum(logged hours × effective role charge-out rate)` and `source engagement metric = contracted audit fee − charge-out value`. Label it **contracted-fee less charge-out value** (or **charge-out-based margin**), not actual payroll profit, statutory profit or realized cash. Do not substitute payroll, overhead, tax, invoice recognition or partner withdrawals in that metric. For firm expense entry, require explicit account choice: operating categories debit an EXPENSE account and credit an ASSET or LIABILITY account; a partner withdrawal debits an EQUITY or LIABILITY partner-current account and credits an ASSET account. Category labels never select accounts or turn a withdrawal into an expense. An ASSET counterpart records cash settlement at recognition; a LIABILITY counterpart records an unpaid obligation, whose later settlement is a separate journal. Receipt-version attachment and settlement status remain required follow-up behavior; no jurisdiction-specific account mapping is inferred.
 
 ## Approval and scope
 

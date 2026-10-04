@@ -241,6 +241,13 @@ export const practicePostingPolicySchema = z.object({
 });
 export const practicePeriodSchema = z.object({ startsOn: z.iso.date(), endsOn: z.iso.date() }).refine(v => v.startsOn <= v.endsOn, 'Period dates are reversed');
 export const practiceJournalSchema = z.object({ periodId: z.uuid(), accountingDate: z.iso.date(), reference: z.string().trim().min(1).max(80), memo: z.string().trim().min(1).max(500), idempotencyKey: z.uuid(), lines: z.array(z.object({ accountId: z.uuid(), debit: moneySchema, credit: moneySchema })).min(2).max(500) });
+export const practiceExpenseCategorySchema = z.enum(['OFFICE_RENT_FACILITIES','STAFF_SALARIES','BENEFITS_END_OF_SERVICE','OVERHEAD','PETTY_CASH','PARTNER_WITHDRAWAL']);
+/** A classification-aware firm expense recognition draft. Settlement is a separate journal. */
+export const practiceExpenseDraftSchema = z.object({
+  periodId: z.uuid(), accountingDate: z.iso.date(), category: practiceExpenseCategorySchema,
+  reference: z.string().trim().min(1).max(80), description: z.string().trim().min(1).max(400),
+  amount: moneySchema, debitAccountId: z.uuid(), creditAccountId: z.uuid(), idempotencyKey: z.uuid(),
+}).refine(value => value.debitAccountId !== value.creditAccountId, 'Expense accounts must be different');
 export const practiceVersionSchema = z.object({ expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
 export const practiceReverseJournalSchema = practiceVersionSchema.extend({
   periodId: z.uuid(),
@@ -530,6 +537,7 @@ export const portalLogoutResultSchema = z.object({ signedOut: z.literal(true) })
 /** Canonical input and output schemas exported for deterministic JSON Schema/OpenAPI generation. */
 export const contractSchemas = {
   practiceAccount: practiceAccountSchema, practicePeriod: practicePeriodSchema, practiceJournal: practiceJournalSchema,
+  practiceExpenseCategory: practiceExpenseCategorySchema, practiceExpenseDraft: practiceExpenseDraftSchema,
   practicePostingPolicy: practicePostingPolicySchema, practiceVersion: practiceVersionSchema,
   practiceAccountView: practiceAccountViewSchema, practicePeriodView: practicePeriodViewSchema,
   practiceJournalLineView: practiceJournalLineViewSchema, practiceJournalView: practiceJournalViewSchema,

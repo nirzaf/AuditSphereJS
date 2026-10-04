@@ -6,13 +6,13 @@ import {
   practiceAccountViewSchema, practiceJournalViewSchema, practiceLedgerSchema, practicePeriodTransitionResultSchema,
   practicePeriodViewSchema, practicePostingPolicyViewSchema,
   practiceJournalSchema, practicePeriodSchema, practicePeriodTransitionSchema,
-  practicePostingPolicySchema, practiceReverseJournalSchema, practiceVersionSchema,
+  practicePostingPolicySchema, practiceReverseJournalSchema, practiceVersionSchema, practiceExpenseDraftSchema,
   recordPaymentSchema, paginationQuerySchema,
 } from '@auditsphere/contracts';
 import type { InvoiceReceiptRequest, PaginationQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
-import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
+import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
 import { issueInvoice, issueInvoiceReceipt, listInvoices, recordInvoicePayment, voidInvoice } from './invoices.js';
 import { toPracticeAccountView, toPracticeInvoiceView, toPracticeJournalView, toPracticeLedgerView, toPracticePeriodView } from './practice-response.js';
 
@@ -46,6 +46,11 @@ export class PracticeLedgerController {
   @ApiCreatedResponse({ standardSchema: practiceJournalViewSchema })
   @SerializeOptions({ schema: practiceJournalViewSchema })
   async journal(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: practiceJournalSchema }) body: unknown) { return toPracticeJournalView(await createPracticeJournal(actorId, engagementId, body)); }
+
+  @Post('expenses/drafts')
+  @ApiCreatedResponse({ standardSchema: practiceJournalViewSchema })
+  @SerializeOptions({ schema: practiceJournalViewSchema })
+  async expenseDraft(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: practiceExpenseDraftSchema }) body: unknown) { return toPracticeJournalView(await createPracticeExpenseDraft(actorId, engagementId, body)); }
 
   @Post('journals/:id/post')
   @ApiCreatedResponse({ standardSchema: practiceJournalViewSchema })

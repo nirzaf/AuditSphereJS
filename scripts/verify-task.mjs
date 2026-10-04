@@ -32,6 +32,7 @@ const tasks = {
   T068: ['build:server', 'practice-ledger'],
   T069: ['build:server', 'contracts:check', 'commercial-onboarding', 'idempotency-postgres', 'api-contracts'],
   T139: ['build:server', 'contracts:check', 'practice-rates-unit', 'practice-rates', 'practice-rates-api', 'practice-ledger', 'api-contracts', 'test:web:practice-rates'],
+  T144: ['build:server', 'contracts:check', 'practice-ledger', 'test:web:practice-expenses'],
   T032: ['build:server', 'contracts:check', 'storage', 'scope-repository', 'document-version'],
   T033: ['build:server', 'contracts:check', 'multipart-plugin', 'clamav-unit', 'clamav-real', 'pdf-inspection', 'document-upload'],
   T034: ['build:server', 'document-download'],
