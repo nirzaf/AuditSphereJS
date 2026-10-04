@@ -24,8 +24,9 @@ it('shows the selected-engagement state instead of asking the user to select aga
   const view = fixture.componentInstance;
   view.identityProvider.set('entra');
   view.signedIn.set(true);
-  view.readableEngagements.set([{ id: 'engagement-1', name: 'Acceptance engagement', clientId: 'client-1', clientName: 'Acceptance client', version: 1 }]);
-  view.selectEngagement('engagement-1');
+  const engagementId = '11111111-1111-4111-8111-111111111111';
+  view.readableEngagements.set([{ id: engagementId, name: 'Acceptance engagement', clientId: '22222222-2222-4222-8222-222222222222', clientName: 'Acceptance client', version: 1 }]);
+  view.selectEngagement(engagementId);
   fixture.detectChanges();
 
   expect(fixture.nativeElement.textContent).toContain('Engagement selected. The server checks your access again for every request.');

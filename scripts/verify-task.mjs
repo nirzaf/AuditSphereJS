@@ -39,7 +39,7 @@ const tasks = {
   T035: ['build:server', 'pdf-renderer', 'document-version', 'pdf-seccomp', 'build:linux', 'pdf-render-runtime'],
   T036: ['build:server', 'contracts:check', 'document-template-compiler', 'document-templates', 'pdf-renderer', 'test:web:document-templates'],
   T037: ['build:server', 'contracts:check', 'notifications'],
-  T038: ['build:server', 'contracts:check', 'realtime-unit', 'realtime', 'portal-auth', 'test:web:realtime', 'boundaries'],
+  T038: ['build:server', 'contracts:check', 'realtime-unit', 'realtime', 'portal-auth', 'test:web:realtime', 'boundaries', 'ci-workflow'],
   T017: ['verify:all', 'build:linux', 'smoke:linux'],
   T013: ['database-version', 'local-services', 'rustfs-isolation'],
   T018: ['build:server', 'scope-jobs', 'scope-database', 'scope-repository', 'scope-authorization', 'scope-boundary'],

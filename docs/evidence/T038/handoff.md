@@ -19,9 +19,11 @@ The behavior reference was the public [AuditSphere visual prototype](https://git
 ## Files and contracts
 
 - `apps/api/src/main.ts` — registers realtime and edit-lease lifecycle providers, installs the Redis Socket.IO adapter before application initialization, and enables orderly shutdown.
+- `.github/workflows/ci.yml` — places the new real-service realtime integration in the integration shard matrix.
 - `apps/api/tests/realtime.integration.ts` — two API replicas with real PostgreSQL 18.6 and Redis 8.10; exercises room authorization, serialized concurrent joins, lease ownership, post-commit publication, rollback silence, access revocation and WebSocket-proxy failover.
 - `apps/api/tests/portal-auth.integration.ts` — verifies the portal socket cookie's `/socket.io` path and security attributes.
 - `apps/web/package.json`, `apps/web/proxy.json`, `apps/web/src/realtime-client.ts`, `apps/web/src/realtime-client.spec.ts`, `apps/web/src/workspace.ts`, `apps/web/src/workspace.html` — typed browser client, WebSocket proxy, reconnect/reload behavior and Fieldwork connection state.
+- `apps/web/src/workspace.spec.ts`, `apps/web/src/workspace-auth.spec.ts` — keep workspace fixtures within the UUID contract used by server-backed engagement selection.
 - `packages/contracts/src/index.ts` — validated room requests, version snapshots/acknowledgements and sanitized invalidation contract. Runtime schemas and OpenAPI were regenerated and checked; no HTTP endpoint or database migration was added.
 - `packages/server/src/platform/realtime/README.md`, `authorization.ts`, `gateway.ts`, `invalidation.ts`, `module.ts`, `redis-transport.ts`, `rooms.ts` — room boundary, origin checks, serialized join changes, live session revalidation, cross-replica transport and event contract.
 - `packages/server/src/platform/auth.ts`, `portal-auth.ts`, `portal-auth-controller.ts` — reuse internal identity and revocable portal sessions; issue the scoped HttpOnly socket cookie needed because the existing portal cookie is path-limited to `/api/v1/portal`.
@@ -29,7 +31,7 @@ The behavior reference was the public [AuditSphere visual prototype](https://git
 - `packages/server/src/modules/fieldwork/service.ts` — registers Trial Balance version hints with `UnitOfWork.afterCommit` for mapping/finalization.
 - `packages/server/src/index.ts`, `packages/server/package.json`, `apps/web/package.json`, root `package.json`, `pnpm-lock.yaml` — exports, exact dependency pins and recorded verification commands.
 - `packages/server/tests/realtime.test.ts` — room separation, schema validation and payload sanitization.
-- `scripts/verify-task.mjs` — T038 now has an executable verification recipe.
+- `scripts/verify-task.mjs` — T038 now has an executable verification recipe including the CI workflow invariant checker.
 - `docs/guides/03-library-register.md` — records realtime libraries and transport constraints.
 - `docs/guides/13-execution-ledger.md` and this handoff — task status and evidence.
 
@@ -50,7 +52,8 @@ No unresolved D01–D12 decision changes realtime room authorization or transpor
 
 | Command / test | Tested artifact and fixture | Actual result / exit status | Evidence |
 | :--- | :--- | :--- | :--- |
-| `pnpm verify:task -- T038` | Server build; generated contracts/OpenAPI; 4 realtime unit tests; PostgreSQL 18.6 + Redis 8.10 integration; portal-auth PostgreSQL/Fastify integration; 3 Angular realtime tests; boundaries | PASS, exit 0. Realtime integration 1/1, portal auth 1/1, Angular 3/3. | Console output in task run; no skipped tests. |
+| `pnpm verify:task -- T038` | Server build; generated contracts/OpenAPI; 4 realtime unit tests; PostgreSQL 18.6 + Redis 8.10 integration; portal-auth PostgreSQL/Fastify integration; 3 Angular realtime tests; boundaries; CI matrix/security invariant checker | PASS, exit 0. Realtime integration 1/1, portal auth 1/1, Angular 3/3, CI checker passed. | Console output in task run; no skipped tests. |
+| `pnpm test:unit` | Root Vitest and all Angular browser unit tests | PASS, exit 0; 27 files / 125 Vitest tests and 13 Angular files / 80 tests passed. | Console output in task run. |
 | `pnpm verify:affected` | Boundary check, server and test typechecks, Angular production build, Vitest suite | PASS, exit 0; 27 files and 125 tests passed. | Console output in task run. |
 | `pnpm lint` | ESLint and import boundaries | PASS, exit 0. | Console output in task run. |
 | `pnpm dependencies:check` | Installed dependency metadata and advisories | PASS, exit 0. | Console output in task run; compatibility entries are in `docs/guides/03-library-register.md`. |

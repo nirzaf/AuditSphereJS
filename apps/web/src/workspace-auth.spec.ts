@@ -57,7 +57,7 @@ describe('Workspace Microsoft sign-in session', () => {
 
   it('restores an Entra session after the redirect without loading engagement records', async () => {
     auth.restoreSession.mockResolvedValueOnce({ id: 'user-id', email: 'auditor@example.test', active: true });
-    auth.listReadableEngagements.mockResolvedValueOnce([{ id: 'engagement-a', name: 'FY26 audit', clientId: 'client-a', clientName: 'Example Ltd' }]);
+    auth.listReadableEngagements.mockResolvedValueOnce([{ id: '11111111-1111-4111-8111-111111111111', name: 'FY26 audit', clientId: '22222222-2222-4222-8222-222222222222', clientName: 'Example Ltd' }]);
     const fixture = TestBed.createComponent(Workspace);
     fixture.detectChanges();
     await vi.waitFor(() => expect(fixture.componentInstance.signedIn()).toBe(true));
@@ -68,7 +68,7 @@ describe('Workspace Microsoft sign-in session', () => {
     expect(fixture.componentInstance.imports()).toEqual([]);
     expect(fixture.nativeElement.querySelector('practice-ledger')).toBeNull();
     fixture.componentInstance.navigate('Practice', 'ledger');
-    fixture.componentInstance.selectEngagement('engagement-a');
+    fixture.componentInstance.selectEngagement('11111111-1111-4111-8111-111111111111');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('practice-ledger')).not.toBeNull();
     expect(fixture.nativeElement.textContent).toContain('Load ledger');

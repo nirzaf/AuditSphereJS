@@ -102,6 +102,7 @@ jobs:
             tests/audit-write.integration.ts
             tests/commercial-onboarding.integration.ts
             tests/queue-runtime.integration.ts
+            apps/api/tests/realtime.integration.ts
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/setup@v3
