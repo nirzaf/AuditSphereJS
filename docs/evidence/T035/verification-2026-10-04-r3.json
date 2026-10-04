@@ -42,6 +42,27 @@
       "cpuLimit": 1
     }
   },
+  "hostedCi": {
+    "runId": "37199010821",
+    "url": "https://github.com/nirzaf/AuditSphereJS/actions/runs/37199010821",
+    "result": "PASS",
+    "commit": "8dca5b52d37ebf101ad09503404fb04b35bdb38d",
+    "verificationJob": "PASS",
+    "verifiedWebRelease": "https://github.com/nirzaf/AuditSphereJS/releases/tag/build-8dca5b52d37ebf101ad09503404fb04b35bdb38d",
+    "assets": [
+      {
+        "name": "web.tar.gz",
+        "sizeBytes": 341090,
+        "url": "https://github.com/nirzaf/AuditSphereJS/releases/download/build-8dca5b52d37ebf101ad09503404fb04b35bdb38d/web.tar.gz"
+      },
+      {
+        "name": "web-SHA256SUMS",
+        "sizeBytes": 77,
+        "url": "https://github.com/nirzaf/AuditSphereJS/releases/download/build-8dca5b52d37ebf101ad09503404fb04b35bdb38d/web-SHA256SUMS"
+      }
+    ],
+    "deploymentPerformed": false
+  },
   "limitations": [
     "Live SharePoint/OneDrive adapter boundary evidence is recorded separately in T156; the PDF writer itself used the synthetic Graph adapter in its PostgreSQL integration test.",
     "Production host, kernel, AppArmor and orchestrator acceptance remain release gates because the production deployment target is not selected."

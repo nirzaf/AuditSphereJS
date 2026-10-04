@@ -5,7 +5,7 @@
 Task ID: T035
 Requirement IDs: R010, R011, R014, R019, R065, R066, R067, R068, R069
 Implementing commit/branch: in progress on `main`
-Status: DONE (hosted CI run pending for this commit)
+Status: DONE (hosted CI and nonproduction asset publication passed)
 
 ## Intended and delivered outcome
 
@@ -95,9 +95,10 @@ The target-image smoke now uses `config/seccomp-chromium.json`, derived from pin
 | `pnpm lint` | ESLint and import boundaries | PASS; zero errors, existing ignored prototype declaration warnings only | Local run 2026-10-04 |
 | `M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156` | Real SharePoint and OneDrive storage adapters against designated synthetic folders | PASS; 2/2 live-provider checks, zero skips; exact-version byte/hash isolation and outside-folder write denial | [T156 redacted evidence](../T156/live-storage-2026-10-04-6ad456e8.json) |
 | `git diff --check` | Reviewed T035 change set | PASS | Local run 2026-10-04 |
+| GitHub Actions [run 37199010821](https://github.com/nirzaf/AuditSphereJS/actions/runs/37199010821) | Push commit `8dca5b52d37ebf101ad09503404fb04b35bdb38d` on `main` | PASS; full verification, T035, contract check, dependency audit, Linux build/runtime smoke, and public web asset publication all succeeded | [Verified nonproduction web release](https://github.com/nirzaf/AuditSphereJS/releases/tag/build-8dca5b52d37ebf101ad09503404fb04b35bdb38d) |
 
 The live T156 checks validate the SharePoint/OneDrive storage adapter and selected-folder boundary. The PDF writer's database/provenance/failure semantics were verified through the PostgreSQL integration and synthetic Graph adapter; no production renderer caller, production provider credentials, deployment host or report-issuance authorization was added by T035. Reporting must continue to supply its own workflow authorization guard.
 
 ### Review disposition
 
-All T035 checklist items and AC1–AC3 are satisfied. The renderer and writer are server-side platform capabilities only; report templates, release approvals, signatures and report delivery remain with their owning later tasks. The seccomp profile passed the actual constrained Linux image smoke locally; hosted CI for the commit is tracked separately after push. Next dependency-eligible task: T036, versioned document templates and approved assets.
+All T035 checklist items and AC1–AC3 are satisfied. The renderer and writer are server-side platform capabilities only; report templates, release approvals, signatures and report delivery remain with their owning later tasks. The seccomp profile passed the actual constrained Linux image smoke locally and in hosted CI. Actions published the labelled prerelease web assets and performed no deployment. Next dependency-eligible task: T036, versioned document templates and approved assets.
