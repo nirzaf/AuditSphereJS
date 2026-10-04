@@ -99,6 +99,8 @@ model User {
   invoiceLedgerPostingsCreated InvoiceLedgerPosting[]         @relation("InvoiceLedgerPostingCreator")
   documentLinksCreated         DocumentLink[]                  @relation("DocumentLinkCreator")
   documentUploadSessions       DocumentUploadSession[]
+  practiceExpensesCreated      PracticeExpense[]                @relation("PracticeExpenseCreator")
+  practiceExpenseSettlementsCreated PracticeExpenseSettlement[] @relation("PracticeExpenseSettlementCreator")
 
   @@unique([tenantId, entraObjectId])
 }
@@ -898,6 +900,8 @@ model PracticeAccount {
   kind    String
   active  Boolean @default(true)
   posting Boolean @default(true)
+  expenseDebits  PracticeExpense[] @relation("PracticeExpenseDebit")
+  expenseCredits PracticeExpense[] @relation("PracticeExpenseCredit")
 
   @@unique([firmId, code])
   @@unique([firmId, id])
@@ -1016,9 +1020,49 @@ model PracticeJournal {
   reversedJournals PracticeJournal[]     @relation("PracticeJournalReversal")
   lines            PracticeJournalLine[]
   invoicePosting   InvoiceLedgerPosting?
+  expenseRecognition PracticeExpense? @relation("PracticeExpenseRecognition")
+  expenseSettlement  PracticeExpenseSettlement? @relation("PracticeExpenseSettlementJournal")
 
   @@unique([firmId, reference])
   @@unique([firmId, id])
+}
+
+/// Immutable classified recognition metadata pinned to the original firm journal.
+model PracticeExpense {
+  id              String              @id @default(uuid()) @db.Uuid
+  firmId          String              @db.Uuid
+  journalId       String              @db.Uuid
+  category        String              @db.VarChar(48)
+  amount          Decimal             @db.Decimal(28, 6)
+  debitAccountId  String              @db.Uuid
+  creditAccountId String              @db.Uuid
+  createdBy       String              @db.Uuid
+  createdAt       DateTime            @default(now()) @db.Timestamptz(6)
+  journal         PracticeJournal     @relation("PracticeExpenseRecognition", fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
+  debitAccount    PracticeAccount     @relation("PracticeExpenseDebit", fields: [firmId, debitAccountId], references: [firmId, id], onDelete: Restrict)
+  creditAccount   PracticeAccount     @relation("PracticeExpenseCredit", fields: [firmId, creditAccountId], references: [firmId, id], onDelete: Restrict)
+  creator         User                @relation("PracticeExpenseCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  settlements     PracticeExpenseSettlement[]
+
+  @@unique([firmId, id])
+  @@unique([firmId, journalId])
+}
+
+/// Each obligation payment is its own canonical journal and append-only source link.
+model PracticeExpenseSettlement {
+  id                String          @id @default(uuid()) @db.Uuid
+  firmId            String          @db.Uuid
+  expenseJournalId  String          @db.Uuid
+  journalId         String          @db.Uuid
+  amount            Decimal         @db.Decimal(28, 6)
+  createdBy         String          @db.Uuid
+  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+  expense           PracticeExpense @relation(fields: [firmId, expenseJournalId], references: [firmId, journalId], onDelete: Restrict)
+  journal           PracticeJournal @relation("PracticeExpenseSettlementJournal", fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
+  creator           User            @relation("PracticeExpenseSettlementCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@unique([firmId, id])
+  @@unique([firmId, journalId])
 }
 
 /// Immutable link from an issued invoice to its one posted deferred-fee recognition journal.

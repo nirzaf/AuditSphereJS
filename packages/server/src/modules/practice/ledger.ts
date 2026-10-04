@@ -4,6 +4,7 @@ import type { z } from 'zod';
 import {
   practiceAccountSchema, practicePeriodSchema, practiceJournalSchema, practiceVersionSchema,
   practicePeriodTransitionSchema, practicePostingPolicySchema, practiceReverseJournalSchema, practiceExpenseDraftSchema,
+  practiceExpenseSettlementSchema,
 } from '@auditsphere/contracts';
 import { db } from '../../platform/db.js';
 import { AccountingDate } from '../../platform/clock.js';
@@ -120,23 +121,75 @@ export async function createPracticeExpenseDraft(actorId: string, engagementId: 
       throw new BadRequestException('Operating expenses require an expense debit and an explicitly selected asset or liability counterpart');
     }
     const categoryLabel = body.category.replaceAll('_', ' ').toLowerCase();
-    return tx.practiceJournal.create({ data: {
+    const journal = await tx.practiceJournal.create({ data: {
       firmId, periodId: period.id, accountingDate: day, reference: body.reference,
       memo: `[${body.category}] ${body.description}`, createdBy: actorId,
       lines: { create: [
         { accountId: body.debitAccountId, position: 0, debit: amount.toFixed(), credit: '0' },
         { accountId: body.creditAccountId, position: 1, debit: '0', credit: amount.toFixed() },
       ] },
-    }, include: { lines: true }}).then(journal => ({ ...journal, category: body.category, categoryLabel }));
+    }, include: { lines: true }});
+    await tx.practiceExpense.create({ data: {
+      firmId, journalId: journal.id, category: body.category, amount: amount.toFixed(),
+      debitAccountId: body.debitAccountId, creditAccountId: body.creditAccountId, createdBy: actorId,
+    } });
+    return { ...journal, category: body.category, categoryLabel };
   }, unitOfWork);
+}
+/** Create a separate balanced payment journal against a posted expense obligation. */
+export async function settlePracticeExpense(actorId: string, engagementId: string, expenseJournalId: string, input: unknown, unitOfWork?: UnitOfWork) {
+  const body = parse(practiceExpenseSettlementSchema, input);
+  return command(actorId, engagementId, 'PRACTICE_POST', body, 'PRACTICE_EXPENSE_SETTLED', async (tx, firmId) => {
+    if (await firmScope(tx, actorId, engagementId, 'PRACTICE_MANAGE') !== firmId) throw new ForbiddenException('A firm-wide practice management grant is required');
+    const amount = Decimal6.from(body.amount);
+    if (!amount.isPositive()) throw new BadRequestException('Settlement amount must be greater than zero');
+    await tx.$queryRaw`SELECT id FROM "PracticeJournal" WHERE "firmId" = ${firmId}::uuid AND id = ${expenseJournalId}::uuid FOR UPDATE`;
+    const expense = await tx.practiceExpense.findUnique({
+      where: { firmId_journalId: { firmId, journalId: expenseJournalId } },
+      include: {
+        journal: { include: { reversedJournals: { select: { id: true } } } },
+        settlements: { include: { journal: { include: { reversedJournals: { select: { id: true } } } } } },
+      },
+    });
+    if (!expense || expense.category === 'PARTNER_WITHDRAWAL' || expense.journal.status !== 'POSTED' || expense.journal.reversedJournals.length > 0) {
+      throw new ConflictException('A current, posted operating expense is required for settlement');
+    }
+    const liability = await tx.practiceAccount.findFirst({ where: { firmId, id: expense.creditAccountId, kind: 'LIABILITY', active: true, posting: true } });
+    if (!liability) throw new BadRequestException('Only an expense recognized to a liability can be settled later');
+    const settled = Decimal6.sum(expense.settlements
+      .filter(item => item.journal.reversedJournals.length === 0)
+      .map(item => Decimal6.from(item.amount.toString())));
+    const outstanding = Decimal6.from(expense.amount.toString()).subtract(settled);
+    if (amount.compare(outstanding) > 0) throw new ConflictException('Settlement exceeds the outstanding expense obligation');
+    await lockPracticePeriod(tx, body.periodId);
+    const period = await tx.practicePeriod.findFirst({ where: { id: body.periodId, firmId, closed: false } });
+    if (!period) throw new ConflictException('An open period in this firm is required');
+    const day = AccountingDate.fromISO(body.accountingDate).startOfUtcDay();
+    if (day < period.startsOn || day > period.endsOn) throw new BadRequestException('Settlement date is outside this period');
+    const asset = await tx.practiceAccount.findFirst({ where: { firmId, id: body.assetAccountId, kind: 'ASSET', active: true, posting: true } });
+    if (!asset) throw new BadRequestException('Settlement must use an active posting asset account');
+    const journal = await tx.practiceJournal.create({ data: {
+      firmId, periodId: period.id, accountingDate: day, reference: body.reference,
+      memo: `[EXPENSE_SETTLEMENT] ${expense.journal.reference}`, createdBy: actorId,
+      lines: { create: [
+        { accountId: liability.id, position: 0, debit: amount.toFixed(), credit: '0' },
+        { accountId: asset.id, position: 1, debit: '0', credit: amount.toFixed() },
+      ] },
+    }, include: { lines: true } });
+    await tx.practiceExpenseSettlement.create({ data: {
+      firmId, expenseJournalId: expense.journalId, journalId: journal.id, amount: amount.toFixed(), createdBy: actorId,
+    } });
+    return postPracticeJournalInTransaction(tx, firmId, actorId, journal.id, journal.version);
+  }, unitOfWork);
+}
+async function postPracticeJournalInTransaction(tx: TransactionClient, firmId: string, actorId: string, journalId: string, expectedVersion: number) {
+  const updated = await tx.practiceJournal.updateMany({ where: { id: journalId, firmId, status: 'DRAFT', version: expectedVersion }, data: { status: 'POSTED', version: { increment: 1 }, postedBy: actorId, postedAt: new Date() } });
+  if (updated.count !== 1) throw new ConflictException('Journal changed, was posted, or is outside this firm');
+  return tx.practiceJournal.findUniqueOrThrow({ where: { id: journalId } });
 }
 export async function postPracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practiceVersionSchema, input);
-  return command(actorId, engagementId, 'PRACTICE_POST', body, `PRACTICE_JOURNAL_POSTED:${journalId}`, async (tx, firmId) => {
-    const updated = await tx.practiceJournal.updateMany({ where: { id: journalId, firmId, status: 'DRAFT', version: body.expectedVersion }, data: { status: 'POSTED', version: { increment: 1 }, postedBy: actorId, postedAt: new Date() } });
-    if (updated.count !== 1) throw new ConflictException('Journal changed, was posted, or is outside this firm');
-    return tx.practiceJournal.findUniqueOrThrow({ where: { id: journalId } });
-  }, unitOfWork);
+  return command(actorId, engagementId, 'PRACTICE_POST', body, `PRACTICE_JOURNAL_POSTED:${journalId}`, (tx, firmId) => postPracticeJournalInTransaction(tx, firmId, actorId, journalId, body.expectedVersion), unitOfWork);
 }
 export async function reversePracticeJournal(actorId: string, engagementId: string, journalId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = parse(practiceReverseJournalSchema, input);
@@ -145,6 +198,8 @@ export async function reversePracticeJournal(actorId: string, engagementId: stri
     const original = await tx.practiceJournal.findFirst({ where: { id: journalId, firmId, status: 'POSTED', version: body.expectedVersion }, include: { lines: { orderBy: { position: 'asc' } } } });
     if (!original) throw new ConflictException('A current posted journal in this firm is required');
     if (await tx.practiceJournal.findUnique({ where: { reversalOf: journalId } })) throw new ConflictException('Journal was already reversed');
+    const expense = await tx.practiceExpense.findUnique({ where: { firmId_journalId: { firmId, journalId } }, include: { settlements: { include: { journal: { include: { reversedJournals: { select: { id: true } } } } } } } });
+    if (expense?.settlements.some(item => item.journal.reversedJournals.length === 0)) throw new ConflictException('Reverse expense settlements before reversing the original expense');
     await lockPracticePeriod(tx, body.periodId);
     const period = await tx.practicePeriod.findFirst({ where: { id: body.periodId, firmId, closed: false } });
     if (!period) throw new ConflictException('A reversal must use an open accounting period in this firm');
@@ -181,12 +236,17 @@ export async function reopenPracticePeriod(actorId: string, engagementId: string
 export async function practiceLedger(actorId: string, engagementId: string) {
   return runUnitOfWork(async ({ client: tx }) => {
     const firmId = await firmScope(tx, actorId, engagementId, 'PRACTICE_READ');
-    const [accounts, periods, journals, balances] = await Promise.all([
+    const [accounts, periods, journals, expenses, balances] = await Promise.all([
       tx.practiceAccount.findMany({ where: { firmId }, orderBy: { code: 'asc' } }),
       tx.practicePeriod.findMany({ where: { firmId }, orderBy: { startsOn: 'desc' } }),
       tx.practiceJournal.findMany({ where: { firmId }, include: { lines: { orderBy: { position: 'asc' } } }, orderBy: { accountingDate: 'desc' }, take: 100 }),
+      tx.practiceExpense.findMany({ where: { firmId }, include: { creditAccount: { select: { kind: true, active: true, posting: true } }, journal: { include: { reversedJournals: { select: { id: true } } } }, settlements: { include: { journal: { include: { reversedJournals: { select: { id: true } } } } } }, }, orderBy: { createdAt: 'desc' }, take: 500 }),
       tx.$queryRaw<Array<{ accountId: string; code: string; name: string; kind: string; debit: string; credit: string; balance: string }>>`SELECT a.id AS "accountId", a.code, a.name, a.kind, coalesce(sum(l.debit),0)::text AS debit, coalesce(sum(l.credit),0)::text AS credit, coalesce(sum(l.debit-l.credit),0)::text AS balance FROM "PracticeAccount" a LEFT JOIN ("PracticeJournalLine" l JOIN "PracticeJournal" j ON j.id = l."journalId" AND j.status = 'POSTED') ON l."accountId" = a.id WHERE a."firmId" = ${firmId}::uuid GROUP BY a.id ORDER BY a.code`,
     ]);
-    return { firmId, currency: 'QAR', accounts, periods, journals, balances };
+    return { firmId, currency: 'QAR', accounts, periods, journals, expenses: expenses.map(expense => {
+      const settledAmount = Decimal6.sum(expense.settlements.filter(item => item.journal.reversedJournals.length === 0).map(item => Decimal6.from(item.amount.toString())));
+      const amount = Decimal6.from(expense.amount.toString());
+      return { id: expense.id, journalId: expense.journalId, reference: expense.journal.reference, category: expense.category, amount: amount.toFixed(), creditAccountId: expense.creditAccountId, journalStatus: expense.journal.status, journalVersion: expense.journal.version, settledAmount: settledAmount.toFixed(), outstandingAmount: amount.subtract(settledAmount).toFixed(), settlementAllowed: expense.creditAccount.kind === 'LIABILITY' && expense.creditAccount.active && expense.creditAccount.posting && expense.category !== 'PARTNER_WITHDRAWAL' && expense.journal.status === 'POSTED' && expense.journal.reversedJournals.length === 0 && settledAmount.compare(amount) < 0 };
+    }), balances };
   }, { isolationLevel: 'RepeatableRead' });
 }

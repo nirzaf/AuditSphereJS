@@ -19,12 +19,13 @@ test('Practice expenses creates and posts a classified journal through the real 
     {id:ids.expense,code:'500',name:'Office rent',kind:'EXPENSE',active:true,posting:true},
     {id:ids.cash,code:'100',name:'Cash',kind:'ASSET',active:true,posting:true},
     {id:ids.payable,code:'210',name:'Accrued expenses',kind:'LIABILITY',active:true,posting:true},
-  ],periods:[{id:ids.period,startsOn:'2026-01-01',endsOn:'2026-12-31',closed:false,version:1,lastTransitionReason:''}],journals:[],balances:[]};
+  ],periods:[{id:ids.period,startsOn:'2026-01-01',endsOn:'2026-12-31',closed:false,version:1,lastTransitionReason:''}],journals:[],expenses:[{id:ids.journal,journalId:ids.journal,reference:'EXP-E2E-1',category:'OFFICE_RENT_FACILITIES',amount:'1250.250000',creditAccountId:ids.payable,journalStatus:'POSTED',journalVersion:2,settledAmount:'0.000000',outstandingAmount:'1250.250000',settlementAllowed:true}],balances:[]};
   const journal = {id:ids.journal,periodId:ids.period,accountingDate:'2026-10-04',reference:'EXP-E2E-1',memo:'[OFFICE_RENT_FACILITIES] October rent',status:'DRAFT',version:1,postedAt:null,reversalOf:null,lines:[]};
-  let draftRequest: unknown; let postRequest: unknown;
+  let draftRequest: unknown; let postRequest: unknown; let settlementRequest: unknown;
   await page.route('**/api/v1/engagements/*/practice**', async route => {
     const request=route.request(); const url=new URL(request.url());
     if(request.method()==='POST' && url.pathname.endsWith('/expenses/drafts')) { draftRequest=request.postDataJSON(); await route.fulfill({json:journal}); }
+    else if(request.method()==='POST' && url.pathname.endsWith(`/expenses/${ids.journal}/settlements`)) { settlementRequest=request.postDataJSON(); await route.fulfill({json:{...journal,id:'10000000-0000-4000-8000-000000000008',reference:'SETTLE-E2E-1',memo:'[EXPENSE_SETTLEMENT] EXP-E2E-1',status:'POSTED',version:2,postedAt:'2026-10-04T00:00:00.000Z'}}); }
     else if(request.method()==='POST' && url.pathname.endsWith(`/journals/${ids.journal}/post`)) { postRequest=request.postDataJSON(); await route.fulfill({json:{...journal,status:'POSTED',version:2,postedAt:'2026-10-04T00:00:00.000Z'}}); }
     else await route.fulfill({json:ledger});
   });
@@ -33,10 +34,10 @@ test('Practice expenses creates and posts a classified journal through the real 
   await page.getByRole('button',{name:'Load accounts'}).click();
   await expect(page.getByRole('heading',{name:'New recognition entry'})).toBeVisible();
   await page.getByLabel('Category').selectOption('OFFICE_RENT_FACILITIES');
-  await page.getByLabel('Accounting period').selectOption(ids.period);
-  await page.getByLabel('Accounting date').fill('2026-10-04');
-  await page.getByLabel('Reference').fill('EXP-E2E-1');
-  await page.getByLabel('Amount · QAR').fill('1250.25');
+  await page.locator('#expense-period').selectOption(ids.period);
+  await page.locator('#expense-date').fill('2026-10-04');
+  await page.locator('#expense-reference').fill('EXP-E2E-1');
+  await page.locator('#expense-amount').fill('1250.25');
   await page.getByLabel('Classification account').selectOption(ids.expense);
   await page.getByLabel('Counterpart account').selectOption(ids.payable);
   await page.getByLabel('Description').fill('October rent');
@@ -46,6 +47,15 @@ test('Practice expenses creates and posts a classified journal through the real 
   await page.getByRole('button',{name:'Post through firm policy'}).click();
   await expect(page.getByText('Expense journal posted through approved policy, period, and balance controls.')).toBeVisible();
   expect(postRequest).toMatchObject({expectedVersion:1});
+  await page.getByLabel('Open expense obligation').selectOption(ids.journal);
+  await page.locator('#settlement-period').selectOption(ids.period);
+  await page.getByLabel('Payment accounting date').fill('2026-10-04');
+  await page.getByLabel('Payment reference').fill('PAY-E2E-1');
+  await page.locator('#settlement-amount').fill('1250.25');
+  await page.getByLabel('Cash / asset account').selectOption(ids.cash);
+  await page.getByRole('button',{name:'Record and post settlement'}).click();
+  await expect(page.getByText('Expense obligation settled through a separate posted journal. The outstanding balance has been refreshed.')).toBeVisible();
+  expect(settlementRequest).toMatchObject({periodId:ids.period,amount:'1250.25',assetAccountId:ids.cash});
 });
 test('session drafts survive module navigation and browser history preserves the workspace', async ({page}) => {
   await page.route('**/api/v1/identity/config',route=>route.fulfill({json:{provider:'development'}}));

@@ -43,6 +43,7 @@ export function toPracticeLedgerView(ledger: {
     postedAt: DateValue | null; reversalOf: string | null;
     lines?: Array<{ [key: string]: unknown; id: string; accountId: string; position: number; debit: DecimalValue; credit: DecimalValue }>;
   }>;
+    expenses: Array<{ id: string; journalId: string; reference: string; category: string; amount: DecimalValue; creditAccountId: string; journalStatus: string; journalVersion: number; settledAmount: DecimalValue; outstandingAmount: DecimalValue; settlementAllowed: boolean }>;
   balances: Array<{ accountId: string; code: string; name: string; kind: string; debit: string; credit: string; balance: string }>;
 }) {
   return {
@@ -50,6 +51,7 @@ export function toPracticeLedgerView(ledger: {
     accounts: ledger.accounts.map(toPracticeAccountView),
     periods: ledger.periods.map(toPracticePeriodView),
     journals: ledger.journals.map(toPracticeJournalView),
+    expenses: ledger.expenses.map(expense => ({ ...expense, amount: decimalText(expense.amount), settledAmount: decimalText(expense.settledAmount), outstandingAmount: decimalText(expense.outstandingAmount) })),
     balances: ledger.balances.map(({ accountId, code, name, kind, debit, credit, balance }) => ({ accountId, code, name, kind, debit, credit, balance })),
   };
 }

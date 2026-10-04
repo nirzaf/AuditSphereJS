@@ -188,6 +188,7 @@ class ContractFixtureController {
       journals: [{ id: '33333333-3333-4333-8333-333333333333', firmId: 'server-only', periodId: '22222222-2222-4222-8222-222222222222', accountingDate: new Date('2026-10-01T00:00:00.000Z'), reference: 'J-001', memo: 'Opening balance', status: 'POSTED', version: 2, postedAt: new Date('2026-10-01T01:00:00.000Z'), reversalOf: null, createdBy: 'server-only', postedBy: 'server-only', lines: [
         { id: '44444444-4444-4444-8444-444444444444', firmId: 'server-only', journalId: 'server-only', accountId: '11111111-1111-4111-8111-111111111111', position: 0, debit: fixed('100'), credit: fixed('0') },
       ] }],
+      expenses: [],
       balances: [{ accountId: '11111111-1111-4111-8111-111111111111', code: '1000', name: 'Cash', kind: 'ASSET', debit: '100.000000', credit: '0.000000', balance: '100.000000' }],
     });
   }

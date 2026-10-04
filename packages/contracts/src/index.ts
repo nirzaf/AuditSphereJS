@@ -248,6 +248,12 @@ export const practiceExpenseDraftSchema = z.object({
   reference: z.string().trim().min(1).max(80), description: z.string().trim().min(1).max(400),
   amount: moneySchema, debitAccountId: z.uuid(), creditAccountId: z.uuid(), idempotencyKey: z.uuid(),
 }).refine(value => value.debitAccountId !== value.creditAccountId, 'Expense accounts must be different');
+/** A later payment is a separate firm journal against the original expense liability. */
+export const practiceExpenseSettlementSchema = z.object({
+  periodId: z.uuid(), accountingDate: z.iso.date(),
+  reference: z.string().trim().min(1).max(80), amount: moneySchema,
+  assetAccountId: z.uuid(), idempotencyKey: z.uuid(),
+});
 export const practiceVersionSchema = z.object({ expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
 export const practiceReverseJournalSchema = practiceVersionSchema.extend({
   periodId: z.uuid(),
@@ -273,6 +279,12 @@ export const practiceJournalViewSchema = z.object({
   memo: z.string().trim().min(1).max(500), status: z.enum(['DRAFT', 'POSTED']), version: z.number().int().positive(),
   postedAt: z.iso.datetime().nullable(), reversalOf: z.uuid().nullable(), lines: z.array(practiceJournalLineViewSchema).max(500).optional(),
 });
+export const practiceExpenseViewSchema = z.object({
+  id: z.uuid(), journalId: z.uuid(), reference: z.string().trim().min(1).max(80),
+  category: practiceExpenseCategorySchema, amount: moneySchema, creditAccountId: z.uuid(),
+  journalStatus: z.enum(['DRAFT', 'POSTED']), journalVersion: z.number().int().positive(),
+  settledAmount: moneySchema, outstandingAmount: moneySchema, settlementAllowed: z.boolean(),
+});
 export const practiceBalanceViewSchema = z.object({
   accountId: z.uuid(), code: z.string().trim().min(1).max(30), name: z.string().trim().min(1).max(150),
   kind: z.enum(['ASSET', 'LIABILITY', 'EQUITY', 'INCOME', 'EXPENSE']), debit: moneySchema, credit: moneySchema, balance: moneySchema,
@@ -280,6 +292,7 @@ export const practiceBalanceViewSchema = z.object({
 export const practiceLedgerSchema = z.object({
   currency: z.string().regex(/^[A-Z]{3}$/), accounts: z.array(practiceAccountViewSchema).max(10_000),
   periods: z.array(practicePeriodViewSchema).max(5_000), journals: z.array(practiceJournalViewSchema).max(100),
+  expenses: z.array(practiceExpenseViewSchema).max(500),
   balances: z.array(practiceBalanceViewSchema).max(10_000),
 });
 /** Professional job grades are pricing identities, separate from application access roles. */
@@ -538,9 +551,11 @@ export const portalLogoutResultSchema = z.object({ signedOut: z.literal(true) })
 export const contractSchemas = {
   practiceAccount: practiceAccountSchema, practicePeriod: practicePeriodSchema, practiceJournal: practiceJournalSchema,
   practiceExpenseCategory: practiceExpenseCategorySchema, practiceExpenseDraft: practiceExpenseDraftSchema,
+  practiceExpenseSettlement: practiceExpenseSettlementSchema,
   practicePostingPolicy: practicePostingPolicySchema, practiceVersion: practiceVersionSchema,
   practiceAccountView: practiceAccountViewSchema, practicePeriodView: practicePeriodViewSchema,
   practiceJournalLineView: practiceJournalLineViewSchema, practiceJournalView: practiceJournalViewSchema,
+  practiceExpenseView: practiceExpenseViewSchema,
   practiceBalanceView: practiceBalanceViewSchema, practiceLedger: practiceLedgerSchema,
   practiceJobGrade: practiceJobGradeSchema, practiceRateCardView: practiceRateCardViewSchema,
   practiceStaffView: practiceStaffViewSchema, practiceStaffGradeAssignmentView: practiceStaffGradeAssignmentViewSchema,

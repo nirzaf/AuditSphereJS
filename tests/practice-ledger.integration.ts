@@ -14,7 +14,7 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } = await import('@auditsphere/server');
+    const { db, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID();
       await db.firm.create({ data: { id: firmId, name: 'Ledger firm' } });
@@ -30,6 +30,7 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       const drawings = await createPracticeAccount(actorId, engagementId, { code: '310', name: 'Partner drawings', kind: 'EQUITY' });
       await assert.rejects(createPracticeAccount(actorId, engagementId, { code: '100', name: 'Duplicate cash', kind: 'ASSET' }), (error: any) => error.getStatus?.() === 409 && /already exists/.test(error.message));
       const rent = await createPracticeAccount(actorId, engagementId, { code: '500', name: 'Rent', kind: 'EXPENSE' });
+      const settlementExpenseAccount = await createPracticeAccount(actorId, engagementId, { code: '501', name: 'Settlement test expense', kind: 'EXPENSE' });
       const period = await createPracticePeriod(actorId, engagementId, { startsOn: '2026-01-01', endsOn: '2026-12-31' });
       await assert.rejects(createPracticePeriod(actorId, engagementId, { startsOn: '2026-06-01', endsOn: '2027-05-31' }), (error: any) => error.getStatus?.() === 409 && /overlap/.test(error.message));
       const create = (reference: string, debit = '0.30', credit = '0.30') => createPracticeJournal(actorId, engagementId, { periodId: period.id, accountingDate: '2026-10-02', reference, memo: 'Rent payment', idempotencyKey: randomUUID(), lines: [{ accountId: rent.id, debit, credit: '0' }, { accountId: cash.id, debit: '0', credit }] });
@@ -50,6 +51,42 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       assert.equal(expensePosted.status, 'POSTED', 'expense recognition posts through the canonical policy/period/balance controls');
       const expenseReversal = await reversePracticeJournal(actorId, engagementId, expenseDraft.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-02', reference: 'REV-EXP-RENT-1' });
       assert.equal(expenseReversal.status, 'POSTED', 'expense correction preserves posted history through exact reversal');
+      const payableExpense = await createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, amount: '100', reference: 'EXP-SETTLE-1', debitAccountId: settlementExpenseAccount.id, idempotencyKey: randomUUID() });
+      await postPracticeJournal(actorId, engagementId, payableExpense.id, { expectedVersion: 1, idempotencyKey: randomUUID() });
+      const postOnlyActor = randomUUID();
+      await db.user.create({ data: { id: postOnlyActor, email: 'post-only@example.test', role: 'BILLING' } });
+      await db.membership.create({ data: { userId: postOnlyActor, firmId, clientId, engagementId, role: 'BILLING' } });
+      await db.roleGrant.create({ data: { userId: postOnlyActor, capability: 'PRACTICE_POST', firmId, grantedBy: actorId } });
+      await assert.rejects(settlePracticeExpense(postOnlyActor, engagementId, payableExpense.id, { periodId: period.id, accountingDate: '2026-10-04', reference: 'PAY-EXP-UNAUTHORIZED', amount: '1', assetAccountId: cash.id, idempotencyKey: randomUUID() }), /firm-wide practice grant is required/);
+      const settlementInput = { periodId: period.id, accountingDate: '2026-10-04', amount: '60', assetAccountId: cash.id };
+      const attempts = await Promise.allSettled([
+        settlePracticeExpense(actorId, engagementId, payableExpense.id, { ...settlementInput, reference: 'PAY-EXP-SETTLE-1A', idempotencyKey: randomUUID() }),
+        settlePracticeExpense(actorId, engagementId, payableExpense.id, { ...settlementInput, reference: 'PAY-EXP-SETTLE-1B', idempotencyKey: randomUUID() }),
+      ]);
+      const fulfilled = attempts.filter((attempt): attempt is PromiseFulfilledResult<Awaited<ReturnType<typeof settlePracticeExpense>>> => attempt.status === 'fulfilled');
+      const rejected = attempts.filter(attempt => attempt.status === 'rejected');
+      assert.equal(fulfilled.length, 1, 'only one racing settlement may consume the final outstanding balance');
+      assert.equal(rejected.length, 1);
+      assert.match(String(rejected[0].reason), /exceeds the outstanding/);
+      const firstSettlement = fulfilled[0].value;
+      assert.equal(firstSettlement.status, 'POSTED', 'settlement is a separate posted journal');
+      const settlementLines = await db.practiceJournalLine.findMany({ where: { journalId: firstSettlement.id }, orderBy: { position: 'asc' } });
+      assert.deepEqual(settlementLines.map(line => [line.accountId, line.debit.toString(), line.credit.toString()]), [[payable.id, '60', '0'], [cash.id, '0', '60']]);
+      let expenseStatus = (await practiceLedger(actorId, engagementId)).expenses.find(item => item.journalId === payableExpense.id);
+      assert.equal(expenseStatus?.settledAmount, '60.000000');
+      assert.equal(expenseStatus?.outstandingAmount, '40.000000');
+      assert.equal(expenseStatus?.settlementAllowed, true);
+      await assert.rejects(settlePracticeExpense(actorId, engagementId, payableExpense.id, { ...settlementInput, reference: 'PAY-EXP-OVER', amount: '40.01', idempotencyKey: randomUUID() }), /exceeds the outstanding/);
+      await assert.rejects(reversePracticeJournal(actorId, engagementId, payableExpense.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-04', reference: 'REV-EXP-SETTLED' }), /Reverse expense settlements/);
+      await reversePracticeJournal(actorId, engagementId, firstSettlement.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-04', reference: 'REV-PAY-EXP-SETTLE-1' });
+      expenseStatus = (await practiceLedger(actorId, engagementId)).expenses.find(item => item.journalId === payableExpense.id);
+      assert.equal(expenseStatus?.settledAmount, '0.000000', 'exactly reversed settlement no longer consumes the obligation balance');
+      const completeSettlement = await settlePracticeExpense(actorId, engagementId, payableExpense.id, { ...settlementInput, reference: 'PAY-EXP-SETTLE-FULL', amount: '100', idempotencyKey: randomUUID() });
+      assert.equal(completeSettlement.status, 'POSTED');
+      expenseStatus = (await practiceLedger(actorId, engagementId)).expenses.find(item => item.journalId === payableExpense.id);
+      assert.equal(expenseStatus?.outstandingAmount, '0.000000');
+      assert.equal(expenseStatus?.settlementAllowed, false);
+      await assert.rejects(db.practiceExpenseSettlement.updateMany({ where: { journalId: firstSettlement.id }, data: { amount: '1' } }), /immutable/);
       const partnerWithdrawal = await createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, category: 'PARTNER_WITHDRAWAL', reference: 'EXP-DRAW-1', debitAccountId: drawings.id, creditAccountId: cash.id, idempotencyKey: randomUUID() });
       assert.match(partnerWithdrawal.memo, /^\[PARTNER_WITHDRAWAL\]/);
       const withdrawalPosted = await postPracticeJournal(actorId, engagementId, partnerWithdrawal.id, { expectedVersion: 1, idempotencyKey: randomUUID() });

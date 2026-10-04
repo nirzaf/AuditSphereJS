@@ -12,7 +12,7 @@ const ledger = {
     { id: ids.cash, code: '100', name: 'Cash', kind: 'ASSET', active: true, posting: true },
     { id: ids.payable, code: '210', name: 'Accrued expenses', kind: 'LIABILITY', active: true, posting: true },
     { id: ids.equity, code: '310', name: 'Partner drawings', kind: 'EQUITY', active: true, posting: true },
-  ], periods: [{ id: ids.period, startsOn: '2026-01-01', endsOn: '2026-12-31', closed: false, version: 1, lastTransitionReason: '' }], journals: [], balances: [],
+  ], periods: [{ id: ids.period, startsOn: '2026-01-01', endsOn: '2026-12-31', closed: false, version: 1, lastTransitionReason: '' }], journals: [], expenses: [], balances: [],
 };
 const journal = { id: ids.journal, periodId: ids.period, accountingDate: '2026-10-04', reference: 'EXP-1', memo: '[OFFICE_RENT_FACILITIES] October rent', status: 'DRAFT', version: 1, postedAt: null, reversalOf: null, lines: [] };
 
@@ -49,5 +49,23 @@ it('keeps the firm-wide authorization denial explicit', async () => {
   const fixture = TestBed.createComponent(PracticeExpenses); fixture.componentRef.setInput('token', 'read-only'); fixture.componentRef.setInput('engagementId', ids.engagement); fixture.detectChanges();
   fixture.componentInstance.refresh(); await vi.waitFor(() => expect(fixture.componentInstance.busy()).toBe(false));
   expect(fixture.componentInstance.message()).toContain('firm-wide Practice permission');
+  fixture.destroy();
+});
+
+it('records a later expense liability payment as a separate posted journal', async () => {
+  const obligation = { id: ids.journal, journalId: ids.journal, reference: 'EXP-1', category: 'OFFICE_RENT_FACILITIES', amount: '1250.250000', creditAccountId: ids.payable, journalStatus: 'POSTED', journalVersion: 2, settledAmount: '0.000000', outstandingAmount: '1250.250000', settlementAllowed: true };
+  const updatedLedger = { ...ledger, expenses: [obligation] };
+  const request = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify(updatedLedger)))
+    .mockResolvedValueOnce(new Response(JSON.stringify({ ...journal, status: 'POSTED', version: 2 })))
+    .mockResolvedValueOnce(new Response(JSON.stringify(updatedLedger)));
+  vi.stubGlobal('fetch', request);
+  const fixture = TestBed.createComponent(PracticeExpenses);
+  fixture.componentRef.setInput('token', 'billing-session'); fixture.componentRef.setInput('engagementId', ids.engagement); fixture.detectChanges();
+  const view = fixture.componentInstance; view.refresh(); await vi.waitFor(() => expect(view.ledger()).not.toBeNull());
+  view.settlementExpenseJournalId = ids.journal; view.settlementPeriodId = ids.period; view.settlementDate = '2026-10-04'; view.settlementReference = 'PAY-EXP-1'; view.settlementAmount = '500.25'; view.settlementAssetAccountId = ids.cash;
+  view.settleExpense(); await vi.waitFor(() => expect(view.message()).toContain('separate posted journal'));
+  expect(request.mock.calls[1][0]).toBe(`/api/v1/engagements/${ids.engagement}/practice/expenses/${ids.journal}/settlements`);
+  expect(JSON.parse(request.mock.calls[1][1].body)).toMatchObject({ amount: '500.25', assetAccountId: ids.cash });
   fixture.destroy();
 });

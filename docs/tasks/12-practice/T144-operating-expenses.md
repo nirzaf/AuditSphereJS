@@ -46,14 +46,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 - [x] Provide expense entry for office rent/facilities, salaries/benefits/end-of-service, overhead, petty cash and partner withdrawals.
 - [x] Route each category through the approved chart/posting policy; partner withdrawals are not automatically an expense.
-- [ ] Attach supporting document versions and post via the canonical journal engine. Canonical journal posting is implemented; supporting document-version attachment is still pending.
-- [ ] Track payment/settlement separately from recognition when required by the policy.
+- [ ] Attach supporting document versions and post via the canonical journal engine. Canonical journal posting is implemented; supporting document-version attachment is still pending until firm-private versioned storage is available.
+- [x] Track payment/settlement separately from recognition when required by the policy. A liability recognition can be settled through its own balanced, immediately posted journal; settlement amount, reversals, and concurrent over-settlement are guarded.
 
 ## Acceptance criteria and required tests
 
 - [x] **AC1:** All specified categories can be recorded.
 - [x] **AC2:** Posted expense journals satisfy balance/period controls.
 - [x] **AC3:** Partner withdrawal classification follows approved accounting rather than a UI label.
+
+Settlement verification additionally proves a separate liability-debit/asset-credit journal, both Practice posting and management authority, exact outstanding-balance enforcement under concurrent requests, settlement reversal, and the prohibition on reversing a recognition while active settlements remain. Receipt-version attachment remains outstanding.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 
