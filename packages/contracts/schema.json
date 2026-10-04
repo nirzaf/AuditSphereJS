@@ -3452,7 +3452,7 @@
               "type": "boolean"
             },
             "unmet": {
-              "maxItems": 22,
+              "maxItems": 23,
               "type": "array",
               "items": {
                 "type": "object",
@@ -3463,6 +3463,7 @@
                       "PROPOSAL_NOT_DRAFTED",
                       "PROPOSAL_NOT_PRESENTED",
                       "CLIENT_ACCEPTANCE_MISSING",
+                      "CLIENT_ACCEPTANCE_STALE",
                       "PARTNER_RISK_CLEARANCE_MISSING",
                       "ADVANCE_INVOICE_MISSING",
                       "ADVANCE_PAYMENT_MISSING",
