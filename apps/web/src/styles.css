@@ -40,3 +40,11 @@ nav button span{color:var(--ste-primary-light)}nav button.active span{color:var(
 @media(max-width:620px){.practice-rate-form{grid-template-columns:minmax(0,1fr)}.practice-rate-form .form-submit{align-items:stretch}.practice-rate-form .form-submit button{width:100%}.practice-rates table{min-width:720px}}
 
 .mapping-cell{display:grid;gap:3px;min-width:0}.mapping-cell small{font-size:9px;line-height:1.15;color:var(--ste-text-body);overflow-wrap:anywhere}.grid-row{height:72px}.viewport{height:420px}
+.connection { min-width: 0; }
+@media (min-width: 761px) and (max-width: 900px) {
+  .connection { gap: 10px 12px; align-items: flex-start; }
+  .connection > div { flex: 1 1 100%; min-width: 0; flex-wrap: wrap; align-items: flex-start; }
+  .connection select { width: 100%; min-width: 0; max-width: 100%; flex: 1 1 100%; }
+  .connection .auth-user { flex: 1 1 180px; min-width: 0; max-width: none; overflow-wrap: anywhere; }
+  .connection small { flex: 1 1 100%; min-width: 0; max-width: none; }
+}

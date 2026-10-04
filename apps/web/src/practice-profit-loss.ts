@@ -2,7 +2,7 @@ import { Component, input, signal } from '@angular/core';
 import { practiceFirmProfitLossDetailSchema, practiceFirmProfitLossSchema } from '@auditsphere/contracts';
 import type { PracticeFirmProfitLoss, PracticeFirmProfitLossDetail, PracticeFirmProfitLossRow } from '@auditsphere/contracts';
 import type { z } from 'zod';
-import { authenticatedFetch, requestContractJson } from './api-client';
+import { ApiContractError, authenticatedFetch, requestContractJson } from './api-client';
 import { currentAccessToken } from './identity';
 
 function localMonth() {
@@ -42,6 +42,7 @@ export class PracticeProfitLoss {
   readonly report = signal<PracticeFirmProfitLoss | null>(null);
   readonly detail = signal<PracticeFirmProfitLossDetail | null>(null);
   readonly busy = signal(false);
+  readonly error = signal(false);
   readonly month = signal(localMonth());
   readonly compareMonth = signal('');
   readonly message = signal('Choose an accounting month to load the firm Profit and Loss statement.');
@@ -58,19 +59,43 @@ export class PracticeProfitLoss {
 
   private async run(work: () => Promise<void>) {
     this.busy.set(true);
+    this.error.set(false);
     try { await work(); }
-    catch (error) { this.message.set(error instanceof Error ? error.message : 'The Practice Profit and Loss report could not be loaded.'); }
+    catch (error) {
+      this.error.set(true);
+      this.message.set(this.userFacingError(error));
+    }
     finally { this.busy.set(false); }
   }
 
-  setMonth(event: Event) { this.month.set((event.target as HTMLInputElement).value); }
-  setCompareMonth(event: Event) { this.compareMonth.set((event.target as HTMLInputElement).value); }
+  private userFacingError(error: unknown) {
+    if (error instanceof ApiContractError) {
+      const reference = error.correlationId ? ` Reference: ${error.correlationId}.` : '';
+      if (error.status === 401) return `Your sign-in could not be verified. Sign in again, then retry.${reference}`;
+      if (error.status === 403) return `Firm Practice reporting permission (PRACTICE_READ) is required. Ask an administrator to assign it.${reference}`;
+      if (error.status === 409) return `The report changed after it was loaded. Reload the statement, then retry the account detail.${reference}`;
+    }
+    return error instanceof Error ? error.message : 'The Practice Profit and Loss report could not be loaded.';
+  }
+
+  private filtersChanged() {
+    this.error.set(false);
+    this.message.set('Report periods changed. Load the report to view an updated snapshot.');
+  }
+
+  setMonth(event: Event) { this.month.set((event.target as HTMLInputElement).value); this.filtersChanged(); }
+  setCompareMonth(event: Event) { this.compareMonth.set((event.target as HTMLInputElement).value); this.filtersChanged(); }
+
+  private validationError(message: string) {
+    this.error.set(true);
+    this.message.set(message);
+  }
 
   refresh() {
     const month = this.month();
-    if (!month) { this.message.set('Choose an accounting month before loading the report.'); return; }
+    if (!month) { this.validationError('Choose an accounting month before loading the report.'); return; }
     const comparison = this.compareMonth();
-    if (comparison && comparison === month) { this.message.set('Choose a different month for the comparison.'); return; }
+    if (comparison && comparison === month) { this.validationError('Choose a different month for the comparison.'); return; }
     void this.run(async () => {
       const query = new URLSearchParams({ month });
       if (comparison) query.set('compareMonth', comparison);

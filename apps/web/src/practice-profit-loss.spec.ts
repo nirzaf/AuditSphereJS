@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { afterEach, expect, it, vi } from 'vitest';
+import { ApiContractError } from './api-client';
 import { PracticeProfitLoss, firmProfitLossCsv } from './practice-profit-loss';
 
 afterEach(() => { vi.unstubAllGlobals(); TestBed.resetTestingModule(); });
@@ -37,6 +38,10 @@ it('loads comparison months, drills to posted sources, and exports the exact rep
   await vi.waitFor(() => expect(view.report()?.snapshotHash).toBe(snapshotHash));
   fixture.detectChanges();
   expect(fetcher.mock.calls[0]?.[0]).toBe(`/api/v1/engagements/${engagementId}/practice/reports/profit-loss?month=2026-04&compareMonth=2025-04`);
+  expect(fixture.nativeElement.querySelector('#profit-loss-month')?.getAttribute('aria-describedby')).toBe('profit-loss-month-help');
+  expect(fixture.nativeElement.querySelector('#profit-loss-comparison')?.getAttribute('aria-describedby')).toBe('profit-loss-comparison-help');
+  expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain('loaded for 2026-04');
+  expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
   expect(fixture.nativeElement.textContent).toContain('Net profit / (loss)');
   expect(fixture.nativeElement.textContent).toContain('2025-04');
 
@@ -60,12 +65,36 @@ it('blocks a same-month comparison and reports stale snapshot conflicts without 
   const view = fixture.componentInstance;
   view.month.set('2026-04'); view.compareMonth.set('2026-04'); view.refresh();
   expect(view.message()).toContain('different month');
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('Choose a different month');
   expect(fetcher).not.toHaveBeenCalled();
-  view.compareMonth.set('2025-04'); view.refresh();
+  view.setCompareMonth({ target: { value: '2025-04' } } as unknown as Event);
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelector('[role="alert"]')).toBeNull();
+  expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain('Report periods changed');
+  view.refresh();
   await vi.waitFor(() => expect(view.report()?.snapshotHash).toBe(snapshotHash));
   view.selectAccount(report.rows[0]!, 'CURRENT');
   await vi.waitFor(() => expect(view.busy()).toBe(false));
   expect(view.detail()).toBeNull();
-  expect(view.message()).toContain('409');
+  expect(view.message()).toContain('changed after it was loaded');
+  fixture.detectChanges();
+  expect(fixture.nativeElement.querySelector('[role="alert"]')?.textContent).toContain('Reload the statement');
+  fixture.destroy();
+});
+
+it('gives a clear recovery step for a firm Practice permission denial', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new ApiContractError(403, 'raw authorization response', 'trace-403')));
+  const fixture = TestBed.createComponent(PracticeProfitLoss);
+  fixture.componentRef.setInput('engagementId', engagementId);
+  fixture.detectChanges();
+  fixture.componentInstance.refresh();
+  await vi.waitFor(() => expect(fixture.componentInstance.busy()).toBe(false));
+  fixture.detectChanges();
+  const alert = fixture.nativeElement.querySelector('[role="alert"]')?.textContent ?? '';
+  expect(alert).toContain('PRACTICE_READ');
+  expect(alert).toContain('Ask an administrator to assign it');
+  expect(alert).toContain('trace-403');
+  expect(alert).not.toContain('raw authorization response');
   fixture.destroy();
 });

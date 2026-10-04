@@ -62,3 +62,11 @@ This report adds no migration and has no durable side effect to roll back. It is
 - Review result: DONE for T146's scoped code and automated acceptance criteria.
 - Open blockers: live positive browser access is an environment authorization limitation, not a T146 code acceptance failure.
 - Next eligible task by dependency order: T147 — allocated-payment accounts-receivable aging.
+
+## Responsive usability refinement — 2026-10-05
+
+The report screen now adapts its filters and financial summary to phone, tablet and desktop widths, keeps inputs and actions at least 44 px high, provides horizontal table-scroll guidance, and uses accessible polite success versus assertive error feedback. Permission and stale-snapshot responses now give recovery steps; the empty state no longer repeats the load action. The shared engagement connection area also wraps correctly at tablet widths.
+
+The built-in browser rendered the authenticated report route for the pre-existing synthetic engagement at 320, 390, 768, 900 and 1280 px with no page-level horizontal overflow. It confirmed the 403 `PRACTICE_READ` boundary and the clear permission message. Positive live report data remains unavailable to the current Staff Fixture, so browser visual acceptance of returned financial rows remains unverified; PostgreSQL report acceptance is covered by the task recipe above. No grant or business record was changed.
+
+Additional checks: all Angular tests passed (15 files, 88 tests); `pnpm lint` passed. See [UI module evidence](../UI-MODULES.md#practice-pl-responsive-usability-refinement--2026-10-05) for the complete verification record.

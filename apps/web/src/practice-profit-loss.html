@@ -5,19 +5,25 @@
       <h1 id="practice-profit-loss-title">Monthly Profit &amp; Loss</h1>
       <p>Posted income and expense accounts, grouped by their firm chart classification and accounting month.</p>
     </div>
-    <div class="report-actions">
+    <div class="report-actions" role="group" aria-label="Report period and actions">
       <label for="profit-loss-month">Reporting month
-        <input id="profit-loss-month" type="month" [value]="month()" (change)="setMonth($event)" [disabled]="busy()">
+        <input id="profit-loss-month" type="month" [value]="month()" (change)="setMonth($event)" [disabled]="busy()" aria-describedby="profit-loss-month-help">
+        <span id="profit-loss-month-help" class="field-help">Uses journal accounting dates.</span>
       </label>
       <label for="profit-loss-comparison">Compare with <span class="optional">(optional)</span>
-        <input id="profit-loss-comparison" type="month" [value]="compareMonth()" (change)="setCompareMonth($event)" [disabled]="busy()">
+        <input id="profit-loss-comparison" type="month" [value]="compareMonth()" (change)="setCompareMonth($event)" [disabled]="busy()" aria-describedby="profit-loss-comparison-help">
+        <span id="profit-loss-comparison-help" class="field-help">Choose a different month for comparison.</span>
       </label>
-      <button type="button" class="primary" (click)="refresh()" [disabled]="busy() || !month()">{{ busy() ? 'Loading…' : 'Load report' }}</button>
+      <button type="button" class="primary" (click)="refresh()" [disabled]="busy() || !month()">{{ busy() ? 'Loading report…' : 'Load report' }}</button>
       <button type="button" (click)="downloadSnapshot()" [disabled]="busy() || !report()">Export snapshot</button>
     </div>
   </header>
 
-  <p class="report-status" role="status" aria-live="polite">{{ message() }}</p>
+  @if (error()) {
+    <p class="report-status report-error" role="alert">{{ message() }}</p>
+  } @else {
+    <p class="report-status" role="status" aria-live="polite">{{ message() }}</p>
+  }
 
   @if (report(); as value) {
     <section class="report-summary" aria-label="Current month Profit and Loss totals">
@@ -34,6 +40,7 @@
       </section>
     }
 
+    <p class="table-scroll-help">On a small screen, scroll the table horizontally to see each reporting period.</p>
     <div class="report-table-scroll" tabindex="0" role="region" aria-label="Monthly Profit and Loss account rows">
       <table>
         <caption>Report snapshot {{ value.snapshotHash }} · database as of {{ value.asOf }} · accounting dates only</caption>
@@ -47,8 +54,8 @@
                 <tr>
                   <td>{{ row.section === 'INCOME' ? 'Income' : 'Expense' }}</td>
                   <th scope="row">{{ row.code }} · {{ row.name }} <small>{{ row.currentEntryCount }} posted lines</small></th>
-                  <td class="money"><button type="button" class="amount-link" [attr.aria-label]="'View posted sources for ' + row.name + ', ' + value.parameters.month" (click)="selectAccount(row, 'CURRENT')">{{ row.currentAmount }}</button></td>
-                  @if(value.parameters.compareMonth) { <td class="money"><button type="button" class="amount-link" [attr.aria-label]="'View posted sources for ' + row.name + ', ' + value.parameters.compareMonth" (click)="selectAccount(row, 'COMPARISON')">{{ row.comparisonAmount }} <small>{{ row.comparisonEntryCount }} lines</small></button></td> }
+                  <td class="money"><button type="button" class="amount-link" [attr.aria-label]="'View posted sources for ' + row.name + ', ' + value.parameters.month" (click)="selectAccount(row, 'CURRENT')" [disabled]="busy()">{{ row.currentAmount }}</button></td>
+                  @if(value.parameters.compareMonth) { <td class="money"><button type="button" class="amount-link" [attr.aria-label]="'View posted sources for ' + row.name + ', ' + value.parameters.compareMonth" (click)="selectAccount(row, 'COMPARISON')" [disabled]="busy()">{{ row.comparisonAmount }} <small>{{ row.comparisonEntryCount }} lines</small></button></td> }
                 </tr>
               }
             }
@@ -64,6 +71,7 @@
       @if(detail(); as selected) {
         <header><div><div class="eyebrow">POSTED JOURNAL SOURCE</div><h2 id="profit-loss-detail-title">{{ selected.account.code }} · {{ selected.account.name }}</h2><p>{{ selected.period === 'CURRENT' ? selected.parameters.month : selected.parameters.compareMonth }} · {{ selected.totalCount }} posted lines · snapshot {{ selected.snapshotHash.slice(0, 12) }}</p></div></header>
         @if(selected.entries.length) {
+          <p class="table-scroll-help">On a small screen, scroll the table horizontally to review all journal details.</p>
           <div class="report-table-scroll" tabindex="0" role="region" aria-label="Profit and Loss journal source details"><table>
             <caption>Accounting-date activity for {{ selected.account.name }}</caption>
             <thead><tr><th scope="col">Accounting date</th><th scope="col">Reference</th><th scope="col">Memo</th><th scope="col" class="money">Debit</th><th scope="col" class="money">Credit</th><th scope="col">Lineage</th></tr></thead>
@@ -77,6 +85,6 @@
     </section>
     <p class="report-footnote">Only chart accounts classified as income or expense are included. Partner withdrawals, balance-sheet movements and charge-out analytics remain separate from actual firm Profit &amp; Loss.</p>
   } @else {
-    <section class="report-empty"><h2>Load the monthly firm statement</h2><p>Choose an accounting month and optional comparison. Draft journals and server timestamps do not affect the report.</p><button type="button" class="primary" (click)="refresh()" [disabled]="busy() || !month()">{{ busy() ? 'Loading…' : 'Load report' }}</button></section>
+    <section class="report-empty"><h2>Load the monthly firm statement</h2><p>Choose an accounting month and optional comparison. Draft journals and server timestamps do not affect the report. Use the report controls above when you are ready.</p></section>
   }
 </section>
