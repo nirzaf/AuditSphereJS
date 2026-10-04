@@ -1,0 +1,31 @@
+{
+  "checkedAt": "2026-10-04T07:22:37.424Z",
+  "runId": "6d010532-1c9b-437d-b1bf-cb04840ea197",
+  "database": "ephemeral PostgreSQL 18.6 Testcontainers database",
+  "redis": "digest-pinned Redis 8.10 Testcontainers service",
+  "worker": "apps/worker/dist/main.js long-running process",
+  "result": "LIVE_GRAPH_CLEANUP_WORKER_PROCESS_PASSED",
+  "scanned": 2,
+  "cleaned": 2,
+  "reviewRequired": 0,
+  "providers": [
+    {
+      "provider": "SHAREPOINT",
+      "status": "CLEANED_AND_READ_FAILS_CLOSED",
+      "fixtureRetained": false,
+      "sha256": "b325c145059ddb4d2dd378a9369e50889439b109deb6a643da7e7e43a122e314",
+      "sizeBytes": 134
+    },
+    {
+      "provider": "ONEDRIVE",
+      "status": "CLEANED_AND_READ_FAILS_CLOSED",
+      "fixtureRetained": false,
+      "sha256": "bdcb9187b3edb6fc2dc2cc94115558e34a450e741e108ee0dd4c45498d2cd053",
+      "sizeBytes": 132
+    }
+  ],
+  "limitations": [
+    "Only unique synthetic files in the designated nonproduction SharePoint and OneDrive acceptance folders were used.",
+    "This is an ephemeral acceptance database; it does not prove production backup, retention or legal-hold behavior."
+  ]
+}

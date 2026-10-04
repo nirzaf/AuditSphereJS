@@ -114,3 +114,11 @@ Added real PDF.js worker fixtures that exceed the configured 500-page and 10,000
 | `pnpm verify:task -- T033` | Server build, contract/OpenAPI drift, multipart, ClamAV, PDF.js worker policy, PostgreSQL 18.6/Fastify upload API | Passed, exit 0; multipart 2/2, ClamAV unit 3/3, real daemon 1/1, PDF inspection 10/10, upload API/PostgreSQL 1/1 | 2026-10-04 local output |
 
 T033 remains `IN_PROGRESS`: this strengthens the hostile-file bound evidence but does not prove every PDF grammar/viewer behavior, the portal/PBC upload-freeze boundary (T075), cross-client PBC completion, or the T064 category repository binding. No tenant, provider, database or live user permissions changed.
+
+## Long-running worker cleanup recovery — 2026-10-04
+
+The compiled `apps/worker/dist/main.js` now runs one cleanup pass at startup and repeats every ten minutes. Both fieldwork and Practice receipt sweepers still enforce their existing 60-minute grace periods and atomic database claims. Startup recovery means stale staging is not left behind until the first ten-minute timer after a worker restart.
+
+The credentialed live acceptance started the actual worker process with an isolated PostgreSQL 18.6 database and digest-pinned Redis. It seeded two expired, uniquely named, nonproduction Graph stages in the designated SharePoint and OneDrive folders, then observed the worker transition both rows to `CLEANED`. Both provider reads failed closed afterward; there were zero `REVIEW_REQUIRED` rows. Redacted per-run hashes and limitations are recorded in [worker-process evidence](m365-upload-sweep-worker-2026-10-04.json).
+
+`pnpm verify:task -- T033` passed after the worker change: server build, contracts/OpenAPI, multipart 2/2, ClamAV unit 3/3, live configured daemon clean/EICAR 1/1, PDF inspection 10/10, PostgreSQL/Fastify upload API 1/1. `M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm test:m365:upload-cleanup:live` passed 1/1 against the isolated database, Redis and only the synthetic provider folders. Production-database operation, backups, retention and legal holds remain unverified. T033 remains open for the T075 portal/PBC upload-freeze path, T064 category folder binding, broader PDF grammar/viewer policy and remaining API acceptance.

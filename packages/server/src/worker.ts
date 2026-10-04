@@ -78,7 +78,7 @@ export async function runWorker() {
   void relayOnce();
 
   // Unreferenced uploads are cleaned only after a grace period, and Graph evidence is never deleted.
-  const sweepTimer = setInterval(() => {
+  const sweepOnce = () => {
     sweepInFlight ??= Promise.all([
       sweepUnreferencedUploads({ olderThanMinutes: 60 }),
       sweepPracticeExpenseReceiptUploads({ staleCleaningMinutes: 60 }),
@@ -91,7 +91,11 @@ export async function runWorker() {
       })
       .catch(() => console.error('Upload sweep failed'))
       .then(() => { sweepInFlight = undefined; });
-  }, 600_000);
+  };
+  // Recover stale upload stages promptly after a worker restart; the sweepers claim rows
+  // atomically and enforce their own grace periods before any provider deletion.
+  void sweepOnce();
+  const sweepTimer = setInterval(sweepOnce, 600_000);
 
   const shutdown = onceAsync(async () => {
     clearInterval(timer);
