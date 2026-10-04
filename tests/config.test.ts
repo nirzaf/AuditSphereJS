@@ -10,6 +10,13 @@ it('bounds pools and requires complete production providers', () => {
   expect(() => readConfiguration({ ...base, NODE_ENV: 'production' })).toThrow('Entra identity');
   expect(readConfiguration(base).DATABASE_POOL_MAX).toBe(10);
 });
+it('treats empty optional Graph mail environment fields as unset while keeping opt-in configuration strict', () => {
+  const generatedLocalEnvironment = {
+    ...base, NOTIFICATION_PROVIDER: 'disabled', M365_MAIL_TENANT_ID: '', M365_MAIL_CLIENT_ID: '', M365_MAIL_CLIENT_SECRET: '', M365_NOTIFICATION_SENDER: '',
+  };
+  expect(readConfiguration(generatedLocalEnvironment).NOTIFICATION_PROVIDER).toBe('disabled');
+  expect(() => readConfiguration({ ...generatedLocalEnvironment, NOTIFICATION_PROVIDER: 'graph' })).toThrow('Graph notifications require separate M365_MAIL credentials');
+});
 it('requires Graph storage and rejects the local RustFS/S3 fixture in production', () => {
   const production = { ...base, NODE_ENV: 'production', AUTH_PROVIDER: 'entra', WEB_ORIGIN: 'https://auditsphere.example.test' };
   expect(() => readConfiguration({ ...production, STORAGE_PROVIDER: 'local-s3' })).toThrow('Production requires Entra identity and Graph storage');

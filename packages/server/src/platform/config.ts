@@ -9,10 +9,10 @@ const schema = z.object({
   DEV_AUTH_ENABLED: z.enum(['true', 'false']).default('false'),
   STORAGE_PROVIDER: z.enum(['graph', 'local-s3']).optional(),
   NOTIFICATION_PROVIDER: z.enum(['disabled', 'graph']).default('disabled'),
-  M365_MAIL_TENANT_ID: z.uuid().optional(),
-  M365_MAIL_CLIENT_ID: z.uuid().optional(),
-  M365_MAIL_CLIENT_SECRET: z.string().min(1).optional(),
-  M365_NOTIFICATION_SENDER: z.string().email().optional(),
+  M365_MAIL_TENANT_ID: z.preprocess(value => value === '' ? undefined : value, z.uuid().optional()),
+  M365_MAIL_CLIENT_ID: z.preprocess(value => value === '' ? undefined : value, z.uuid().optional()),
+  M365_MAIL_CLIENT_SECRET: z.preprocess(value => value === '' ? undefined : value, z.string().min(1).optional()),
+  M365_NOTIFICATION_SENDER: z.preprocess(value => value === '' ? undefined : value, z.string().email().optional()),
   AUTH_PROVIDER: z.enum(['entra', 'development']).optional(),
   WEB_ORIGIN: z.url().refine(value => {
     const origin = new URL(value);
