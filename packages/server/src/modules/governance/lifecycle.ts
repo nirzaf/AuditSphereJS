@@ -176,7 +176,18 @@ async function evaluateEvidence(client: LifecycleClient, engagement: { id: strin
     else values.key1ProposalId = key1.id;
     const key2 = await client.riskClearance.findFirst({ where: { engagementId: engagement.id }, orderBy: { clearedAt: 'desc' } });
     if (!key2) fail('PARTNER_RISK_CLEARANCE_MISSING', 'Key 2 is missing: Partner risk clearance (ISA 220) must be recorded');
-    else values.key2ClearanceId = key2.id;
+    else {
+      // T059: the clearance must cite a cleared acceptance case at the case's CURRENT review
+      // version — a stale approval from before post-clearance edits can never satisfy the gate.
+      if (!key2.acceptanceCaseId) fail('PARTNER_RISK_CLEARANCE_STALE', 'Key 2 is stale: the clearance must be recorded through a completed acceptance review');
+      else {
+        const cited = await client.acceptanceCase.findUnique({ where: { id: key2.acceptanceCaseId } });
+        if (!cited || cited.status !== 'CLEARED' || !key2.reviewVersion || cited.reviewVersion !== key2.reviewVersion) {
+          fail('PARTNER_RISK_CLEARANCE_STALE', 'Key 2 is stale: the cited acceptance review changed after clearance; re-clear the current review version');
+        }
+        values.key2ClearanceId = key2.id;
+      }
+    }
     // A race or drift that desynchronises the acceptance evidence cannot produce a false
     // clearance: the accepted response must cite the exact presented revision.
     if (key1) {

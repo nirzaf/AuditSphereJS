@@ -118,6 +118,7 @@ model Engagement {
   documentLinks          DocumentLink[]
   documentUploadSessions DocumentUploadSession[]
   proposals              CommercialProposal[]
+  acceptanceCases       AcceptanceCase[]
   riskClearances         RiskClearance[]
   letterRecord           EngagementLetterRecord?
   invoices               EngagementInvoice[]
@@ -1078,6 +1079,9 @@ model RiskClearance {
   reason       String
   clearedBy    String     @db.Uuid
   clearedAt    DateTime   @default(now())
+  acceptanceCaseId String?         @db.Uuid
+  acceptanceCase   AcceptanceCase? @relation(fields: [acceptanceCaseId], references: [id], onDelete: Restrict)
+  reviewVersion    Int?
 }
 
 model EngagementLetterRecord {
@@ -1200,6 +1204,25 @@ model AuditEvent {
   chainRecord     AuditChainRecord?
 
   @@unique([engagementId, id])
+}
+
+model AcceptanceCase {
+  id              String    @id @default(uuid()) @db.Uuid
+  firmId          String    @db.Uuid
+  clientId        String    @db.Uuid
+  engagementId    String    @unique @db.Uuid
+  engagement      Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  track           String
+  templateVersion String
+  answers         Json      @default("{}")
+  status          String    @default("DRAFT")
+  reviewVersion   Int       @default(1)
+  completedBy     String?   @db.Uuid
+  completedAt     DateTime?
+  clearedBy       String?   @db.Uuid
+  clearedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  clearances      RiskClearance[]
 }
 
 model SecurityEvent {

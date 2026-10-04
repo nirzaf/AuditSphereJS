@@ -104,6 +104,7 @@ jobs:
             tests/commercial-onboarding.integration.ts
             tests/billing-gates.integration.ts
             tests/commercial-crm.integration.ts
+            tests/acceptance-cases.integration.ts
             tests/queue-runtime.integration.ts
             apps/api/tests/realtime.integration.ts
             apps/api/tests/edit-leases.integration.ts

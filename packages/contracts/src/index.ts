@@ -464,7 +464,7 @@ export const practicePeriodTransitionResultSchema = z.object({
 export const lifecycleCommands = ['OPEN_PROPOSAL','DISPATCH_PROPOSAL','REJECT_PROSPECT','ISSUE_ENGAGEMENT_LETTER','ACTIVATE_PORTAL','START_FIELDWORK','SUBMIT_FOR_REVIEW','RETURN_FOR_REWORK','APPROVE_MANAGER_REVIEW','AUTHORIZE_FINAL_REPORT','RELEASE_FINAL_PACKAGE','LOCK_ARCHIVE'] as const;
 export const lifecycleTerminalOutcomes = ['PROSPECT_REJECTED'] as const;
 export const lifecycleGateCodes = [
-  'PROPOSAL_NOT_DRAFTED','PROPOSAL_NOT_PRESENTED','CLIENT_ACCEPTANCE_MISSING','CLIENT_ACCEPTANCE_STALE','PARTNER_RISK_CLEARANCE_MISSING',
+  'PROPOSAL_NOT_DRAFTED','PROPOSAL_NOT_PRESENTED','CLIENT_ACCEPTANCE_MISSING','CLIENT_ACCEPTANCE_STALE','PARTNER_RISK_CLEARANCE_MISSING','PARTNER_RISK_CLEARANCE_STALE',
   'ADVANCE_INVOICE_MISSING','ADVANCE_PAYMENT_MISSING','ADVANCE_RECEIPT_MISSING','FINALIZED_TRIAL_BALANCE_MISSING',
   'APPROVED_MATERIALITY_MISSING','MATERIALITY_STALE','WORKPROGRAM_SUBMISSIONS_MISSING','OPEN_REVIEW_NOTES',
   'SRM_NOT_COMPILED','CRITICAL_CONFIRMATIONS_PENDING','RED_RISK_CLEARANCE_MISSING','REPORT_OPINION_MISSING',
@@ -881,4 +881,39 @@ export const profileLeadSchema = z.object({
   contactName: z.string().trim().min(2).max(200),
   contactEmail: z.string().trim().email().max(200),
   scope: z.string().trim().min(3).max(500),
+});
+
+/** T056: versioned acceptance/continuance questionnaire templates feeding the dual-key Key 2. */
+export const acceptanceTracks = ['NEW_CLIENT', 'CONTINUANCE'] as const;
+export const acceptanceTrackSchema = z.enum(acceptanceTracks);
+export const acceptanceTemplates: Record<(typeof acceptanceTracks)[number], { version: string; required: { id: string; question: string; evidenceRequired: boolean }[] }> = {
+  NEW_CLIENT: { version: 'NC-1', required: [
+    { id: 'ubo', question: 'Ultimate beneficial owner identified', evidenceRequired: true },
+    { id: 'aml', question: 'AML background check completed', evidenceRequired: true },
+    { id: 'integrity', question: 'Management integrity assessed', evidenceRequired: false },
+    { id: 'independence', question: 'Independence and conflicts confirmed', evidenceRequired: true },
+  ] },
+  CONTINUANCE: { version: 'CO-1', required: [
+    { id: 'priorFees', question: 'Prior-year professional fees settled', evidenceRequired: true },
+    { id: 'priorFeesOutstanding', question: 'Outstanding prior-year fees detail, or explicit NONE', evidenceRequired: false },
+    { id: 'managementChanges', question: 'Management or ownership changes reviewed', evidenceRequired: true },
+    { id: 'litigation', question: 'Litigation or regulatory investigations reviewed', evidenceRequired: true },
+  ] },
+};
+export const createAcceptanceCaseSchema = z.object({ idempotencyKey: z.uuid(), track: acceptanceTrackSchema });
+export const recordAcceptanceAnswerSchema = z.object({
+  idempotencyKey: z.uuid(),
+  questionId: z.string().trim().min(1).max(60),
+  answer: z.string().trim().min(1).max(500),
+  evidenceRef: z.string().trim().max(200).optional(),
+});
+export const clearAcceptanceCaseSchema = z.object({ idempotencyKey: z.uuid(), reason: z.string().trim().min(10).max(1000) });
+
+/** T055: engagement identity and duplicate-period policy. */
+export const createEngagementSchema = z.object({
+  idempotencyKey: z.uuid(),
+  clientId: z.uuid(),
+  name: z.string().trim().min(3).max(200),
+  service: z.string().trim().min(3).max(200),
+  period: z.string().trim().min(4).max(40),
 });
