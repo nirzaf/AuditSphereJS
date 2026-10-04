@@ -68,4 +68,7 @@ export { resolveFirmPracticeRepository } from './platform/repository.js';
 export { attachPracticeExpenseReceipt, listPracticeExpenseReceipts, sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';
 export { GraphStorage, configuredGraphStorage, decodeGraphReference } from './platform/graph-storage.js';
 export { RuntimeModule, Readiness } from './platform/runtime.js';
+export { NotificationController } from './platform/notifications-controller.js';
+export { createRoutedNotification, snapshotAuthorizedRecipients, GraphMailProvider, configuredGraphMailProvider, dispatchPendingNotifications, listNotificationInbox, listOutboundMessages, markNotificationRead, retryFailedOutbound, reconcileUnknownOutbound } from './platform/notifications.js';
+export type { AuthorizedContact, ContactRole, NotificationEvent, RecipientSnapshot } from './platform/notifications.js';
 export { readConfiguration } from './platform/config.js';

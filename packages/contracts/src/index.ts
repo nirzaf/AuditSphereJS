@@ -61,7 +61,7 @@ export const finalizeSchema = z.object({ expectedVersion: z.number().int().posit
 export const moneySchema = z.string().regex(/^-?\d{1,22}(\.\d{1,6})?$/);
 /** Capability vocabulary evaluated against a firm/client/engagement scope. Local grants are
  *  never Microsoft directory authority and never infer one from the other. */
-export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND','COMMERCIAL_MANAGE','PRACTICE_READ','PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_REOPEN_PERIOD','TEAM_ASSIGNMENT_MANAGE'] as const;
+export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND','COMMERCIAL_MANAGE','PRACTICE_READ','PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_REOPEN_PERIOD','TEAM_ASSIGNMENT_MANAGE','EXTERNAL_COMMUNICATION_READ','EXTERNAL_COMMUNICATION_SEND','EXTERNAL_COMMUNICATION_RECONCILE'] as const;
 export const capabilitySchema = z.enum(capabilities);
 export const staffRoles = ['PREPARER', 'REVIEWER', 'APPROVER', 'BILLING', 'ADMIN'] as const;
 /** Full desired engagement role and capability set, issued with a finite expiry and reason. */
@@ -81,6 +81,24 @@ export const revokeEngagementStaffSchema = z.object({
   expectedVersion: z.number().int().positive(),
   reason: z.string().trim().min(10).max(1000),
 });
+export const notificationInboxQuerySchema = z.object({ unreadOnly: z.enum(['true', 'false']).optional() });
+export const notificationSchema = z.object({
+  id: z.uuid(), engagementId: z.uuid(), eventKey: z.string().min(1).max(200), kind: z.string().min(1).max(40),
+  title: z.string().max(200), body: z.string().max(2000), createdAt: z.iso.datetime(), readAt: z.iso.datetime().nullable(), version: z.number().int().positive(),
+});
+export const notificationReadSchema = z.object({ expectedVersion: z.number().int().positive() });
+export const notificationReadResultSchema = z.object({ id: z.uuid(), readAt: z.iso.datetime(), version: z.number().int().positive() });
+export const outboundMessageSchema = z.object({
+  id: z.uuid(), eventKey: z.string().min(1).max(200), eventType: z.string().min(1).max(40), recipientRole: z.enum(['MD_GM', 'CFO_FD', 'AUDIT_LIAISON']),
+  status: z.enum(['QUEUED', 'SENDING', 'SENT', 'FAILED', 'UNKNOWN', 'RECONCILED_SENT', 'CANCELLED']),
+  version: z.number().int().positive(), attemptCount: z.number().int().nonnegative(), providerReceipt: z.string().max(500).nullable(), failureCode: z.string().max(120).nullable(), createdAt: z.iso.datetime(), updatedAt: z.iso.datetime(),
+});
+export const outboundRetrySchema = z.object({ expectedVersion: z.number().int().positive(), reason: z.string().trim().min(10).max(1000) });
+export const outboundReconcileSchema = z.object({
+  expectedVersion: z.number().int().positive(), outcome: z.enum(['SENT', 'NOT_SENT']),
+  evidenceReference: z.string().trim().min(8).max(1000), reason: z.string().trim().min(10).max(1000),
+});
+export const outboundMutationResultSchema = z.object({ id: z.uuid(), status: outboundMessageSchema.shape.status, version: z.number().int().positive() });
 /** Publishing binds one immutable accounting version to one exact finalized import version. */
 export const publishSchema = z.object({ importId: z.uuid(), expectedVersion: z.number().int().positive(), idempotencyKey: z.uuid() });
 /** Allowlisted accepted balance-version views; tenant keys and publisher identity stay server-side. */

@@ -6405,7 +6405,7 @@
       },
       "capabilities": {
         "minItems": 1,
-        "maxItems": 21,
+        "maxItems": 24,
         "type": "array",
         "items": {
           "type": "string",
@@ -6430,7 +6430,10 @@
             "PRACTICE_MANAGE",
             "PRACTICE_POST",
             "PRACTICE_REOPEN_PERIOD",
-            "TEAM_ASSIGNMENT_MANAGE"
+            "TEAM_ASSIGNMENT_MANAGE",
+            "EXTERNAL_COMMUNICATION_READ",
+            "EXTERNAL_COMMUNICATION_SEND",
+            "EXTERNAL_COMMUNICATION_RECONCILE"
           ]
         }
       },
@@ -6711,7 +6714,10 @@
             "PRACTICE_MANAGE",
             "PRACTICE_POST",
             "PRACTICE_REOPEN_PERIOD",
-            "TEAM_ASSIGNMENT_MANAGE"
+            "TEAM_ASSIGNMENT_MANAGE",
+            "EXTERNAL_COMMUNICATION_READ",
+            "EXTERNAL_COMMUNICATION_SEND",
+            "EXTERNAL_COMMUNICATION_RECONCILE"
           ]
         }
       },

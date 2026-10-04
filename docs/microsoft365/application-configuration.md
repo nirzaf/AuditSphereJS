@@ -1,6 +1,6 @@
 # Configure AuditSphereJS for Microsoft 365
 
-Last reviewed: 2026-10-03. Variable names below are checked against `.env.production.example`, `platform/config.ts`, `platform/entra.ts` and `platform/repository.ts`.
+Last reviewed: 2026-10-04. Variable names below are checked against `.env.production.example`, `platform/config.ts`, `platform/entra.ts`, `platform/repository.ts` and `platform/notifications.ts`.
 
 ## Identity and storage variables
 
@@ -22,6 +22,11 @@ Use a private local environment file or server secret manager. Preserve database
 | `M365_CLIENT_SECRET` | Storage credential value from private configuration |
 | `SHAREPOINT_DRIVE_ID`, `SHAREPOINT_FOLDER_ID` | Verified evidence fixture drive/folder |
 | `ONEDRIVE_DRIVE_ID`, `ONEDRIVE_FOLDER_ID` | Verified working-file fixture drive/folder |
+| `NOTIFICATION_PROVIDER` | `disabled` by default; `graph` only after the separate Mail.Send app and mailbox are approved |
+| `M365_MAIL_TENANT_ID`, `M365_MAIL_CLIENT_ID`, `M365_MAIL_CLIENT_SECRET` | Private credentials for a mail-only Graph application; never reuse the file-storage app registration |
+| `M365_NOTIFICATION_SENDER` | Dedicated, licensed sender mailbox authorized for that mail-only application |
+
+Graph notification dispatch is disabled in the current tenant: no `Mail.Send` consent or dedicated sender is recorded. Do not set `NOTIFICATION_PROVIDER=graph` until an administrator has reviewed and separately consented the mail-only application. Its required `Mail.Send` application permission is not granted by the storage app's `Files.SelectedOperations.Selected` consent. Email remains outside database transactions; retries are manual after a definite provider rejection. A timeout or server-side error becomes `UNKNOWN` and cannot be resent until a billing/approver reconciliation records evidence. A Graph HTTP 202 records provider acceptance only, never recipient delivery.
 
 The production startup validator currently requires all four drive/folder variables. However, production repository resolution requires an active PostgreSQL `ClientRepository` binding for the exact `firmId`, `clientId`, `purpose` and `provider='graph'`. Migration `202610020007_repository_scope` adds a composite foreign key so the stored firm and client must belong together; the PostgreSQL integration test verifies a mismatched pair is rejected. Migration `202610020008_role_grant_scope_fks` applies the same firm/client/engagement hierarchy checks to scoped authorization grants, and its Testcontainers fixture rejects a client or engagement paired with a different owner tuple. Environment folders are a development fallback only; setting them does not provision production clients. Use `purpose='evidence'` for SharePoint and `purpose='working'` for OneDrive. Client repository provisioning/admin UI is not a completed workflow; do not assume setting tenant configuration creates those records. These schema checks do not prove live SharePoint/OneDrive acceptance or provision a tenant repository.
 

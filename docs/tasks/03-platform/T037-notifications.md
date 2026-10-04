@@ -49,18 +49,20 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Create recipient snapshots using MD/GM, CFO/FD and audit-liaison routing; validate addresses against authorized contact roles.
-- [ ] Support in-app status and one approved email provider; keep actual sends out of transactions.
-- [ ] Persist attempts and provider receipts, with UNKNOWN state for ambiguous timeouts; do not automatically replay an uncertain send.
-- [ ] Prevent preparers from sending external communications; sanitize all provider logs.
+- [x] Implement MD/GM, CFO/FD and audit-liaison event routing; freeze only active, verified, consented role contacts into an immutable email snapshot. SQL validates snapshot role/address shape. Fixture-backed routing is proven; production contact lookup remains dependent on T053.
+- [x] Support the in-app inbox and Microsoft Graph email adapter. PostgreSQL intent is created in the caller's business transaction; provider I/O runs only in the worker. Graph mail is disabled by default until a separate mail-only app registration and permission are approved.
+- [x] Persist delivery attempts, Graph request correlation/receipts and append-only retry/reconciliation actions. Unknown outcomes and expired claims never auto-replay; retries require a definite failure and a reason.
+- [x] Prevent preparer dispatch through role ceilings plus explicit scoped grants. Provider logs exclude recipient addresses, subject, body, bearer token, provider response body and credentials.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** A receipt routes to CFO/FD and a PBC request to liaison in fixtures.
-- [ ] **AC2:** Provider failure does not duplicate the business event.
-- [ ] **AC3:** Preparer-triggered external send is rejected.
+- [x] **AC1:** PostgreSQL acceptance proves payment receipt routes to CFO/FD, PBC requests to liaison, and deliverables to MD/GM.
+- [x] **AC2:** Unique engagement/event keys prevent duplicate intent; provider failure leaves the same durable event for explicit retry.
+- [x] **AC3:** Preparer-triggered external send is denied and creates no outbound row.
 
 Test role-based recipients, retry deduplication, invalid provider configuration and ambiguous outcomes.
+
+Downstream workflow integration: T053 owns the persisted client contact-role directory and will supply its authorized records to this server-side routing boundary. Live Microsoft 365 mail acceptance remains a global tenant gate: the adapter stays disabled until a dedicated Graph mail application, sender and separately reviewed/consented `Mail.Send` are available.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 

@@ -10,6 +10,7 @@ import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
 import { sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';
 import { createTrialBalanceImportProcessor } from './modules/fieldwork/import-worker.js';
 import { dispatchPendingOutbox } from './platform/outbox.js';
+import { configuredGraphMailProvider, dispatchPendingNotifications } from './platform/notifications.js';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
 import { readConfiguration } from './platform/config.js';
 import {
@@ -55,6 +56,7 @@ export async function runWorker() {
 
   let relayInFlight: Promise<void> | undefined;
   let sweepInFlight: Promise<void> | undefined;
+  let notificationInFlight: Promise<void> | undefined;
   let publishing = false;
   const relay = async () => {
     if (publishing) return;
@@ -76,6 +78,20 @@ export async function runWorker() {
   const relayOnce = () => relayInFlight ??= relay().finally(() => { relayInFlight = undefined; });
   const timer = setInterval(() => { void relayOnce(); }, 1_000);
   void relayOnce();
+
+  const notificationProvider = configuredGraphMailProvider();
+  const dispatchNotifications = async () => {
+    try {
+      const result = await dispatchPendingNotifications(notificationProvider);
+      if (result.claimed || result.unknown) console.log('Notification dispatch', JSON.stringify(result));
+    } catch {
+      // Never log a provider body, recipient, message body, token, or credential.
+      console.error('Notification dispatch pass failed; durable PostgreSQL intent remains available');
+    }
+  };
+  const dispatchNotificationsOnce = () => notificationInFlight ??= dispatchNotifications().finally(() => { notificationInFlight = undefined; });
+  const notificationTimer = setInterval(() => { void dispatchNotificationsOnce(); }, 2_000);
+  void dispatchNotificationsOnce();
 
   // Unreferenced uploads are cleaned only after a grace period, and Graph evidence is never deleted.
   const sweepOnce = () => {
@@ -100,7 +116,8 @@ export async function runWorker() {
   const shutdown = onceAsync(async () => {
     clearInterval(timer);
     clearInterval(sweepTimer);
-    await Promise.allSettled([relayInFlight, sweepInFlight].filter((job): job is Promise<void> => !!job));
+    clearInterval(notificationTimer);
+    await Promise.allSettled([relayInFlight, sweepInFlight, notificationInFlight].filter((job): job is Promise<void> => !!job));
     // close() stops new claims and waits for the current import to reach its transaction boundary.
     await worker.close();
     await queue.close();

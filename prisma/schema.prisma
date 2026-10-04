@@ -79,6 +79,7 @@ model Engagement {
   letterRecord           EngagementLetterRecord?
   invoices               EngagementInvoice[]
   practiceTimeEntries    PracticeTimeEntry[]
+  outboundMessages       OutboundMessage[]
 
   @@unique([firmId, clientId, id])
 }
@@ -106,6 +107,8 @@ model User {
   practiceExpenseSettlementsCreated PracticeExpenseSettlement[]           @relation("PracticeExpenseSettlementCreator")
   practiceExpenseReceiptsCreated    PracticeExpenseReceipt[]              @relation("PracticeExpenseReceiptCreator")
   practiceExpenseReceiptUploads     PracticeExpenseReceiptUploadSession[]
+  outboundMessages                  OutboundMessage[]                   @relation("OutboundMessageCreator")
+  outboundMessageActions            OutboundMessageAction[]             @relation("OutboundMessageActionActor")
 
   @@unique([tenantId, entraObjectId])
 }
@@ -224,9 +227,98 @@ model Membership {
   role         String     @default("PREPARER")
   user         User       @relation(fields: [userId], references: [id])
   engagement   Engagement @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id])
+  notifications Notification[]
 
   @@id([userId, engagementId])
   @@index([firmId, clientId, engagementId])
+}
+
+/// Internal inbox items are scoped to one current engagement membership. The database
+/// composite FK prevents a notification from crossing staff or engagement boundaries.
+model Notification {
+  id              String     @id @default(uuid()) @db.Uuid
+  engagementId    String     @db.Uuid
+  recipientUserId String     @db.Uuid
+  eventKey        String
+  kind            String
+  title           String     @db.VarChar(200)
+  body            String     @db.VarChar(2000)
+  createdAt       DateTime   @default(now()) @db.Timestamptz(6)
+  readAt          DateTime?  @db.Timestamptz(6)
+  version         Int        @default(1)
+  membership      Membership @relation(fields: [recipientUserId, engagementId], references: [userId, engagementId], onDelete: Restrict, map: "Notification_membership_scope_fkey")
+
+  @@unique([recipientUserId, engagementId, eventKey])
+  @@index([recipientUserId, engagementId, createdAt])
+}
+
+/// Durable outbound intent. The immutable recipient snapshot is captured when the
+/// originating business transaction creates this row; provider I/O happens afterward.
+model OutboundMessage {
+  id                String             @id @default(uuid()) @db.Uuid
+  engagementId      String             @db.Uuid
+  createdBy         String             @db.Uuid
+  eventKey          String
+  eventType         String
+  recipientRole     String
+  recipientSnapshot Json
+  subject           String             @db.VarChar(300)
+  textBody          String             @db.VarChar(20000)
+  provider          String             @default("GRAPH")
+  status            String             @default("QUEUED")
+  version           Int                @default(1)
+  attemptCount      Int                @default(0)
+  providerReceipt   String?
+  failureCode       String?
+  unknownAt         DateTime?          @db.Timestamptz(6)
+  deliveredAt       DateTime?          @db.Timestamptz(6)
+  reconciliation    Json?
+  claimToken        String?            @db.Uuid
+  claimExpiresAt    DateTime?          @db.Timestamptz(6)
+  createdAt         DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @db.Timestamptz(6)
+  engagement        Engagement         @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  creator           User               @relation("OutboundMessageCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  attempts          DeliveryAttempt[]
+  actions           OutboundMessageAction[]
+
+  @@unique([engagementId, eventKey])
+  @@index([status, claimExpiresAt, createdAt])
+  @@index([engagementId, createdAt])
+}
+
+/// Delivery observations are append-only. A provider timeout is recorded as UNKNOWN,
+/// never replayed automatically, and requires evidence-backed reconciliation.
+model DeliveryAttempt {
+  id                 String         @id @default(uuid()) @db.Uuid
+  outboundMessageId  String         @db.Uuid
+  sequence           Int
+  state              String
+  providerStatus     Int?
+  providerReceipt    String?
+  failureCode        String?
+  startedAt          DateTime       @default(now()) @db.Timestamptz(6)
+  completedAt        DateTime?      @db.Timestamptz(6)
+  outboundMessage    OutboundMessage @relation(fields: [outboundMessageId], references: [id], onDelete: Restrict)
+
+  @@unique([outboundMessageId, sequence])
+  @@index([startedAt])
+}
+
+/// Append-only human decisions for retry and outcome reconciliation.
+model OutboundMessageAction {
+  id                 String         @id @default(uuid()) @db.Uuid
+  outboundMessageId  String         @db.Uuid
+  actorId            String         @db.Uuid
+  action             String
+  outcome            String?
+  reason             String         @db.VarChar(1000)
+  evidenceReference  String?        @db.VarChar(1000)
+  createdAt          DateTime       @default(now()) @db.Timestamptz(6)
+  outboundMessage    OutboundMessage @relation(fields: [outboundMessageId], references: [id], onDelete: Restrict)
+  actor              User           @relation("OutboundMessageActionActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([outboundMessageId, createdAt])
 }
 
 model Document {
