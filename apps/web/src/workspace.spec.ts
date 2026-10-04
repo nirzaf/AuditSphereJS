@@ -92,9 +92,38 @@ it('fails closed with a clear message when identity configuration cannot be reac
   fixture.detectChanges();
 
   expect(fixture.nativeElement.textContent).toContain('Workspace access is unavailable');
-  expect(fixture.nativeElement.textContent).toContain('Check the API connection and reload');
+  expect(fixture.nativeElement.textContent).toContain('Check the API connection, then retry');
+  expect(fixture.nativeElement.textContent).toContain('Retry API connection');
   expect(fixture.nativeElement.querySelector('practice-ledger')).toBeNull();
   expect(fixture.nativeElement.querySelector('#token')).toBeNull();
+  fixture.destroy();
+});
+it('recovers identity configuration through an in-app retry after a temporary API outage', async () => {
+  const identity = {
+    identityConfiguration: vi.fn()
+      .mockRejectedValueOnce(new Error('Bad Gateway'))
+      .mockResolvedValueOnce({ provider: 'entra' }),
+    restoreSession: vi.fn().mockResolvedValue(null),
+    signIn: vi.fn(), signOut: vi.fn(), revokeSessions: vi.fn(), currentAccessToken: vi.fn(),
+    currentIdentity: vi.fn(), listReadableEngagements: vi.fn(),
+  };
+  TestBed.configureTestingModule({ providers: [{ provide: IDENTITY_ADAPTER, useValue: identity }] });
+  const fixture = TestBed.createComponent(Workspace);
+  fixture.detectChanges();
+  await vi.waitFor(() => expect(fixture.componentInstance.identityProvider()).toBe('unavailable'));
+  fixture.detectChanges();
+
+  const retry = [...fixture.nativeElement.querySelectorAll('button')]
+    .find((element: HTMLButtonElement) => element.textContent.trim() === 'Retry API connection');
+  expect(retry).toBeTruthy();
+  retry!.click();
+  await vi.waitFor(() => expect(fixture.componentInstance.identityProvider()).toBe('entra'));
+  await vi.waitFor(() => expect(fixture.componentInstance.sessionRestoring()).toBe(false));
+  fixture.detectChanges();
+
+  expect(identity.identityConfiguration).toHaveBeenCalledTimes(2);
+  expect(identity.restoreSession).toHaveBeenCalledOnce();
+  expect(fixture.nativeElement.textContent).toContain('Sign in to continue');
   fixture.destroy();
 });
 it('does not confuse an engagement-list outage with an empty assignment list', async () => {

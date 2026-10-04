@@ -59,9 +59,21 @@ export class Workspace implements OnDestroy {
         void this.router?.navigate([], { queryParams: { module, view: screen.id }, replaceUrl: true });
       }
     });
-    void this.identity.identityConfiguration().then(config => {
+    void this.initializeIdentity();
+  }
+  private async initializeIdentity() {
+    this.identityProvider.set('loading');
+    this.signedIn.set(false);
+    this.currentUser.set(null);
+    this.readableEngagements.set([]);
+    this.engagementId.set('');
+    this.engagementLoadError.set('');
+    this.sessionRestoring.set(false);
+    try {
+      const config = await this.identity.identityConfiguration();
       this.identityProvider.set(config.provider);
       if (config.provider === 'entra') {
+        this.message.set('Sign in to load engagements assigned to your account.');
         this.sessionRestoring.set(true);
         void this.identity.restoreSession().then(user => {
           if (!user) return;
@@ -71,12 +83,16 @@ export class Workspace implements OnDestroy {
         }).catch(error => this.message.set(error instanceof Error ? error.message : 'Microsoft sign-in could not be restored.'))
           .finally(() => this.sessionRestoring.set(false));
       }
-      if (config.provider === 'development') this.engagementId.set('00000000-0000-4000-8000-000000000002');
-    }).catch(() => {
+      if (config.provider === 'development') {
+        this.engagementId.set('00000000-0000-4000-8000-000000000002');
+        this.message.set('Local development access is ready.');
+      }
+    } catch {
       this.identityProvider.set('unavailable');
-      this.message.set('Identity configuration is unavailable. Check the AuditSphere API connection, then reload the workspace.');
-    });
+      this.message.set('Identity configuration is unavailable. Check the AuditSphere API connection, then retry.');
+    }
   }
+  retryIdentityConfiguration() { void this.initializeIdentity(); }
   readonly modules = modules;
   readonly screenId = signal('trial-balance');
   readonly screenList = computed(() => screensFor(this.active()));
