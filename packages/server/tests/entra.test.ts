@@ -7,9 +7,15 @@ it('accepts only signed tenant-specific API tokens with delegated scope', async 
   const { publicKey, privateKey } = await generateKeyPair('RS256');
   const keys = createLocalJWKSet({ keys: [{ ...await exportJWK(publicKey), kid: 'test' }] });
   const identity = new EntraIdentity({ tenantId, audience: 'audit-api', scope: 'access_as_user' }, keys);
-  const token = (audience = 'audit-api', scope = 'access_as_user', tid = tenantId, expires = '2m', issuer = `https://login.microsoftonline.com/${tenantId}/v2.0`) => new SignJWT({ tid, oid: objectId, scp: scope, wid: ['administrator'] }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime(expires).sign(privateKey);
+  const token = (audience = 'audit-api', scope = 'access_as_user', tid = tenantId, expires = '2m', issuer = `https://login.microsoftonline.com/${tenantId}/v2.0`) => new SignJWT({
+    tid, oid: objectId, scp: scope,
+    wids: ['synthetic-global-administrator-role-id'], roles: ['Global Administrator'],
+  }).setProtectedHeader({ alg: 'RS256', kid: 'test' }).setIssuer(issuer).setAudience(audience).setIssuedAt().setExpirationTime(expires).sign(privateKey);
   const valid = await identity.authenticate(await token());
   expect(valid).toMatchObject({ tenantId, objectId });
+  expect(Object.keys(valid).sort()).toEqual(['issuedAt', 'objectId', 'tenantId']);
+  expect(valid).not.toHaveProperty('wids');
+  expect(valid).not.toHaveProperty('roles');
   expect(Number.isSafeInteger(valid.issuedAt)).toBe(true);
   await expect(identity.authenticate(await token('https://graph.microsoft.com'))).rejects.toThrow();
   await expect(identity.authenticate(await token('audit-api', 'access_as_user', tenantId, '2m', 'https://attacker.example/v2.0'))).rejects.toThrow();
