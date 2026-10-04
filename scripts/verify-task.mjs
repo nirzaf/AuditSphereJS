@@ -36,7 +36,7 @@ const tasks = {
   T032: ['build:server', 'contracts:check', 'storage', 'scope-repository', 'document-version'],
   T033: ['build:server', 'contracts:check', 'multipart-plugin', 'clamav-unit', 'clamav-real', 'pdf-inspection', 'document-upload'],
   T034: ['build:server', 'document-download'],
-  T035: ['build:server', 'pdf-renderer', 'build:linux', 'pdf-render-runtime'],
+  T035: ['build:server', 'pdf-renderer', 'document-version', 'pdf-seccomp', 'build:linux', 'pdf-render-runtime'],
   T037: ['build:server', 'contracts:check', 'notifications'],
   T017: ['verify:all', 'build:linux', 'smoke:linux'],
   T013: ['database-version', 'local-services', 'rustfs-isolation'],
@@ -67,8 +67,13 @@ for (const step of tasks[id]) {
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }
+  if (step === 'pdf-seccomp') {
+    const result = spawnSync(process.execPath, ['scripts/verify-chromium-seccomp.mjs'], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
+    continue;
+  }
   if (step === 'pdf-render-runtime') {
-    const result = spawnSync('docker', ['run', '--rm', '--network', 'none', '--memory=1g', '--cpus=1', '--security-opt', 'seccomp=unconfined', 'auditsphere-local:compatibility', 'node', 'scripts/pdf-render-smoke.mjs'], { stdio: 'inherit' });
+    const result = spawnSync('docker', ['run', '--rm', '--network', 'none', '--read-only', '--tmpfs', '/tmp:rw,nosuid,nodev,size=64m', '--tmpfs', '/home/node/.cache:rw,nosuid,nodev,size=32m', '--pids-limit=128', '--memory=1g', '--cpus=1', '--cap-drop=ALL', '--security-opt=no-new-privileges', '--security-opt', 'seccomp=config/seccomp-chromium.json', 'auditsphere-local:compatibility', 'node', 'scripts/pdf-render-smoke.mjs'], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }

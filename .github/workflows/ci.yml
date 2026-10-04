@@ -48,6 +48,7 @@ jobs:
       - run: pnpm verify:all
         env:
           RUN_LIVE_E2E: "1"
+      - run: pnpm verify:task -- T035
       - run: pnpm contracts:check
       - run: pnpm audit --audit-level=moderate
       - run: pnpm build:linux

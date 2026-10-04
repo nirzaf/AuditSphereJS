@@ -55,7 +55,7 @@ test('document uploads append immutable versions and queued imports read their p
       NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri,
       STORAGE_PROVIDER: 'graph', M365_TENANT_ID: tenantId, M365_CLIENT_ID: 'synthetic-client', M365_CLIENT_SECRET: 'synthetic-secret',
     });
-    const { db, upload, retrieve, resolveClientRepository } = await import('@auditsphere/server');
+    const { db, upload, retrieve, resolveClientRepository, renderAndPublishPdf, persistRenderedPdfVersion, requireCapability } = await import('@auditsphere/server');
     try {
       await db.firm.create({ data: { id: firmId, name: 'Document version firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Document version client' } });
@@ -140,6 +140,57 @@ test('document uploads append immutable versions and queued imports read their p
       assert.equal(loadedReferences.get(secondImport.id), versions[1]!.storageReference);
       assert.deepEqual((await db.tbRow.findMany({ where: { importId: firstImport.id }, orderBy: { position: 'asc' }, select: { code: true } })).map(row => row.code), ['100', '200']);
       assert.deepEqual((await db.tbRow.findMany({ where: { importId: secondImport.id }, orderBy: { position: 'asc' }, select: { code: true } })).map(row => row.code), ['300', '400']);
+
+      const templateHtml = '<!doctype html><html><body><h1>{{reportTitle}}</h1><p>{{reportBasis}}</p></body></html>';
+      const templateSha256 = (await import('node:crypto')).createHash('sha256').update(templateHtml).digest('hex');
+      const reportData = { reportTitle: 'Synthetic Report', reportBasis: 'Acceptance fixture' };
+      let renderedArtifact: Parameters<typeof persistRenderedPdfVersion>[0]['artifact'] | undefined;
+      const renderedVersion = await renderAndPublishPdf({
+        template: { id: 't035-synthetic-report', version: 1, html: templateHtml, sha256: templateSha256 },
+        data: reportData,
+      }, artifact => {
+        renderedArtifact = artifact;
+        return persistRenderedPdfVersion({
+          actorId, engagementId, filename: 'synthetic-report.pdf', artifact,
+          authorize: (client, principal, scope) => requireCapability(client, principal, 'FIELDWORK_WRITE', scope),
+        });
+      });
+      if (!renderedArtifact) throw new Error('The renderer did not produce a publishable artifact');
+      const renderedDocument = await db.document.findFirstOrThrow({ where: { id: renderedVersion.documentId, engagementId } });
+      const storedVersion = await db.documentVersion.findFirstOrThrow({ where: { id: renderedVersion.documentVersionId, engagementId, documentId: renderedDocument.id } });
+      assert.equal(renderedDocument.filename, 'synthetic-report.pdf');
+      assert.equal(renderedDocument.category, '04_Drafts & Deliverables');
+      assert.equal(storedVersion.sequence, 1);
+      assert.equal(storedVersion.sha256, renderedVersion.sha256);
+      assert.equal(storedVersion.sizeBytes, renderedVersion.sizeBytes);
+      assert.equal(storedVersion.provider, 'graph');
+      const expectedDataSha256 = (await import('node:crypto')).createHash('sha256').update('{"reportBasis":"Acceptance fixture","reportTitle":"Synthetic Report"}').digest('hex');
+      const provenance = storedVersion.renderProvenance as Record<string, unknown>;
+      assert.match(String(provenance.chromiumVersion), /^\d+\.\d+\.\d+\.\d+$/);
+      assert.deepEqual(provenance, {
+        schemaVersion: 1, renderer: 'playwright-chromium', playwrightVersion: '1.58.2',
+        chromiumVersion: provenance.chromiumVersion,
+        templateId: 't035-synthetic-report', templateVersion: 1,
+        templateSha256,
+        dataSha256: expectedDataSha256,
+        pageCount: 1, blockedResourceCount: 0,
+      });
+      const trackedRenderedObject = await db.storedObject.findFirstOrThrow({ where: { documentId: renderedDocument.id } });
+      assert.equal(trackedRenderedObject.status, 'REFERENCED');
+      assert.equal(await db.auditEvent.count({ where: { resourceId: renderedDocument.id, action: 'RENDERED_PDF_VERSION_PUBLISHED' } }), 1);
+      await assert.rejects(db.$executeRaw`UPDATE "DocumentVersion" SET "renderProvenance" = '{}'::jsonb WHERE id = ${storedVersion.id}::uuid`, /append-only/);
+
+      let authorizationChecks = 0;
+      const beforeDeniedRender = objects.size;
+      await assert.rejects(persistRenderedPdfVersion({
+        actorId, engagementId, filename: 'revoked-report.pdf', artifact: renderedArtifact,
+        authorize: async () => { authorizationChecks++; if (authorizationChecks === 2) throw new Error('report permission was revoked'); },
+      }), /report permission was revoked/);
+      assert.equal(authorizationChecks, 2, 'the workflow authorization is rechecked after provider storage');
+      assert.equal(objects.size, beforeDeniedRender + 1, 'the denied render is still tracked for cleanup, not attached to a document');
+      assert.equal(await db.document.count({ where: { engagementId, filename: 'revoked-report.pdf' } }), 0);
+      const orphanedRender = await db.storedObject.findFirstOrThrow({ where: { engagementId, status: 'PENDING', sha256: renderedArtifact.sha256, documentId: null } });
+      assert.equal(orphanedRender.status, 'PENDING');
 
       const { linkDocument, listDocumentLinks, revokeDocumentLink } = await import('@auditsphere/server');
       const linkInput = {

@@ -8,7 +8,7 @@
 | Owner area | `documents` |
 | Completion unit | One focused, reviewable change and its evidence |
 
-> Current status: `IN_PROGRESS`. The pinned Playwright/Chromium renderer, escaped template data, denied browser network access, bounded PDF inspection and failure-before-publish behavior pass actual-browser checks on Windows and the target Linux image. Immutable `DocumentVersion` persistence/provenance and a least-privilege production seccomp profile that permits Chromium user namespaces still need an owning workflow/runtime decision before this task can be marked DONE.
+> Current status: `DONE`. The pinned Playwright/Chromium renderer, immutable `DocumentVersion` provenance writer, rechecked caller-supplied workflow authorization, Moby-derived default-deny Chromium seccomp profile and resource-constrained target-image smoke all pass the recorded task checks. The rendered-document writer remains a platform capability; future reporting commands must provide their own authorization guard. Real SharePoint/OneDrive adapter behavior is separately verified against synthetic tenant folders in T156. Production host/kernel acceptance remains a release gate, not a claim made by this task. The reviewed runtime profile is documented in [the PDF worker seccomp runbook](../../runbooks/pdf-worker-seccomp.md).
 
 ## Outcome
 
@@ -57,7 +57,8 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Use the pinned Playwright 1.58.2 Chromium renderer; the target image installs the browser from that exact package version.
 - [x] Render version-identified templates with escaped scalar data; disable JavaScript and abort every browser resource request.
 - [x] Bound template/data bytes, output size, page count and render duration; package Noto/Liberation fonts in the target image and launch Chromium with its sandbox enabled.
-- [ ] Produce an immutable document version and retain renderer/template/data snapshot identities.
+- [x] Run the renderer with a reviewed default-deny seccomp profile and container-level capability, filesystem, network, process, memory and CPU restrictions.
+- [x] Persist a completed PDF as an immutable `DocumentVersion` with verified byte digest, provider identity and checked renderer/template/data snapshot hashes; recheck the owning workflow authorization before storage and inside the final metadata transaction.
 
 ## Acceptance criteria and required tests
 

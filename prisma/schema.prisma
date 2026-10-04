@@ -391,6 +391,7 @@ model DocumentVersion {
   eTag             String?
   sha256           String
   sizeBytes        Int
+  renderProvenance Json?                   @db.JsonB
   createdBy        String                  @db.Uuid
   createdAt        DateTime                @default(now())
   links            DocumentLink[]

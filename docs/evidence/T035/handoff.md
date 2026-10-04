@@ -5,7 +5,7 @@
 Task ID: T035
 Requirement IDs: R010, R011, R014, R019, R065, R066, R067, R068, R069
 Implementing commit/branch: in progress on `main`
-Status: IN_PROGRESS
+Status: DONE (hosted CI run pending for this commit)
 
 ## Intended and delivered outcome
 
@@ -70,3 +70,34 @@ The GitHub Actions run for `c3fe250` exposed a timing race in the Linux Chromium
 | `git diff --check` | Current tracked diff | PASS | Local run, 2026-10-04 |
 
 The hosted rerun for `c3fe250` failed only at the same resource-denial assertion; the prior startup/config issue was resolved. The source fix above is awaiting its own hosted CI run. T035 remains IN_PROGRESS because its immutable `DocumentVersion` persistence and production seccomp acceptance gates remain open.
+
+## Completion review — 2026-10-04
+
+The earlier in-progress notes above describe intermediate states and are superseded by this completion review. T035 is now DONE for its scoped renderer/runtime outcome. Production deployment-host/kernel acceptance remains a downstream release gate; the user has not selected a production target.
+
+### Added immutable rendered-document persistence
+
+- `packages/server/src/platform/rendered-documents.ts` persists a completed artifact as a new `Document` and immutable `DocumentVersion`, recording provider identity/version, exact SHA-256 and byte size, page count, and renderer/template/canonical-data provenance.
+- The caller provides the owning workflow's authorization callback. It is checked before provider I/O and again while the engagement is locked inside the final PostgreSQL transaction. A failed second check leaves a tracked `PENDING` storage object for the existing cleanup path and creates no document/version.
+- Migration `202610040006_rendered_pdf_provenance` adds a constrained JSONB provenance manifest. The integration test verifies the record, audit event, exact hashes, provider metadata, append-only database rejection, and revoked-authorization cleanup path using PostgreSQL 18.6 plus the synthetic Graph adapter.
+- `packages/server/src/platform/README.md` documents ownership; the Fieldwork README now points to the platform document/version boundary.
+
+### Reviewed runtime isolation
+
+The target-image smoke now uses `config/seccomp-chromium.json`, derived from pinned Moby profile commit `2ceae35d351c156cb5a8efc0fdc4a08cf94569d8`. The checker confirms the source baseline and the only three reviewed Chromium namespace-sandbox additions. The smoke runs as uid 1000 with no network, a read-only image root, bounded tmpfs mounts, all capabilities dropped, no-new-privileges, a 128-process limit, 1 GiB memory and 1 CPU. Production kernel/AppArmor/orchestrator behavior remains to be tested against the eventual deployment host.
+
+### Verification evidence
+
+| Command / test | Tested artifact and fixture | Actual result / exit status | Evidence |
+| :--- | :--- | :--- | :--- |
+| `pnpm verify:task -- T035` | Windows Playwright 1.58.2/Chromium renderer fixtures; PostgreSQL 18.6 document/version integration with synthetic Graph adapter; pinned seccomp verification; rebuilt source-fingerprinted Linux image and constrained smoke | PASS; 3/3 Chromium checks, 1/1 PostgreSQL integration, seccomp check passed, smoke passed; renderer Playwright 1.58.2 / Chromium 145.0.7632.6, Noto Sans, one page, 14,260 bytes, uid 1000 | [Fresh run record](verification-2026-10-04-r3.json) |
+| `pnpm verify:affected` | Import boundaries, server/test typechecks, Angular production build, Vitest | PASS; 25 test files / 115 tests | Local run 2026-10-04 |
+| `pnpm lint` | ESLint and import boundaries | PASS; zero errors, existing ignored prototype declaration warnings only | Local run 2026-10-04 |
+| `M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156` | Real SharePoint and OneDrive storage adapters against designated synthetic folders | PASS; 2/2 live-provider checks, zero skips; exact-version byte/hash isolation and outside-folder write denial | [T156 redacted evidence](../T156/live-storage-2026-10-04-6ad456e8.json) |
+| `git diff --check` | Reviewed T035 change set | PASS | Local run 2026-10-04 |
+
+The live T156 checks validate the SharePoint/OneDrive storage adapter and selected-folder boundary. The PDF writer's database/provenance/failure semantics were verified through the PostgreSQL integration and synthetic Graph adapter; no production renderer caller, production provider credentials, deployment host or report-issuance authorization was added by T035. Reporting must continue to supply its own workflow authorization guard.
+
+### Review disposition
+
+All T035 checklist items and AC1–AC3 are satisfied. The renderer and writer are server-side platform capabilities only; report templates, release approvals, signatures and report delivery remain with their owning later tasks. The seccomp profile passed the actual constrained Linux image smoke locally; hosted CI for the commit is tracked separately after push. Next dependency-eligible task: T036, versioned document templates and approved assets.
