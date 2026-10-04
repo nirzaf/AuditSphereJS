@@ -648,9 +648,16 @@ export const trialBalanceSummaryLineSchema = z.object({ fsli: z.string().max(120
 export const trialBalanceSummarySchema = z.array(trialBalanceSummaryLineSchema).max(2_000);
 export const mappingsSavedSchema = z.object({ saved: z.number().int().positive() });
 export const trialBalanceFinalizedSchema = z.object({ status: z.literal('FINALIZED') });
-export const editLeaseResultSchema = z.union([
-  z.object({ userId: z.uuid(), displayName: z.string().trim().min(1).max(120), leaseToken: z.uuid(), fencingNumber: z.number().int().positive() }),
-  z.object({ action: z.enum(['renew', 'release']), ok: z.literal(true) }),
+export const editLeaseHolderSchema = z.object({
+  userId: z.uuid(),
+  displayName: z.string().trim().min(1).max(320),
+  expiresAt: z.iso.datetime(),
+  ownedByCurrentUser: z.boolean(),
+  leaseToken: z.uuid().optional(),
+});
+export const editLeaseResultSchema = z.discriminatedUnion('available', [
+  z.object({ available: z.literal(false), action: z.enum(['status', 'acquire', 'renew', 'release']), reason: z.literal('REDIS_UNAVAILABLE') }),
+  z.object({ available: z.literal(true), action: z.enum(['status', 'acquire', 'renew', 'release']), lease: editLeaseHolderSchema.nullable() }),
 ]);
 /** Redis edit leases coordinate users; they do not replace PostgreSQL expectedVersion checks. */
 export const editLeaseSchema = z.discriminatedUnion('action', [

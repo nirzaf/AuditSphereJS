@@ -9,7 +9,7 @@ import type { PaginationQuery, TrialBalanceRowsQuery } from '@auditsphere/contra
 import { InternalGuard } from '../../platform/auth.js';
 import * as service from './service.js';
 import { db } from '../../platform/db.js';
-import { editLease } from '../../platform/leases.js';
+import { editLease, editLeaseStatus } from '../../platform/leases.js';
 
 function importDto(batch: Awaited<ReturnType<typeof service.getBatch>>) {
   return {
@@ -63,8 +63,19 @@ export class FieldworkController {
   @SerializeOptions({ schema: trialBalanceSummaryLineSchema })
   summary(@Param('engagementId') e: string, @Param('id') id: string) { return service.aggregate(e, id); }
 
-  @Post(':id/lease')
+  @Get(':id/rows/:rowId/lease')
+  @ApiOkResponse({ standardSchema: editLeaseResultSchema })
+  @SerializeOptions({ schema: editLeaseResultSchema })
+  async leaseStatus(@Param('engagementId') e: string, @Param('id') id: string, @Param('rowId') rowId: string, @Req() req: any) {
+    await service.authorizeRowLease(e, id, rowId, req.actorId);
+    return editLeaseStatus(e, id, rowId, req.actorId);
+  }
+
+  @Post(':id/rows/:rowId/lease')
   @ApiCreatedResponse({ standardSchema: editLeaseResultSchema })
   @SerializeOptions({ schema: editLeaseResultSchema })
-  async lease(@Param('engagementId') e: string, @Param('id') id: string, @Req() req: any, @Body({ schema: editLeaseSchema }) body: unknown) { await service.getBatch(e, id); return editLease(id, req.actorId, body); }
+  async lease(@Param('engagementId') e: string, @Param('id') id: string, @Param('rowId') rowId: string, @Req() req: any, @Body({ schema: editLeaseSchema }) body: unknown) {
+    const { displayName } = await service.authorizeRowLease(e, id, rowId, req.actorId);
+    return editLease(e, id, rowId, req.actorId, displayName, body);
+  }
 }

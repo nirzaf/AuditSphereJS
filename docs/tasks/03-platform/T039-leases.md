@@ -43,16 +43,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Acquire expiring Redis leases atomically using random ownership tokens.
-- [ ] Compare tokens atomically when renewing or releasing; never delete a newly acquired replacement lease on stale release.
-- [ ] Include scope in keys and authorize acquire/heartbeat/release; show owner and expiry in the client.
-- [ ] Treat leases as advisory; do not call a random token a monotonic fencing number. Database versions remain mandatory.
+- [x] Acquire expiring Redis leases atomically using random ownership tokens.
+- [x] Compare tokens atomically when renewing or releasing; never delete a newly acquired replacement lease on stale release.
+- [x] Include scope in keys and authorize acquire/heartbeat/release; show owner and expiry in the client.
+- [x] Treat leases as advisory; do not call a random token a monotonic fencing number. Database versions remain mandatory.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Old client cannot release another user's replacement lease.
-- [ ] **AC2:** Expired lease never authorizes a stale database write.
-- [ ] **AC3:** Redis outage disables presence gracefully without disabling database conflict checks.
+- [x] **AC1:** Old client cannot release another user's replacement lease.
+- [x] **AC2:** Expired lease never authorizes a stale database write.
+- [x] **AC3:** Redis outage disables presence gracefully without disabling database conflict checks.
 
 Test auth/room isolation, lease ownership, reconnect and selected multi-replica transport behavior.
 

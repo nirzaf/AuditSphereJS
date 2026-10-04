@@ -111,6 +111,21 @@ export async function upload(engagementId: string, actorId: string, input: unkno
   }
 }
 export async function getBatch(engagementId: string, id: string) { const batch = await db.tbImport.findFirst({ where: { id, engagementId } }); if (!batch) throw new NotFoundException('Import not found'); return batch; }
+/** Resolve and authorize a row-level collaboration lease against the authoritative engagement. */
+export async function authorizeRowLease(engagementId: string, importId: string, rowId: string, actorId: string) {
+  const [batch, engagement, row, user] = await Promise.all([
+    db.tbImport.findFirst({ where: { id: importId, engagementId }, select: { id: true, status: true } }),
+    db.engagement.findUnique({ where: { id: engagementId } }),
+    db.tbRow.findFirst({ where: { id: rowId, importId }, select: { id: true } }),
+    db.user.findUnique({ where: { id: actorId }, select: { email: true } }),
+  ]);
+  if (!batch || !engagement || !row) throw new NotFoundException('Trial Balance row not found');
+  await requireCapability(db, actorId, 'FIELDWORK_WRITE', scopeOf(engagement));
+  assertEditable(engagement.state);
+  if (batch.status !== 'MAPPING_REQUIRED') throw new ConflictException('Only rows in an editable Trial Balance can have an edit lease');
+  if (!user?.email) throw new NotFoundException('Active staff identity not found');
+  return { displayName: user.email };
+}
 export async function rows(engagementId: string, id: string, offset: number, search: string, limit = 200) {
   await getBatch(engagementId, id);
   const where = { importId: id, ...(search ? { OR: [{ code: { contains: search, mode: 'insensitive' as const } }, { name: { contains: search, mode: 'insensitive' as const } }] } : {}) };

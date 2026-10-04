@@ -103,6 +103,7 @@ jobs:
             tests/commercial-onboarding.integration.ts
             tests/queue-runtime.integration.ts
             apps/api/tests/realtime.integration.ts
+            apps/api/tests/edit-leases.integration.ts
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/setup@v3

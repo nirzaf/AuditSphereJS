@@ -101,7 +101,7 @@ test('T038 scopes rooms, emits post-commit hints, reauthorizes and reconnects ac
     const addressA = `http://127.0.0.1:${replicaA.port}`;
     const addressB = `http://127.0.0.1:${replicaB.port}`;
 
-    const ids = { firmId: randomUUID(), clientId: randomUUID(), engagementId: randomUUID(), deniedEngagementId: randomUUID(), userId: server.fixtureUser, leaseOwnerId: randomUUID(), portalUserId: randomUUID(), documentId: randomUUID(), importId: randomUUID(), rowId: randomUUID() };
+    const ids = { firmId: randomUUID(), clientId: randomUUID(), engagementId: randomUUID(), deniedEngagementId: randomUUID(), userId: server.fixtureUser, leaseOwnerId: randomUUID(), readOnlyUserId: randomUUID(), portalUserId: randomUUID(), documentId: randomUUID(), importId: randomUUID(), rowId: randomUUID(), secondRowId: randomUUID() };
     await db.firm.create({ data: { id: ids.firmId, name: 'Synthetic realtime firm' } });
     await db.client.create({ data: { id: ids.clientId, firmId: ids.firmId, name: 'Synthetic realtime client' } });
     await db.engagement.createMany({ data: [
@@ -111,12 +111,15 @@ test('T038 scopes rooms, emits post-commit hints, reauthorizes and reconnects ac
     await db.user.createMany({ data: [
       { id: ids.userId, email: `realtime-${ids.userId}@fixture.test`, role: 'PREPARER' },
       { id: ids.leaseOwnerId, email: `lease-owner-${ids.leaseOwnerId}@fixture.test`, role: 'PREPARER' },
+      { id: ids.readOnlyUserId, email: `read-only-${ids.readOnlyUserId}@fixture.test`, role: 'PREPARER' },
     ] });
     await db.membership.createMany({ data: [ids.userId, ids.leaseOwnerId].map(userId => ({ userId, firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, role: 'PREPARER' })) });
-    await db.roleGrant.createMany({ data: ['ENGAGEMENT_READ', 'FIELDWORK_WRITE'].map(capability => ({ userId: ids.userId, capability, firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, grantedBy: ids.userId })) });
+    await db.membership.create({ data: { userId: ids.readOnlyUserId, firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, role: 'PREPARER' } });
+    await db.roleGrant.createMany({ data: [ids.userId, ids.leaseOwnerId].flatMap(userId => ['ENGAGEMENT_READ', 'FIELDWORK_WRITE'].map(capability => ({ userId, capability, firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, grantedBy: ids.userId }))).concat([{ userId: ids.readOnlyUserId, capability: 'ENGAGEMENT_READ', firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, grantedBy: ids.userId }]) });
     await db.document.create({ data: { id: ids.documentId, engagementId: ids.engagementId, key: `synthetic/${ids.documentId}.csv`, sha256: 'a'.repeat(64), filename: 'synthetic.csv' } });
     await db.tbImport.create({ data: { id: ids.importId, firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, documentId: ids.documentId, sha256: 'b'.repeat(64), status: 'MAPPING_REQUIRED' } });
     await db.tbRow.create({ data: { id: ids.rowId, importId: ids.importId, position: 0, code: '4000', name: 'Synthetic revenue', current: '10.000000', prior: '-10.000000', fsli: null, version: 1 } });
+    await db.tbRow.create({ data: { id: ids.secondRowId, importId: ids.importId, position: 1, code: '1500', name: 'Synthetic assets', current: '10.000000', prior: '9.000000', fsli: null, version: 1 } });
     await db.portalUser.create({ data: { id: ids.portalUserId, email: `portal-${ids.portalUserId}@fixture.test`, mustChangePassword: false } });
     await db.portalMembership.create({ data: { portalUserId: ids.portalUserId, firmId: ids.firmId, clientId: ids.clientId, engagementId: ids.engagementId, advanceClearedAt: new Date() } });
     const portalToken = randomBytes(32).toString('hex');
@@ -152,15 +155,32 @@ test('T038 scopes rooms, emits post-commit hints, reauthorizes and reconnects ac
     assert.equal(switchingEvents.length, 0, 'a denied room switch removes the previous subscription immediately');
 
     const fieldwork = replicaA.app.get(server.FieldworkController);
-    const firstLease = await fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.userId }, { action: 'acquire' }) as { leaseToken: string; fencingNumber: number };
-    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.leaseOwnerId }, { action: 'acquire' }), /Another editor holds this lease/);
-    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.leaseOwnerId }, { action: 'release', token: firstLease.leaseToken }), /ownership token differs/);
-    await fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.userId }, { action: 'release', token: firstLease.leaseToken });
-    const replacementLease = await fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.leaseOwnerId }, { action: 'acquire' }) as { leaseToken: string; fencingNumber: number };
-    assert.ok(replacementLease.fencingNumber > firstLease.fencingNumber, 'a new lease receives a higher fencing number');
-    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.userId }, { action: 'release', token: firstLease.leaseToken }), /ownership token differs/);
-    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.userId }, { action: 'acquire' }), /Another editor holds this lease/);
-    await fieldwork.lease(ids.engagementId, ids.importId, { actorId: ids.leaseOwnerId }, { action: 'release', token: replacementLease.leaseToken });
+    await assert.rejects(fieldwork.leaseStatus(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.readOnlyUserId }), /FIELDWORK_WRITE is not granted/);
+    const firstLease = await fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.userId }, { action: 'acquire' }) as { available: true; lease: { leaseToken: string; expiresAt: string; ownedByCurrentUser: boolean } };
+    assert.equal(firstLease.available, true);
+    assert.equal(firstLease.lease.ownedByCurrentUser, true);
+    assert.ok(Date.parse(firstLease.lease.expiresAt) > Date.now());
+    const otherRowLease = await fieldwork.lease(ids.engagementId, ids.importId, ids.secondRowId, { actorId: ids.leaseOwnerId }, { action: 'acquire' }) as { available: true; lease: { leaseToken: string } };
+    assert.ok(otherRowLease.lease.leaseToken, 'separate rows in one Trial Balance can be edited concurrently');
+    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.leaseOwnerId }, { action: 'acquire' }), /Another editor currently holds this row lease/);
+    const ownerView = await fieldwork.leaseStatus(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.leaseOwnerId }) as { available: true; lease: { userId: string; displayName: string; expiresAt: string; ownedByCurrentUser: boolean; leaseToken?: string } };
+    assert.equal(ownerView.lease.userId, ids.userId);
+    assert.match(ownerView.lease.displayName, /realtime-/);
+    assert.equal(ownerView.lease.ownedByCurrentUser, false);
+    assert.equal(ownerView.lease.leaseToken, undefined, 'another editor never receives the ownership token');
+    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.leaseOwnerId }, { action: 'release', token: firstLease.lease.leaseToken }), /ownership token differs/);
+    await fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.userId }, { action: 'release', token: firstLease.lease.leaseToken });
+    const replacementLease = await fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.leaseOwnerId }, { action: 'acquire' }) as { available: true; lease: { leaseToken: string } };
+    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.userId }, { action: 'release', token: firstLease.lease.leaseToken }), /ownership token differs/);
+    const replacementStillOwned = await fieldwork.leaseStatus(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.userId }) as { available: true; lease: { userId: string } };
+    assert.equal(replacementStillOwned.lease.userId, ids.leaseOwnerId, 'stale release cannot delete a replacement lease');
+    await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.userId }, { action: 'acquire' }), /Another editor currently holds this row lease/);
+    await fieldwork.lease(ids.engagementId, ids.importId, ids.rowId, { actorId: ids.leaseOwnerId }, { action: 'release', token: replacementLease.lease.leaseToken });
+    await fieldwork.lease(ids.engagementId, ids.importId, ids.secondRowId, { actorId: ids.leaseOwnerId }, { action: 'release', token: otherRowLease.lease.leaseToken });
+
+    const leaseHttp = await fetch(`${addressB}/api/v1/engagements/${ids.engagementId}/imports/${ids.importId}/rows/${ids.rowId}/lease`, { headers: { authorization: `Bearer ${devToken}` } });
+    assert.equal(leaseHttp.status, 200, 'the scoped status API is reachable through the Fastify adapter');
+    assert.equal((await leaseHttp.json() as { available: boolean }).available, true);
 
     const received: unknown[] = [];
     let firstInvalidation!: () => void;
@@ -170,6 +190,9 @@ test('T038 scopes rooms, emits post-commit hints, reauthorizes and reconnects ac
       idempotencyKey: randomUUID(), changes: [{ rowId: ids.rowId, expectedVersion: 1, fsli: 'Revenue' }],
     });
     assert.deepEqual(result, { saved: 1 });
+    await assert.rejects(mapBatch(ids.engagementId, ids.importId, ids.userId, {
+      idempotencyKey: randomUUID(), changes: [{ rowId: ids.rowId, expectedVersion: 1, fsli: 'Operating expenses' }],
+    }), /rows changed/);
     await Promise.race([invalidationArrived, sleep(5_000).then(() => { throw new Error('Committed fieldwork mutation did not reach the other API replica'); })]);
     const invalidation = received[0] as Record<string, unknown>;
     assert.deepEqual(Object.keys(invalidation).sort(), ['engagementId', 'resourceId', 'resourceType', 'schemaVersion', 'version']);
@@ -220,6 +243,7 @@ test('T038 scopes rooms, emits post-commit hints, reauthorizes and reconnects ac
     await db.roleGrant.updateMany({ where: { userId: ids.userId, capability: 'ENGAGEMENT_READ', revokedAt: null }, data: { revokedAt: new Date(), revokedBy: ids.userId, reason: 'Synthetic realtime access review' } });
     await replicaB.gateway.revalidateActiveSockets();
     await Promise.race([accessRevoked, sleep(3_000).then(() => { throw new Error('Revoked engagement grant did not revoke the socket room'); })]);
+
   } finally {
     for (const socket of sockets) socket.disconnect();
     await proxy?.close().catch(() => undefined);

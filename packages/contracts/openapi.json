@@ -7082,7 +7082,226 @@
         ]
       }
     },
-    "/api/v1/engagements/{engagementId}/imports/{id}/lease": {
+    "/api/v1/engagements/{engagementId}/imports/{id}/rows/{rowId}/lease": {
+      "get": {
+        "operationId": "FieldworkController_leaseStatus",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rowId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "enum": [
+                            "status",
+                            "acquire",
+                            "renew",
+                            "release"
+                          ]
+                        },
+                        "reason": {
+                          "type": "string",
+                          "enum": [
+                            "REDIS_UNAVAILABLE"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "available",
+                        "action",
+                        "reason"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "available": {
+                          "type": "boolean",
+                          "enum": [
+                            true
+                          ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "enum": [
+                            "status",
+                            "acquire",
+                            "renew",
+                            "release"
+                          ]
+                        },
+                        "lease": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "userId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "displayName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 320
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "ownedByCurrentUser": {
+                              "type": "boolean"
+                            },
+                            "leaseToken": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            }
+                          },
+                          "required": [
+                            "userId",
+                            "displayName",
+                            "expiresAt",
+                            "ownedByCurrentUser"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "available",
+                        "action",
+                        "lease"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Fieldwork"
+        ]
+      },
       "post": {
         "operationId": "FieldworkController_lease",
         "parameters": [
@@ -7096,6 +7315,14 @@
           },
           {
             "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "rowId",
             "required": true,
             "in": "path",
             "schema": {
@@ -7155,60 +7382,98 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "anyOf": [
+                  "oneOf": [
                     {
                       "type": "object",
                       "properties": {
-                        "userId": {
-                          "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        "available": {
+                          "type": "boolean",
+                          "enum": [
+                            false
+                          ]
                         },
-                        "displayName": {
+                        "action": {
                           "type": "string",
-                          "minLength": 1,
-                          "maxLength": 120
+                          "enum": [
+                            "status",
+                            "acquire",
+                            "renew",
+                            "release"
+                          ]
                         },
-                        "leaseToken": {
+                        "reason": {
                           "type": "string",
-                          "format": "uuid",
-                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
-                        },
-                        "fencingNumber": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "exclusiveMinimum": true,
-                          "maximum": 9007199254740991
+                          "enum": [
+                            "REDIS_UNAVAILABLE"
+                          ]
                         }
                       },
                       "required": [
-                        "userId",
-                        "displayName",
-                        "leaseToken",
-                        "fencingNumber"
+                        "available",
+                        "action",
+                        "reason"
                       ],
                       "additionalProperties": false
                     },
                     {
                       "type": "object",
                       "properties": {
-                        "action": {
-                          "type": "string",
-                          "enum": [
-                            "renew",
-                            "release"
-                          ]
-                        },
-                        "ok": {
+                        "available": {
                           "type": "boolean",
                           "enum": [
                             true
                           ]
+                        },
+                        "action": {
+                          "type": "string",
+                          "enum": [
+                            "status",
+                            "acquire",
+                            "renew",
+                            "release"
+                          ]
+                        },
+                        "lease": {
+                          "nullable": true,
+                          "type": "object",
+                          "properties": {
+                            "userId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "displayName": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 320
+                            },
+                            "expiresAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "ownedByCurrentUser": {
+                              "type": "boolean"
+                            },
+                            "leaseToken": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            }
+                          },
+                          "required": [
+                            "userId",
+                            "displayName",
+                            "expiresAt",
+                            "ownedByCurrentUser"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
+                        "available",
                         "action",
-                        "ok"
+                        "lease"
                       ],
                       "additionalProperties": false
                     }
