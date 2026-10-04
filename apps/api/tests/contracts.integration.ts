@@ -439,6 +439,7 @@ test('Nest API contracts reject invalid input, strip sensitive output and genera
       periods: [{ id: '22222222-2222-4222-8222-222222222222', startsOn: '2026-01-01', endsOn: '2026-12-31', closed: false, version: 1, lastTransitionReason: '' }],
       journals: [{ id: '33333333-3333-4333-8333-333333333333', periodId: '22222222-2222-4222-8222-222222222222', accountingDate: '2026-10-01', reference: 'J-001', memo: 'Opening balance', status: 'POSTED', version: 2, postedAt: '2026-10-01T01:00:00.000Z', reversalOf: null,
         lines: [{ id: '44444444-4444-4444-8444-444444444444', accountId: '11111111-1111-4111-8111-111111111111', position: 0, debit: '100.000000', credit: '0.000000' }] }],
+      expenses: [],
       balances: [{ accountId: '11111111-1111-4111-8111-111111111111', code: '1000', name: 'Cash', kind: 'ASSET', debit: '100.000000', credit: '0.000000', balance: '100.000000' }],
     }, 'Practice views serialize date-only periods, six-place accounting amounts and omit firm/actor/join columns');
     const invoiceListResponse = await server.inject({ method: 'GET', url: '/api/v1/contract-fixture/invoice-list' });
