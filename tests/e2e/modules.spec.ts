@@ -12,6 +12,41 @@ test('every module workspace renders with clear authority boundaries and mobile 
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),screen.id).toBe(true);
   }
 });
+test('Practice expenses creates and posts a classified journal through the real API boundary', async ({page}) => {
+  await page.route('**/api/v1/identity/config', route => route.fulfill({json:{provider:'development'}}));
+  const ids = { expense:'10000000-0000-4000-8000-000000000001', cash:'10000000-0000-4000-8000-000000000002', payable:'10000000-0000-4000-8000-000000000003', period:'10000000-0000-4000-8000-000000000005', journal:'10000000-0000-4000-8000-000000000006' };
+  const ledger = {currency:'QAR',accounts:[
+    {id:ids.expense,code:'500',name:'Office rent',kind:'EXPENSE',active:true,posting:true},
+    {id:ids.cash,code:'100',name:'Cash',kind:'ASSET',active:true,posting:true},
+    {id:ids.payable,code:'210',name:'Accrued expenses',kind:'LIABILITY',active:true,posting:true},
+  ],periods:[{id:ids.period,startsOn:'2026-01-01',endsOn:'2026-12-31',closed:false,version:1,lastTransitionReason:''}],journals:[],balances:[]};
+  const journal = {id:ids.journal,periodId:ids.period,accountingDate:'2026-10-04',reference:'EXP-E2E-1',memo:'[OFFICE_RENT_FACILITIES] October rent',status:'DRAFT',version:1,postedAt:null,reversalOf:null,lines:[]};
+  let draftRequest: unknown; let postRequest: unknown;
+  await page.route('**/api/v1/engagements/*/practice**', async route => {
+    const request=route.request(); const url=new URL(request.url());
+    if(request.method()==='POST' && url.pathname.endsWith('/expenses/drafts')) { draftRequest=request.postDataJSON(); await route.fulfill({json:journal}); }
+    else if(request.method()==='POST' && url.pathname.endsWith(`/journals/${ids.journal}/post`)) { postRequest=request.postDataJSON(); await route.fulfill({json:{...journal,status:'POSTED',version:2,postedAt:'2026-10-04T00:00:00.000Z'}}); }
+    else await route.fulfill({json:ledger});
+  });
+  await page.goto('/?module=Practice&view=expenses');
+  await page.getByLabel('Local development access token').fill('synthetic-practice-token');
+  await page.getByRole('button',{name:'Load accounts'}).click();
+  await expect(page.getByRole('heading',{name:'New recognition entry'})).toBeVisible();
+  await page.getByLabel('Category').selectOption('OFFICE_RENT_FACILITIES');
+  await page.getByLabel('Accounting period').selectOption(ids.period);
+  await page.getByLabel('Accounting date').fill('2026-10-04');
+  await page.getByLabel('Reference').fill('EXP-E2E-1');
+  await page.getByLabel('Amount · QAR').fill('1250.25');
+  await page.getByLabel('Classification account').selectOption(ids.expense);
+  await page.getByLabel('Counterpart account').selectOption(ids.payable);
+  await page.getByLabel('Description').fill('October rent');
+  await page.getByRole('button',{name:'Create journal draft'}).click();
+  await expect(page.getByRole('heading',{name:'Expense journal draft created'})).toBeVisible();
+  expect(draftRequest).toMatchObject({category:'OFFICE_RENT_FACILITIES',amount:'1250.25',debitAccountId:ids.expense,creditAccountId:ids.payable});
+  await page.getByRole('button',{name:'Post through firm policy'}).click();
+  await expect(page.getByText('Expense journal posted through approved policy, period, and balance controls.')).toBeVisible();
+  expect(postRequest).toMatchObject({expectedVersion:1});
+});
 test('session drafts survive module navigation and browser history preserves the workspace', async ({page}) => {
   await page.route('**/api/v1/identity/config',route=>route.fulfill({json:{provider:'development'}}));
   await page.goto('/?module=Commercial&view=leads');

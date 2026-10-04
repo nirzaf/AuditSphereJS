@@ -4,7 +4,7 @@
 
 Task ID: T144
 Requirement IDs: R077
-Implementing commit/branch: pending commit on `main`
+Implementing commit/branch: `81f40bd` on `main`; CI follow-up recorded below
 Status: IN_PROGRESS
 
 ## Intended and delivered outcome
@@ -43,6 +43,11 @@ D07 is approved by the user's explicit delegation to approve D01–D12 defaults.
 | `pnpm verify:task -- T144` | Build, canonical contracts/OpenAPI, PostgreSQL 18.6 practice ledger integration, Angular v22 component test | Passed, exit 0; PostgreSQL 1/1, Angular 3/3 | 2026-10-04 local output |
 | `pnpm verify:affected` | Boundaries, server/tests typecheck, Angular production build, Vitest | Passed, exit 0; 25 files, 114 tests | 2026-10-04 local output |
 | `pnpm lint` | ESLint and module boundaries | Passed, exit 0; zero errors, four existing warnings in the untracked `visual-prototype-simulation/worker/worker-configuration.d.ts` | 2026-10-04 local output |
+| `pnpm test:e2e` | Browser module coverage and expense draft/post journey | Passed, exit 0; 10 passed, 2 live-only tests skipped | 2026-10-04 local output |
+
+## CI follow-up
+
+GitHub Actions run [37176596479](https://github.com/nirzaf/AuditSphereJS/actions/runs/37176596479) failed in browser E2E because the generic module test still expected the now server-backed Practice expenses page to display “Preparation only”. The implementation and PostgreSQL integration checks passed. The follow-up removes the stale preparation metadata and adds a Playwright expense creation/posting journey. The full local browser suite now passes (10 passed, 2 live-only skipped); the follow-up push's CI result remains pending.
 
 The PostgreSQL test uses Testcontainers and the pinned `postgres:18.6` fixture. The web test intercepts the API. Neither is live M365 storage acceptance. The browser confirmed the signed-in test account can read its synthetic engagement but receives the expected firm-wide Practice permission denial.
 
