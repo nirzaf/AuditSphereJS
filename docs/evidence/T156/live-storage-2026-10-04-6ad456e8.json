@@ -1,0 +1,45 @@
+{
+  "runId": "6ad456e8-d35a-48ff-a5c1-38ca6545f7a1",
+  "checkedAt": "2026-10-04T02:15:56Z",
+  "testedCommit": "working tree based on ae527662962aa4c1e41664b50b3c823780061553",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156",
+  "result": {
+    "adapterUnitTests": "10 passed",
+    "liveProviderTests": "2 passed, 0 failed, 0 skipped"
+  },
+  "scope": [
+    "SharePoint and OneDrive streamed the selected immutable versions to private files with matching bytes, size and SHA-256",
+    "Same-size external edits did not substitute bytes for an accepted version",
+    "Writes outside both selected folders returned HTTP 403",
+    "Only uniquely named test-created synthetic files were deleted; deleted-item reads failed closed",
+    "Adapter tests exercised access-token refresh, sanitized consent denial, Graph 429 handling, and an upload transport failure without automatic replay",
+    "The built-in browser showed the mapped Staff Fixture identity and its one authorized synthetic engagement"
+  ],
+  "providers": [
+    {
+      "provider": "SHAREPOINT",
+      "checkedAt": "2026-10-04T02:15:45.783Z",
+      "byteCount": 131,
+      "sha256": "5b2f065809b3a43f60c92ed5ff7e31a48a7258955aefc0d5dabc7da876b038c3",
+      "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+      "versionIdentityHash": "610c645ef11ea79d99faca8bfcffcac8f8e4d9b9a359c3f4488ccd82de174ce2",
+      "fixtureRetained": false,
+      "deletedReadOutcome": "READ_FAILS_CLOSED"
+    },
+    {
+      "provider": "ONEDRIVE",
+      "checkedAt": "2026-10-04T02:15:56.497Z",
+      "byteCount": 129,
+      "sha256": "8cd680d933f82a192b1cb1fb4ec69065d0cea11f56b66272311f736fd7a4aff6",
+      "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+      "versionIdentityHash": "2388bce8f2e8b0ae892436ae76f54704d59ee37ff792ef86953d26e4e9f35a30",
+      "fixtureRetained": false,
+      "deletedReadOutcome": "READ_FAILS_CLOSED"
+    }
+  ],
+  "limitations": [
+    "Consent denial, throttling and unknown upload outcome use deterministic adapter responses; no live tenant grant was revoked or modified",
+    "The live storage test exercises the provider adapter rather than a complete authenticated API upload route",
+    "This acceptance does not establish production readiness, legal retention or hold, or production data residency"
+  ]
+}

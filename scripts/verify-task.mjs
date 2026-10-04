@@ -40,7 +40,7 @@ const tasks = {
   T018: ['build:server', 'scope-jobs', 'scope-database', 'scope-repository', 'scope-authorization', 'scope-boundary'],
   T009: ['typecheck', 'api-shell', 'config'],
   T044: ['build:server', 'trial-balance-csv'],
-  T156: ['m365-storage-live'],
+  T156: ['storage', 'm365-storage-live'],
   T149: ['build:server', 'm365-policy', 'config'],
   T150: ['typecheck', 'dependencies:check', 'identity', 'storage', 'config', 'test:web:identity'],
   T151: ['build:server', 'identity', 'identity-session', 'identity-map', 'identity-boundary', 'authorization', 'test:web:identity'],

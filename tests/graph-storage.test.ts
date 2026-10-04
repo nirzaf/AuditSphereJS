@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { GraphStorage, configuredGraphStorage, decodeGraphReference } from '../packages/server/src/platform/graph-storage.js';
@@ -169,5 +169,67 @@ describe('Graph evidence storage', () => {
     const foreignFolder = reference({ driveId: evidence.driveId, repositoryFolderId: 'another-client-folder', itemId: 'x', versionId: '1', eTag: 'v', sha256: '0'.repeat(64), sizeBytes: 1 });
     const noNetworkStorage = new GraphStorage(config, (async () => { throw new Error('A repository mismatch must be rejected before Graph access'); }) as typeof fetch);
     await expect(noNetworkStorage.get(evidence, foreignFolder)).rejects.toThrow('does not belong to this client repository folder');
+  });
+
+  it('requests a fresh token after the cached access token enters its expiry window', async () => {
+    const now = 1_800_000_000_000;
+    const systemClock = vi.spyOn(Date, 'now').mockReturnValue(now);
+    let tokenRequests = 0;
+    const request = (async (url) => {
+      if (String(url).includes('/token')) {
+        tokenRequests++;
+        return Response.json({ access_token: `token-${tokenRequests}`, expires_in: 120 });
+      }
+      return Response.json({ error: 'forbidden' }, { status: 403 });
+    }) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+    const ref = reference({ driveId: 'sp', repositoryFolderId: 'evidence', itemId: 'file', versionId: 'v1', eTag: 'v1', sha256: 'a'.repeat(64), sizeBytes: 1 });
+
+    try {
+      await expect(storage.get(evidence, ref)).rejects.toThrow('Graph version metadata failed (403)');
+      systemClock.mockReturnValue(now + 61_000);
+      await expect(storage.get(evidence, ref)).rejects.toThrow('Graph version metadata failed (403)');
+      expect(tokenRequests).toBe(2);
+    } finally {
+      systemClock.mockRestore();
+    }
+  });
+
+  it('fails closed on revoked or missing consent without exposing OAuth response details', async () => {
+    const request = (async () => Response.json({ error: 'invalid_grant', error_description: 'private acceptance credential detail' }, { status: 400 })) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+
+    await expect(storage.put(evidence, 'consent-check.txt', Buffer.from('synthetic'))).rejects.toThrow('Graph authentication failed (400)');
+    await expect(storage.put(evidence, 'consent-check.txt', Buffer.from('synthetic'))).rejects.not.toThrow('private acceptance credential detail');
+  });
+
+  it('surfaces Graph throttling without retrying the operation automatically', async () => {
+    let graphRequests = 0;
+    const request = (async (url) => {
+      if (String(url).includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
+      graphRequests++;
+      return Response.json({ error: { code: 'tooManyRequests' } }, { status: 429, headers: { 'Retry-After': '1' } });
+    }) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+    const ref = reference({ driveId: 'sp', repositoryFolderId: 'evidence', itemId: 'file', versionId: 'v1', eTag: 'v1', sha256: 'a'.repeat(64), sizeBytes: 1 });
+
+    await expect(storage.get(evidence, ref)).rejects.toThrow('Graph version metadata failed (429)');
+    expect(graphRequests).toBe(1);
+  });
+
+  it('does not replay an upload after a transport failure leaves the provider outcome unknown', async () => {
+    let uploadRequests = 0;
+    const request = (async (url, init) => {
+      if (String(url).includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
+      if (init?.method === 'PUT') {
+        uploadRequests++;
+        throw new Error('synthetic connection closed after request dispatch');
+      }
+      throw new Error('Unexpected request');
+    }) as typeof fetch;
+    const storage = new GraphStorage(config, request);
+
+    await expect(storage.put(evidence, 'unknown-outcome.txt', Buffer.from('synthetic'))).rejects.toThrow('synthetic connection closed after request dispatch');
+    expect(uploadRequests).toBe(1);
   });
 });

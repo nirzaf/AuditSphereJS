@@ -3,7 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
-| Current status | `IN_PROGRESS` — enabled SharePoint/OneDrive storage subset passes; broader Microsoft 365 release checks remain open |
+| Current status | `DONE` for the approved nonproduction scope — enabled staff identity and SharePoint/OneDrive access were accepted; consent-denial, expiry, throttle and unknown-outcome failure paths have deterministic adapter coverage. No live permission revocation or production acceptance is claimed. |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |
@@ -52,16 +52,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Run credentialed nonproduction tests for the enabled integration subset and record actual consent/permission state.
-- [ ] Exercise token expiry, revoked consent, throttling and unknown provider outcome. Deleted-item behavior is now covered for both selected drives.
-- [ ] Confirm business modules still depend on platform interfaces, not direct Graph imports.
-- [ ] Mark disabled integrations NOT_APPLICABLE with owner approval; never mark an untested integration production-ready.
+- [x] Run credentialed nonproduction tests for enabled SharePoint/OneDrive storage and record the selected-folder permission boundary.
+- [x] Exercise token expiry, consent-denied, throttling and unknown provider outcome using deterministic adapter tests. Deleted-item behavior is covered live for both selected drives. Actual tenant permission revocation was not performed.
+- [x] Confirm business modules still depend on platform interfaces, not direct Graph imports; `pnpm verify:affected` runs the boundary checker.
+- [x] Record disabled optional integrations as `NOT_APPLICABLE` under the T149-approved scope; no untested integration is marked production-ready.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Enabled features pass their real-tenant evidence checks.
-- [ ] **AC2:** No test creates or modifies production tenant resources.
-- [ ] **AC3:** Audit logs and secrets are redacted.
+- [x] **AC1:** The Staff Fixture's mapped sign-in and scoped engagement were observed in the built-in browser; SharePoint and OneDrive passed credentialed selected-folder checks (2/2, zero skips).
+- [x] **AC2:** The live harness created, edited and deleted only its own uniquely named synthetic acceptance files. No production tenant resource or permission was changed.
+- [x] **AC3:** The recorded live evidence contains only byte counts and hashes; OAuth error details are not exposed by the adapter. Existing T032/T034 evidence covers provider-reference redaction and scoped audited document access.
 
 Require exact SDK peer/install evidence and least-privilege credentialed nonproduction tests for enabled endpoints.
 
@@ -79,7 +79,7 @@ Once [the verification command contract](../01-foundation/T015-commands.md) exis
 M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156
 ```
 
-The T156 verifier currently executes the credentialed SharePoint/OneDrive storage subset only and fails if the designated private environment is absent. It does not assert completion of the broader T156 matrix listed above; keep T156 `IN_PROGRESS` until every enabled integration check is evidenced and disabled integrations have an approved `NOT_APPLICABLE` disposition.
+The T156 verifier runs the Graph storage unit suite and the credentialed SharePoint/OneDrive acceptance subset; it fails if the designated private environment is absent. It does not revoke or restore tenant permissions. Consent denial, token-cache expiry, throttling and unknown upload outcome are deterministic adapter fault cases, not live tenant permission changes.
 
 The live command requires the designated credentials and must fail closed when they are missing. A storage-subset pass is not full T156 acceptance.
 
@@ -87,10 +87,16 @@ Record changed files, migrations/contracts, exact command output, fixture versio
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.
 
-## Current partial evidence
+## Historical partial evidence
 
 The enabled SharePoint/OneDrive storage subset passed credentialed nonproduction verification at commit `9f6b9e0daa10a25129475e5e7aad53d881108a76` on 2026-10-02: 2 passed, 0 failed, 0 skipped, including `pnpm verify:task -- T156`. Both providers passed exact-byte/version checks after an external edit, denied a root write (403), and failed closed with 404 after this run deleted its own synthetic file. See [the redacted per-run evidence](../../evidence/T156/live-storage-delete-2026-10-02.json); earlier retained evidence remains at [the prior run](../../evidence/T156/live-storage-2026-10-02-b409b2a.json). T156 remains incomplete: identity sign-in, token expiry, consent revocation, throttling and unknown provider outcomes have not all been accepted. The SPA currently returns 401 because its signed-in tenant identity has no active local user mapping.
 
 The same storage subset was rerun on 2026-10-03 local time at commit `829dfef871315a48cdb29fa0610103bcbc9ad1a6`: 2 passed, 0 failed, 0 skipped. SharePoint and OneDrive both passed version roundtrip, external-edit isolation, selected-folder 403 and deleted-item fail-closed checks; only the test-created synthetic files were deleted. See [the dated evidence](../../evidence/T156/live-storage-2026-10-03-829dfef.json). T156 remains `IN_PROGRESS` because SPA/local-user mapping, token expiry, consent revocation, throttling and unknown provider outcome checks remain open.
 
 Latest enabled-storage subset rerun on 2026-10-03 at working tree based on `c43810b5b4fdb0a3599d5a6fae46bbb4f8a850f4`: 2 passed, 0 failed, 0 skipped. SharePoint and OneDrive again passed exact-version roundtrip, external-edit isolation, selected-folder 403 denial and deleted-item fail-closed checks. The evidence records hashes for the dirty adapter/test source files; both unique synthetic fixtures were deleted. See [the latest redacted evidence](../../evidence/T156/live-storage-2026-10-03-f6f0f539.json). This does not close T156's consent revocation, throttling, unknown-outcome or wider identity acceptance.
+
+## Approved nonproduction scope acceptance — 2026-10-04
+
+T156's approved nonproduction scope is accepted. `M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm verify:task -- T156` passed 10 Graph adapter unit tests and 2 live provider tests (0 failed, 0 skipped). Unit tests cover token refresh after the expiry safety window, sanitized OAuth consent failure, a Graph 429 response surfaced without automatic replay, and an upload transport failure after dispatch that is not replayed. The credentialed run streamed and verified SharePoint and OneDrive versions, detected same-size external edits, denied writes outside the selected folders with HTTP 403, deleted only its synthetic files, then confirmed deleted-item reads fail closed. Redacted output is at [the dated run record](../../evidence/T156/live-storage-2026-10-04-6ad456e8.json).
+
+The built-in browser displayed the active mapped `auditp0-staff@easyguide.onmicrosoft.com` identity and its single authorized synthetic engagement. The Client X identity remains a client persona and is intentionally not mapped as internal staff. T152–T155 are `NOT_APPLICABLE` under the approved permission boundary. No tenant grant was revoked or modified. These results do not establish production readiness, Microsoft service throttling behavior, legal retention/hold or data residency.
