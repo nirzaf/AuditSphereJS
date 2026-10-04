@@ -4,6 +4,8 @@
   <practice-rates [token]="token()" [engagementId]="engagementId()" [entra]="entra()" />
 } @else if (screen().id === 'expenses') {
   <practice-expenses [token]="token()" [engagementId]="engagementId()" [entra]="entra()" />
+} @else if (screen().id === 'statements') {
+  <practice-trial-balance [token]="token()" [engagementId]="engagementId()" [entra]="entra()" />
 } @else if (screen().id === 'templates') {
   <document-templates [token]="token()" [engagementId]="engagementId()" [entra]="entra()" />
 } @else {

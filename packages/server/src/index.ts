@@ -7,6 +7,7 @@ export { createLead, listLeads, profileLead, advanceLeadToProposal } from './mod
 export { issueInvoice, recordInvoicePayment, issueInvoiceReceipt, voidInvoice, listInvoices } from './modules/practice/invoices.js';
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
 export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';
+export { firmTrialBalance, firmTrialBalanceAccount } from './modules/practice/trial-balance.js';
 export { PracticeRatesController } from './modules/practice/rates-controller.js';
 export { ensurePracticeRateDefaultsForFirm, listPracticeRateAdministration, schedulePracticeRateCard, assignPracticeStaffGrade, recordAuthorizedPracticeTimeEntrySnapshot, calculatePracticeChargeOutValue } from './modules/practice/rates.js';
 export type { PracticeTimeSnapshotInput } from './modules/practice/rates.js';

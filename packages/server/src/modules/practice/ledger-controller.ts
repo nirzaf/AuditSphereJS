@@ -4,18 +4,20 @@ import {
   apiProblemSchema, invoiceReceiptSchema, invoiceIssuedResultSchema, invoicePaymentResultSchema,
   invoiceReceiptResultSchema, invoiceViewSchema, invoicesSchema, issueInvoiceSchema, invoiceVoidResultSchema, voidInvoiceSchema, practiceAccountSchema,
   practiceAccountViewSchema, practiceJournalViewSchema, practiceLedgerSchema, practicePeriodTransitionResultSchema,
+  practiceFirmTrialBalanceQuerySchema, practiceFirmTrialBalanceSchema, practiceFirmTrialBalanceDetailQuerySchema, practiceFirmTrialBalanceDetailSchema,
   practicePeriodViewSchema, practicePostingPolicyViewSchema,
   practiceJournalSchema, practicePeriodSchema, practicePeriodTransitionSchema,
   practicePostingPolicySchema, practiceReverseJournalSchema, practiceVersionSchema, practiceExpenseDraftSchema, practiceExpenseSettlementSchema,
   practiceExpenseReceiptViewSchema, practiceExpenseReceiptsSchema,
   recordPaymentSchema, paginationQuerySchema,
 } from '@auditsphere/contracts';
-import type { InvoiceReceiptRequest, PaginationQuery } from '@auditsphere/contracts';
+import type { InvoiceReceiptRequest, PaginationQuery, PracticeFirmTrialBalanceQuery, PracticeFirmTrialBalanceDetailQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
 import { issueInvoice, issueInvoiceReceipt, listInvoices, recordInvoicePayment, voidInvoice } from './invoices.js';
 import { attachPracticeExpenseReceipt, listPracticeExpenseReceipts } from './expense-receipts.js';
+import { firmTrialBalance, firmTrialBalanceAccount } from './trial-balance.js';
 import type { UploadFilePart } from '../../platform/document-uploads.js';
 import { toPracticeAccountView, toPracticeInvoiceView, toPracticeJournalView, toPracticeLedgerView, toPracticePeriodView } from './practice-response.js';
 
@@ -24,6 +26,20 @@ type MultipartRequest = { file: (options?: { limits?: { fileSize?: number; files
 @ApiTags('Practice ledger') @ApiBearerAuth() @ApiDefaultResponse({ standardSchema: apiProblemSchema }) @UseGuards(InternalGuard) @UsePipes(new StandardSchemaValidationPipe()) @UseInterceptors(StandardSchemaSerializerInterceptor)
 @Controller('engagements/:engagementId/practice')
 export class PracticeLedgerController {
+  @Get('reports/trial-balance')
+  @ApiOkResponse({ standardSchema: practiceFirmTrialBalanceSchema })
+  @SerializeOptions({ schema: practiceFirmTrialBalanceSchema })
+  trialBalance(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Query({ schema: practiceFirmTrialBalanceQuerySchema }) query: PracticeFirmTrialBalanceQuery) {
+    return firmTrialBalance(actorId, engagementId, query);
+  }
+
+  @Get('reports/trial-balance/accounts/:accountId')
+  @ApiOkResponse({ standardSchema: practiceFirmTrialBalanceDetailSchema })
+  @SerializeOptions({ schema: practiceFirmTrialBalanceDetailSchema })
+  trialBalanceAccount(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('accountId') accountId: string, @Query({ schema: practiceFirmTrialBalanceDetailQuerySchema }) query: PracticeFirmTrialBalanceDetailQuery) {
+    return firmTrialBalanceAccount(actorId, engagementId, accountId, query);
+  }
+
   @Get('expenses/:journalId/receipts')
   @ApiOkResponse({ standardSchema: practiceExpenseReceiptViewSchema, isArray: true })
   @SerializeOptions({ schema: practiceExpenseReceiptViewSchema })

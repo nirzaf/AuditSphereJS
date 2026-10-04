@@ -42,7 +42,7 @@ Verified 2026-10-04. 38 workspaces across five modules; 11 connected views and 2
 | Practice | Engagement profitability | Session-only preparation; persistence and execution pending |
 | Practice | Billing & receivables | Session-only preparation; persistence and execution pending |
 | Practice | Operating expenses | API-backed expense drafts/posting, liability settlements and immutable firm-private receipt attachment; requires firm-wide Practice grants |
-| Practice | Firm financial reports | Session-only preparation; persistence and execution pending |
+| Practice | Firm financial reports | API-backed firm trial balance with account drill-down and deterministic export; monthly P/L and AR aging remain pending |
 
 ## Verification
 
@@ -119,6 +119,8 @@ Practice now has an API-backed rate-card and staff-grade screen. The server seed
 Angular CLI MCP guidance was consulted; the screen is standalone/OnPush with signal state, typed reactive forms, shared contracts, accessible labels and explicit loading/error states. `pnpm verify:task -- T139` passed, including 4 Angular tests. `pnpm verify:affected` passed with 22 Vitest files / 96 tests and the Angular production build.
 
 In the built-in browser, the existing `auditp0-staff@easyguide.onmicrosoft.com` Staff Fixture now confirms as an active local PREPARER and returns its one synthetic assigned engagement, resolving the earlier active-staff identity warning after a fresh sign-in. The Rate cards & staff grades screen returns the designed firm-wide Practice permission denial for this PREPARER. No permission, grant or business record was changed; successful live rate administration remains unverified.
+
+Firm financial reports update — 2026-10-05: the Practice Firm trial balance view now calls the protected PostgreSQL-backed report API, displays opening/period/closing totals and account lines, and provides paginated history plus a deterministic CSV export. PostgreSQL and Angular tests pass. The built-in browser authenticated as the existing Staff Fixture and loaded the view; its `PRACTICE_READ` request received the intended 403 because the account has only engagement-scoped `ENGAGEMENT_READ`. No permission was added. Live positive Practice access remains unverified.
 
 ## Identity configuration recovery - 2026-10-04
 

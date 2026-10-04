@@ -1330,6 +1330,7 @@ model PracticePeriod {
   lastTransitionActor  User?    @relation("PracticePeriodTransitionActor", fields: [lastTransitionBy], references: [id], onDelete: Restrict)
 
   @@unique([firmId, id])
+  @@index([firmId, startsOn], map: "PracticePeriod_firm_starts_on_idx")
 }
 
 model PracticeJournal {
@@ -1354,6 +1355,7 @@ model PracticeJournal {
 
   @@unique([firmId, reference])
   @@unique([firmId, id])
+  @@index([firmId, status, accountingDate], map: "PracticeJournal_firm_status_date_idx")
 }
 
 /// Immutable classified recognition metadata pinned to the original firm journal.
@@ -1486,6 +1488,7 @@ model PracticeJournalLine {
   credit    Decimal         @db.Decimal(28, 6)
 
   @@unique([journalId, position])
+  @@index([firmId, journalId, accountId], map: "PracticeJournalLine_firm_journal_account_idx")
 }
 
 model AuditChainRecord {

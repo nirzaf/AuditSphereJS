@@ -423,6 +423,36 @@ export const practiceBalanceViewSchema = z.object({
   accountId: z.uuid(), code: z.string().trim().min(1).max(30), name: z.string().trim().min(1).max(150),
   kind: z.enum(['ASSET', 'LIABILITY', 'EQUITY', 'INCOME', 'EXPENSE']), debit: moneySchema, credit: moneySchema, balance: moneySchema,
 });
+export const practiceFirmTrialBalanceQuerySchema = z.object({ periodId: z.uuid().optional() });
+export const practiceFirmTrialBalanceDetailQuerySchema = z.object({
+  periodId: z.uuid(), page: z.coerce.number().int().min(1).max(10_000).default(1), pageSize: z.coerce.number().int().min(1).max(200).default(50),
+});
+export const practiceFirmTrialBalanceRowSchema = z.object({
+  accountId: z.uuid(), code: z.string().trim().min(1).max(30), name: z.string().trim().min(1).max(150),
+  kind: z.enum(['ASSET', 'LIABILITY', 'EQUITY', 'INCOME', 'EXPENSE']),
+  openingBalance: moneySchema, openingDebit: moneySchema, openingCredit: moneySchema,
+  periodDebit: moneySchema, periodCredit: moneySchema,
+  closingBalance: moneySchema, closingDebit: moneySchema, closingCredit: moneySchema,
+});
+export const practiceFirmTrialBalanceTotalsSchema = z.object({
+  openingDebit: moneySchema, openingCredit: moneySchema, periodDebit: moneySchema, periodCredit: moneySchema,
+  closingDebit: moneySchema, closingCredit: moneySchema,
+});
+export const practiceFirmTrialBalanceSchema = z.object({
+  currency: z.literal('QAR'), periods: z.array(practicePeriodViewSchema).max(5_000), periodId: z.uuid(),
+  startsOn: z.iso.date(), endsOn: z.iso.date(), rows: z.array(practiceFirmTrialBalanceRowSchema).max(10_000),
+  totals: practiceFirmTrialBalanceTotalsSchema, snapshotHash: z.string().regex(/^[a-f0-9]{64}$/),
+});
+export const practiceFirmTrialBalanceEntrySchema = z.object({
+  id: z.uuid(), journalId: z.uuid(), accountingDate: z.iso.date(), reference: z.string().trim().min(1).max(80),
+  memo: z.string().trim().min(1).max(500), position: z.number().int().nonnegative(), debit: moneySchema, credit: moneySchema,
+  isOpeningBalance: z.boolean(), reversalOf: z.uuid().nullable(), reversedBy: z.boolean(),
+});
+export const practiceFirmTrialBalanceDetailSchema = z.object({
+  periodId: z.uuid(), account: practiceFirmTrialBalanceRowSchema, page: z.number().int().positive(),
+  pageSize: z.number().int().positive().max(200), totalCount: z.number().int().nonnegative(),
+  entries: z.array(practiceFirmTrialBalanceEntrySchema).max(200),
+});
 export const practiceLedgerSchema = z.object({
   currency: z.string().regex(/^[A-Z]{3}$/), accounts: z.array(practiceAccountViewSchema).max(10_000),
   periods: z.array(practicePeriodViewSchema).max(5_000), journals: z.array(practiceJournalViewSchema).max(100),
@@ -706,6 +736,13 @@ export const contractSchemas = {
   practiceExpenseView: practiceExpenseViewSchema,
   practiceExpenseReceiptView: practiceExpenseReceiptViewSchema, practiceExpenseReceipts: practiceExpenseReceiptsSchema,
   practiceBalanceView: practiceBalanceViewSchema, practiceLedger: practiceLedgerSchema,
+  practiceFirmTrialBalanceQuery: practiceFirmTrialBalanceQuerySchema,
+  practiceFirmTrialBalanceDetailQuery: practiceFirmTrialBalanceDetailQuerySchema,
+  practiceFirmTrialBalanceRow: practiceFirmTrialBalanceRowSchema,
+  practiceFirmTrialBalanceTotals: practiceFirmTrialBalanceTotalsSchema,
+  practiceFirmTrialBalance: practiceFirmTrialBalanceSchema,
+  practiceFirmTrialBalanceEntry: practiceFirmTrialBalanceEntrySchema,
+  practiceFirmTrialBalanceDetail: practiceFirmTrialBalanceDetailSchema,
   practiceJobGrade: practiceJobGradeSchema, practiceRateCardView: practiceRateCardViewSchema,
   practiceStaffView: practiceStaffViewSchema, practiceStaffGradeAssignmentView: practiceStaffGradeAssignmentViewSchema,
   practiceRateAdministration: practiceRateAdministrationSchema, createPracticeRateCard: createPracticeRateCardSchema,
@@ -816,6 +853,10 @@ export type RiskOwnerAssignmentResult = z.infer<typeof riskOwnerAssignmentResult
 export type AuditCheckpoint = z.infer<typeof auditCheckpointSchema>;
 export type AuditEvent = z.infer<typeof auditEventSchema>;
 export type PracticeLedger = z.infer<typeof practiceLedgerSchema>;
+export type PracticeFirmTrialBalanceQuery = z.infer<typeof practiceFirmTrialBalanceQuerySchema>;
+export type PracticeFirmTrialBalanceDetailQuery = z.infer<typeof practiceFirmTrialBalanceDetailQuerySchema>;
+export type PracticeFirmTrialBalance = z.infer<typeof practiceFirmTrialBalanceSchema>;
+export type PracticeFirmTrialBalanceDetail = z.infer<typeof practiceFirmTrialBalanceDetailSchema>;
 export type PracticeJobGrade = z.infer<typeof practiceJobGradeSchema>;
 export type PracticeRateAdministration = z.infer<typeof practiceRateAdministrationSchema>;
 export type PracticeRateCardView = z.infer<typeof practiceRateCardViewSchema>;

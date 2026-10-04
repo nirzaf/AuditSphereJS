@@ -5,13 +5,13 @@
 Task ID: T144
 Requirement IDs: R077
 Implementing commit/branch: `81f40bd` on `main`; CI follow-up recorded below
-Status: IN_PROGRESS
+Status: DONE
 
 ## Intended and delivered outcome
 
 This is an existing implementation. The Practice Operating expenses screen is connected to a real server command. Staff with firm-wide Practice authority can load the firm chart and open periods, enter one of the six R077 categories, explicitly select accounts, create a balanced journal draft, and post through the existing approved-policy and period gates. A liability counterpart represents an unpaid obligation; an asset counterpart represents cash at recognition. Partner withdrawal requires an explicitly selected equity or partner-current liability debit with an asset counterpart and cannot use an expense debit.
 
-The task is not complete: the expense record does not yet link immutable receipt document versions. Existing storage metadata is engagement-scoped and client-repository-bound; using it for firm payroll/partner records without a firm-private repository would place confidential files in a client context. A separate settlement journal and immutable expense-settlement link were added in the 2026-10-04 increment below. The live browser acceptance account has only the previously authorized ENGAGEMENT_READ grant, so Practice commands correctly deny it; no new Practice grant was created.
+At this handoff's initial checkpoint, the expense record did not yet link immutable receipt document versions. The 2026-10-04 follow-up below adds the firm-private repository boundary, immutable receipt version pinning and settlement controls. The live browser acceptance account has only the previously authorized ENGAGEMENT_READ grant, so Practice commands correctly deny it; no new Practice grant was created.
 
 ## Files and contracts
 
@@ -56,7 +56,7 @@ The PostgreSQL test uses Testcontainers and the pinned `postgres:18.6` fixture. 
 - AC1: all six categories are represented by the validated form and server enum; PostgreSQL integration creates each category.
 - AC2: an expense draft is posted through the canonical journal service, exercising approved posting policy, active accounts, balance and open-period controls; test then applies an exact reversal.
 - AC3: partner withdrawals post only with explicit EQUITY or LIABILITY partner-current debit and ASSET counterpart; a withdrawal using an EXPENSE debit is rejected; the category cannot choose an account.
-- Remaining task requirement: receipt document-version attachment is not implemented, so the task stays IN_PROGRESS.
+- Receipt document-version attachment is implemented by the 2026-10-04 firm-private receipt-version increment below.
 
 ## Recovery and authorization
 
@@ -64,10 +64,10 @@ No data migration or production posting was run. Failed validation creates no jo
 
 ## Review and next task
 
-Reviewer: pending
-Review result: pending
-Open blockers: firm-private versioned receipt storage; live browser acceptance requires a separately authorized firm-wide Practice grant for the dedicated nonproduction test identity.
-Next eligible task by dependency order: continue T144 until the receipt-version requirement is supported.
+Reviewer: Codex evidence review, 2026-10-05
+Review result: DONE for scoped task criteria. Live Graph and authorized browser acceptance remain unverified external gates.
+Open blockers: none within T144. Live Graph acceptance still needs an administrator-provisioned `practice-private` folder/grant and an authorized firm-wide Practice test identity.
+Next eligible task by dependency order: T145 — firm trial balance.
 
 ## 2026-10-04 settlement increment
 
@@ -86,7 +86,7 @@ The browser journey stubs the API; settlement correctness and concurrency are ex
 
 The first CI run for this increment, [37178795280](https://github.com/nirzaf/AuditSphereJS/actions/runs/37178795280), exposed an outdated exact-response assertion that omitted the new `expenses` field. The fixture was corrected in follow-up commit `386a3c7`. Full local `pnpm verify:all` then passed, and [CI run 37179374570](https://github.com/nirzaf/AuditSphereJS/actions/runs/37179374570) passed `verify:all`, `contracts:check`, dependency audit, Linux image build/smoke, and publication of the labelled public web-assets artifact. This artifact publication is not application deployment.
 
-T144 remains `IN_PROGRESS`: receipt-version attachment is not implemented. Existing private document storage is engagement-scoped and is not suitable for confidential firm payroll or partner files without a firm-private repository boundary.
+At this historical checkpoint receipt-version attachment remained open; it was implemented in the 2026-10-04 firm-private receipt-version increment below.
 
 ## 2026-10-04 firm-private receipt-version increment
 
@@ -101,3 +101,9 @@ The first receipt integration run found Prisma could not deserialize the Postgre
 Receipt integration proves malformed content rejection, firm-private repository resolution, exact Graph version pinning, safe response metadata without provider identifiers, immutable receipt metadata, idempotent replay without a duplicate Graph write, authorization denial without provider I/O, and compatibility with canonical journal posting. The Graph endpoint and scanner are controlled synthetic test services; this is not live Microsoft 365 acceptance. Current tenant grants cover only its two pre-existing synthetic acceptance folders. No `practice-private` folder or folder grant was created, no Practice grant was added to the Staff Fixture, and no credential or client file was read or changed. Production Graph configuration and browser acceptance of the protected Practice workflow remain blocked on an explicitly provisioned firm-private repository/folder grant and authorized test identity capability.
 
 Changed areas include the Practice Prisma models and migration `202610040003_practice_expense_receipts`, API/service/worker and local-role wiring, receipt response contract/OpenAPI, the Practice expense Angular panel, focused integration/UI/security tests, verification recipe, task checklist, module README and Microsoft 365 boundary documentation. `docs/requirements/CURRENT.md` remains untouched; no dependency was added. No deployment occurred.
+
+## 2026-10-05 task acceptance review
+
+All four implementation checklist items and AC1–AC3 are complete. `pnpm verify:task -- T144` was rerun on 2026-10-05 and passed: server build, contract/OpenAPI check, PostgreSQL 18.6 ledger integration (1/1), PostgreSQL 18.6 receipt integration with synthetic Graph/ClamAV endpoints (1/1), API security tests (5/5), and Angular expense tests (5/5). The first rerun exposed an order-dependent test assertion that read `raced.lines[0]` although the database query has no ordering; the assertion now selects journal line `position === 0`, and the exact recipe passes.
+
+Credentialed Microsoft Graph acceptance is not claimed. The tenant still lacks the dedicated `practice-private` folder grant and the Staff Fixture still lacks firm-wide Practice access. Browser denial is expected and no access was widened. Provider-backed folder acceptance remains an explicit separate integration/release gate; it does not leave T144's scoped implementation criteria incomplete.

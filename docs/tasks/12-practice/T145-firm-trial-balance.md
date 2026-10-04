@@ -42,16 +42,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Query posted firm journals by accounting date and period with opening balance, debits, credits and closing balance.
-- [ ] Exclude drafts and never aggregate client audit TBs into firm accounting.
-- [ ] Provide account drill-down and a deterministic export snapshot.
-- [ ] Use decimal database aggregation and index the measured query path.
+- [x] Query posted firm journals by accounting date and period with opening balance, debits, credits and closing balance.
+- [x] Exclude drafts and never aggregate client audit TBs into firm accounting.
+- [x] Provide account drill-down including all posted history through period end and a deterministic export snapshot.
+- [x] Use decimal database aggregation and index the journal-date/journal-line query path.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Debits and credits reconcile across the selected period.
-- [ ] **AC2:** Drill-down totals equal the displayed account balance.
-- [ ] **AC3:** Draft, reversed and prior-period examples match golden expectations.
+- [x] **AC1:** Debits and credits reconcile across the selected period.
+- [x] **AC2:** Complete posted-history drill-down totals equal the displayed closing account balance.
+- [x] **AC3:** Draft, reversed and prior-period examples match golden expectations.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 
@@ -71,6 +71,6 @@ pnpm verify:task -- T145
 
 Before that script exists, record the actual available compile/test/review commands instead. The command above is a **target repository script to implement**, not a claim that an application is included in this ZIP. A verification run must not pass with zero intended tests.
 
-Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. Do not merge or deploy from this task without separate authorization.
+Record changed files, migrations/contracts, exact command output, fixture versions, unresolved decisions and limitations using [the handoff template](../../templates/task-handoff.md). Update [the execution ledger](../../guides/13-execution-ledger.md) only after review. `docs/evidence/T145/handoff.md` records the verification and the restricted live browser result. Do not merge or deploy from this task without separate authorization.
 
 **Stop when:** the scoped outcome and all acceptance criteria are proven. Do not continue into the next feature or add unrelated abstractions.

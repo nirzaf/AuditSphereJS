@@ -1261,6 +1261,635 @@
     ],
     "additionalProperties": false
   },
+  "practiceFirmTrialBalanceQuery": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "periodId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      }
+    },
+    "additionalProperties": false
+  },
+  "practiceFirmTrialBalanceDetailQuery": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "periodId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "page": {
+        "default": 1,
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 10000
+      },
+      "pageSize": {
+        "default": 50,
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 200
+      }
+    },
+    "required": [
+      "periodId",
+      "page",
+      "pageSize"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmTrialBalanceRow": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "accountId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "code": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 30
+      },
+      "name": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 150
+      },
+      "kind": {
+        "type": "string",
+        "enum": [
+          "ASSET",
+          "LIABILITY",
+          "EQUITY",
+          "INCOME",
+          "EXPENSE"
+        ]
+      },
+      "openingBalance": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "openingDebit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "openingCredit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "periodDebit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "periodCredit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "closingBalance": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "closingDebit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "closingCredit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      }
+    },
+    "required": [
+      "accountId",
+      "code",
+      "name",
+      "kind",
+      "openingBalance",
+      "openingDebit",
+      "openingCredit",
+      "periodDebit",
+      "periodCredit",
+      "closingBalance",
+      "closingDebit",
+      "closingCredit"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmTrialBalanceTotals": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "openingDebit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "openingCredit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "periodDebit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "periodCredit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "closingDebit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "closingCredit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      }
+    },
+    "required": [
+      "openingDebit",
+      "openingCredit",
+      "periodDebit",
+      "periodCredit",
+      "closingDebit",
+      "closingCredit"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmTrialBalance": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "currency": {
+        "type": "string",
+        "const": "QAR"
+      },
+      "periods": {
+        "maxItems": 5000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "startsOn": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "endsOn": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "closed": {
+              "type": "boolean"
+            },
+            "version": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "lastTransitionReason": {
+              "type": "string",
+              "maxLength": 1000
+            }
+          },
+          "required": [
+            "id",
+            "startsOn",
+            "endsOn",
+            "closed",
+            "version",
+            "lastTransitionReason"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "periodId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "startsOn": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+      },
+      "endsOn": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+      },
+      "rows": {
+        "maxItems": 10000,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "accountId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "code": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 30
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 150
+            },
+            "kind": {
+              "type": "string",
+              "enum": [
+                "ASSET",
+                "LIABILITY",
+                "EQUITY",
+                "INCOME",
+                "EXPENSE"
+              ]
+            },
+            "openingBalance": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "openingDebit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "openingCredit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "periodDebit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "periodCredit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "closingBalance": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "closingDebit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "closingCredit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            }
+          },
+          "required": [
+            "accountId",
+            "code",
+            "name",
+            "kind",
+            "openingBalance",
+            "openingDebit",
+            "openingCredit",
+            "periodDebit",
+            "periodCredit",
+            "closingBalance",
+            "closingDebit",
+            "closingCredit"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "totals": {
+        "type": "object",
+        "properties": {
+          "openingDebit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "openingCredit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "periodDebit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "periodCredit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "closingDebit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "closingCredit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          }
+        },
+        "required": [
+          "openingDebit",
+          "openingCredit",
+          "periodDebit",
+          "periodCredit",
+          "closingDebit",
+          "closingCredit"
+        ],
+        "additionalProperties": false
+      },
+      "snapshotHash": {
+        "type": "string",
+        "pattern": "^[a-f0-9]{64}$"
+      }
+    },
+    "required": [
+      "currency",
+      "periods",
+      "periodId",
+      "startsOn",
+      "endsOn",
+      "rows",
+      "totals",
+      "snapshotHash"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmTrialBalanceEntry": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "journalId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "accountingDate": {
+        "type": "string",
+        "format": "date",
+        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+      },
+      "reference": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 80
+      },
+      "memo": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 500
+      },
+      "position": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "debit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "credit": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "isOpeningBalance": {
+        "type": "boolean"
+      },
+      "reversalOf": {
+        "anyOf": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "reversedBy": {
+        "type": "boolean"
+      }
+    },
+    "required": [
+      "id",
+      "journalId",
+      "accountingDate",
+      "reference",
+      "memo",
+      "position",
+      "debit",
+      "credit",
+      "isOpeningBalance",
+      "reversalOf",
+      "reversedBy"
+    ],
+    "additionalProperties": false
+  },
+  "practiceFirmTrialBalanceDetail": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "periodId": {
+        "type": "string",
+        "format": "uuid",
+        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+      },
+      "account": {
+        "type": "object",
+        "properties": {
+          "accountId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "code": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 30
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 150
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "ASSET",
+              "LIABILITY",
+              "EQUITY",
+              "INCOME",
+              "EXPENSE"
+            ]
+          },
+          "openingBalance": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "openingDebit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "openingCredit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "periodDebit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "periodCredit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "closingBalance": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "closingDebit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          },
+          "closingCredit": {
+            "type": "string",
+            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+          }
+        },
+        "required": [
+          "accountId",
+          "code",
+          "name",
+          "kind",
+          "openingBalance",
+          "openingDebit",
+          "openingCredit",
+          "periodDebit",
+          "periodCredit",
+          "closingBalance",
+          "closingDebit",
+          "closingCredit"
+        ],
+        "additionalProperties": false
+      },
+      "page": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "pageSize": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 200
+      },
+      "totalCount": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      },
+      "entries": {
+        "maxItems": 200,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "journalId": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "accountingDate": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "reference": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "memo": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500
+            },
+            "position": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "debit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "credit": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "isOpeningBalance": {
+              "type": "boolean"
+            },
+            "reversalOf": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "reversedBy": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "journalId",
+            "accountingDate",
+            "reference",
+            "memo",
+            "position",
+            "debit",
+            "credit",
+            "isOpeningBalance",
+            "reversalOf",
+            "reversedBy"
+          ],
+          "additionalProperties": false
+        }
+      }
+    },
+    "required": [
+      "periodId",
+      "account",
+      "page",
+      "pageSize",
+      "totalCount",
+      "entries"
+    ],
+    "additionalProperties": false
+  },
   "practiceJobGrade": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "string",

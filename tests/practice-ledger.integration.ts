@@ -105,7 +105,7 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
         postPracticeJournal(actorId, engagementId, racing.id, { expectedVersion: 1, idempotencyKey: randomUUID() }),
       ]);
       const raced = await db.practiceJournal.findUniqueOrThrow({ where: { id: racing.id }, include: { lines: true } });
-      if (raced.status === 'POSTED') assert.equal(raced.lines[0].debit.toString(), '0.3', 'a concurrent edit cannot invalidate a posted balance');
+      if (raced.status === 'POSTED') assert.equal(raced.lines.find(line => line.position === 0)?.debit.toString(), '0.3', 'a concurrent edit cannot invalidate a posted balance');
       // Neutralize any successful RACE posting with a genuine reversal, keeping report assertions isolated.
       if (raced.status === 'POSTED') await reversePracticeJournal(actorId, engagementId, racing.id, { expectedVersion: 2, idempotencyKey: randomUUID(), periodId: period.id, accountingDate: '2026-10-02', reference: 'REV-RACE' });
       const key = randomUUID();

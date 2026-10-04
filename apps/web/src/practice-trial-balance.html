@@ -1,0 +1,76 @@
+<section class="practice-trial-balance" aria-labelledby="firm-trial-balance-title" [attr.aria-busy]="busy()">
+  <header class="report-header">
+    <div>
+      <div class="eyebrow">INTERNAL FIRM ACCOUNTING</div>
+      <h1 id="firm-trial-balance-title">Firm trial balance</h1>
+      <p>Posted firm journals only. Client audit adjustments and drafts are excluded.</p>
+    </div>
+    <div class="report-actions">
+      <label for="trial-balance-period">Accounting period</label>
+      <select id="trial-balance-period" [value]="periodId()" (change)="changePeriod($event)" [disabled]="busy() || !report()">
+        @for (period of report()?.periods ?? []; track period.id) {
+          <option [value]="period.id">{{ period.startsOn }} – {{ period.endsOn }}{{ period.closed ? ' · Closed' : '' }}</option>
+        }
+      </select>
+      <button type="button" (click)="refresh()" [disabled]="busy()">{{ busy() ? 'Loading…' : 'Load report' }}</button>
+      <button type="button" class="primary" (click)="downloadSnapshot()" [disabled]="busy() || !report()">Export snapshot</button>
+    </div>
+  </header>
+
+  <p class="report-status" role="status" aria-live="polite">{{ message() }}</p>
+
+  @if (report(); as value) {
+    <section class="report-summary" aria-label="Trial balance control totals">
+      <article><span>Opening balances</span><strong>Dr {{ value.totals.openingDebit }}</strong><strong>Cr {{ value.totals.openingCredit }}</strong></article>
+      <article><span>Period movement</span><strong>Dr {{ value.totals.periodDebit }}</strong><strong>Cr {{ value.totals.periodCredit }}</strong></article>
+      <article><span>Closing balances</span><strong>Dr {{ value.totals.closingDebit }}</strong><strong>Cr {{ value.totals.closingCredit }}</strong></article>
+    </section>
+
+    <div class="report-table-scroll">
+      <table>
+        <caption>{{ value.startsOn }} through {{ value.endsOn }} · {{ value.currency }} · Snapshot {{ value.snapshotHash }}</caption>
+        <thead><tr>
+          <th scope="col">Account</th><th scope="col">Kind</th>
+          <th scope="col">Opening Dr</th><th scope="col">Opening Cr</th>
+          <th scope="col">Period Dr</th><th scope="col">Period Cr</th>
+          <th scope="col">Closing Dr</th><th scope="col">Closing Cr</th>
+        </tr></thead>
+        <tbody>
+          @for (row of value.rows; track row.accountId) {
+            <tr [class.selected]="row.accountId === accountId()">
+              <th scope="row"><button type="button" class="account-select" [attr.data-account]="row.accountId" [attr.aria-pressed]="row.accountId === accountId()" (click)="selectAccount(row.accountId)">{{ row.code }} · {{ row.name }}</button></th>
+              <td>{{ row.kind }}</td><td class="money">{{ row.openingDebit }}</td><td class="money">{{ row.openingCredit }}</td>
+              <td class="money">{{ row.periodDebit }}</td><td class="money">{{ row.periodCredit }}</td>
+              <td class="money">{{ row.closingDebit }}</td><td class="money">{{ row.closingCredit }}</td>
+            </tr>
+          } @empty {
+            <tr><td colspan="8">No firm chart accounts are configured.</td></tr>
+          }
+        </tbody>
+        <tfoot><tr><th scope="row" colspan="2">Totals</th>
+          <td class="money">{{ value.totals.openingDebit }}</td><td class="money">{{ value.totals.openingCredit }}</td>
+          <td class="money">{{ value.totals.periodDebit }}</td><td class="money">{{ value.totals.periodCredit }}</td>
+          <td class="money">{{ value.totals.closingDebit }}</td><td class="money">{{ value.totals.closingCredit }}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+
+    <section class="account-detail" aria-labelledby="account-detail-title">
+      @if (detail(); as selected) {
+        <header><div><div class="eyebrow">ACCOUNT DRILL-DOWN</div><h2 id="account-detail-title">{{ selected.account.code }} · {{ selected.account.name }}</h2><p>Closing balance {{ selected.account.closingBalance }} {{ value.currency }} · period movement Dr {{ selected.account.periodDebit }} / Cr {{ selected.account.periodCredit }}</p></div></header>
+        @if (selected.entries.length) {
+          <div class="report-table-scroll"><table>
+            <caption>Posted journal lines for {{ selected.account.name }}</caption>
+            <thead><tr><th scope="col">Date</th><th scope="col">Balance scope</th><th scope="col">Reference</th><th scope="col">Memo</th><th scope="col">Debit</th><th scope="col">Credit</th><th scope="col">Lineage</th></tr></thead>
+            <tbody>@for (entry of selected.entries; track entry.id) { <tr><td>{{ entry.accountingDate }}</td><td>{{ entry.isOpeningBalance ? 'Opening balance' : 'Period movement' }}</td><td>{{ entry.reference }}</td><td>{{ entry.memo }}</td><td class="money">{{ entry.debit }}</td><td class="money">{{ entry.credit }}</td><td>{{ entry.reversalOf ? 'Reversal' : entry.reversedBy ? 'Reversed' : 'Posted' }}</td></tr> }</tbody>
+          </table></div>
+        } @else { <p>No posted activity for this account in the selected period.</p> }
+        <footer class="detail-pagination"><span>{{ selected.totalCount }} posted lines through period end · page {{ selected.page }}</span><div><button type="button" (click)="page(selected.page - 1)" [disabled]="busy() || selected.page <= 1">Previous</button><button type="button" (click)="page(selected.page + 1)" [disabled]="busy() || selected.page * selected.pageSize >= selected.totalCount">Next</button></div></footer>
+      } @else {
+        <h2 id="account-detail-title">Account drill-down</h2><p>Select an account to inspect all posted history through period end, including opening balance entries and reversal lineage.</p>
+      }
+    </section>
+  } @else {
+    <section class="report-empty"><h2>Load the firm trial balance</h2><p>The report reads one consistent PostgreSQL snapshot and checks that opening, period, and closing debit and credit totals reconcile.</p><button type="button" class="primary" (click)="refresh()" [disabled]="busy()">{{ busy() ? 'Loading…' : 'Load report' }}</button></section>
+  }
+</section>
