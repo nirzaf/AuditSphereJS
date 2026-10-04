@@ -40,10 +40,12 @@ Verified 2026-10-02. 37 workspaces across five modules; 10 connected views and 2
 | Practice | Time & utilization | Session-only preparation; persistence and execution pending |
 | Practice | Engagement profitability | Session-only preparation; persistence and execution pending |
 | Practice | Billing & receivables | Session-only preparation; persistence and execution pending |
-| Practice | Operating expenses | Session-only preparation; persistence and execution pending |
+| Practice | Operating expenses | API-backed expense drafts/posting, liability settlements and immutable firm-private receipt attachment; requires firm-wide Practice grants |
 | Practice | Firm financial reports | Session-only preparation; persistence and execution pending |
 
 ## Verification
+
+Practice receipt UI update — 2026-10-04: Operating Expenses now lists receipt metadata per expense and accepts PDF/JPEG/PNG files up to 15 MB with visible upload status and validation. The focused Angular suite passes 5/5 and `pnpm verify:task -- T144` passes its PostgreSQL receipt integration. The live browser identity is the mapped Staff Fixture and resolves successfully, but its only business grant remains the scoped ENGAGEMENT_READ grant; the Practice UI therefore correctly stays behind the firm-wide Practice permission gate. The real Graph folder binding is also pending an administrator-provisioned `practice-private` folder grant. No identity or permission was widened for this UI check.
 
 - Pinned Angular CLI MCP project discovery and Angular 22 best practices were read before changes; FormRecord documentation was searched. MCP build/test outcomes are recorded locally under ignored .angular/mcp.
 - pnpm verify:affected: boundaries, TypeScript/server builds, Angular build and 60 invariant/unit tests passed.

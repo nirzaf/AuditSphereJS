@@ -6,7 +6,7 @@ Reviewed: 2026-10-04. This is the approved nonproduction integration scope for A
 | --- | --- | --- | --- |
 | Browser SPA | Delegated `api://<AuditSphere API client ID>/access_as_user` only | AuditSphere API; no Graph scopes in browser | Enabled for the acceptance tenant |
 | AuditSphere API identity | Validates the API access token, then maps `(tenant ID, Entra object ID)` to an active local user | Local staff mapping, membership and scoped capability grant decide business access | Enabled; Entra directory roles do not create AuditSphere authority |
-| Server file storage | Application `Files.SelectedOperations.Selected` | Explicit `write` grants on the two synthetic acceptance folders only; SharePoint for engagement evidence and OneDrive for working files | Enabled for nonproduction acceptance; production remains gated |
+| Server file storage | Application `Files.SelectedOperations.Selected` | Explicit `write` grants on the two synthetic acceptance folders only; SharePoint for engagement evidence and OneDrive for working files. No `practice-private` folder grant exists yet. | Enabled for those nonproduction folders only; firm-private Practice receipt storage remains unconfigured |
 | Graph mail | None | No mail send/read operation | Disabled; T037 must define recipient policy and permission before implementation |
 | Graph directory lookup/sync | None | No tenant-wide user/group read | Disabled; identity mapping is administrator-managed locally |
 | Runtime SharePoint site/folder provisioning | None | No site, list, or tenant administration permission | Disabled; setup is an administrator-operated procedure, not an API capability |

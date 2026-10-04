@@ -18,11 +18,13 @@ describe('HTTP security envelope', () => {
     expect(requestEnvelopeViolation('POST', '/api/v1/probe/logout', {})).toBeNull();
   });
 
-  it('allows multipart bodies only for a bounded document upload content route', () => {
+  it('allows multipart bodies only for bounded document and firm-practice receipt upload routes', () => {
     const headers = { 'content-length': '400', 'content-type': 'multipart/form-data; boundary=----audit-sphere-boundary' };
     expect(requestEnvelopeViolation('PUT', '/api/v1/documents/uploads/9b139a57-847f-4963-9fd2-13b879a1760f/content', headers)).toBeNull();
+    expect(requestEnvelopeViolation('PUT', '/api/v1/engagements/9b139a57-847f-4963-9fd2-13b879a1760f/practice/expenses/8c9c264a-9f56-4b11-84c1-80c95bd75910/receipts', headers)).toBeNull();
     expect(requestEnvelopeViolation('POST', '/api/v1/documents/uploads', headers)).toMatchObject({ status: 415 });
     expect(requestEnvelopeViolation('PUT', '/api/v1/documents/uploads/not-a-uuid/content', headers)).toMatchObject({ status: 415 });
+    expect(requestEnvelopeViolation('PUT', '/api/v1/engagements/not-a-uuid/practice/expenses/8c9c264a-9f56-4b11-84c1-80c95bd75910/receipts', headers)).toMatchObject({ status: 415 });
     expect(requestEnvelopeViolation('PUT', '/api/v1/documents/uploads/9b139a57-847f-4963-9fd2-13b879a1760f/content', { ...headers, 'content-type': 'multipart/form-data' })).toMatchObject({ status: 415 });
   });
 

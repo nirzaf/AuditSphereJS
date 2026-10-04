@@ -19,7 +19,7 @@ test('Practice expenses creates and posts a classified journal through the real 
     {id:ids.expense,code:'500',name:'Office rent',kind:'EXPENSE',active:true,posting:true},
     {id:ids.cash,code:'100',name:'Cash',kind:'ASSET',active:true,posting:true},
     {id:ids.payable,code:'210',name:'Accrued expenses',kind:'LIABILITY',active:true,posting:true},
-  ],periods:[{id:ids.period,startsOn:'2026-01-01',endsOn:'2026-12-31',closed:false,version:1,lastTransitionReason:''}],journals:[],expenses:[{id:ids.journal,journalId:ids.journal,reference:'EXP-E2E-1',category:'OFFICE_RENT_FACILITIES',amount:'1250.250000',creditAccountId:ids.payable,journalStatus:'POSTED',journalVersion:2,settledAmount:'0.000000',outstandingAmount:'1250.250000',settlementAllowed:true}],balances:[]};
+  ],periods:[{id:ids.period,startsOn:'2026-01-01',endsOn:'2026-12-31',closed:false,version:1,lastTransitionReason:''}],journals:[],expenses:[{id:ids.journal,journalId:ids.journal,reference:'EXP-E2E-1',category:'OFFICE_RENT_FACILITIES',amount:'1250.250000',creditAccountId:ids.payable,journalStatus:'POSTED',journalVersion:2,settledAmount:'0.000000',outstandingAmount:'1250.250000',settlementAllowed:true,receipts:[],receiptAttachable:true}],balances:[]};
   const journal = {id:ids.journal,periodId:ids.period,accountingDate:'2026-10-04',reference:'EXP-E2E-1',memo:'[OFFICE_RENT_FACILITIES] October rent',status:'DRAFT',version:1,postedAt:null,reversalOf:null,lines:[]};
   let draftRequest: unknown; let postRequest: unknown; let settlementRequest: unknown;
   await page.route('**/api/v1/engagements/*/practice**', async route => {

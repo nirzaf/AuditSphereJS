@@ -279,11 +279,19 @@ export const practiceJournalViewSchema = z.object({
   memo: z.string().trim().min(1).max(500), status: z.enum(['DRAFT', 'POSTED']), version: z.number().int().positive(),
   postedAt: z.iso.datetime().nullable(), reversalOf: z.uuid().nullable(), lines: z.array(practiceJournalLineViewSchema).max(500).optional(),
 });
+/** Safe metadata for an immutable firm-private receipt version; provider references remain server-only. */
+export const practiceExpenseReceiptViewSchema = z.object({
+  id: z.uuid(), sequence: z.number().int().positive(), filename: z.string().trim().min(1).max(200),
+  contentType: z.enum(['application/pdf', 'image/jpeg', 'image/png']), sizeBytes: z.number().int().positive().max(15_000_000),
+  createdAt: z.iso.datetime(),
+});
+export const practiceExpenseReceiptsSchema = z.array(practiceExpenseReceiptViewSchema).max(100);
 export const practiceExpenseViewSchema = z.object({
   id: z.uuid(), journalId: z.uuid(), reference: z.string().trim().min(1).max(80),
   category: practiceExpenseCategorySchema, amount: moneySchema, creditAccountId: z.uuid(),
   journalStatus: z.enum(['DRAFT', 'POSTED']), journalVersion: z.number().int().positive(),
   settledAmount: moneySchema, outstandingAmount: moneySchema, settlementAllowed: z.boolean(),
+  receipts: z.array(practiceExpenseReceiptViewSchema).max(100), receiptAttachable: z.boolean(),
 });
 export const practiceBalanceViewSchema = z.object({
   accountId: z.uuid(), code: z.string().trim().min(1).max(30), name: z.string().trim().min(1).max(150),
@@ -556,6 +564,7 @@ export const contractSchemas = {
   practiceAccountView: practiceAccountViewSchema, practicePeriodView: practicePeriodViewSchema,
   practiceJournalLineView: practiceJournalLineViewSchema, practiceJournalView: practiceJournalViewSchema,
   practiceExpenseView: practiceExpenseViewSchema,
+  practiceExpenseReceiptView: practiceExpenseReceiptViewSchema, practiceExpenseReceipts: practiceExpenseReceiptsSchema,
   practiceBalanceView: practiceBalanceViewSchema, practiceLedger: practiceLedgerSchema,
   practiceJobGrade: practiceJobGradeSchema, practiceRateCardView: practiceRateCardViewSchema,
   practiceStaffView: practiceStaffViewSchema, practiceStaffGradeAssignmentView: practiceStaffGradeAssignmentViewSchema,

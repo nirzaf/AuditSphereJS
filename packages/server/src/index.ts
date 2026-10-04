@@ -63,6 +63,8 @@ export { publishBalances, latestPublication, publicationDetail, rowDigest } from
 export { runWorker } from './worker.js';
 export { ensureBucket, store, retrieve, retrieveToFile, removeObject, storageProvider } from './platform/storage.js';
 export { resolveClientRepository } from './platform/repository.js';
+export { resolveFirmPracticeRepository } from './platform/repository.js';
+export { attachPracticeExpenseReceipt, listPracticeExpenseReceipts, sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';
 export { GraphStorage, configuredGraphStorage, decodeGraphReference } from './platform/graph-storage.js';
 export { RuntimeModule, Readiness } from './platform/runtime.js';
 export { readConfiguration } from './platform/config.js';

@@ -53,7 +53,7 @@ it('keeps the firm-wide authorization denial explicit', async () => {
 });
 
 it('records a later expense liability payment as a separate posted journal', async () => {
-  const obligation = { id: ids.journal, journalId: ids.journal, reference: 'EXP-1', category: 'OFFICE_RENT_FACILITIES', amount: '1250.250000', creditAccountId: ids.payable, journalStatus: 'POSTED', journalVersion: 2, settledAmount: '0.000000', outstandingAmount: '1250.250000', settlementAllowed: true };
+  const obligation = { id: ids.journal, journalId: ids.journal, reference: 'EXP-1', category: 'OFFICE_RENT_FACILITIES', amount: '1250.250000', creditAccountId: ids.payable, journalStatus: 'POSTED', journalVersion: 2, settledAmount: '0.000000', outstandingAmount: '1250.250000', settlementAllowed: true, receipts: [], receiptAttachable: true };
   const updatedLedger = { ...ledger, expenses: [obligation] };
   const request = vi.fn()
     .mockResolvedValueOnce(new Response(JSON.stringify(updatedLedger)))
@@ -67,5 +67,29 @@ it('records a later expense liability payment as a separate posted journal', asy
   view.settleExpense(); await vi.waitFor(() => expect(view.message()).toContain('separate posted journal'));
   expect(request.mock.calls[1][0]).toBe(`/api/v1/engagements/${ids.engagement}/practice/expenses/${ids.journal}/settlements`);
   expect(JSON.parse(request.mock.calls[1][1].body)).toMatchObject({ amount: '500.25', assetAccountId: ids.cash });
+  fixture.destroy();
+});
+
+it('uploads a bounded receipt as multipart and refreshes immutable receipt metadata', async () => {
+  const baseLedger = { ...ledger, expenses: [{ id: ids.journal, journalId: ids.journal, reference: 'EXP-1', category: 'OFFICE_RENT_FACILITIES', amount: '1250.250000', creditAccountId: ids.payable, journalStatus: 'DRAFT', journalVersion: 1, settledAmount: '0.000000', outstandingAmount: '1250.250000', settlementAllowed: false, receipts: [], receiptAttachable: true }] };
+  const receipt = { id: '10000000-0000-4000-8000-000000000008', sequence: 1, filename: 'rent.png', contentType: 'image/png', sizeBytes: 12, createdAt: '2026-10-04T12:00:00.000Z' };
+  const updatedLedger = { ...baseLedger, expenses: [{ ...baseLedger.expenses[0], receipts: [receipt] }] };
+  const request = vi.fn()
+    .mockResolvedValueOnce(new Response(JSON.stringify(baseLedger)))
+    .mockResolvedValueOnce(new Response(JSON.stringify(receipt), { status: 201 }))
+    .mockResolvedValueOnce(new Response(JSON.stringify(updatedLedger)));
+  vi.stubGlobal('fetch', request);
+  const fixture = TestBed.createComponent(PracticeExpenses);
+  fixture.componentRef.setInput('token', 'billing-session'); fixture.componentRef.setInput('engagementId', ids.engagement); fixture.detectChanges();
+  const view = fixture.componentInstance;
+  view.refresh(); await vi.waitFor(() => expect(view.ledger()).not.toBeNull());
+  const file = new File([new Uint8Array(12)], 'rent.png', { type: 'image/png' });
+  view.attachReceipt({ target: { files: [file], value: 'chosen' } } as unknown as Event, ids.journal);
+  await vi.waitFor(() => expect(view.ledger()?.expenses[0]?.receipts).toEqual([receipt]));
+  expect(request.mock.calls[1][0]).toBe(`/api/v1/engagements/${ids.engagement}/practice/expenses/${ids.journal}/receipts`);
+  expect(request.mock.calls[1][1].method).toBe('PUT');
+  expect(request.mock.calls[1][1].body).toBeInstanceOf(FormData);
+  expect(new Headers(request.mock.calls[1][1].headers).get('content-type')).toBeNull();
+  expect(view.message()).toContain('Receipt version 1 attached');
   fixture.destroy();
 });

@@ -7,6 +7,7 @@ import { db } from './platform/db.js';
 import { ensureBucket, retrieve } from './platform/storage.js';
 import { resolveClientRepository } from './platform/repository.js';
 import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
+import { sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';
 import { createTrialBalanceImportProcessor } from './modules/fieldwork/import-worker.js';
 import { dispatchPendingOutbox } from './platform/outbox.js';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
@@ -78,15 +79,15 @@ export async function runWorker() {
 
   // Unreferenced uploads are cleaned only after a grace period, and Graph evidence is never deleted.
   const sweepTimer = setInterval(() => {
-    sweepInFlight ??= sweepUnreferencedUploads({ olderThanMinutes: 60 })
-      .then(result => {
-        if (result.scanned) {
-          console.log('Upload sweep', JSON.stringify({
-            scanned: result.scanned,
-            cleaned: result.cleaned,
-            reviewRequired: result.reviewRequired,
-          }));
-        }
+    sweepInFlight ??= Promise.all([
+      sweepUnreferencedUploads({ olderThanMinutes: 60 }),
+      sweepPracticeExpenseReceiptUploads({ staleCleaningMinutes: 60 }),
+    ])
+      .then(([fieldwork, practice]) => {
+        if (fieldwork.scanned || practice.scanned) console.log('Upload sweep', JSON.stringify({
+          fieldwork: { scanned: fieldwork.scanned, cleaned: fieldwork.cleaned, reviewRequired: fieldwork.reviewRequired },
+          practice: { scanned: practice.scanned, cleaned: practice.cleaned, reviewRequired: practice.reviewRequired },
+        }));
       })
       .catch(() => console.error('Upload sweep failed'))
       .then(() => { sweepInFlight = undefined; });

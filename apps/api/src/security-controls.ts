@@ -38,7 +38,8 @@ function isSupportedJsonContentType(value: string | undefined): boolean {
 
 function isAuthorizedMultipartRoute(method: string, url: string, value: string | undefined): boolean {
   return method.toUpperCase() === 'PUT'
-    && /^\/api\/v1\/documents\/uploads\/[0-9a-f-]{36}\/content(?:\?.*)?$/i.test(url)
+    && (/^\/api\/v1\/documents\/uploads\/[0-9a-f-]{36}\/content(?:\?.*)?$/i.test(url)
+      || /^\/api\/v1\/engagements\/[0-9a-f-]{36}\/practice\/expenses\/[0-9a-f-]{36}\/receipts(?:\?.*)?$/i.test(url))
     && /^multipart\/form-data\s*;\s*boundary=(?:"[^"]{1,200}"|[^;\s]{1,200})(?:\s*;.*)?$/i.test(value ?? '');
 }
 

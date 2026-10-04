@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
-import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Put, Query, Req, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
   apiProblemSchema, invoiceReceiptSchema, invoiceIssuedResultSchema, invoicePaymentResultSchema,
   invoiceReceiptResultSchema, invoiceViewSchema, invoicesSchema, issueInvoiceSchema, invoiceVoidResultSchema, voidInvoiceSchema, practiceAccountSchema,
@@ -7,6 +7,7 @@ import {
   practicePeriodViewSchema, practicePostingPolicyViewSchema,
   practiceJournalSchema, practicePeriodSchema, practicePeriodTransitionSchema,
   practicePostingPolicySchema, practiceReverseJournalSchema, practiceVersionSchema, practiceExpenseDraftSchema, practiceExpenseSettlementSchema,
+  practiceExpenseReceiptViewSchema, practiceExpenseReceiptsSchema,
   recordPaymentSchema, paginationQuerySchema,
 } from '@auditsphere/contracts';
 import type { InvoiceReceiptRequest, PaginationQuery } from '@auditsphere/contracts';
@@ -14,11 +15,33 @@ import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './ledger.js';
 import { issueInvoice, issueInvoiceReceipt, listInvoices, recordInvoicePayment, voidInvoice } from './invoices.js';
+import { attachPracticeExpenseReceipt, listPracticeExpenseReceipts } from './expense-receipts.js';
+import type { UploadFilePart } from '../../platform/document-uploads.js';
 import { toPracticeAccountView, toPracticeInvoiceView, toPracticeJournalView, toPracticeLedgerView, toPracticePeriodView } from './practice-response.js';
+
+type MultipartRequest = { file: (options?: { limits?: { fileSize?: number; files?: number; fields?: number; parts?: number }; throwFileSizeLimit?: boolean }) => Promise<UploadFilePart | undefined> };
 
 @ApiTags('Practice ledger') @ApiBearerAuth() @ApiDefaultResponse({ standardSchema: apiProblemSchema }) @UseGuards(InternalGuard) @UsePipes(new StandardSchemaValidationPipe()) @UseInterceptors(StandardSchemaSerializerInterceptor)
 @Controller('engagements/:engagementId/practice')
 export class PracticeLedgerController {
+  @Get('expenses/:journalId/receipts')
+  @ApiOkResponse({ standardSchema: practiceExpenseReceiptViewSchema, isArray: true })
+  @SerializeOptions({ schema: practiceExpenseReceiptViewSchema })
+  receipts(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('journalId') journalId: string) {
+    return listPracticeExpenseReceipts(actorId, engagementId, journalId);
+  }
+
+  @Put('expenses/:journalId/receipts')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: { type: 'object', required: ['file'], properties: { file: { type: 'string', format: 'binary' } } } })
+  @ApiCreatedResponse({ standardSchema: practiceExpenseReceiptViewSchema })
+  @SerializeOptions({ schema: practiceExpenseReceiptViewSchema })
+  async attachReceipt(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('journalId') journalId: string, @Headers('idempotency-key') idempotencyKey: string | undefined, @Req() request: MultipartRequest) {
+    const part = await request.file({ limits: { fileSize: 15_000_000, files: 1, fields: 0, parts: 1 }, throwFileSizeLimit: false });
+    if (!part) throw new BadRequestException('A single receipt file part is required.');
+    return attachPracticeExpenseReceipt(actorId, engagementId, journalId, idempotencyKey ?? '', part);
+  }
+
   @Get()
   @ApiOkResponse({ standardSchema: practiceLedgerSchema })
   @SerializeOptions({ schema: practiceLedgerSchema })

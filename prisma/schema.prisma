@@ -10,16 +10,19 @@ datasource db {
 
 /// Firm is the top ownership boundary. Firm data must never be visible across firms.
 model Firm {
-  id                       String                         @id @default(uuid()) @db.Uuid
-  name                     String
-  createdAt                DateTime                       @default(now())
-  clients                  Client[]
-  roleGrants               RoleGrant[]
-  taxonomies               TaxonomyVersion[]
-  invoiceNumberSequence    InvoiceNumberSequence?
-  practiceRateCards        PracticeRateCard[]
-  practiceGradeAssignments PracticeStaffGradeAssignment[]
-  practiceTimeEntries      PracticeTimeEntry[]
+  id                            String                                @id @default(uuid()) @db.Uuid
+  name                          String
+  createdAt                     DateTime                              @default(now())
+  clients                       Client[]
+  repositories                  FirmRepository[]
+  roleGrants                    RoleGrant[]
+  taxonomies                    TaxonomyVersion[]
+  invoiceNumberSequence         InvoiceNumberSequence?
+  practiceRateCards             PracticeRateCard[]
+  practiceGradeAssignments      PracticeStaffGradeAssignment[]
+  practiceTimeEntries           PracticeTimeEntry[]
+  practiceExpenseReceipts       PracticeExpenseReceipt[]
+  practiceExpenseReceiptUploads PracticeExpenseReceiptUploadSession[]
 }
 
 /// Client belongs to exactly one firm. Ids are only unique inside their firm so child
@@ -81,26 +84,28 @@ model Engagement {
 }
 
 model User {
-  id                           String                         @id @default(uuid()) @db.Uuid
-  email                        String                         @unique
-  role                         String
-  active                       Boolean                        @default(true)
-  tenantId                     String?                        @db.Uuid
-  entraObjectId                String?                        @db.Uuid
-  memberships                  Membership[]
-  grants                       RoleGrant[]
-  sessionRevocations           IdentitySessionRevocation[]
-  operationRequests            OperationRequest[]
-  practicePeriodTransitions    PracticePeriod[]               @relation("PracticePeriodTransitionActor")
-  practiceRateCardsCreated     PracticeRateCard[]             @relation("PracticeRateCardCreator")
-  practiceGradeAssignments     PracticeStaffGradeAssignment[] @relation("PracticeGradeStaff")
-  practiceGradeAssignmentsMade PracticeStaffGradeAssignment[] @relation("PracticeGradeAssigner")
-  practiceTimeEntries          PracticeTimeEntry[]
-  invoiceLedgerPostingsCreated InvoiceLedgerPosting[]         @relation("InvoiceLedgerPostingCreator")
-  documentLinksCreated         DocumentLink[]                  @relation("DocumentLinkCreator")
-  documentUploadSessions       DocumentUploadSession[]
-  practiceExpensesCreated      PracticeExpense[]                @relation("PracticeExpenseCreator")
-  practiceExpenseSettlementsCreated PracticeExpenseSettlement[] @relation("PracticeExpenseSettlementCreator")
+  id                                String                                @id @default(uuid()) @db.Uuid
+  email                             String                                @unique
+  role                              String
+  active                            Boolean                               @default(true)
+  tenantId                          String?                               @db.Uuid
+  entraObjectId                     String?                               @db.Uuid
+  memberships                       Membership[]
+  grants                            RoleGrant[]
+  sessionRevocations                IdentitySessionRevocation[]
+  operationRequests                 OperationRequest[]
+  practicePeriodTransitions         PracticePeriod[]                      @relation("PracticePeriodTransitionActor")
+  practiceRateCardsCreated          PracticeRateCard[]                    @relation("PracticeRateCardCreator")
+  practiceGradeAssignments          PracticeStaffGradeAssignment[]        @relation("PracticeGradeStaff")
+  practiceGradeAssignmentsMade      PracticeStaffGradeAssignment[]        @relation("PracticeGradeAssigner")
+  practiceTimeEntries               PracticeTimeEntry[]
+  invoiceLedgerPostingsCreated      InvoiceLedgerPosting[]                @relation("InvoiceLedgerPostingCreator")
+  documentLinksCreated              DocumentLink[]                        @relation("DocumentLinkCreator")
+  documentUploadSessions            DocumentUploadSession[]
+  practiceExpensesCreated           PracticeExpense[]                     @relation("PracticeExpenseCreator")
+  practiceExpenseSettlementsCreated PracticeExpenseSettlement[]           @relation("PracticeExpenseSettlementCreator")
+  practiceExpenseReceiptsCreated    PracticeExpenseReceipt[]              @relation("PracticeExpenseReceiptCreator")
+  practiceExpenseReceiptUploads     PracticeExpenseReceiptUploadSession[]
 
   @@unique([tenantId, entraObjectId])
 }
@@ -225,19 +230,19 @@ model Membership {
 }
 
 model Document {
-  id            String            @id @default(uuid()) @db.Uuid
-  engagementId  String            @db.Uuid
-  engagement    Engagement        @relation(fields: [engagementId], references: [id], onDelete: Restrict)
-  key           String            @unique
-  sha256        String
-  filename      String
-  category      String            @default("02_Trial Balance & Schedules")
-  version       Int               @default(1)
-  createdAt     DateTime          @default(now())
-  versions      DocumentVersion[]
-  storedObjects StoredObject[]
-  imports       TbImport[]
-  links         DocumentLink[]
+  id             String                  @id @default(uuid()) @db.Uuid
+  engagementId   String                  @db.Uuid
+  engagement     Engagement              @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  key            String                  @unique
+  sha256         String
+  filename       String
+  category       String                  @default("02_Trial Balance & Schedules")
+  version        Int                     @default(1)
+  createdAt      DateTime                @default(now())
+  versions       DocumentVersion[]
+  storedObjects  StoredObject[]
+  imports        TbImport[]
+  links          DocumentLink[]
   uploadSessions DocumentUploadSession[]
 
   @@unique([engagementId, id])
@@ -261,25 +266,41 @@ model ClientRepository {
   @@index([clientId, purpose])
 }
 
+/// Binds firm-private Practice documents to a selected provider folder independently of any client.
+model FirmRepository {
+  id        String    @id @default(uuid()) @db.Uuid
+  firmId    String    @db.Uuid
+  purpose   String
+  provider  String
+  driveId   String
+  folderId  String
+  createdAt DateTime  @default(now()) @db.Timestamptz(6)
+  retiredAt DateTime? @db.Timestamptz(6)
+  firm      Firm      @relation(fields: [firmId], references: [id], onDelete: Restrict)
+
+  @@unique([firmId, purpose, provider])
+  @@index([firmId, purpose, retiredAt])
+}
+
 /// The immutable provider identity of one stored document byte-for-byte. Append-only: a
 /// provider change creates a new version row and never rewrites the previous identity.
 model DocumentVersion {
-  id               String     @id @default(uuid()) @db.Uuid
-  engagementId     String     @db.Uuid
-  documentId       String     @db.Uuid
-  document         Document   @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentVersion_document_scope_fkey")
+  id               String                  @id @default(uuid()) @db.Uuid
+  engagementId     String                  @db.Uuid
+  documentId       String                  @db.Uuid
+  document         Document                @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentVersion_document_scope_fkey")
   imports          TbImport[]
   sequence         Int
   provider         String
-  storageReference String     @unique
+  storageReference String                  @unique
   driveId          String?
   itemId           String?
   versionId        String
   eTag             String?
   sha256           String
   sizeBytes        Int
-  createdBy        String     @db.Uuid
-  createdAt        DateTime   @default(now())
+  createdBy        String                  @db.Uuid
+  createdAt        DateTime                @default(now())
   links            DocumentLink[]
   uploadSessions   DocumentUploadSession[]
 
@@ -293,32 +314,32 @@ model DocumentVersion {
 /// A short-lived staff-authorized upload. Bytes remain unreferenced storage until finalize
 /// rechecks engagement authority/state and creates the document/version/link atomically.
 model DocumentUploadSession {
-  id                  String          @id @default(uuid()) @db.Uuid
-  firmId              String          @db.Uuid
-  clientId            String          @db.Uuid
-  engagementId        String          @db.Uuid
-  actorId             String          @db.Uuid
+  id                  String           @id @default(uuid()) @db.Uuid
+  firmId              String           @db.Uuid
+  clientId            String           @db.Uuid
+  engagementId        String           @db.Uuid
+  actorId             String           @db.Uuid
   category            String
   originalFilename    String
   declaredContentType String
   declaredSizeBytes   Int
-  maxSizeBytes        Int             @default(15728640)
+  maxSizeBytes        Int              @default(15728640)
   expectedSha256      String?
-  status              String          @default("INITIATED")
-  storageKey          String          @unique
+  status              String           @default("INITIATED")
+  storageKey          String           @unique
   storageReference    String?
   actualSha256        String?
   actualSizeBytes     Int?
-  version             Int             @default(1)
-  createdAt           DateTime        @default(now())
+  version             Int              @default(1)
+  createdAt           DateTime         @default(now())
   expiresAt           DateTime
   uploadedAt          DateTime?
   finalizedAt         DateTime?
-  documentId          String?         @db.Uuid
-  documentVersionId   String?         @db.Uuid
-  engagement          Engagement      @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict, map: "DocumentUploadSession_engagement_scope_fkey")
-  actor               User            @relation(fields: [actorId], references: [id], onDelete: Restrict)
-  document            Document?       @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentUploadSession_document_scope_fkey")
+  documentId          String?          @db.Uuid
+  documentVersionId   String?          @db.Uuid
+  engagement          Engagement       @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict, map: "DocumentUploadSession_engagement_scope_fkey")
+  actor               User             @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  document            Document?        @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "DocumentUploadSession_document_scope_fkey")
   documentVersion     DocumentVersion? @relation(fields: [engagementId, documentId, documentVersionId], references: [engagementId, documentId, id], onDelete: Restrict, map: "DocumentUploadSession_version_scope_fkey")
 
   @@unique([engagementId, id])
@@ -623,18 +644,18 @@ model RiskPartnerClearance {
 /// upload leaves a record instead of untracked bytes. Referenced objects are the evidence;
 /// pending/duplicate ones are cleaned only after a grace period and never when they are evidence.
 model StoredObject {
-  id           String     @id @default(uuid()) @db.Uuid
-  engagementId String     @db.Uuid
-  engagement   Engagement @relation(fields: [engagementId], references: [id])
-  key          String     @unique
-  reference    String?
-  sha256       String
-  status       String     @default("PENDING")
-  documentId   String?    @db.Uuid
-  document     Document?  @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "StoredObject_document_scope_fkey")
-  createdAt    DateTime   @default(now())
+  id               String     @id @default(uuid()) @db.Uuid
+  engagementId     String     @db.Uuid
+  engagement       Engagement @relation(fields: [engagementId], references: [id])
+  key              String     @unique
+  reference        String?
+  sha256           String
+  status           String     @default("PENDING")
+  documentId       String?    @db.Uuid
+  document         Document?  @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "StoredObject_document_scope_fkey")
+  createdAt        DateTime   @default(now())
   cleanupStartedAt DateTime?
-  resolvedAt   DateTime?
+  resolvedAt       DateTime?
 
   @@index([status, createdAt])
 }
@@ -893,13 +914,13 @@ model AuditChainHead {
 }
 
 model PracticeAccount {
-  id      String  @id @default(uuid()) @db.Uuid
-  firmId  String  @db.Uuid
-  code    String
-  name    String
-  kind    String
-  active  Boolean @default(true)
-  posting Boolean @default(true)
+  id             String            @id @default(uuid()) @db.Uuid
+  firmId         String            @db.Uuid
+  code           String
+  name           String
+  kind           String
+  active         Boolean           @default(true)
+  posting        Boolean           @default(true)
   expenseDebits  PracticeExpense[] @relation("PracticeExpenseDebit")
   expenseCredits PracticeExpense[] @relation("PracticeExpenseCredit")
 
@@ -1004,23 +1025,23 @@ model PracticePeriod {
 }
 
 model PracticeJournal {
-  id               String                @id @default(uuid()) @db.Uuid
-  firmId           String                @db.Uuid
-  periodId         String                @db.Uuid
-  accountingDate   DateTime              @db.Date
-  reference        String
-  memo             String
-  status           String                @default("DRAFT")
-  version          Int                   @default(1)
-  createdBy        String                @db.Uuid
-  postedBy         String?               @db.Uuid
-  postedAt         DateTime?
-  reversalOf       String?               @unique @db.Uuid
-  reversal         PracticeJournal?      @relation("PracticeJournalReversal", fields: [firmId, reversalOf], references: [firmId, id], onDelete: Restrict, map: "PracticeJournal_reversal_scope_fkey")
-  reversedJournals PracticeJournal[]     @relation("PracticeJournalReversal")
-  lines            PracticeJournalLine[]
-  invoicePosting   InvoiceLedgerPosting?
-  expenseRecognition PracticeExpense? @relation("PracticeExpenseRecognition")
+  id                 String                     @id @default(uuid()) @db.Uuid
+  firmId             String                     @db.Uuid
+  periodId           String                     @db.Uuid
+  accountingDate     DateTime                   @db.Date
+  reference          String
+  memo               String
+  status             String                     @default("DRAFT")
+  version            Int                        @default(1)
+  createdBy          String                     @db.Uuid
+  postedBy           String?                    @db.Uuid
+  postedAt           DateTime?
+  reversalOf         String?                    @unique @db.Uuid
+  reversal           PracticeJournal?           @relation("PracticeJournalReversal", fields: [firmId, reversalOf], references: [firmId, id], onDelete: Restrict, map: "PracticeJournal_reversal_scope_fkey")
+  reversedJournals   PracticeJournal[]          @relation("PracticeJournalReversal")
+  lines              PracticeJournalLine[]
+  invoicePosting     InvoiceLedgerPosting?
+  expenseRecognition PracticeExpense?           @relation("PracticeExpenseRecognition")
   expenseSettlement  PracticeExpenseSettlement? @relation("PracticeExpenseSettlementJournal")
 
   @@unique([firmId, reference])
@@ -1029,37 +1050,100 @@ model PracticeJournal {
 
 /// Immutable classified recognition metadata pinned to the original firm journal.
 model PracticeExpense {
-  id              String              @id @default(uuid()) @db.Uuid
-  firmId          String              @db.Uuid
-  journalId       String              @db.Uuid
-  category        String              @db.VarChar(48)
-  amount          Decimal             @db.Decimal(28, 6)
-  debitAccountId  String              @db.Uuid
-  creditAccountId String              @db.Uuid
-  createdBy       String              @db.Uuid
-  createdAt       DateTime            @default(now()) @db.Timestamptz(6)
-  journal         PracticeJournal     @relation("PracticeExpenseRecognition", fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
-  debitAccount    PracticeAccount     @relation("PracticeExpenseDebit", fields: [firmId, debitAccountId], references: [firmId, id], onDelete: Restrict)
-  creditAccount   PracticeAccount     @relation("PracticeExpenseCredit", fields: [firmId, creditAccountId], references: [firmId, id], onDelete: Restrict)
-  creator         User                @relation("PracticeExpenseCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  id              String                                @id @default(uuid()) @db.Uuid
+  firmId          String                                @db.Uuid
+  journalId       String                                @db.Uuid
+  category        String                                @db.VarChar(48)
+  amount          Decimal                               @db.Decimal(28, 6)
+  debitAccountId  String                                @db.Uuid
+  creditAccountId String                                @db.Uuid
+  createdBy       String                                @db.Uuid
+  createdAt       DateTime                              @default(now()) @db.Timestamptz(6)
+  journal         PracticeJournal                       @relation("PracticeExpenseRecognition", fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
+  debitAccount    PracticeAccount                       @relation("PracticeExpenseDebit", fields: [firmId, debitAccountId], references: [firmId, id], onDelete: Restrict)
+  creditAccount   PracticeAccount                       @relation("PracticeExpenseCredit", fields: [firmId, creditAccountId], references: [firmId, id], onDelete: Restrict)
+  creator         User                                  @relation("PracticeExpenseCreator", fields: [createdBy], references: [id], onDelete: Restrict)
   settlements     PracticeExpenseSettlement[]
+  receipts        PracticeExpenseReceipt[]
+  receiptUploads  PracticeExpenseReceiptUploadSession[]
 
   @@unique([firmId, id])
   @@unique([firmId, journalId])
 }
 
+/// Immutable firm-private copy of one supporting receipt, pinned to an exact provider version.
+model PracticeExpenseReceipt {
+  id               String                                @id @default(uuid()) @db.Uuid
+  firmId           String                                @db.Uuid
+  expenseJournalId String                                @db.Uuid
+  sequence         Int
+  provider         String
+  storageReference String                                @unique
+  driveId          String?
+  itemId           String?
+  versionId        String
+  eTag             String?
+  sha256           String                                @db.Char(64)
+  sizeBytes        Int
+  filename         String                                @db.VarChar(200)
+  contentType      String                                @db.VarChar(100)
+  createdBy        String                                @db.Uuid
+  createdAt        DateTime                              @default(now()) @db.Timestamptz(6)
+  firm             Firm                                  @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  expense          PracticeExpense                       @relation(fields: [firmId, expenseJournalId], references: [firmId, journalId], onDelete: Restrict)
+  creator          User                                  @relation("PracticeExpenseReceiptCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  uploadSessions   PracticeExpenseReceiptUploadSession[]
+
+  @@unique([firmId, id])
+  @@unique([firmId, expenseJournalId, id])
+  @@unique([firmId, expenseJournalId, sequence])
+  @@unique([driveId, itemId, versionId])
+  @@index([firmId, expenseJournalId, sequence])
+}
+
+/// Durable upload receipt for cleanup/recovery after provider writes with ambiguous outcomes.
+model PracticeExpenseReceiptUploadSession {
+  id               String                  @id @default(uuid()) @db.Uuid
+  firmId           String                  @db.Uuid
+  expenseJournalId String                  @db.Uuid
+  actorId          String                  @db.Uuid
+  filename         String                  @db.VarChar(200)
+  contentType      String                  @db.VarChar(100)
+  storageKey       String                  @unique
+  idempotencyKey   String                  @db.Uuid
+  storageReference String?
+  sha256           String?                 @db.Char(64)
+  sizeBytes        Int?
+  status           String                  @default("INITIATED")
+  version          Int                     @default(1)
+  createdAt        DateTime                @default(now()) @db.Timestamptz(6)
+  expiresAt        DateTime                @db.Timestamptz(6)
+  uploadedAt       DateTime?               @db.Timestamptz(6)
+  attachedAt       DateTime?               @db.Timestamptz(6)
+  cleanupStartedAt DateTime?               @db.Timestamptz(6)
+  receiptId        String?                 @db.Uuid
+  expense          PracticeExpense         @relation(fields: [firmId, expenseJournalId], references: [firmId, journalId], onDelete: Restrict, map: "PracticeExpenseReceiptUploadSession_expense_fkey")
+  actor            User                    @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  receipt          PracticeExpenseReceipt? @relation(fields: [firmId, expenseJournalId, receiptId], references: [firmId, expenseJournalId, id], onDelete: Restrict, map: "PracticeExpenseReceiptUploadSession_receipt_fkey")
+  firm             Firm                    @relation(fields: [firmId], references: [id], onDelete: Restrict, map: "PracticeExpenseReceiptUploadSession_firm_fkey")
+
+  @@unique([firmId, id])
+  @@unique([actorId, idempotencyKey])
+  @@index([status, expiresAt, createdAt])
+}
+
 /// Each obligation payment is its own canonical journal and append-only source link.
 model PracticeExpenseSettlement {
-  id                String          @id @default(uuid()) @db.Uuid
-  firmId            String          @db.Uuid
-  expenseJournalId  String          @db.Uuid
-  journalId         String          @db.Uuid
-  amount            Decimal         @db.Decimal(28, 6)
-  createdBy         String          @db.Uuid
-  createdAt         DateTime        @default(now()) @db.Timestamptz(6)
-  expense           PracticeExpense @relation(fields: [firmId, expenseJournalId], references: [firmId, journalId], onDelete: Restrict)
-  journal           PracticeJournal @relation("PracticeExpenseSettlementJournal", fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
-  creator           User            @relation("PracticeExpenseSettlementCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  id               String          @id @default(uuid()) @db.Uuid
+  firmId           String          @db.Uuid
+  expenseJournalId String          @db.Uuid
+  journalId        String          @db.Uuid
+  amount           Decimal         @db.Decimal(28, 6)
+  createdBy        String          @db.Uuid
+  createdAt        DateTime        @default(now()) @db.Timestamptz(6)
+  expense          PracticeExpense @relation(fields: [firmId, expenseJournalId], references: [firmId, journalId], onDelete: Restrict)
+  journal          PracticeJournal @relation("PracticeExpenseSettlementJournal", fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict)
+  creator          User            @relation("PracticeExpenseSettlementCreator", fields: [createdBy], references: [id], onDelete: Restrict)
 
   @@unique([firmId, id])
   @@unique([firmId, journalId])

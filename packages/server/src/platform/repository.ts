@@ -24,3 +24,19 @@ export async function resolveClientRepository(client: RepositoryClient, firmId: 
   if (!driveId || !folderId) throw new Error(`No ${purpose} repository binding or local fixture configuration is available`);
   return { driveId, folderId, purpose };
 }
+
+export type FirmRepositoryClient = Pick<typeof db, 'firmRepository'>;
+
+/** Resolve the firm's private Practice folder, never a client evidence or working folder. */
+export async function resolveFirmPracticeRepository(client: FirmRepositoryClient, firmId: string): Promise<GraphRepository> {
+  const binding = await client.firmRepository.findFirst({
+    where: { firmId, purpose: 'practice-private', provider: 'graph', retiredAt: null },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (binding) return { driveId: binding.driveId, folderId: binding.folderId, purpose: 'practice-private' };
+  if (process.env.NODE_ENV === 'production') throw new Error('No firm-private Practice repository is provisioned');
+  const driveId = process.env.M365_PRACTICE_DRIVE_ID;
+  const folderId = process.env.M365_PRACTICE_FOLDER_ID;
+  if (!driveId || !folderId) throw new Error('No firm-private Practice repository binding or local fixture configuration is available');
+  return { driveId, folderId, purpose: 'practice-private' };
+}

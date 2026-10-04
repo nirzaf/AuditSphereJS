@@ -4,7 +4,7 @@ Read `../../docs/requirements/CURRENT.md` and the owning server module README be
 
 The shell provides five module selectors, 36 workspace links and URL-addressable views (`?module=Governance&view=risks`). Trial Balance and Practice retain their dedicated workspaces. `module-catalog.ts` defines the remaining presentation forms and guidance; `module-workspace.ts` owns typed reactive forms, loading/search, review confirmations and protected API interactions.
 
-Practice operating expenses now load the server-owned firm chart and open periods, submit a classified journal draft with a decimal string, and post only through the canonical Practice policy/version/authorization path. Partner withdrawals expose only explicitly selected equity/liability classification accounts with an asset counterpart. Receipt-version attachment and expense settlement tracking remain pending; see [T144 handoff](../../docs/evidence/T144/handoff.md).
+Practice operating expenses now load the server-owned firm chart and open periods, submit a classified journal draft with a decimal string, post only through the canonical Practice policy/version/authorization path, record liability settlements separately, and attach scanned immutable receipt versions to a firm-private repository. The live browser acceptance account has only engagement-scoped authority and the tenant has no dedicated Practice folder grant, so those protected/live acceptance gates remain closed; see [T144 handoff](../../docs/evidence/T144/handoff.md).
 
 Commercial onboarding is implemented as server-backed behavior (proposals, dual-key gate, engagement letter, advance invoices) — see `docs/evidence/T069/handoff.md`. Screens talk only to the real API.
 

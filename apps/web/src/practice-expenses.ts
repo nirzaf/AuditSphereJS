@@ -1,6 +1,6 @@
 import { Component, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { practiceExpenseDraftSchema, practiceExpenseSettlementSchema, practiceLedgerSchema, practiceJournalViewSchema, type PracticeLedger } from '@auditsphere/contracts';
+import { practiceExpenseDraftSchema, practiceExpenseSettlementSchema, practiceExpenseReceiptViewSchema, practiceLedgerSchema, practiceJournalViewSchema, type PracticeLedger } from '@auditsphere/contracts';
 import { parseContractValue } from './api-client';
 import { authenticatedFetch } from './api-client';
 import { currentAccessToken } from './identity';
@@ -36,7 +36,15 @@ const categories = [
           <button class="primary" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Create journal draft' }}</button>
         </form>
       </section>
-      @if (draft(); as journal) { <section class="panel" aria-live="polite"><h2>Expense journal draft created</h2><p>{{ journal.reference }} · {{ journal.accountingDate }} · {{ journal.status }}</p><p>{{ journal.memo }}</p><button type="button" class="primary" (click)="postDraft()" [disabled]="busy()">Post through firm policy</button></section> }
+      @if (draft(); as journal) { <section class="panel" aria-live="polite"><h2>Expense journal draft created</h2><p>{{ journal.reference }} · {{ journal.accountingDate }} · {{ journal.status }}</p><p>{{ journal.memo }}</p><button type="button" class="primary" (click)="postDraft()" [disabled]="busy() || journal.status !== 'DRAFT'">Post through firm policy</button></section> }
+      <section class="panel"><h2>Expense receipts</h2><p>Receipts are malware-scanned and attached as immutable versions in the firm-private Practice repository.</p>
+        @if (data.expenses.length) { @for (expense of data.expenses; track expense.journalId) {
+          <article class="receipt-expense"><h3>{{ expense.reference }} · {{ expense.category }}</h3><p>{{ expense.journalStatus }} · QAR {{ expense.amount }}</p>
+            @if (expense.receipts.length) { <ul aria-label="Attached receipt versions">@for (receipt of expense.receipts; track receipt.id) { <li>Version {{ receipt.sequence }} · {{ receipt.filename }} · {{ receipt.contentType }} · {{ receipt.sizeBytes }} bytes</li> }</ul> } @else { <p>No supporting receipt attached.</p> }
+            @if (expense.receiptAttachable) { <label [for]="'receipt-' + expense.journalId">Attach receipt (PDF, JPEG, PNG; max 15 MB)</label><input [id]="'receipt-' + expense.journalId" type="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" [disabled]="busy()" (change)="attachReceipt($event, expense.journalId)"> }
+          </article>
+        } } @else { <p>Create an expense draft to attach its supporting receipt.</p> }
+      </section>
       <section class="panel">
         <h2>Settle a recognized obligation</h2>
         <p>A liability recognized for an expense can be paid later through a separate, balanced firm journal. The payment posts immediately under Practice management and posting authority.</p>
@@ -96,6 +104,28 @@ export class PracticeExpenses {
       this.message.set('Expense obligation settled through a separate posted journal. The outstanding balance has been refreshed.');
       this.settlementExpenseJournalId = ''; this.settlementAmount = '';
       this.ledger.set(await this.request(this.path(), practiceLedgerSchema));
+    });
+  }
+  attachReceipt(event: Event, journalId: string) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    input.value = '';
+    if (file.size <= 0 || file.size > 15_000_000) { this.message.set('Choose a non-empty receipt no larger than 15 MB.'); return; }
+    const allowed = new Set(['application/pdf', 'image/jpeg', 'image/png']);
+    if (!allowed.has(file.type)) { this.message.set('Choose a PDF, JPEG, or PNG receipt.'); return; }
+    void this.run(async () => {
+      this.message.set('Checking the receipt and storing its immutable firm-private version…');
+      const form = new FormData(); form.append('file', file, file.name);
+      const headers = new Headers({ 'Idempotency-Key': crypto.randomUUID(), ...(!this.entra() ? { Authorization: `Bearer ${this.token()}` } : {}) });
+      const init: RequestInit = { method: 'PUT', headers, body: form };
+      const path = this.path(`/expenses/${encodeURIComponent(journalId)}/receipts`);
+      const response = this.entra() ? await authenticatedFetch(path, init, currentAccessToken) : await fetch(path, init);
+      const payload: unknown = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(response.status === 403 ? 'Your account needs the firm-wide Practice permission required to attach receipts.' : `Receipt upload failed (HTTP ${response.status}).`);
+      const receipt = parseContractValue(practiceExpenseReceiptViewSchema, payload);
+      this.ledger.set(await this.request(this.path(), practiceLedgerSchema));
+      this.message.set(`Receipt version ${receipt.sequence} attached to ${receipt.filename}.`);
     });
   }
 }
