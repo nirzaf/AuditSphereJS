@@ -57,3 +57,16 @@ Review result: Windows browser checks and target Linux image smoke pass; immutab
 Open blockers: least-privilege production seccomp profile for user namespaces, and an approved ownership path for persisting rendered provenance in an immutable document version
 Next eligible task by dependency order: T035 completion; T036 template catalog follows after T035 is DONE
 Stop after this task; do not implement the next one without assignment.
+
+## CI follow-up — 2026-10-04
+
+The GitHub Actions run for `c3fe250` exposed a timing race in the Linux Chromium resource-denial assertion: PDF rendering began after `DOMContentLoaded`, before Chromium consistently scheduled the injected image request. The renderer now waits for the page `load` event; routed resources are aborted, so the page proceeds without granting network access. This also ensures document resources have settled before PDF capture.
+
+| Command / test | Tested artifact and fixture | Actual result / exit status | Evidence |
+| :--- | :--- | :--- | :--- |
+| `pnpm exec node --import tsx --test packages/server/tests/pdf-renderer.integration.ts` (3 consecutive runs) | Windows x64 Playwright Chromium; quotation, multi-page report and loopback metadata fixtures | PASS; 3/3 checks on each run; loopback listener received 0 requests and blocked-resource count was recorded | Local actual-browser runs, 2026-10-04 |
+| `pnpm verify:task -- T035` | Server build, Chromium integration tests, rebuilt source-fingerprinted Linux image and constrained PDF smoke | PASS; renderer checks 3/3; Linux smoke rendered one page with Chromium 145.0.7632.6 as uid 1000; 1 GiB / 1 CPU / no network | Local run, 2026-10-04 |
+| `pnpm verify:affected` | Boundaries, server/test types, Angular production build, Vitest | PASS; 25 files / 115 tests | Local run, 2026-10-04 |
+| `git diff --check` | Current tracked diff | PASS | Local run, 2026-10-04 |
+
+The hosted rerun for `c3fe250` failed only at the same resource-denial assertion; the prior startup/config issue was resolved. The source fix above is awaiting its own hosted CI run. T035 remains IN_PROGRESS because its immutable `DocumentVersion` persistence and production seccomp acceptance gates remain open.

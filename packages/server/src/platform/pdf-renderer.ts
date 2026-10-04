@@ -138,7 +138,10 @@ export async function renderTrustedPdf(input: {
     page.setDefaultTimeout(RENDER_TIMEOUT_MS);
     let pageError = false;
     page.on('pageerror', () => { pageError = true; });
-    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: RENDER_TIMEOUT_MS });
+    // Wait until Chromium has completed (or the request route has aborted) all
+    // document resources before creating the PDF. Starting at DOMContentLoaded
+    // races image/resource interception and can omit blocked-resource evidence.
+    await page.setContent(html, { waitUntil: 'load', timeout: RENDER_TIMEOUT_MS });
     const bytes = await Promise.race([
       page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: false, tagged: true }),
       new Promise<never>((_resolve, reject) => { renderTimer = setTimeout(() => reject(new PdfRenderError('Document rendering exceeded its time limit.')), RENDER_TIMEOUT_MS); }),
