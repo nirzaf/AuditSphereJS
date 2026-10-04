@@ -34,6 +34,7 @@ minimumReleaseAgeExclude:
   - '@smithy/core@3.35.1'
   - 'bullmq@6.3.11'
   - '@angular/router@22.2.1'
+  - pdfjs-dist@6.4.299
 
 
 # Reviewed security overrides: Prisma 7.10 CLI config API and generation are tested.

@@ -13,6 +13,7 @@ import { resolveClientRepository } from './repository.js';
 import { storageProvider, storeFile } from './storage.js';
 import { decodeGraphReference } from './graph-storage.js';
 import { MalwareDetectedError, MalwareScannerUnavailableError, scanFileWithClamAv } from './clamav.js';
+import { inspectPdfFile, PdfPolicyRejectedError } from './pdf-inspection.js';
 import { lockForUpdate, runUnitOfWork } from './unit-of-work.js';
 
 const MAX_UPLOAD_BYTES = 15_000_000;
@@ -105,6 +106,16 @@ export async function receiveDocumentUpload(actorId: string, sessionId: string, 
       if (error instanceof MalwareDetectedError) throw new BadRequestException('Uploaded file was rejected by security scanning.');
       if (error instanceof MalwareScannerUnavailableError) throw new ServiceUnavailableException('Security scanning is unavailable; the file was not stored.');
       throw error;
+    }
+    if (contentType === 'application/pdf') {
+      try {
+        await inspectPdfFile(temporaryFile);
+      } catch (error) {
+        await db.documentUploadSession.updateMany({ where: { id: session.id, actorId, status: 'INITIATED' }, data: { status: 'FAILED', version: { increment: 1 } } });
+        if (error instanceof PdfPolicyRejectedError) throw new BadRequestException('PDF is encrypted, contains prohibited active content, or could not be safely inspected.');
+        if (error instanceof ServiceUnavailableException) throw error;
+        throw new ServiceUnavailableException('PDF security inspection is unavailable; the file was not stored.');
+      }
     }
     const engagement = await db.engagement.findUnique({ where: { id: session.engagementId } });
     if (!engagement || engagement.firmId !== session.firmId || engagement.clientId !== session.clientId) throw new NotFoundException('Upload session not found');

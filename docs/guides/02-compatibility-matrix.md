@@ -1,6 +1,6 @@
 # Compatibility matrix and release policy
 
-**Research date:** 1 October 2026. **Evidence level:** primary-document and tagged-manifest review; no application stack executed here.
+**Research date:** 4 October 2026. **Evidence level:** primary-document and tagged-manifest review; no application stack executed here.
 
 ## Three levels of evidence
 
@@ -25,6 +25,7 @@
 | Nest BullMQ integration | 12.0.0 candidate | Mutable manifest shows compatible Nest/Bull peers; published immutable metadata must confirm [S15](https://raw.githubusercontent.com/nestjs/bull/master/packages/bullmq/package.json). |
 | Zod | Latest stable 4.x in supported integration | Exact patch and Swagger/Standard Schema bridge must resolve and pass validation/OpenAPI tests [S20](https://docs.nestjs.com/openapi/introduction). |
 | Other direct dependencies | [Library register](03-library-register.md) | Exact versions pending T005 resolution; this pack does not invent unverified patch pins. |
+| PDF inspection parser | pdfjs-dist 6.4.299 | Node engine `>=22.13.0 || >=24`, Apache-2.0; compatible with the pinned Node 24 line. The exact server-only static-inspection usage, worker resource bounds, advisory review and smoke result are recorded in [T033 dependency evidence](../evidence/T033/pdf-policy-2026-10-04.md). It is not used for document rendering. |
 
 ## Explicit Prisma decision
 

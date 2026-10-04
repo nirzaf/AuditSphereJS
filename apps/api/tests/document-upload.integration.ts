@@ -22,6 +22,30 @@ const otherActorId = 'a7000000-0000-4000-8000-000000000007';
 const localFixtureId = '00000000-0000-4000-8000-000000000001';
 const testTenant = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 
+function syntheticPdf(catalogEntries = '', pageEntries = '') {
+  const objects = [
+    `<< /Type /Catalog /Pages 2 0 R ${catalogEntries} >>`,
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << >> /Contents 4 0 R ${pageEntries} >>`,
+    '<< /Length 0 >>\nstream\n\nendstream',
+  ];
+  if (pageEntries) objects.push('<< /Type /Annot /Subtype /Link /Rect [0 0 10 10] /A << /S /URI /URI (https://example.test) >> >>');
+  const parts = ['%PDF-1.7\n'];
+  const offsets = [0];
+  let length = Buffer.byteLength(parts[0]);
+  for (let index = 0; index < objects.length; index++) {
+    offsets.push(length);
+    const object = `${index + 1} 0 obj\n${objects[index]}\nendobj\n`;
+    parts.push(object);
+    length += Buffer.byteLength(object);
+  }
+  const xrefOffset = length;
+  const xref = [`xref\n0 ${objects.length + 1}\n`, '0000000000 65535 f \n'];
+  for (const offset of offsets.slice(1)) xref.push(`${offset.toString().padStart(10, '0')} 00000 n \n`);
+  parts.push(...xref, `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+  return Buffer.from(parts.join(''), 'ascii');
+}
+
 async function startTestMalwareScanner() {
   const server: Server = createServer(socket => {
     let input = Buffer.alloc(0);
@@ -153,6 +177,18 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       assert.equal(await db.documentVersion.count({ where: { engagementId } }), 0);
       assert.equal(objects.size, 0, 'infected bytes never reach Graph');
 
+      for (const [filename, activePdf] of [
+        ['javascript-action.pdf', syntheticPdf('/OpenAction << /S /JavaScript /JS (app.alert\\(1\\)) >>')],
+        ['external-link.pdf', syntheticPdf('', '/Annots [5 0 R]')],
+      ] as const) {
+        const unsafe = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename, contentType: 'application/pdf', sizeBytes: activePdf.byteLength }) as { id: string };
+        const objectsBeforeInspection = await db.storedObject.count({ where: { engagementId } });
+        await assert.rejects(receiveDocumentUpload(actorId, unsafe.id, { filename, mimetype: 'application/pdf', file: (async function* () { yield activePdf; })() }), /PDF is encrypted, contains prohibited active content/);
+        assert.equal((await db.documentUploadSession.findUniqueOrThrow({ where: { id: unsafe.id } })).status, 'FAILED', 'a PDF with active content permanently fails its session');
+        assert.equal(await db.storedObject.count({ where: { engagementId } }), objectsBeforeInspection, 'active PDF content is rejected before storage metadata is created');
+        assert.equal(objects.size, 0, 'active PDF content never reaches Graph');
+      }
+
       const offlineBytes = Buffer.from('%PDF-1.7\nscanner-offline');
       const unavailable = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'scanner-offline.pdf', contentType: 'application/pdf', sizeBytes: offlineBytes.byteLength }) as { id: string };
       const scannerPort = process.env.CLAMAV_PORT;
@@ -164,7 +200,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       assert.equal(await db.storedObject.count({ where: { engagementId } }), storedBeforeScan, 'scanner outages are detected before creating storage metadata');
       assert.equal(objects.size, 0, 'scanner outages never trigger Graph writes');
 
-      const failedProviderBytes = Buffer.from('%PDF-1.7\nprovider-failure');
+      const failedProviderBytes = syntheticPdf();
       const failedProvider = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'provider-failure.pdf', contentType: 'application/pdf', sizeBytes: failedProviderBytes.byteLength }) as { id: string };
       failNextProviderUpload = true;
       await assert.rejects(receiveDocumentUpload(actorId, failedProvider.id, { filename: 'provider-failure.pdf', mimetype: 'application/pdf', file: (async function* () { yield failedProviderBytes; })() }), /Graph upload failed \(503\)/);
@@ -173,7 +209,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       assert.equal(await db.documentVersion.count({ where: { engagementId } }), 0, 'provider failure cannot create immutable version metadata');
       assert.equal((await db.storedObject.findFirstOrThrow({ where: { engagementId, status: 'UPLOADING', sha256: createHash('sha256').update(failedProviderBytes).digest('hex') } })).status, 'UPLOADING', 'unknown provider outcome remains tracked for the grace-period cleanup/reconciliation path');
 
-      const pdfBytes = Buffer.from('%PDF-1.7\nfixture');
+      const pdfBytes = syntheticPdf();
       const frozen = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'frozen.pdf', contentType: 'application/pdf', sizeBytes: pdfBytes.byteLength, expectedSha256: createHash('sha256').update(pdfBytes).digest('hex') }) as { id: string };
       await receiveDocumentUpload(actorId, frozen.id, { filename: 'frozen.pdf', mimetype: 'application/pdf', file: (async function* () { yield pdfBytes.subarray(0, 5); yield pdfBytes.subarray(5); })() });
       await db.engagement.update({ where: { id: engagementId }, data: { state: 'DELIVERABLE_RELEASE' } });
@@ -192,7 +228,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       assert.equal(await db.storedObject.count({ where: { engagementId, documentId: document.id, status: 'REFERENCED' } }), 1);
       await assert.rejects(db.$executeRaw`UPDATE "DocumentUploadSession" SET status = 'STORED', version = version + 1 WHERE id = ${frozen.id}::uuid`, /invalid state transition|check constraint/i);
 
-      const abandonedBytes = Buffer.from('%PDF-1.7\nabandoned-stage');
+      const abandonedBytes = syntheticPdf();
       const abandoned = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'abandoned.pdf', contentType: 'application/pdf', sizeBytes: abandonedBytes.byteLength }) as { id: string };
       await receiveDocumentUpload(actorId, abandoned.id, { filename: 'abandoned.pdf', mimetype: 'application/pdf', file: (async function* () { yield abandonedBytes; })() });
       const abandonedRow = await db.storedObject.findFirstOrThrow({ where: { engagementId, status: 'PENDING', documentId: null, sha256: createHash('sha256').update(abandonedBytes).digest('hex') } });
@@ -216,7 +252,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
         const apiHeaders = { authorization: 'Bearer document-upload-integration-token' };
         const oversizedInit = await fetch(`${origin}/api/v1/documents/uploads`, { method: 'POST', headers: { ...apiHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ engagementId, category: '03_Fieldwork & Testing', filename: 'oversized.pdf', contentType: 'application/pdf', sizeBytes: 15_000_001 }) });
         assert.equal(oversizedInit.status, 400, 'the shared contract rejects declared sizes above 15 MB before a session is persisted');
-        const apiPdf = Buffer.from('%PDF-1.7\napi-fixture');
+        const apiPdf = syntheticPdf();
         const create = await fetch(`${origin}/api/v1/documents/uploads`, { method: 'POST', headers: { ...apiHeaders, 'content-type': 'application/json' }, body: JSON.stringify({ engagementId, category: '03_Fieldwork & Testing', filename: 'api-evidence.pdf', contentType: 'application/pdf', sizeBytes: apiPdf.byteLength }) });
         assert.equal(create.status, 201);
         const created = await create.json() as { id: string; status: string };
