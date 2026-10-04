@@ -90,6 +90,7 @@ test('T039 scopes row leases, rejects stale owners, and keeps PostgreSQL version
     const released = await fetch(leaseUrl, { method: 'POST', headers: { authorization: `Bearer ${devToken}`, 'content-type': 'application/json' }, body: JSON.stringify({ action: 'release', token: routeResult.lease.leaseToken }) });
     assert.equal(released.status, 201);
 
+    await server.mapBatch(ids.engagementId, ids.importId, ids.ownerA, { idempotencyKey: randomUUID(), changes: [{ rowId: ids.rowA, expectedVersion: 1, fsli: 'Revenue' }] });
     const expiring = await fieldwork.lease(ids.engagementId, ids.importId, ids.rowA, { actorId: ids.ownerA }, { action: 'acquire' }) as { available: true; lease: { leaseToken: string } };
     const leaseKey = `audit:edit:tb:${ids.engagementId}:${ids.importId}:${ids.rowA}`;
     assert.equal(execFileSync('docker', ['exec', redis.getId(), 'redis-cli', 'PEXPIRE', leaseKey, '1'], { encoding: 'utf8' }).trim(), '1');
@@ -97,9 +98,9 @@ test('T039 scopes row leases, rejects stale owners, and keeps PostgreSQL version
     const expired = await fieldwork.leaseStatus(ids.engagementId, ids.importId, ids.rowA, { actorId: ids.ownerA }) as { available: true; lease: null };
     assert.equal(expired.lease, null, 'expired leases stop reporting editing presence');
     await assert.rejects(fieldwork.lease(ids.engagementId, ids.importId, ids.rowA, { actorId: ids.ownerA }, { action: 'release', token: expiring.lease.leaseToken }), /Lease expired or ownership token differs/);
-
-    await server.mapBatch(ids.engagementId, ids.importId, ids.ownerA, { idempotencyKey: randomUUID(), changes: [{ rowId: ids.rowA, expectedVersion: 1, fsli: 'Revenue' }] });
     await assert.rejects(server.mapBatch(ids.engagementId, ids.importId, ids.ownerA, { idempotencyKey: randomUUID(), changes: [{ rowId: ids.rowA, expectedVersion: 1, fsli: 'Operating expenses' }] }), /rows changed/);
+    const afterExpiredStaleWrite = await db.tbRow.findUniqueOrThrow({ where: { id: ids.rowA }, select: { fsli: true, version: true } });
+    assert.deepEqual(afterExpiredStaleWrite, { fsli: 'Revenue', version: 2 }, 'the expired lease does not authorize an overwrite of the newer database row');
     await redis.stop();
     const offline = await fieldwork.leaseStatus(ids.engagementId, ids.importId, ids.rowA, { actorId: ids.ownerA }) as { available: boolean; reason?: string };
     assert.equal(offline.available, false, 'an unavailable Redis lease service must not fail the API operation');

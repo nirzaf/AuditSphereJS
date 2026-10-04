@@ -4,7 +4,7 @@
 
 Task ID: T039
 Requirement IDs: R046, source `docs/sources/requirements-current.md:497`
-Implementing commit/branch: this handoff commit on `main`
+Implementing commit/branch: T039 implementation on `main`; acceptance proof finalized in follow-up test commit
 Status: DONE
 
 ## Intended and delivered outcome
@@ -48,7 +48,7 @@ No pending D01–D12 decision applies to R046 row lease behavior. Existing autho
 ## Acceptance criteria
 
 - **AC1 — passed:** a stale owner's release token is rejected after another user acquires the replacement lease; the replacement remains visible and owned by that user.
-- **AC2 — passed:** Redis lease expiry was forced with `PEXPIRE`; the expired lease returned no owner and rejected its stale release. A stale PostgreSQL row version was independently rejected, both before and after lease Redis became unavailable. Lease tokens are not accepted by row mapping commands.
+- **AC2 — passed:** a mapping advanced the PostgreSQL row to version 2 before a held lease was expired with `PEXPIRE`. The stale version-1 write was rejected after expiry and the stored mapping remained unchanged; it was also rejected after Redis became unavailable. The expired lease returned no owner and rejected its stale release. Lease tokens are not accepted by row mapping commands.
 - **AC3 — passed:** stopping Redis returns `{ available: false, reason: REDIS_UNAVAILABLE }` for lease presence; an attempted stale mapping still fails on the PostgreSQL row version.
 
 ## Recovery and authorization
