@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `NOT_APPLICABLE` — the approved T149 scope has no Graph subscription or webhook permission; storage reads use direct selected-item requests. The disabled-surface policy test passes. See [handoff](../../evidence/T155/handoff.md). |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |

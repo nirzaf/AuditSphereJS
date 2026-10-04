@@ -30,7 +30,7 @@ Last verified: 2026-10-03 through Entra administration, SharePoint administratio
 | Local private configuration | `.env.m365.acceptance` in repository root; Git-ignored; current Windows user only |
 | Acceptance credential expiry | `2026-10-08T22:16:16Z` |
 
-Only synthetic fixtures belong in these repositories. The existing unrelated AuditSphere P0/AuditSphereOps registrations and their credentials were not reused or changed. No outbound mail permission, sending action, Microsoft 365 eSignature setup or production deployment is part of this configuration.
+Only synthetic fixtures belong in these repositories. The existing unrelated AuditSphere P0/AuditSphereOps registrations and their credentials were not reused or changed. No outbound mail, tenant directory, runtime provisioning, Graph change-notification permission, Microsoft 365 eSignature setup or production deployment is part of this configuration.
 
 ## Verified and pending
 

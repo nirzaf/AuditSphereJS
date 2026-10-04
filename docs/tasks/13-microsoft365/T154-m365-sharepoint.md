@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `NOT_APPLICABLE` — T149 disables runtime site/folder provisioning; the acceptance site and selected storage folders are already administrator-operated resources. The disabled-surface policy test passes. See [handoff](../../evidence/T154/handoff.md). |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |

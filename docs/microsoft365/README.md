@@ -8,7 +8,7 @@ Last reviewed: 2026-10-04. These guides describe the current AuditSphereJS imple
 - [Current tenant inventory](current-tenant.md): existing acceptance resources and verified/pending results.
 - [Permission boundary](permission-matrix.md): approved delegated/application permissions, resource scope and disabled optional capabilities.
 
-Microsoft Entra authenticates staff; PostgreSQL controls business access. The browser SPA calls our API. A separate server application accesses SharePoint evidence and OneDrive working files through Graph. The SPA has no storage credential. RustFS is a local test fixture. Report signing uses image artwork and version-bound approval under [D08](../decisions/D08-image-signature.md); Microsoft 365 eSignature is excluded.
+Microsoft Entra authenticates staff; PostgreSQL controls business access. The browser SPA calls our API. A separate server application accesses SharePoint evidence and OneDrive working files through Graph. The SPA has no storage credential. RustFS is a local test fixture. Graph mail, directory synchronization, runtime site provisioning and Graph change notifications are disabled by the approved nonproduction scope. Report signing uses image artwork and version-bound approval under [D08](../decisions/D08-image-signature.md); Microsoft 365 eSignature is excluded.
 
 ## Keeping these guides current
 

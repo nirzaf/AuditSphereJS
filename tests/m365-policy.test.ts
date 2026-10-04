@@ -10,6 +10,7 @@ it('documents the selected Graph permission and excludes unapproved tenant-wide 
   expect(policy).toContain('Graph mail | None');
   expect(policy).toContain('Graph directory lookup/sync | None');
   expect(policy).toContain('Runtime SharePoint site/folder provisioning | None');
+  expect(policy).toContain('Graph change notifications/webhooks | None');
   expect(policy).toContain('Never add `Files.ReadWrite.All`, `Sites.ReadWrite.All`, `Mail.Send`, `User.Read.All`, or `Directory.Read.All`');
 });
 

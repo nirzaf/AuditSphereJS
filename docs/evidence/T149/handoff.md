@@ -9,7 +9,7 @@ Status: DONE for the explicitly selected nonproduction identity and selected-fol
 
 ## Intended and delivered outcome
 
-Recorded the least-privilege Microsoft 365 surface selected by the user: Entra authenticates internal staff; the SPA requests only AuditSphere's own delegated `access_as_user` API scope; a separate server app uses `Files.SelectedOperations.Selected` with explicit write grants limited to two synthetic acceptance folders. Graph mail, tenant-wide directory lookup/sync and runtime SharePoint administration remain disabled. Local test mode retains the RustFS-compatible S3 fixture and does not call Graph. No Entra, Graph or SharePoint tenant mutation occurred in this task.
+Recorded the least-privilege Microsoft 365 surface selected by the user: Entra authenticates internal staff; the SPA requests only AuditSphere's own delegated `access_as_user` API scope; a separate server app uses `Files.SelectedOperations.Selected` with explicit write grants limited to two synthetic acceptance folders. Graph mail, tenant-wide directory lookup/sync, runtime SharePoint administration and Graph change notifications remain disabled. Local test mode retains the RustFS-compatible S3 fixture and does not call Graph. No Entra, Graph or SharePoint tenant mutation occurred in this task.
 
 ## Files and contracts
 

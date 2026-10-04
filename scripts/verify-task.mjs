@@ -44,6 +44,10 @@ const tasks = {
   T149: ['build:server', 'm365-policy', 'config'],
   T150: ['typecheck', 'dependencies:check', 'identity', 'storage', 'config', 'test:web:identity'],
   T151: ['build:server', 'identity', 'identity-session', 'identity-map', 'identity-boundary', 'authorization', 'test:web:identity'],
+  T152: ['m365-policy'],
+  T153: ['m365-policy'],
+  T154: ['m365-policy'],
+  T155: ['m365-policy'],
 };
 if (!tasks[id]) throw new Error(`Task ${id || '(missing)'} has no recorded verification recipe. It cannot be verified.`);
 for (const step of tasks[id]) {

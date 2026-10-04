@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `NOT_APPLICABLE` — T149 disables tenant-wide user/group lookup and synchronization; staff identities and engagement assignments remain explicitly administered in AuditSphere. The disabled-surface policy test passes. See [handoff](../../evidence/T153/handoff.md). |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |
