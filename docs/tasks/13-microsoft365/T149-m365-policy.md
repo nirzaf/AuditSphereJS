@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` — selected nonproduction Entra/Graph storage scope is documented and regression-tested; production and optional mail/directory features remain gated |
 | Execution class | `OPTIONAL` |
 | Phase | 13-microsoft365 — Optional Microsoft 365 integration |
 | Owner area | `microsoft365` |
@@ -48,18 +49,18 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Define only the approved features: internal SSO, mail, directory lookup and optional SharePoint workspace; full tenant administration is not implied by the functional file.
-- [ ] Create a least-privilege permission/consent matrix for delegated versus application access.
-- [ ] Separate audit roles from Entra roles and admin-consent ability.
-- [ ] Keep the optional integration disabled until tenant approval and credentialed tests are recorded.
+- [x] Define only the approved features: internal SSO and selected-folder SharePoint/OneDrive storage; mail, directory lookup and runtime workspace provisioning remain disabled. Full tenant administration is not implied by the functional file.
+- [x] Create a least-privilege permission/consent matrix for delegated versus application access in [the permission boundary](../../microsoft365/permission-matrix.md).
+- [x] Separate AuditSphere roles from Entra roles and admin-consent ability; only local identity mapping, membership and grants establish application authority.
+- [x] Keep optional integration disabled until tenant approval and credentialed tests are recorded. The selected nonproduction storage app has only `Files.SelectedOperations.Selected`, explicit synthetic-folder grants and dated credentialed acceptance in [T156 evidence](../../evidence/T156/tenant-readiness.md); no tenant change was made in this task.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** No broad tenant permission is requested solely for convenience.
-- [ ] **AC2:** Disabled integration makes no outbound calls.
-- [ ] **AC3:** Optional scope does not block unrelated core work when an alternative approved provider exists.
+- [x] **AC1:** No broad tenant permission is requested solely for convenience. The matrix names the sole runtime Graph role and prohibits tenant-wide permissions.
+- [x] **AC2:** Disabled Graph storage makes no outbound Graph/token request in local S3 mode; `tests/m365-policy.test.ts` exercises `ensureBucket()` against an ephemeral local S3 endpoint while spying on `fetch`.
+- [x] **AC3:** Local nonproduction storage and the core affected verification run without Microsoft Graph credentials; production remains intentionally configured to require the selected Entra/Graph providers.
 
-Require exact SDK peer/install evidence and least-privilege credentialed nonproduction tests for enabled endpoints.
+No dependency was added. `@azure/msal-browser` is pinned at 5.23.0 for the existing SPA login; the server Graph storage adapter uses the native Fetch API, not a Graph SDK. T150 owns independent MSAL/Graph package compatibility review. The enabled storage endpoint has credentialed nonproduction evidence in T156; this task does not claim production-provider acceptance.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 

@@ -1,11 +1,12 @@
 # Microsoft 365 configuration
 
-Last reviewed: 2026-10-03. These guides describe the current AuditSphereJS implementation and its nonproduction tenant setup.
+Last reviewed: 2026-10-04. These guides describe the current AuditSphereJS implementation and its nonproduction tenant setup.
 
 - [Tenant and app setup](tenant-setup.md): administrator sign-in, Entra registrations, consent and selected-folder grants.
 - [Application configuration](application-configuration.md): environment variables, credentials and local user/repository assignments.
 - [Verification and troubleshooting](verification-and-troubleshooting.md): live tests, credential rotation and known failure cases.
 - [Current tenant inventory](current-tenant.md): existing acceptance resources and verified/pending results.
+- [Permission boundary](permission-matrix.md): approved delegated/application permissions, resource scope and disabled optional capabilities.
 
 Microsoft Entra authenticates staff; PostgreSQL controls business access. The browser SPA calls our API. A separate server application accesses SharePoint evidence and OneDrive working files through Graph. The SPA has no storage credential. RustFS is a local test fixture. Report signing uses image artwork and version-bound approval under [D08](../decisions/D08-image-signature.md); Microsoft 365 eSignature is excluded.
 
