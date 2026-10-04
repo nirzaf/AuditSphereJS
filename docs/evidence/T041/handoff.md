@@ -92,3 +92,9 @@ Correction: the server package now exports the side-effect-free metrics module a
 | `git diff --check` | PASS, exit 0 |
 
 Hosted Actions for the correction is pending push; the successful result will be appended after the run completes. `.zcodeignore` remains unrelated untracked content and was not staged. `visual-prototype-simulation/` remains excluded.
+
+## Hosted verification result — 2026-10-04
+
+Correction and the already-committed work on the current `main` branch were pushed at `1700063f653ffe831a71f3f4b0e726f059979d37`. [GitHub Actions run 37229786868](https://github.com/nirzaf/AuditSphereJS/actions/runs/37229786868) completed with `success` for that exact SHA: static, unit, e2e, all three PostgreSQL integration shards, Linux compatibility image and `publish-web-assets` all passed. The two shards containing document upload and document download both pass after the metrics-import isolation fix. The workflow published its labelled non-production web asset; it performed no application deployment.
+
+The local `main` branch and `origin/main` both resolve to `1700063f653ffe831a71f3f4b0e726f059979d37`. `.zcodeignore` is still untracked and excluded from commits; no path under `visual-prototype-simulation/` is present in the pushed commits. The previous “pending push/hosted Actions” note above records the state before this result and is now resolved.
