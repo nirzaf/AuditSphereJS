@@ -117,6 +117,12 @@ jobs:
       - run: pnpm db:migrate
       - run: pnpm db:roles
       - run: pnpm db:seed
+      - name: Allow Chromium sandbox user namespaces on Ubuntu 24
+        if: contains(matrix.shard.files, 'pdf-renderer.integration.ts')
+        run: |
+          if grep -q "Ubuntu 24" /etc/os-release; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
       - if: contains(matrix.shard.files, 'pdf-renderer.integration.ts')
         run: pnpm exec playwright install --with-deps chromium
       - name: Run integration shard
@@ -192,6 +198,11 @@ jobs:
       - run: pnpm setup:local
       - run: pnpm build:server
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Allow Chromium sandbox user namespaces on Ubuntu 24
+        run: |
+          if grep -q "Ubuntu 24" /etc/os-release; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
       - run: pnpm verify:task -- T035
       - run: pnpm smoke:linux
       - name: Package verified build

@@ -74,6 +74,11 @@ assert.match(
   /contains\(matrix\.shard\.files, 'pdf-renderer\.integration\.ts'\)[\s\S]*?pnpm exec playwright install --with-deps chromium/,
   "The PDF integration shard must install its pinned Chromium runtime",
 );
+assert.match(
+  integration,
+  /Allow Chromium sandbox user namespaces on Ubuntu 24[\s\S]*?contains\(matrix\.shard\.files, 'pdf-renderer\.integration\.ts'\)[\s\S]*?kernel\.apparmor_restrict_unprivileged_userns=0/,
+  "The PDF integration shard must allow its sandbox on Ubuntu 24",
+);
 const declared = new Set(shardFiles);
 const packageScripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
 const suiteFiles = packageScripts["test:integration"].split(" ").filter((file) => file.endsWith(".ts"));
@@ -109,6 +114,11 @@ assert.match(
   image,
   /pnpm exec playwright install --with-deps chromium[\s\S]*?pnpm verify:task -- T035/,
   "The image job must install the PDF renderer browser before the T035 gate",
+);
+assert.match(
+  image,
+  /Allow Chromium sandbox user namespaces on Ubuntu 24[\s\S]*?kernel\.apparmor_restrict_unprivileged_userns=0[\s\S]*?pnpm verify:task -- T035/,
+  "The image job must enable sandboxed Chromium on Ubuntu 24 before the T035 gate",
 );
 assert.match(
   image,
