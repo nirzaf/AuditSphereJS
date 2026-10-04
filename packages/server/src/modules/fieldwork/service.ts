@@ -8,6 +8,7 @@ import { resolveClientRepository } from '../../platform/repository.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { runUnitOfWork, withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { createTrialBalanceImportOutbox } from '../../platform/outbox.js';
+import { publishRealtimeInvalidation } from '../../platform/realtime/invalidation.js';
 import { mappingSchema, uploadSchema, finalizeSchema } from '@auditsphere/contracts';
 import { z } from 'zod';
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -117,7 +118,8 @@ export async function rows(engagementId: string, id: string, offset: number, sea
 }
 export async function mapBatch(engagementId: string, importId: string, actorId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = validate(mappingSchema, input); const hash = digest(JSON.stringify({ importId, body }));
-  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+  return withUnitOfWork(unitOfWork, async (scope) => {
+    const tx = scope.client;
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
     const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
     if (receipt) { if (receipt.hash !== hash || receipt.actorId !== actorId || receipt.engagementId !== engagementId) throw new ConflictException('Idempotency key reused'); return receipt.result; }
@@ -137,8 +139,9 @@ export async function mapBatch(engagementId: string, importId: string, actorId: 
         AND row.version = change."expectedVersion"
       RETURNING row.id`;
     if (updated.length !== body.changes.length) throw new ConflictException('One or more rows changed; reload before saving');
-    await tx.tbImport.update({ where: { id: importId }, data: { version: { increment: 1 } } });
+    const updatedBatch = await tx.tbImport.update({ where: { id: importId }, data: { version: { increment: 1 } }, select: { version: true } });
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_MAPPED', payload: { changes: body.changes } } });
+    scope.afterCommit(() => publishRealtimeInvalidation({ schemaVersion: 1, engagementId, resourceType: 'trial-balance-import', resourceId: importId, version: updatedBatch.version }));
     const result = { saved: body.changes.length };
     await tx.commandReceipt.create({ data: { key: body.idempotencyKey, engagementId, actorId, hash, result } });
     return result;
@@ -146,7 +149,8 @@ export async function mapBatch(engagementId: string, importId: string, actorId: 
 }
 export async function finalize(engagementId: string, importId: string, actorId: string, input: unknown, unitOfWork?: UnitOfWork) {
   const body = validate(finalizeSchema, input);
-  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+  return withUnitOfWork(unitOfWork, async (scope) => {
+    const tx = scope.client;
     await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
     const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
     if (!engagement) throw new NotFoundException('Engagement not found');
@@ -161,6 +165,7 @@ export async function finalize(engagementId: string, importId: string, actorId: 
     const changed = await tx.tbImport.updateMany({ where: { id: batch.id, engagementId, status: 'MAPPING_REQUIRED', version: body.expectedVersion }, data: { status: 'FINALIZED', version: { increment: 1 } } });
     if (changed.count !== 1) throw new ConflictException('Import changed');
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_FINALIZED', payload: { importId: batch.id } } });
+    scope.afterCommit(() => publishRealtimeInvalidation({ schemaVersion: 1, engagementId, resourceType: 'trial-balance-import', resourceId: importId, version: batch.version + 1 }));
     return { status: 'FINALIZED' };
   });
 }

@@ -8,7 +8,7 @@ import {
 import { NestFactory } from '@nestjs/core';
 import type { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { CommercialController, PracticeLedgerController, PracticeRatesController, AuditController, FieldworkController, DocumentLinksController, DocumentDownloadsController, DocumentUploadsController, DocumentTemplatesController, GovernanceController, PublicationController, TaxonomyController, MaterialityController, RiskController, ReviewNoteController, AdjustmentController, NotificationController, InternalGuard, InternalIdentityGuard, InternalIdentityController, PortalAuthController, RuntimeModule, Readiness, readConfiguration } from '@auditsphere/server';
+import { CommercialController, PracticeLedgerController, PracticeRatesController, AuditController, FieldworkController, DocumentLinksController, DocumentDownloadsController, DocumentUploadsController, DocumentTemplatesController, GovernanceController, PublicationController, TaxonomyController, MaterialityController, RiskController, ReviewNoteController, AdjustmentController, NotificationController, InternalGuard, InternalIdentityGuard, InternalIdentityController, PortalAuthController, RealtimeModule, RuntimeModule, Readiness, installRealtimeRedisAdapter, readConfiguration, EditLeaseConnection } from '@auditsphere/server';
 import { apiProblemSchema, healthResponseSchema, identityConfigurationSchema, readinessResponseSchema, systemVersionSchema } from '@auditsphere/contracts';
 import { configureHttpSecurity, createFastifyAdapter } from './http-security.js';
 export { createFastifyAdapter, createRequestId } from './http-security.js';
@@ -52,7 +52,7 @@ class IdentityController {
     return { provider: 'entra', tenantId: process.env.M365_TENANT_ID, clientId: process.env.ENTRA_BROWSER_CLIENT_ID, scopes: [process.env.ENTRA_BROWSER_API_SCOPE], redirectUri: process.env.ENTRA_BROWSER_REDIRECT_URI };
   }
 }
-@Module({ imports: [RuntimeModule], controllers: [HealthController, SystemController, IdentityController, InternalIdentityController, PortalAuthController, DocumentUploadsController, DocumentDownloadsController, DocumentTemplatesController, FieldworkController, DocumentLinksController, PublicationController, TaxonomyController, MaterialityController, RiskController, ReviewNoteController, AdjustmentController, NotificationController, GovernanceController, AuditController, PracticeLedgerController, PracticeRatesController, CommercialController], providers: [InternalGuard, InternalIdentityGuard] })
+@Module({ imports: [RuntimeModule, RealtimeModule], controllers: [HealthController, SystemController, IdentityController, InternalIdentityController, PortalAuthController, DocumentUploadsController, DocumentDownloadsController, DocumentTemplatesController, FieldworkController, DocumentLinksController, PublicationController, TaxonomyController, MaterialityController, RiskController, ReviewNoteController, AdjustmentController, NotificationController, GovernanceController, AuditController, PracticeLedgerController, PracticeRatesController, CommercialController], providers: [InternalGuard, InternalIdentityGuard, EditLeaseConnection] })
 export class AppModule {}
 
 export function createOpenApiDocument(app: NestFastifyApplication) {
@@ -67,6 +67,8 @@ export async function configureApiHttp(app: NestFastifyApplication, config = rea
 export async function main() {
   const config = readConfiguration();
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, createFastifyAdapter());
+  await installRealtimeRedisAdapter(app, config.REDIS_URL);
+  app.enableShutdownHooks();
   await configureApiHttp(app, config);
   await app.get(Readiness).check();
   await app.listen(config.PORT, config.HOST);

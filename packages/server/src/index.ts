@@ -12,7 +12,7 @@ export type { ContractContribution, ContractTimeValue } from './modules/practice
 export { AuditController } from './platform/audit-controller.js';
 export { captureAuditCheckpoint, verifyAuditChain, verifyAuditRecords, signAuditCheckpoint, verifySignedAuditCheckpoint } from './platform/audit-chain.js';
 export type { AuditCheckpoint, AuditChainRow, SignedAuditCheckpoint } from './platform/audit-chain.js';
-export { InternalGuard, InternalIdentityGuard, currentInternalIdentity, readableInternalEngagements, revokeCurrentUserSessions, authenticateEntraActor, fixtureUser } from './platform/auth.js';
+export { InternalGuard, InternalIdentityGuard, currentInternalIdentity, readableInternalEngagements, revokeCurrentUserSessions, authenticateEntraActor, authenticateRealtimeInternalActor, fixtureUser } from './platform/auth.js';
 export { EntraIdentity } from './platform/entra.js';
 export { InternalIdentityController } from './platform/identity-controller.js';
 export { assignEngagementStaff, revokeEngagementStaff } from './platform/staff-access.js';
@@ -27,7 +27,7 @@ export { PdfRenderError, renderAndPublishPdf, renderTrustedPdf } from './platfor
 export { persistRenderedPdfVersion } from './platform/rendered-documents.js';
 export type { PersistedRenderedPdfVersion, RenderedPdfAuthorizer } from './platform/rendered-documents.js';
 export { initiateDocumentUpload, receiveDocumentUpload, finalizeDocumentUpload, getDocumentUploadSession } from './platform/document-uploads.js';
-export { issuePortalInvitation, issuePortalPasswordReset, redeemPortalInvitation, loginPortalUser, completePortalPasswordReset, completePortalFirstLogin, resolvePortalSession, logoutPortalSession, assertPortalUploadAllowed } from './platform/portal-auth.js';
+export { issuePortalInvitation, issuePortalPasswordReset, redeemPortalInvitation, loginPortalUser, completePortalPasswordReset, completePortalFirstLogin, resolvePortalSession, logoutPortalSession, assertPortalUploadAllowed, PORTAL_SESSION_COOKIE, PORTAL_SOCKET_SESSION_COOKIE, portalSessionTokenFromCookieHeader, portalSocketSessionTokenFromCookieHeader } from './platform/portal-auth.js';
 export { requireCapability, hasCapability, anyCapability, grantCoversScope, revokeGrant } from './platform/authorization.js';
 export { recordAuditEvent, recordSecurityEvent, redactValue, redactedMarker } from './platform/audit.js';
 export type { AuditEventInput, SecurityEventInput } from './platform/audit.js';
@@ -54,7 +54,7 @@ export type { QuotationPricingInput, QuotationPricingResult, QuotationLineInput,
 export type { MappedBenchmarkLine, MaterialityFigures, RiskBand, MaterialityBenchmark } from './modules/governance/materiality.js';
 export type { Capability, Scope } from './platform/authorization.js';
 export { parseTrialBalance, parseTrialBalanceStream, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
-export { upload } from './modules/fieldwork/service.js';
+export { upload, mapBatch, finalize } from './modules/fieldwork/service.js';
 export { AdjustmentController } from './modules/fieldwork/adjustments-controller.js';
 export { createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, listAdjustmentJournals, adjustmentJournalDetail, adjustedBalances } from './modules/fieldwork/adjustments.js';
 export { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
@@ -77,3 +77,11 @@ export { NotificationController } from './platform/notifications-controller.js';
 export { createRoutedNotification, snapshotAuthorizedRecipients, GraphMailProvider, configuredGraphMailProvider, dispatchPendingNotifications, listNotificationInbox, listOutboundMessages, markNotificationRead, retryFailedOutbound, reconcileUnknownOutbound } from './platform/notifications.js';
 export type { AuthorizedContact, ContactRole, NotificationEvent, RecipientSnapshot } from './platform/notifications.js';
 export { readConfiguration } from './platform/config.js';
+export { RealtimeModule } from './platform/realtime/module.js';
+export { EditLeaseConnection } from './platform/leases.js';
+export { RealtimeGateway } from './platform/realtime/gateway.js';
+export { authorizeRealtimeJoin, resolveRealtimePrincipal } from './platform/realtime/authorization.js';
+export type { RealtimePrincipal, AuthorizedRealtimeJoin } from './platform/realtime/authorization.js';
+export { publishRealtimeInvalidation, subscribeRealtimeInvalidations } from './platform/realtime/invalidation.js';
+export { internalEngagementRoom, internalImportRoom, portalEngagementRoom } from './platform/realtime/rooms.js';
+export { installRealtimeRedisAdapter } from './platform/realtime/redis-transport.js';

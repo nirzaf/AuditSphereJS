@@ -11,6 +11,28 @@ const SCRYPT_OPTIONS = { N: 16_384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
 export type PortalCredentialPurpose = 'INVITATION' | 'PASSWORD_RESET';
 export type PortalSessionCredentials = { sessionToken: string; csrfToken: string; expiresAt: Date; mustChangePassword: boolean };
 export type PortalIdentity = { id: string; email: string; mustChangePassword: boolean };
+export const PORTAL_SESSION_COOKIE = 'auditsphere_portal_session';
+export const PORTAL_SOCKET_SESSION_COOKIE = 'auditsphere_portal_socket';
+
+/** Parse only the opaque portal-session cookie; the token itself is never logged or returned. */
+export function portalSessionTokenFromCookieHeader(header?: string): string | null {
+  for (const item of header?.split(';') ?? []) {
+    const separator = item.indexOf('=');
+    if (separator < 0 || item.slice(0, separator).trim() !== PORTAL_SESSION_COOKIE) continue;
+    try { return decodeURIComponent(item.slice(separator + 1).trim()) || null; } catch { return null; }
+  }
+  return null;
+}
+
+/** The duplicate HttpOnly cookie is scoped only to the Socket.IO endpoint. */
+export function portalSocketSessionTokenFromCookieHeader(header?: string): string | null {
+  for (const item of header?.split(';') ?? []) {
+    const separator = item.indexOf('=');
+    if (separator < 0 || item.slice(0, separator).trim() !== PORTAL_SOCKET_SESSION_COOKIE) continue;
+    try { return decodeURIComponent(item.slice(separator + 1).trim()) || null; } catch { return null; }
+  }
+  return null;
+}
 
 function deriveKey(password: string, salt: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => nodeScrypt(password, salt, PASSWORD_BYTES, SCRYPT_OPTIONS, (error, key) => error ? reject(error) : resolve(key)));

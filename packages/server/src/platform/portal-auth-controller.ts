@@ -19,6 +19,9 @@ import {
   completePortalPasswordReset,
   loginPortalUser,
   logoutPortalSession,
+  PORTAL_SESSION_COOKIE,
+  PORTAL_SOCKET_SESSION_COOKIE,
+  portalSessionTokenFromCookieHeader,
   redeemPortalInvitation,
   resolvePortalSession,
 } from './portal-auth.js';
@@ -27,6 +30,7 @@ type PortalRequest = { headers: { cookie?: string; origin?: string; 'x-csrf-toke
 type PortalReply = { header: (name: string, value: string | string[]) => PortalReply };
 
 function cookieValue(request: PortalRequest, name: string): string | null {
+  if (name === PORTAL_SESSION_COOKIE) return portalSessionTokenFromCookieHeader(request.headers.cookie);
   for (const item of request.headers.cookie?.split(';') ?? []) {
     const separator = item.indexOf('=');
     if (separator < 0 || item.slice(0, separator).trim() !== name) continue;
@@ -46,7 +50,8 @@ function setPortalCookies(reply: PortalReply, sessionToken: string, csrfToken: s
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   const maxAge = Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
   reply.header('set-cookie', [
-    `auditsphere_portal_session=${encodeURIComponent(sessionToken)}; Path=/api/v1/portal; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`,
+    `${PORTAL_SESSION_COOKIE}=${encodeURIComponent(sessionToken)}; Path=/api/v1/portal; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`,
+    `${PORTAL_SOCKET_SESSION_COOKIE}=${encodeURIComponent(sessionToken)}; Path=/socket.io; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure}`,
     `auditsphere_portal_csrf=${encodeURIComponent(csrfToken)}; Path=/api/v1/portal; SameSite=Strict; Max-Age=${maxAge}${secure}`,
   ]);
 }
@@ -54,7 +59,8 @@ function setPortalCookies(reply: PortalReply, sessionToken: string, csrfToken: s
 function clearPortalCookies(reply: PortalReply): void {
   const secure = process.env.NODE_ENV === 'production' ? '; Secure' : '';
   reply.header('set-cookie', [
-    `auditsphere_portal_session=; Path=/api/v1/portal; HttpOnly; SameSite=Lax; Max-Age=0${secure}`,
+    `${PORTAL_SESSION_COOKIE}=; Path=/api/v1/portal; HttpOnly; SameSite=Lax; Max-Age=0${secure}`,
+    `${PORTAL_SOCKET_SESSION_COOKIE}=; Path=/socket.io; HttpOnly; SameSite=Strict; Max-Age=0${secure}`,
     `auditsphere_portal_csrf=; Path=/api/v1/portal; SameSite=Strict; Max-Age=0${secure}`,
   ]);
 }

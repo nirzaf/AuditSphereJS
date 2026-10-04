@@ -12,6 +12,7 @@ import type { TrialBalanceImport, TrialBalanceRow, TrialBalanceSummaryLine } fro
 import type { z } from 'zod';
 import { parseContractValue, requestAuthenticatedContractJson, requestContractJson } from './api-client';
 import { IDENTITY_ADAPTER, type InternalIdentity, type ReadableEngagement } from './identity';
+import { RealtimeClient, type RealtimeConnection } from './realtime-client';
 // Standalone is the default in Angular v20+; setting it explicitly is unnecessary.
 @Component({ selector: 'audit-root', imports: [FormsModule, ScrollingModule, ModuleWorkspace], templateUrl: './workspace.html' })
 export class Workspace implements OnDestroy {
@@ -23,12 +24,15 @@ export class Workspace implements OnDestroy {
   readonly readableEngagements = signal<ReadableEngagement[]>([]);
   readonly engagementsLoading = signal(false);
   readonly engagementLoadError = signal('');
+  readonly realtimeStatus = signal<'offline' | 'connected' | 'disconnected' | 'denied'>('offline');
   readonly workspaceAccess = computed(() => this.identityProvider() !== 'entra' || (this.signedIn() && this.readableEngagements().some(item => item.id === this.engagementId())));
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly identity = inject(IDENTITY_ADAPTER);
+  private readonly realtime = inject(RealtimeClient);
   private readonly router = inject(Router, { optional: true });
   private readonly route = inject(ActivatedRoute, { optional: true });
   private navigation?: { unsubscribe(): void };
+  private realtimeConnection?: RealtimeConnection;
   constructor() {
     afterRenderEffect({ mixedReadWrite: () => {
       this.screenId(); this.active();
@@ -104,7 +108,7 @@ export class Workspace implements OnDestroy {
   token = ''; search = ''; offset = 0; total = signal(0); active = signal('Fieldwork');
   get base() { return `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/imports`; }
   private timer = setInterval(() => { const batch = this.batch(); if (batch && ['QUEUED','PARSING'].includes(batch.status)) void this.run(() => this.load(batch.id)); }, 2000);
-  ngOnDestroy() { clearInterval(this.timer); this.navigation?.unsubscribe(); }
+  ngOnDestroy() { clearInterval(this.timer); this.navigation?.unsubscribe(); this.realtimeConnection?.close(); }
   navigate(module: string, view?: string) {
     if (this.dirty()) { this.message.set('Save or discard mappings before changing workspaces.'); return; }
     const selected = screensFor(module).find(screen => screen.id === view) ?? screensFor(module)[0];
@@ -147,7 +151,41 @@ export class Workspace implements OnDestroy {
     if (selected === this.engagementId()) return;
     this.engagementId.set(selected);
     this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
+    this.realtimeConnection?.close(); this.realtimeConnection = undefined; this.realtimeStatus.set('offline');
     this.message.set(selected ? 'Engagement selected. Load its records to continue.' : 'Choose an engagement assigned to your account.');
+    if (selected && (this.identityProvider() === 'development' || this.signedIn())) this.openRealtimeEngagement(selected);
+  }
+  private openRealtimeEngagement(engagementId: string) {
+    this.realtimeConnection?.close();
+    this.realtimeConnection = this.realtime.connect({
+      kind: 'internal',
+      accessToken: () => this.identityProvider() === 'entra' ? this.identity.currentAccessToken() : Promise.resolve(this.token),
+    }, { engagementId, resource: { type: 'engagement' } }, {
+      onSnapshot: () => this.refreshAfterRealtime(),
+      onInvalidation: event => {
+        if (this.dirty()) { this.message.set('Another user changed this import. Your draft is preserved; row versions will detect a conflict if the same accounts changed.'); return; }
+        if (this.batch()?.id === event.resourceId) void this.run(async () => {
+          this.imports.set(await this.api('', trialBalanceImportsSchema));
+          await this.load(event.resourceId);
+          this.message.set('This Trial Balance changed in another session. Authoritative data was reloaded.');
+        });
+      },
+      onRefreshRequired: () => this.refreshAfterRealtime(),
+      onStatus: status => this.realtimeStatus.set(status),
+      onAccessRevoked: () => {
+        this.selectEngagement('');
+        this.realtimeStatus.set('denied');
+        this.message.set('Engagement access was revoked. The workspace has been cleared.');
+      },
+    });
+  }
+  private refreshAfterRealtime() {
+    if (!this.engagementId() || this.dirty()) {
+      if (this.dirty()) this.message.set('Realtime changes are waiting. Save or discard your draft, then reload from the server.');
+      return;
+    }
+    if (this.batch()) void this.run(() => this.load(this.batch()!.id));
+    else if (this.imports().length) void this.run(async () => { this.imports.set(await this.api('', trialBalanceImportsSchema)); });
   }
   connect() { void this.run(async () => {
     if (!this.engagementId()) throw new Error('Choose an assigned engagement before loading records.');
@@ -161,6 +199,7 @@ export class Workspace implements OnDestroy {
     this.message.set(this.readableEngagements().length ? 'Signed in. Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.');
   }); }
   microsoftSignOut() { void this.run(async () => {
+    this.realtimeConnection?.close(); this.realtimeConnection = undefined; this.realtimeStatus.set('offline');
     const entraSession = this.identityProvider() === 'entra';
     let sessionRevocationConfirmed = !entraSession;
     if (entraSession) {
@@ -180,7 +219,7 @@ export class Workspace implements OnDestroy {
             : 'Local access and engagement data were cleared, but neither server session revocation nor Microsoft sign-out could be confirmed.');
   }); }
   async load(id: string) { const batch = await this.api('/' + id, trialBalanceImportSchema); this.batch.set(batch); if (batch.status === 'FAILED') { this.message.set(batch.error ?? 'The import failed.'); return; } if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) { const page = await this.api(`/${id}/rows?offset=${this.offset}&search=${encodeURIComponent(this.search)}`, trialBalanceRowsPageSchema); this.rows.set(page.rows); this.total.set(page.total); this.summary.set(await this.api('/' + id + '/summary', trialBalanceSummarySchema)); } }
-  open(id: string) { this.changes.set({}); this.offset = 0; void this.run(() => this.load(id)); }
+  open(id: string) { this.changes.set({}); this.offset = 0; this.batch.set(null); this.realtimeConnection?.join({ engagementId: this.engagementId(), resource: { type: 'trial-balance-import', id } }); void this.run(() => this.load(id)); }
   upload(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 15_000_000) { this.message.set('CSV must be smaller than 15 MB.'); return; } void this.run(async () => { const body = parseContractValue(uploadSchema, { filename: file.name, csv: await file.text() }, 400); const batch = await this.api('', trialBalanceImportSchema, 'POST', body); this.imports.set(await this.api('', trialBalanceImportsSchema)); await this.load(batch.id); this.message.set('Import queued. Worker validation runs in the background.'); }); }
   edit(row: TrialBalanceRow, fsli: string) { if (!fsli) return; this.changes.update(value => ({ ...value, [row.id]: { rowId: row.id, expectedVersion: row.version, fsli } })); }
   save() { void this.run(async () => { const id = this.batch()!.id; const body = parseContractValue(mappingSchema, { idempotencyKey: crypto.randomUUID(), changes: Object.values(this.changes()) }, 400); await this.api('/' + id + '/mappings', mappingsSavedSchema, 'PATCH', body); this.changes.set({}); await this.load(id); this.message.set('Mappings saved. Versions checked by PostgreSQL.'); }); }

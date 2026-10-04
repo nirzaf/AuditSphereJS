@@ -1,5 +1,32 @@
 import { z } from 'zod';
 export const states = ['LEAD_INGESTION','PROPOSAL_GENERATION','DUAL_KEY_PENDING','ADVANCE_BILLING','PORTAL_ACTIVE_PLANNING','FIELDWORK_EXECUTION','MANAGERIAL_REVIEW','PARTNER_APPROVAL','DELIVERABLE_RELEASE','COMPLIANCE_COUNTDOWN','ARCHIVED_READ_ONLY'] as const;
+/** Realtime join requests name one engagement-scoped resource; room names are always server-derived. */
+export const realtimeResourceSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('engagement') }),
+  z.object({ type: z.literal('trial-balance-import'), id: z.uuid() }),
+]);
+export const realtimeJoinRequestSchema = z.object({ engagementId: z.uuid(), resource: realtimeResourceSchema });
+export const realtimeJoinSnapshotSchema = z.object({
+  engagementId: z.uuid(),
+  engagementVersion: z.number().int().positive(),
+  resource: realtimeResourceSchema,
+  resourceVersion: z.number().int().positive(),
+});
+export const realtimeJoinAckSchema = z.discriminatedUnion('ok', [
+  z.object({ ok: z.literal(true), snapshot: realtimeJoinSnapshotSchema }),
+  z.object({ ok: z.literal(false), error: z.enum(['Room access denied', 'Invalid room request']) }),
+]);
+/** Hints contain identifiers and versions only; clients reload all business data over authorized APIs. */
+export const realtimeInvalidationSchema = z.object({
+  schemaVersion: z.literal(1),
+  engagementId: z.uuid(),
+  resourceType: z.literal('trial-balance-import'),
+  resourceId: z.uuid(),
+  version: z.number().int().positive(),
+});
+export type RealtimeJoinRequest = z.infer<typeof realtimeJoinRequestSchema>;
+export type RealtimeJoinSnapshot = z.infer<typeof realtimeJoinSnapshotSchema>;
+export type RealtimeInvalidation = z.infer<typeof realtimeInvalidationSchema>;
 export const fslis = ['Cash and equivalents','Trade receivables','Property and equipment','Trade payables','Equity','Revenue','Operating expenses'] as const;
 export const uploadSchema = z.object({
   filename: z.string().regex(/^[^/\\]+\.csv$/i).max(200),

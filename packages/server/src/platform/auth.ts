@@ -32,6 +32,11 @@ async function authenticateInternalActor(received: string): Promise<string> {
   return userId;
 }
 
+/** Socket handshakes use the exact same Entra/development identity boundary as HTTP requests. */
+export function authenticateRealtimeInternalActor(received: string): Promise<string> {
+  return authenticateInternalActor(received);
+}
+
 export async function revokeCurrentUserSessions(userId: string) {
   const user = await db.user.findUnique({ where: { id: userId }, select: { id: true, active: true } });
   if (!user?.active) throw new UnauthorizedException('Internal authentication required');

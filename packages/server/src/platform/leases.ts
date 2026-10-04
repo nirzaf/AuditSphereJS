@@ -1,10 +1,16 @@
 import { Redis } from 'ioredis';
 import { randomUUID } from 'node:crypto';
-import { ConflictException, BadRequestException } from '@nestjs/common';
+import { ConflictException, BadRequestException, type OnModuleDestroy } from '@nestjs/common';
 import { editLeaseSchema } from '@auditsphere/contracts';
 const redis = new Redis(process.env.REDIS_URL!, { lazyConnect: true, maxRetriesPerRequest: 1 });
 redis.on('error', error => console.error('Redis lease coordination unavailable:', error.message));
 // These leases improve collaboration only. PostgreSQL version checks remain mandatory.
+export class EditLeaseConnection implements OnModuleDestroy {
+  onModuleDestroy(): void {
+    redis.disconnect();
+  }
+}
+
 export async function editLease(resourceId: string, actorId: string, body: unknown) {
   const parsed = editLeaseSchema.safeParse(body); if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const key = `audit:edit:tb:${resourceId}`;

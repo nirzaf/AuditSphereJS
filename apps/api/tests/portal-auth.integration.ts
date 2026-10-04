@@ -71,9 +71,13 @@ test('client portal invitation, first reset, session isolation and payment gate 
     assert.deepEqual(await redeem.json(), { mustChangePassword: true });
     const cookieHeaders = redeem.headers.getSetCookie();
     const sessionCookie = cookieHeaders.find((value) => value.startsWith('auditsphere_portal_session='));
+    const socketSessionCookie = cookieHeaders.find((value) => value.startsWith('auditsphere_portal_socket='));
     const csrfCookie = cookieHeaders.find((value) => value.startsWith('auditsphere_portal_csrf='));
     assert.ok(sessionCookie?.includes('HttpOnly'));
     assert.ok(sessionCookie?.includes('Secure'), 'the session cookie is Secure under the production setting');
+    assert.ok(socketSessionCookie, 'login issues a dedicated Socket.IO session cookie');
+    assert.ok(socketSessionCookie.includes('HttpOnly') && socketSessionCookie.includes('Path=/socket.io') && socketSessionCookie.includes('SameSite=Strict'));
+    assert.ok(socketSessionCookie.includes('Secure'), 'the scoped Socket.IO session cookie is Secure in production');
     assert.ok(csrfCookie && !csrfCookie.includes('HttpOnly'));
     assert.ok(csrfCookie.includes('Secure'), 'the CSRF cookie is Secure under the production setting');
     const session = `auditsphere_portal_session=${sessionCookie?.split(';', 1)[0].split('=', 2)[1]}`;
