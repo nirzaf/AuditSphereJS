@@ -75,3 +75,20 @@ Open blockers: Hosted Actions for the implementation commit is pending push; liv
 
 Next eligible task by dependency order: T042 — build deterministic Trial Balance fixtures and a test-only engagement seed.
 Stop after this task; do not implement the next feature without assignment.
+
+## CI failure follow-up — 2026-10-04
+
+The first hosted run for the observability implementation (`38ac6990cbedffb444cb013e51959bb7b204cfbb`, [Actions run 37228375653](https://github.com/nirzaf/AuditSphereJS/actions/runs/37228375653)) passed static, unit, e2e, image and one integration shard. Two integration shards exposed the same test-isolation regression: importing `operationalMetrics` from the `@auditsphere/server` root barrel in `apps/api/src/http-security.ts` eagerly loaded the database module before document upload/download tests pointed it at their Testcontainers database. Their fixed development-fixture UUID then collided with the already seeded local application database.
+
+Correction: the server package now exports the side-effect-free metrics module at `@auditsphere/server/observability/metrics`, and the API security layer imports that narrow entry point instead of the server barrel. Production HTTP metrics behavior is unchanged. The observed regression was reproduced before the fix and both document integration tests passed after it.
+
+| Follow-up command | Actual result |
+| :--- | :--- |
+| `pnpm exec node --import tsx --test apps/api/tests/document-download.integration.ts` | PASS, 1/1; disposable PostgreSQL container and full authorized/denied download path |
+| `pnpm exec node --import tsx --test apps/api/tests/document-upload.integration.ts` | PASS, 1/1; disposable PostgreSQL container, malware scanner fixture and full upload/finalization path |
+| `pnpm verify:task -- T041` | PASS, exit 0; full recorded recipe including PostgreSQL/Redis outbox, RustFS isolation and boundaries |
+| `pnpm verify:affected` | PASS, exit 0; server/test typecheck, Angular production build and 137 unit tests |
+| `pnpm lint` | PASS, exit 0 |
+| `git diff --check` | PASS, exit 0 |
+
+Hosted Actions for the correction is pending push; the successful result will be appended after the run completes. `.zcodeignore` remains unrelated untracked content and was not staged. `visual-prototype-simulation/` remains excluded.

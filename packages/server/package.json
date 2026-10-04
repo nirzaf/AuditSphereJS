@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./observability/metrics": {
+      "types": "./dist/platform/observability/metrics.d.ts",
+      "import": "./dist/platform/observability/metrics.js"
     }
   },
   "dependencies": {

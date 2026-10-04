@@ -8,7 +8,7 @@ import { BODY_LIMIT_BYTES, RATE_LIMIT_WINDOW_MS, rateLimitPolicyFor, requestEnve
 import { randomUUID } from 'node:crypto';
 import type { IncomingMessage } from 'node:http';
 import { performance } from 'node:perf_hooks';
-import { operationalMetrics } from '@auditsphere/server';
+import { operationalMetrics } from '@auditsphere/server/observability/metrics';
 
 const CORRELATION_ID_HEADER = 'x-correlation-id';
 const SAFE_CORRELATION_ID = /^[A-Za-z0-9_-]{1,64}$/;
