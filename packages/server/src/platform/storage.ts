@@ -4,15 +4,44 @@ import { createHash } from 'node:crypto';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { configuredGraphStorage, decodeGraphReference, type GraphRepository } from './graph-storage.js';
+import { createCorrelationId, currentCorrelationId } from './observability/correlation.js';
+import { operationalMetrics } from './observability/metrics.js';
+import { safeOperationalCode } from './observability/logging.js';
 export const storageProvider = () => process.env.STORAGE_PROVIDER || (process.env.NODE_ENV === 'production' ? 'graph' : 'local-s3');
 let graphStorage: ReturnType<typeof configuredGraphStorage> | undefined;
 const graph = () => graphStorage ||= configuredGraphStorage();
 const client = new S3Client({ region: 'us-east-1', endpoint: process.env.S3_ENDPOINT, forcePathStyle: true, credentials: { accessKeyId: process.env.S3_ACCESS_KEY!, secretAccessKey: process.env.S3_SECRET_KEY! } });
 const Bucket = process.env.S3_BUCKET || 'evidence';
+async function trackLocalS3<T>(operation: string, action: () => Promise<T>): Promise<T> {
+  const correlationId = createCorrelationId(currentCorrelationId());
+  const previous = operationalMetrics.dependencyState('local-s3');
+  try {
+    const result = await action();
+    operationalMetrics.recordProvider('local-s3', operation, true);
+    return result;
+  } catch (error) {
+    operationalMetrics.recordProvider('local-s3', operation, false);
+    if (previous !== 'down') console.error(JSON.stringify({
+      event: 'dependency.provider_transition', dependency: 'local-s3', state: 'down', operation, correlationId,
+      errorCode: safeOperationalCode(error, 'OBJECT_STORAGE_UNAVAILABLE'),
+      action: 'Restore the configured RustFS endpoint and credentials; retry the durable operation after recovery.',
+    }));
+    throw error;
+  }
+}
 export async function ensureBucket() {
   if (storageProvider() === 'graph') { graph(); return; }
   if (storageProvider() !== 'local-s3' || process.env.NODE_ENV === 'production') throw new Error('Production requires Microsoft Graph storage');
-  try { await client.send(new HeadBucketCommand({ Bucket })); } catch (e: any) { if (e.$metadata?.httpStatusCode !== 404) throw e; await client.send(new CreateBucketCommand({ Bucket })); }
+  await trackLocalS3('bucket', async () => {
+    try { await client.send(new HeadBucketCommand({ Bucket })); }
+    catch (error) {
+      if (error && typeof error === 'object' && '$metadata' in error && (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404) {
+        await client.send(new CreateBucketCommand({ Bucket }));
+        return;
+      }
+      throw error;
+    }
+  });
 }
 export async function storeBytes(key: string, bytes: Uint8Array, contentType: string, repository?: GraphRepository): Promise<string> {
   await ensureBucket();
@@ -20,7 +49,7 @@ export async function storeBytes(key: string, bytes: Uint8Array, contentType: st
     if (!repository) throw new Error('Microsoft Graph storage requires a client repository binding');
     return graph().put(repository, key.replaceAll('/', '_'), Buffer.from(bytes));
   }
-  await client.send(new PutObjectCommand({ Bucket, Key: key, Body: Buffer.from(bytes), ContentType: contentType, IfNoneMatch: '*' }));
+  await trackLocalS3('upload', () => client.send(new PutObjectCommand({ Bucket, Key: key, Body: Buffer.from(bytes), ContentType: contentType, IfNoneMatch: '*' })));
   return key;
 }
 /** Stream a previously validated, bounded staging file into the selected server-side provider. */
@@ -32,7 +61,7 @@ export async function storeFile(key: string, path: string, sizeBytes: number, sh
     if (!repository) throw new Error('Microsoft Graph storage requires a client repository binding');
     return graph().putStream(repository, key.replaceAll('/', '_'), createReadStream(path), sizeBytes, sha256, contentType, onStored);
   }
-  await client.send(new PutObjectCommand({ Bucket, Key: key, Body: createReadStream(path), ContentLength: sizeBytes, ContentType: contentType, IfNoneMatch: '*' }));
+  await trackLocalS3('upload', () => client.send(new PutObjectCommand({ Bucket, Key: key, Body: createReadStream(path), ContentLength: sizeBytes, ContentType: contentType, IfNoneMatch: '*' })));
   await onStored?.(key);
   return key;
 }
@@ -56,7 +85,7 @@ export async function removeObject(reference: string, repository?: GraphReposito
     return;
   }
   if (storageProvider() !== 'local-s3' || process.env.NODE_ENV === 'production') throw new Error('Object deletion is only automated for the local storage fixture');
-  await client.send(new DeleteObjectCommand({ Bucket, Key: reference }));
+  await trackLocalS3('delete', () => client.send(new DeleteObjectCommand({ Bucket, Key: reference })));
 }
 export async function retrieve(key: string, repository?: GraphRepository) {
   if (key.startsWith('graph:')) {
@@ -64,7 +93,10 @@ export async function retrieve(key: string, repository?: GraphRepository) {
     return (await graph().get(repository, key)).toString('utf8');
   }
   if (process.env.NODE_ENV === 'production' || storageProvider() !== 'local-s3') throw new Error('Local storage references are disabled');
-  const result = await client.send(new GetObjectCommand({ Bucket, Key: key })); return result.Body!.transformToString();
+  return trackLocalS3('download', async () => {
+    const result = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+    return result.Body!.transformToString();
+  });
 }
 
 /** Verify provider bytes into a private file before the API begins streaming them to a caller. */
@@ -78,7 +110,7 @@ export async function retrieveToFile(key: string, destination: string, expected:
     return;
   }
   if (process.env.NODE_ENV === 'production' || storageProvider() !== 'local-s3') throw new Error('Local storage references are disabled');
-  const result = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+  const result = await trackLocalS3('download', () => client.send(new GetObjectCommand({ Bucket, Key: key })));
   if (!result.Body) throw new Error('Stored document has no content stream');
   const body = result.Body as unknown as { transformToWebStream?: () => ReadableStream<Uint8Array> };
   const source = body.transformToWebStream ? Readable.fromWeb(body.transformToWebStream() as never) : result.Body as unknown as Readable;

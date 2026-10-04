@@ -6,6 +6,8 @@ import { readConfiguration } from '../../../packages/server/src/platform/config.
 process.env.NODE_ENV = 'test';
 process.env.DATABASE_URL ??= 'postgresql://test:test@127.0.0.1:5432/auditsphere';
 process.env.REDIS_URL ??= 'redis://127.0.0.1:6379';
+const metricsToken = 't041-api-metrics-scrape-token-0123456789';
+process.env.OBSERVABILITY_METRICS_TOKEN = metricsToken;
 const { AppModule, configureApiHttp, createFastifyAdapter } = await import('../src/main.js');
 
 describe('NestJS/Fastify API shell', () => {
@@ -31,6 +33,19 @@ describe('NestJS/Fastify API shell', () => {
     expect(live.statusCode).toBe(200);
     expect(live.json()).toEqual({ status: 'ok', service: 'auditsphere-api' });
     expect(live.headers['x-correlation-id']).toMatch(/^[0-9a-f-]{36}$/i);
+  });
+
+  it('publishes bounded Prometheus metrics only to an authorized scrape request', async () => {
+    const server = app.getHttpAdapter().getInstance();
+    const denied = await server.inject({ method: 'GET', url: '/health/metrics' });
+    expect(denied.statusCode).toBe(401);
+    const allowed = await server.inject({ method: 'GET', url: '/health/metrics', headers: { authorization: `Bearer ${metricsToken}` } });
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.headers['content-type']).toContain('text/plain');
+    expect(allowed.headers['cache-control']).toBe('no-store');
+    expect(allowed.body).toContain('auditsphere_http_requests_total');
+    expect(allowed.body).toContain('auditsphere_database_pool_connections');
+    expect(allowed.body).not.toContain(metricsToken);
   });
 
   it('rejects malformed and oversized JSON before a business route executes', async () => {

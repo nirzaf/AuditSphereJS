@@ -18,6 +18,7 @@ describe('durable Trial Balance outbox contract', () => {
     expect(parseTrialBalanceOutbox(event)).toEqual({
       outboxEventId: eventId,
       operationId: eventId,
+      correlationId: eventId,
       payloadVersion: 1,
     });
   });
@@ -38,7 +39,7 @@ describe('durable Trial Balance outbox contract', () => {
       outboxEventId: eventId,
       operationId: eventId,
       payloadVersion: 1,
-    })).toEqual({ outboxEventId: eventId, operationId: eventId, payloadVersion: 1 });
+    })).toEqual({ outboxEventId: eventId, operationId: eventId, correlationId: eventId, payloadVersion: 1 });
     expect(() => parseTrialBalanceOutboxJob({
       outboxEventId: eventId,
       operationId: eventId,

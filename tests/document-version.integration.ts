@@ -131,7 +131,7 @@ test('document uploads append immutable versions and queued imports read their p
         const event = await db.outboxEvent.findFirstOrThrow({ where: { importId: batch.id } });
         await processImport({
           id: event.operationId,
-          data: { outboxEventId: event.id, operationId: event.operationId, payloadVersion: 1 },
+          data: { outboxEventId: event.id, operationId: event.operationId, correlationId: event.correlationId ?? event.id, payloadVersion: 1 },
           attemptsMade: 0,
           opts: { attempts: 1 },
         });

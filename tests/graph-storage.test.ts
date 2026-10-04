@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { GraphStorage, configuredGraphStorage, decodeGraphReference } from '../packages/server/src/platform/graph-storage.js';
+import { runWithCorrelationId } from '../packages/server/src/platform/observability/correlation.js';
 
 const config = { tenantId: 'tenant', clientId: 'client', clientSecret: 'secret' };
 const evidence = { driveId: 'sp', folderId: 'evidence' };
@@ -54,7 +55,7 @@ describe('Graph evidence storage', () => {
       return Response.json({});
     }) as typeof fetch;
     const storage = new GraphStorage(config, request);
-    const ref = await storage.put(evidence, 'unique.pdf', Buffer.from('bytes'));
+    const ref = await runWithCorrelationId('graph-correlation-041', () => storage.put(evidence, 'unique.pdf', Buffer.from('bytes')));
     expect(calls.some((call) => call.url.includes('/drives/sp/items/evidence:/unique.pdf:/content'))).toBe(true);
     const decoded = decodeGraphReference(ref);
     expect(decoded.repositoryFolderId).toBe(evidence.folderId);
@@ -62,9 +63,12 @@ describe('Graph evidence storage', () => {
     expect(decoded.eTag).toBe('v1');
     expect(calls.find((call) => call.url.includes('/versions?'))?.url).not.toContain('eTag');
     expect(decoded.sizeBytes).toBe(5);
-    expect((await storage.get(evidence, ref)).toString()).toBe('bytes');
+    expect((await runWithCorrelationId('graph-correlation-041', () => storage.get(evidence, ref))).toString()).toBe('bytes');
     expect(calls.some((call) => call.url.endsWith('/versions/1.0/content'))).toBe(true);
     expect(calls.filter((call) => call.url.includes('/token'))).toHaveLength(1);
+    const graphCalls = calls.filter(call => call.url.startsWith('https://graph.microsoft.com/') || call.url.includes('login.microsoftonline.com'));
+    expect(graphCalls.length).toBeGreaterThan(0);
+    expect(graphCalls.every(call => new Headers(call.init?.headers).get('client-request-id') === 'graph-correlation-041')).toBe(true);
     // The preauthenticated download URL authenticates itself; no bearer token is forwarded.
     expect(calls.find((call) => call.url === 'https://tenant.sharepoint.com/download')?.init?.headers).toBeUndefined();
   });
@@ -77,12 +81,14 @@ describe('Graph evidence storage', () => {
       const target = String(url);
       if (target.includes('/token')) return Response.json({ access_token: 'token', expires_in: 3600 });
       if (init?.method === 'DELETE') {
-        expect(init.headers).toMatchObject({ 'If-Match': 'v1' });
+        expect(new Headers(init.headers).get('If-Match')).toBe('v1');
         recycled = true;
         return new Response(null, { status: 204 });
       }
       if (init?.method === 'PUT') {
-        expect(init.headers).toMatchObject({ 'Content-Length': String(payload.byteLength), 'Content-Type': 'application/pdf' });
+        const headers = new Headers(init.headers);
+        expect(headers.get('Content-Length')).toBe(String(payload.byteLength));
+        expect(headers.get('Content-Type')).toBe('application/pdf');
         expect((init as RequestInit & { duplex?: string }).duplex).toBe('half');
         expect(init.body).toBeInstanceOf(ReadableStream);
         uploaded = Buffer.from(await new Response(init.body).arrayBuffer());

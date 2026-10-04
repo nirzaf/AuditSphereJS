@@ -3,23 +3,27 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import { z } from 'zod';
 import type { Prisma } from '../generated/prisma/client.js';
 import { db } from './db.js';
+import { createCorrelationId, currentCorrelationId } from './observability/correlation.js';
 
 export const TRIAL_BALANCE_IMPORT_EVENT = 'tb.import' as const;
 export const SCHEDULED_DEADLINE_EVENT = 'scheduler.deadline' as const;
 const outboxIdSchema = z.uuid();
+const correlationIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
 const trialBalancePayloadSchema = z.object({}).strict();
 const scheduledDeadlinePayloadSchema = z.object({}).strict();
 const outboxJobSchema = z.object({
   outboxEventId: outboxIdSchema,
   operationId: outboxIdSchema,
+  correlationId: correlationIdSchema.optional(),
   payloadVersion: z.literal(1),
-}).strict();
+}).strict().transform(job => ({ ...job, correlationId: job.correlationId ?? job.outboxEventId }));
 const scheduledDeadlineJobSchema = z.object({
   outboxEventId: outboxIdSchema,
   operationId: outboxIdSchema,
   deadlineId: outboxIdSchema,
+  correlationId: correlationIdSchema.optional(),
   payloadVersion: z.literal(1),
-}).strict();
+}).strict().transform(job => ({ ...job, correlationId: job.correlationId ?? job.outboxEventId }));
 
 export type TrialBalanceOutboxJob = z.infer<typeof outboxJobSchema>;
 export type ScheduledDeadlineOutboxJob = z.infer<typeof scheduledDeadlineJobSchema>;
@@ -55,6 +59,7 @@ type OutboxRecord = {
   dispatchClaimToken: string;
   importId: string | null;
   deadlineId: string | null;
+  correlationId: string | null;
 };
 
 /**
@@ -66,12 +71,14 @@ export async function createTrialBalanceImportOutbox(
   scope: OutboxScope & { importId: string },
 ): Promise<string> {
   const operationId = randomUUID();
+  const correlationId = createCorrelationId(currentCorrelationId());
   const { importId, ...engagementScope } = scope;
   await client.backgroundOperation.create({
     data: {
       id: operationId,
       ...engagementScope,
       type: TRIAL_BALANCE_IMPORT_EVENT,
+      correlationId,
       state: 'QUEUED',
     },
   });
@@ -82,6 +89,7 @@ export async function createTrialBalanceImportOutbox(
       ...engagementScope,
       importId,
       type: TRIAL_BALANCE_IMPORT_EVENT,
+      correlationId,
       payloadVersion: 1,
       payload: trialBalancePayloadSchema.parse({}),
     },
@@ -95,6 +103,7 @@ export function parseTrialBalanceOutbox(event: {
   type: unknown;
   payloadVersion: unknown;
   payload: unknown;
+  correlationId?: unknown;
 }): TrialBalanceOutboxJob {
   if (event.type !== TRIAL_BALANCE_IMPORT_EVENT || event.payloadVersion !== 1) {
     throw Object.assign(new Error('Unsupported outbox event type or payload version'), { code: 'OUTBOX_EVENT_INVALID' });
@@ -103,8 +112,9 @@ export function parseTrialBalanceOutbox(event: {
     trialBalancePayloadSchema.parse(event.payload);
     const id = outboxIdSchema.parse(event.id);
     const operationId = outboxIdSchema.parse(event.operationId);
+    const correlationId = event.correlationId == null ? id : correlationIdSchema.parse(event.correlationId);
     if (id !== operationId) throw new Error('Outbox event operation identity does not match');
-    return outboxJobSchema.parse({ outboxEventId: id, operationId, payloadVersion: 1 });
+    return outboxJobSchema.parse({ outboxEventId: id, operationId, correlationId, payloadVersion: 1 });
   } catch {
     throw Object.assign(new Error('Invalid trial-balance outbox record'), { code: 'OUTBOX_EVENT_INVALID' });
   }
@@ -117,6 +127,7 @@ export function parseScheduledDeadlineOutbox(event: {
   type: unknown;
   payloadVersion: unknown;
   payload: unknown;
+  correlationId?: unknown;
 }): ScheduledDeadlineOutboxJob {
   if (event.type !== SCHEDULED_DEADLINE_EVENT || event.payloadVersion !== 1) {
     throw Object.assign(new Error('Unsupported scheduled-deadline outbox event'), { code: 'OUTBOX_EVENT_INVALID' });
@@ -126,8 +137,9 @@ export function parseScheduledDeadlineOutbox(event: {
     const id = outboxIdSchema.parse(event.id);
     const operationId = outboxIdSchema.parse(event.operationId);
     const deadlineId = outboxIdSchema.parse(event.deadlineId);
+    const correlationId = event.correlationId == null ? id : correlationIdSchema.parse(event.correlationId);
     if (id !== operationId || operationId !== deadlineId) throw new Error('Scheduled-deadline operation identity does not match');
-    return scheduledDeadlineJobSchema.parse({ outboxEventId: id, operationId, deadlineId, payloadVersion: 1 });
+    return scheduledDeadlineJobSchema.parse({ outboxEventId: id, operationId, deadlineId, correlationId, payloadVersion: 1 });
   } catch {
     throw Object.assign(new Error('Invalid scheduled-deadline outbox record'), { code: 'OUTBOX_EVENT_INVALID' });
   }
@@ -197,7 +209,8 @@ async function claimDispatchBatch(options: {
                 event.payload,
                 event."dispatchClaimToken",
                 event."importId",
-                event."deadlineId"
+                event."deadlineId",
+                event."correlationId"
     `;
   });
 }

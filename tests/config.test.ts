@@ -22,6 +22,12 @@ it('requires Graph storage and rejects the local RustFS/S3 fixture in production
   expect(() => readConfiguration({ ...production, STORAGE_PROVIDER: 'local-s3' })).toThrow('Production requires Entra identity and Graph storage');
   expect(() => readConfiguration({ ...production, STORAGE_PROVIDER: 'graph' })).toThrow('Missing production configuration: M365_TENANT_ID');
 });
+it('requires a generated metrics scrape token when configured', () => {
+  const token = 't041-generated-metrics-token-0123456789';
+  expect(() => readConfiguration({ ...base, OBSERVABILITY_METRICS_TOKEN: 'replace-with-generated-metrics-token' })).toThrow('OBSERVABILITY_METRICS_TOKEN');
+  expect(readConfiguration({ ...base, OBSERVABILITY_METRICS_TOKEN: token }).OBSERVABILITY_METRICS_TOKEN).toBe(token);
+  expect(readConfiguration({ ...base, OBSERVABILITY_METRICS_TOKEN: '' }).OBSERVABILITY_METRICS_TOKEN).toBeUndefined();
+});
 it('accepts only an exact HTTP(S) web origin for the credentialed CORS allowlist', () => {
   expect(() => readConfiguration({ ...base, WEB_ORIGIN: 'https://auditsphere.example.test/workspace' })).toThrow('WEB_ORIGIN');
   expect(() => readConfiguration({ ...base, WEB_ORIGIN: 'ftp://auditsphere.example.test' })).toThrow('WEB_ORIGIN');

@@ -20,6 +20,7 @@ describe('durable deadline queue contract', () => {
       outboxEventId: id,
       operationId: id,
       deadlineId: id,
+      correlationId: id,
       payloadVersion: 1,
     });
   });
@@ -38,7 +39,7 @@ describe('durable deadline queue contract', () => {
       operationId: id,
       deadlineId: id,
       payloadVersion: 1,
-    })).toEqual({ outboxEventId: id, operationId: id, deadlineId: id, payloadVersion: 1 });
+    })).toEqual({ outboxEventId: id, operationId: id, deadlineId: id, correlationId: id, payloadVersion: 1 });
     expect(() => parseScheduledDeadlineOutboxJob({
       outboxEventId: id,
       operationId: id,

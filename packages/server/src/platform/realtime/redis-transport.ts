@@ -2,6 +2,8 @@ import { createAdapter } from '@socket.io/redis-adapter';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import type { INestApplication } from '@nestjs/common';
 import { Redis } from 'ioredis';
+import { operationalMetrics } from '../observability/metrics.js';
+import { safeOperationalCode } from '../observability/logging.js';
 
 class RedisRealtimeIoAdapter extends IoAdapter {
   private closed = false;
@@ -36,8 +38,11 @@ export async function installRealtimeRedisAdapter(app: INestApplication, redisUr
   try {
     await Promise.all([publisher.connect(), subscriber.connect()]);
     app.useWebSocketAdapter(new RedisRealtimeIoAdapter(app, publisher, subscriber));
+    operationalMetrics.setDependency('redis', 'up');
   } catch (error) {
     await Promise.allSettled([publisher.quit(), subscriber.quit()]);
-    throw error;
+    app.useWebSocketAdapter(new IoAdapter(app));
+    operationalMetrics.setDependency('redis', 'down');
+    console.error(JSON.stringify({ event: 'startup.dependency_degraded', dependency: 'redis', errorCode: safeOperationalCode(error, 'REDIS_REALTIME_UNAVAILABLE'), action: 'Restore Redis to enable cross-instance realtime fanout; HTTP service remains available and PostgreSQL stays authoritative.' }));
   }
 }

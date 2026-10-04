@@ -31,7 +31,7 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 ## Scope and implementation boundary
 
-**Allowed areas:** packages/server/src/platform/observability/; health/metrics; operational documentation
+**Allowed areas:** `packages/server/src/platform/observability/`, platform readiness/database/outbox/scheduler/storage/provider adapters, API request logging and health/metrics composition, worker telemetry composition, the readiness contract and reviewed correlation-ID migration, local environment setup, and focused verification/evidence/docs.
 
 **Non-goals:** Do not log credentials or sensitive evidence bodies, or add unused telemetry stacks.
 
@@ -45,16 +45,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Propagate correlation IDs across HTTP, outbox, worker, storage and provider operations.
-- [ ] Record queue age, failures, event-loop lag, DB pool occupancy and API latency without high-cardinality personal labels.
-- [ ] Provide readiness behavior for degraded optional services and actionable startup/queue alerts.
-- [ ] Keep observability packages lightweight; use native Nest logging initially and add reviewed OpenTelemetry exporters only as required.
+- [x] Propagate correlation IDs across HTTP, outbox, worker, storage and provider operations.
+- [x] Record queue age, failures, event-loop lag, DB pool occupancy and API latency without high-cardinality personal labels.
+- [x] Provide readiness behavior for degraded optional services and actionable startup/queue alerts.
+- [x] Keep observability packages lightweight; use native Nest logging initially and add reviewed OpenTelemetry exporters only as required.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** A test job can be followed from command to outcome using one correlation ID.
-- [ ] **AC2:** Tokens and sensitive evidence are absent from logs.
-- [ ] **AC3:** Dependency outages produce actionable alerts rather than false success.
+- [x] **AC1:** A test job can be followed from command to outcome using one correlation ID.
+- [x] **AC2:** Tokens and sensitive evidence are absent from logs.
+- [x] **AC3:** Dependency outages produce actionable alerts rather than false success.
 
 Verify correlation across API/job paths, redaction and realistic dependency-failure health behavior.
 

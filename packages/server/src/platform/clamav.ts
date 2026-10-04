@@ -1,5 +1,8 @@
 import { createReadStream } from 'node:fs';
 import { createConnection, type Socket } from 'node:net';
+import { createCorrelationId, currentCorrelationId } from './observability/correlation.js';
+import { operationalMetrics } from './observability/metrics.js';
+import { safeOperationalCode } from './observability/logging.js';
 
 const CHUNK_BYTES = 64 * 1024;
 const MAX_REPLY_BYTES = 4 * 1024;
@@ -65,6 +68,7 @@ export async function scanFileWithClamAv(filePath: string, options: ClamAvOption
   }
 
   const socket = createConnection({ host: options.host, port: options.port });
+  const correlationId = createCorrelationId(currentCorrelationId());
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   socket.setTimeout(timeoutMs, () => socket.destroy(new Error('scanner connection timed out')));
 
@@ -87,11 +91,18 @@ export async function scanFileWithClamAv(filePath: string, options: ClamAvOption
     const response = await responsePromise;
     socket.destroy();
 
-    if (/\bFOUND$/i.test(response)) throw new MalwareDetectedError();
+    if (/\bFOUND$/i.test(response)) {
+      operationalMetrics.recordProvider('clamav', 'scan', true);
+      throw new MalwareDetectedError();
+    }
     if (!/^stream:\s*OK$/i.test(response)) throw new Error(`scanner returned an unexpected response: ${response.slice(0, 160)}`);
+    operationalMetrics.recordProvider('clamav', 'scan', true);
   } catch (error) {
     socket.destroy();
     if (error instanceof MalwareDetectedError) throw error;
+    const previous = operationalMetrics.dependencyState('clamav');
+    operationalMetrics.recordProvider('clamav', 'scan', false);
+    if (previous !== 'down') console.error(JSON.stringify({ event: 'dependency.provider_transition', dependency: 'clamav', state: 'down', errorCode: safeOperationalCode(error, 'CLAMAV_UNAVAILABLE'), correlationId, action: 'Restore the private ClamAV INSTREAM service; uploads remain blocked until scanning succeeds.' }));
     throw new MalwareScannerUnavailableError();
   }
 }

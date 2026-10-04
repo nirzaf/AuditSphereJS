@@ -3,6 +3,9 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   DATABASE_URL: z.url().refine(value => URL.canParse(value) && ['postgres:', 'postgresql:'].includes(new URL(value).protocol)), REDIS_URL: z.url().refine(value => URL.canParse(value) && ['redis:', 'rediss:'].includes(new URL(value).protocol)),
   DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
+  OBSERVABILITY_METRICS_TOKEN: z.preprocess(value => value === '' ? undefined : value, z.string().min(32).refine(value => !value.startsWith('replace-'), 'OBSERVABILITY_METRICS_TOKEN must be generated').optional()),
+  OBSERVABILITY_METRICS_HOST: z.string().min(1).default('127.0.0.1'),
+  OBSERVABILITY_METRICS_PORT: z.coerce.number().int().min(1).max(65535).default(9101),
   CLAMAV_HOST: z.string().min(1).default('127.0.0.1'),
   CLAMAV_PORT: z.coerce.number().int().min(1).max(65535).default(3310),
   PORT: z.coerce.number().int().min(1).max(65535).default(3000),
@@ -32,6 +35,7 @@ export function readConfiguration(env = process.env) {
     if (config.AUTH_PROVIDER !== 'entra' || config.STORAGE_PROVIDER !== 'graph') throw new Error('Production requires Entra identity and Graph storage');
     if (new URL(config.WEB_ORIGIN).protocol !== 'https:') throw new Error('Production WEB_ORIGIN requires HTTPS');
     for (const key of ['M365_TENANT_ID', 'M365_CLIENT_ID', 'M365_CLIENT_SECRET', 'ENTRA_API_AUDIENCE', 'ENTRA_API_SCOPE', 'ENTRA_BROWSER_CLIENT_ID', 'ENTRA_BROWSER_API_SCOPE', 'ENTRA_BROWSER_REDIRECT_URI', 'SHAREPOINT_DRIVE_ID', 'SHAREPOINT_FOLDER_ID', 'ONEDRIVE_DRIVE_ID', 'ONEDRIVE_FOLDER_ID', 'CLAMAV_HOST', 'CLAMAV_PORT']) if (!env[key]) throw new Error(`Missing production configuration: ${key}`);
+    if (!config.OBSERVABILITY_METRICS_TOKEN) throw new Error('Missing production configuration: OBSERVABILITY_METRICS_TOKEN');
   }
   if (config.NOTIFICATION_PROVIDER === 'graph' && (!config.M365_MAIL_TENANT_ID || !config.M365_MAIL_CLIENT_ID || !config.M365_MAIL_CLIENT_SECRET || !config.M365_NOTIFICATION_SENDER)) {
     throw new Error('Graph notifications require separate M365_MAIL credentials and M365_NOTIFICATION_SENDER');

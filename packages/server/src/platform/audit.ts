@@ -1,5 +1,6 @@
 import { Prisma } from '../generated/prisma/client.js';
 import { db } from './db.js';
+import { currentCorrelationId } from './observability/correlation.js';
 
 /**
  * Audit write helpers (T025). Existing module call sites keep writing USER events through
@@ -52,7 +53,7 @@ export function recordAuditEvent(client: AuditClient, input: AuditEventInput) {
       resourceType: input.resource?.type ?? null,
       resourceId: input.resource?.id ?? null,
       resourceVersion: input.resource?.version ?? null,
-      correlationId: input.correlationId ?? null,
+      correlationId: input.correlationId ?? currentCorrelationId() ?? null,
       beforeState: (input.before === undefined ? null : redactValue(input.before)) as Prisma.InputJsonValue,
       afterState: (input.after === undefined ? null : redactValue(input.after)) as Prisma.InputJsonValue,
     },
@@ -74,7 +75,7 @@ export function recordSecurityEvent(client: AuditClient, input: SecurityEventInp
       action: input.action,
       engagementId: input.engagementId ?? null,
       actorId: input.actorId ?? null,
-      correlationId: input.correlationId ?? null,
+      correlationId: input.correlationId ?? currentCorrelationId() ?? null,
       detail: (input.detail === undefined ? {} : redactValue(input.detail)) as Prisma.InputJsonValue,
     },
   });

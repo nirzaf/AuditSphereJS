@@ -3,6 +3,7 @@ import type { Job } from 'bullmq';
 import { z } from 'zod';
 import type { Prisma, ScheduledDeadline as ScheduledDeadlineRecord } from '../generated/prisma/client.js';
 import { db } from './db.js';
+import { createCorrelationId, currentCorrelationId } from './observability/correlation.js';
 import {
   SCHEDULED_DEADLINE_EVENT,
   claimBackgroundOperation,
@@ -74,6 +75,7 @@ export async function scheduleDeadline(client: Prisma.TransactionClient, value: 
   const parsed = deadlineInputSchema.parse(value);
   if (!Number.isFinite(parsed.dueAt.getTime())) throw new TypeError('Scheduled deadline instant is invalid');
   const payload = jsonObject(parsed.payload);
+  const correlationId = createCorrelationId(currentCorrelationId());
   const scope = { firmId: parsed.firmId, clientId: parsed.clientId, engagementId: parsed.engagementId };
   const where = { firmId_clientId_engagementId_idempotencyKey: { ...scope, idempotencyKey: parsed.idempotencyKey } };
   const existing = await client.scheduledDeadline.findUnique({ where });
@@ -90,6 +92,7 @@ export async function scheduleDeadline(client: Prisma.TransactionClient, value: 
       classification: parsed.classification,
       dueAt: parsed.dueAt,
       payload,
+      correlationId,
     }],
     skipDuplicates: true,
   });
@@ -135,7 +138,7 @@ export async function enqueueDueDeadlines(options: { now: Date; batchSize?: numb
   const parsed = scanOptionsSchema.parse(options);
   const now = parsed.now;
   return db.$transaction(async tx => {
-    const due = await tx.$queryRaw<Array<Pick<ScheduledDeadlineRecord, 'id' | 'firmId' | 'clientId' | 'engagementId'>>> `
+    const due = await tx.$queryRaw<Array<Pick<ScheduledDeadlineRecord, 'id' | 'firmId' | 'clientId' | 'engagementId' | 'correlationId'>>> `
       WITH due AS (
         SELECT id
         FROM scheduled_deadlines
@@ -148,7 +151,7 @@ export async function enqueueDueDeadlines(options: { now: Date; batchSize?: numb
       SET state = 'QUEUED', "queuedAt" = ${now}, "updatedAt" = ${now}
       FROM due
       WHERE deadline.id = due.id
-      RETURNING deadline.id, deadline."firmId", deadline."clientId", deadline."engagementId"
+      RETURNING deadline.id, deadline."firmId", deadline."clientId", deadline."engagementId", deadline."correlationId"
     `;
 
     for (const deadline of due) {
@@ -160,6 +163,7 @@ export async function enqueueDueDeadlines(options: { now: Date; batchSize?: numb
           clientId: deadline.clientId,
           engagementId: deadline.engagementId,
           type: SCHEDULED_DEADLINE_EVENT,
+          correlationId: deadline.correlationId,
           state: 'QUEUED',
           startedAt: now,
           updatedAt: now,
@@ -174,6 +178,7 @@ export async function enqueueDueDeadlines(options: { now: Date; batchSize?: numb
           engagementId: deadline.engagementId,
           deadlineId: deadline.id,
           type: SCHEDULED_DEADLINE_EVENT,
+          correlationId: deadline.correlationId,
           payloadVersion: 1,
           payload: {},
           createdAt: now,

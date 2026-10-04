@@ -246,12 +246,63 @@
                     "status": {
                       "type": "string",
                       "enum": [
-                        "ready"
+                        "ready",
+                        "degraded"
                       ]
+                    },
+                    "dependencies": {
+                      "type": "object",
+                      "properties": {
+                        "postgres": {
+                          "type": "string",
+                          "enum": [
+                            "up"
+                          ]
+                        },
+                        "redis": {
+                          "type": "string",
+                          "enum": [
+                            "up",
+                            "down"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "postgres",
+                        "redis"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "alerts": {
+                      "maxItems": 2,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "enum": [
+                              "REDIS_UNAVAILABLE"
+                            ]
+                          },
+                          "action": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 300
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "action"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
-                    "status"
+                    "status",
+                    "dependencies",
+                    "alerts"
                   ],
                   "additionalProperties": false
                 }

@@ -4,6 +4,7 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { currentCorrelationId, runWithCorrelationId } from '../packages/server/src/platform/observability/correlation.js';
 import { Queue, Worker } from '../packages/server/tests/bullmq-test-adapter.js';
 import type { OutboxDispatch } from '../packages/server/src/platform/outbox.js';
 import { GenericContainer, Wait } from 'testcontainers';
@@ -54,10 +55,11 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     db = dbModule.db;
     const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID();
     const importId = randomUUID(), documentId = randomUUID();
+    const requestCorrelationId = 'T041-trialbalance-acceptance';
     const digest = createHash('sha256').update(csv).digest('hex');
     const scope = { firmId, clientId, engagementId };
     const now = new Date();
-    await db.$transaction(async tx => {
+    await runWithCorrelationId(requestCorrelationId, () => db!.$transaction(async tx => {
       await tx.firm.create({ data: { id: firmId, name: 'Outbox integration firm' } });
       await tx.client.create({ data: { id: clientId, firmId, name: 'Outbox integration client' } });
       await tx.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Outbox integration engagement' } });
@@ -77,9 +79,11 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
       } });
       const actualOperationId = await outbox.createTrialBalanceImportOutbox(tx, { ...scope, importId });
       assert.match(actualOperationId, /^[0-9a-f-]{36}$/i);
-    });
+    }));
     const event = await db.outboxEvent.findFirstOrThrow({ where: { importId } });
     assert.equal(event.operationId, event.id);
+    assert.equal(event.correlationId, requestCorrelationId);
+    assert.equal((await db.backgroundOperation.findUniqueOrThrow({ where: { id: event.operationId } })).correlationId, requestCorrelationId);
     const queueName = `outbox-${randomUUID().replaceAll('-', '')}`;
     const connection = { host: redis.getHost(), port: redis.getMappedPort(6379), maxRetriesPerRequest: null };
     queue = new Queue(queueName, { connection });
@@ -126,6 +130,7 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     const retryDispatch = await outbox.dispatchPendingOutbox(enqueueOutbox);
     assert.deepEqual(retryDispatch, { claimed: 1, published: 1, failed: 0 });
     assert.ok(await queue.getJob(event.operationId), 'retry uses the stable operation UUID and does not create a second job');
+    assert.equal((await queue.getJob(event.operationId))?.data.correlationId, requestCorrelationId);
     const queuedEvent = await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } });
     assert.ok(queuedEvent.publishedAt);
     assert.equal(queuedEvent.completedAt, null, 'successful enqueue must not be reported as business completion');
@@ -149,12 +154,15 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     assert.deepEqual(recovery, { claimed: 1, published: 1, failed: 0 });
     assert.ok(await queue.getJob(event.operationId));
 
-    worker = new Worker(queueName, processorModule.createTrialBalanceImportProcessor(async (_document, batch) => {
+    let observedWorkerCorrelationId: string | undefined;
+    const importProcessor = processorModule.createTrialBalanceImportProcessor(async (_document, batch) => {
+      observedWorkerCorrelationId = currentCorrelationId();
       if (batch.id === cancellationImportId && cancellationOperationId) {
         setTimeout(() => worker?.cancelJob(cancellationOperationId!, 'T031 cooperative cancellation acceptance'), 25);
       }
       return workerEvidence;
-    }), { connection, concurrency: 1 });
+    });
+    worker = new Worker(queueName, (job, token, signal) => runWithCorrelationId(job.data.correlationId, () => importProcessor(job, token, signal)), { connection, concurrency: 1 });
     const waitForCompletion = async () => {
       const deadline = Date.now() + 20_000;
       while (Date.now() < deadline) {
@@ -166,6 +174,8 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
       throw new Error('Trial-balance worker did not complete the recovered operation');
     };
     const completed = await waitForCompletion();
+    assert.equal(observedWorkerCorrelationId, requestCorrelationId);
+    assert.equal(completed.correlationId, requestCorrelationId);
     assert.deepEqual(completed.result, { status: 'MAPPING_REQUIRED', rowCount: 2 });
     assert.equal(await db.tbRow.count({ where: { importId } }), 2);
     const completedEvent = await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } });
@@ -194,19 +204,29 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     workerEvidence = cancelCsv;
     const cancelEvent = await db.outboxEvent.findFirstOrThrow({ where: { importId: cancellationImportId } });
     const cancelled = new Promise<void>((resolve, reject) => {
-      const deadline = setTimeout(() => reject(new Error('Worker did not reach the cancellation checkpoint')), 30_000);
+      let active = true;
+      const deadline = setTimeout(() => { active = false; reject(new Error('Worker did not reach the cancellation checkpoint')); }, 30_000);
       const poll = async () => {
-        const operation = await db!.backgroundOperation.findUniqueOrThrow({ where: { id: cancellationOperationId } });
-        if (operation.state === 'CANCELLED') {
+        if (!active) return;
+        try {
+          const operation = await db!.backgroundOperation.findUniqueOrThrow({ where: { id: cancellationOperationId } });
+          if (operation.state === 'CANCELLED') {
+            active = false;
+            clearTimeout(deadline);
+            resolve();
+          } else setTimeout(() => { void poll(); }, 50);
+        } catch (error) {
+          active = false;
           clearTimeout(deadline);
-          resolve();
-        } else setTimeout(() => { void poll(); }, 50);
+          reject(error);
+        }
       };
       void poll();
     });
     await queue.add('parse', {
       outboxEventId: cancelEvent.id,
       operationId: cancellationOperationId,
+      correlationId: cancelEvent.correlationId ?? cancelEvent.id,
       payloadVersion: 1,
     }, { jobId: cancellationOperationId, attempts: 1, removeOnComplete: true, removeOnFail: true });
     await cancelled;

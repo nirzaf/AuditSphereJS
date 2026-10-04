@@ -1470,6 +1470,7 @@ model BackgroundOperation {
   clientId     String       @db.Uuid
   engagementId String       @db.Uuid
   type         String       @db.VarChar(120)
+  correlationId String?     @db.VarChar(64)
   state        String       @default("QUEUED") @db.VarChar(16)
   attemptCount Int          @default(0)
   result       Json?
@@ -1499,6 +1500,7 @@ model ScheduledDeadline {
   classification String      @db.VarChar(16)
   dueAt          DateTime    @db.Timestamptz(6)
   payload        Json
+  correlationId  String?     @db.VarChar(64)
   state          String      @default("SCHEDULED") @db.VarChar(16)
   queuedAt       DateTime?   @db.Timestamptz(6)
   completedAt    DateTime?   @db.Timestamptz(6)
@@ -1528,6 +1530,7 @@ model OutboxEvent {
   deadlineId             String?             @unique @db.Uuid
   deadline               ScheduledDeadline?  @relation(fields: [firmId, clientId, engagementId, deadlineId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_deadline_scope_fkey")
   type                   String              @db.VarChar(120)
+  correlationId          String?             @db.VarChar(64)
   payloadVersion         Int                 @default(1)
   payload                Json
   publishedAt            DateTime?
@@ -1544,6 +1547,7 @@ model OutboxEvent {
   @@unique([firmId, clientId, engagementId, deadlineId], map: "OutboxEvent_deadline_scope_id_key")
   @@index([completedAt, type, createdAt], map: "OutboxEvent_unfinished_scope")
   @@index([type, createdAt], map: "OutboxEvent_dispatchable")
+  @@index([correlationId], map: "OutboxEvent_correlation")
 }
 
 model CommandReceipt {

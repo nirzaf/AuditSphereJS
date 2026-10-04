@@ -16,6 +16,10 @@ The platform owns cross-module mechanisms and shared records: identity and autho
 
 ## Required invariants
 
+- HTTP requests establish one validated correlation ID in async context and return it in `x-correlation-id`. Durable outbox/operation rows carry the same value into BullMQ workers and storage/provider requests; older queued envelopes fall back to their stable outbox UUID during rolling upgrades.
+- Operational metrics use bounded route/method/status, queue, provider and dependency labels. Never label a metric with caller, tenant, engagement, document, object, email or correlation IDs. Scrape endpoints require a generated bearer token; logs redact credentials, request bodies and evidence content.
+- PostgreSQL failure makes readiness unready. Redis failure degrades optional queues/realtime while PostgreSQL remains authoritative; startup and dependency-transition logs explain recovery actions. Queue counts/oldest waiting age, API latency, event-loop lag and PostgreSQL pool occupancy are exposed through authenticated metrics endpoints.
+
 - Deadline intent is committed to PostgreSQL in the source workflow transaction. A bounded `FOR UPDATE SKIP LOCKED` scan atomically moves due rows into deterministic background-operation and outbox identities; missed rows are recovered by later scans after a restart. Redis queue insertion is at-least-once and never owns deadline state.
 - The API database role may read/create/update scheduled rows and read/insert outbox rows; the worker role may select/insert/update deadline, background-operation and outbox rows. Neither runtime role receives DELETE on deadline or operation history.
 - Every deadline is explicitly `INFORMATIONAL` or `ENFORCEMENT`. Registered handlers receive that classification and execute database changes in the operation-completion transaction. External delivery must create separate durable outbox intent. A handler must not rely on a rendered PDF or successful document generation to enforce archive state.

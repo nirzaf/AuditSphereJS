@@ -607,7 +607,14 @@ export const apiProblemSchema = z.object({
   }),
 });
 export const healthResponseSchema = z.object({ status: z.literal('ok'), service: z.literal('auditsphere-api') });
-export const readinessResponseSchema = z.object({ status: z.literal('ready') });
+export const readinessResponseSchema = z.object({
+  status: z.enum(['ready', 'degraded']),
+  dependencies: z.object({ postgres: z.literal('up'), redis: z.enum(['up', 'down']) }),
+  alerts: z.array(z.object({
+    code: z.enum(['REDIS_UNAVAILABLE']),
+    action: z.string().trim().min(1).max(300),
+  })).max(2),
+});
 export const systemVersionSchema = z.object({ service: z.literal('auditsphere-api'), version: z.string().regex(/^\d+\.\d+\.\d+$/) });
 /** Audit reads preserve verification evidence while validating all transport fields. */
 export const auditCheckpointSchema = z.object({
