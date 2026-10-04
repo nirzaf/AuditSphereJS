@@ -35,6 +35,12 @@ for (const name of verifyJobs) {
     /pnpm install --frozen-lockfile/,
     `${name} must reject lockfile drift`,
   );
+  const setupLocal = job.indexOf("pnpm setup:local");
+  const buildServer = job.indexOf("pnpm build:server");
+  assert.ok(
+    setupLocal !== -1 && buildServer !== -1 && setupLocal < buildServer,
+    `${name} must create the ignored local env before Prisma generation`,
+  );
   assert.match(
     job,
     /uses: pnpm\/setup@v3[\s\S]*?version: 12\.8\.1[\s\S]*?runtime: node@24\.21\.0[\s\S]*?install: false[\s\S]*?cache: false/,

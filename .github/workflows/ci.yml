@@ -23,6 +23,7 @@ jobs:
           install: false
           cache: false
       - run: pnpm install --frozen-lockfile
+      - run: pnpm setup:local
       - name: Verify CI permission and cache policy
         run: node scripts/verify-ci-workflow.mjs
       - name: Verify dependency install denial paths
@@ -47,6 +48,7 @@ jobs:
           install: false
           cache: false
       - run: pnpm install --frozen-lockfile
+      - run: pnpm setup:local
       - run: pnpm build:server
       - run: pnpm test:unit
 
@@ -86,6 +88,7 @@ jobs:
             tests/audit-chain.integration.ts
             tests/practice-expense-receipts.integration.ts
             tests/outbox.integration.ts
+            tests/document-templates.integration.ts
         - files: |
             apps/api/tests/multipart-plugin.integration.ts
             tests/local-services.integration.ts
@@ -108,8 +111,8 @@ jobs:
           install: false
           cache: false
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:server
       - run: pnpm setup:local
+      - run: pnpm build:server
       - run: pnpm infra:up
       - run: pnpm db:migrate
       - run: pnpm db:roles
@@ -130,8 +133,8 @@ jobs:
           install: false
           cache: false
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build:server
       - run: pnpm setup:local
+      - run: pnpm build:server
       - run: pnpm infra:up
       - run: pnpm db:migrate
       - run: pnpm db:roles
@@ -179,6 +182,7 @@ jobs:
           install: false
           cache: false
       - run: pnpm install --frozen-lockfile
+      - run: pnpm setup:local
       - run: pnpm build:server
       - run: pnpm verify:task -- T035
       - run: pnpm smoke:linux
