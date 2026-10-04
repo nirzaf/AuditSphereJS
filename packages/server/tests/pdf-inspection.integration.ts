@@ -96,6 +96,43 @@ function compressedCatalogPdf(
   return Buffer.from(prefix.join(''), 'binary');
 }
 
+function oversizedPdf(pageCount: number, annotationCount = 0) {
+  const objects: string[] = [];
+  const pageIds = Array.from({ length: pageCount }, (_, index) => index + 3);
+  const contentIds = Array.from({ length: pageCount }, (_, index) => index + 3 + pageCount);
+  objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
+  objects[2] = `<< /Type /Pages /Kids [${pageIds.map(id => `${id} 0 R`).join(' ')}] /Count ${pageCount} >>`;
+  for (let index = 0; index < pageCount; index++) {
+    const annotations = index === 0 && annotationCount > 0
+      ? `/Annots [${Array.from({ length: annotationCount }, (_, item) => `${3 + (pageCount * 2) + item} 0 R`).join(' ')}]`
+      : '';
+    objects[pageIds[index]] = `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << >> /Contents ${contentIds[index]} 0 R ${annotations} >>`;
+    objects[contentIds[index]] = '<< /Length 3 >>\nstream\nq Q\nendstream';
+  }
+  for (let index = 0; index < annotationCount; index++) {
+    const id = 3 + (pageCount * 2) + index;
+    objects[id] = '<< /Type /Annot /Subtype /Text /Rect [0 0 1 1] /Contents (synthetic passive note) >>';
+  }
+
+  const parts = ['%PDF-1.7\n'];
+  const offsets = Array(objects.length).fill(0);
+  let length = Buffer.byteLength(parts[0]);
+  for (let id = 1; id < objects.length; id++) {
+    if (!objects[id]) continue;
+    offsets[id] = length;
+    const object = `${id} 0 obj\n${objects[id]}\nendobj\n`;
+    parts.push(object);
+    length += Buffer.byteLength(object);
+  }
+  const xrefOffset = length;
+  const xref = [`xref\n0 ${objects.length}\n`, '0000000000 65535 f \n'];
+  for (let id = 1; id < objects.length; id++) {
+    xref.push(offsets[id] === 0 ? '0000000000 00000 f \n' : `${offsets[id].toString().padStart(10, '0')} 00000 n \n`);
+  }
+  parts.push(...xref, `trailer\n<< /Size ${objects.length} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+  return Buffer.from(parts.join(''), 'ascii');
+}
+
 async function inspect(bytes: Buffer) {
   const directory = await mkdtemp(join(tmpdir(), 'auditsphere-pdf-policy-'));
   directories.push(directory);
@@ -155,6 +192,11 @@ describe('bounded PDF active-content inspection', () => {
       inspect(compressedCatalogPdf('', { number: 7, body: '<< /Type /Annot /Subtype /Link /Rect [0 0 10 10] /A << /S /URI /URI (https://example.test) >> >>' }, '/Annots [7 0 R]')),
       PdfPolicyRejectedError,
     );
+  });
+
+  it('rejects documents that exceed the page and annotation resource caps', async () => {
+    await assert.rejects(inspect(oversizedPdf(501)), PdfPolicyRejectedError);
+    await assert.rejects(inspect(oversizedPdf(1, 10_001)), PdfPolicyRejectedError);
   });
 
   it('fails closed on malformed PDFs', async () => {

@@ -104,3 +104,13 @@ Next eligible task: continue T033 until these criteria are implemented or an app
 - `pnpm verify:task -- T033`: PASS, exit 0; PDF inspection 9/9, multipart 2/2, ClamAV unit 3/3, real-daemon clean/EICAR 1/1, PostgreSQL/Fastify upload 1/1.
 - Fixture, runtime, lockfile hash and evidence limitations are recorded in [the compressed indirect-object verification](pdf-compressed-indirect-2026-10-04.md). The earlier measured PDF-policy report remains unchanged.
 - This verifies the added object-stream cases only; broader PDF grammar, malformed cross-reference and viewer behavior remain open. T033 remains `IN_PROGRESS` for portal/PBC authorization and other task acceptance gates.
+
+## PDF parser resource-cap regression — 2026-10-04
+
+Added real PDF.js worker fixtures that exceed the configured 500-page and 10,000-annotation limits. Both are rejected by the bounded inspection worker while the existing valid-passive, active-content, compressed-object and malformed-file controls remain green. The fixtures are synthetic and never reach ClamAV storage metadata or a provider in the end-to-end denied-content checks.
+
+| Command / test | Tested artifact and fixture | Actual result / exit status | Evidence |
+| :--- | :--- | :--- | :--- |
+| `pnpm verify:task -- T033` | Server build, contract/OpenAPI drift, multipart, ClamAV, PDF.js worker policy, PostgreSQL 18.6/Fastify upload API | Passed, exit 0; multipart 2/2, ClamAV unit 3/3, real daemon 1/1, PDF inspection 10/10, upload API/PostgreSQL 1/1 | 2026-10-04 local output |
+
+T033 remains `IN_PROGRESS`: this strengthens the hostile-file bound evidence but does not prove every PDF grammar/viewer behavior, the portal/PBC upload-freeze boundary (T075), cross-client PBC completion, or the T064 category repository binding. No tenant, provider, database or live user permissions changed.
