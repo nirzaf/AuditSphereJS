@@ -31,6 +31,11 @@ jobs:
       - run: pnpm build:server
       - run: pnpm db:seed
       - run: pnpm exec playwright install --with-deps chromium
+      - name: Allow Chromium sandbox user namespaces on Ubuntu 24
+        run: |
+          if grep -q "Ubuntu 24" /etc/os-release; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
       - name: Start compiled local services
         run: |
           node apps/api/dist/main.js > api.log 2>&1 &
