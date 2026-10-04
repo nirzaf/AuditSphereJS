@@ -7,3 +7,7 @@ Status: `IN_REVIEW` (independent review pending). Contacts carry MANAGING_DIRECT
 - AC3: a captured recipient snapshot survives later contact edits unchanged (proven).
 
 Commands: `pnpm verify:task -- T053`.
+
+## Response contract and OpenAPI follow-up — 2026-10-05
+
+Contact creation/list and routing snapshots now have explicit response schemas and generated OpenAPI success responses. List projections omit persistence-only firm/creator fields and serialize timestamps to ISO strings. `pnpm contracts:check`, `apps/api/tests/contracts.integration.ts` and the shared `tests/commercial-crm.integration.ts` passed; `pnpm verify:affected` passed with 30 Vitest files/137 tests and an Angular production build. Receipt dispatch wiring to T037 remains open, so T053 stays `IN_REVIEW`.

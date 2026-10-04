@@ -7,3 +7,7 @@ Status: `IN_REVIEW` (independent review pending). Leads record PHONE/WHATSAPP/EM
 - AC3: lead intake creates no engagement, no role grants and no memberships, and never moves an engagement state (proven).
 
 Commands: `pnpm verify:task -- T054`. Lead-to-engagement conversion and the connected leads/entities screens remain open.
+
+## Response contract and OpenAPI follow-up — 2026-10-05
+
+Lead create/list/profile/advance now have explicit response schemas and generated OpenAPI success responses. The list projection omits persistence-only firm/creator fields and serializes timestamps to ISO strings. `pnpm contracts:check`, `apps/api/tests/contracts.integration.ts` and the shared `tests/commercial-crm.integration.ts` passed; `pnpm verify:affected` passed with 30 Vitest files/137 tests and an Angular production build. Lead-to-engagement conversion and connected screens remain open, so T054 stays `IN_REVIEW`.

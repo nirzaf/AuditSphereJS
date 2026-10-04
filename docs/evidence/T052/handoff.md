@@ -7,3 +7,7 @@ Status: `IN_REVIEW` (independent review pending). Clients carry legal name, Tax 
 - AC3: editing the address never rewrites the issued-letter snapshot, which pins the client name at issuance and is immutable (proven over the full dual-key letter flow).
 
 Commands: `pnpm verify:task -- T052`. UI wiring of the entities screen to the real directory API remains open.
+
+## Response contract and OpenAPI follow-up — 2026-10-05
+
+The directory endpoint now returns an explicit client/contact projection with ISO timestamps; client creation, profile update and parent assignment each have a distinct response schema. The projection omits persistence-only firm and creator fields. Generated OpenAPI now documents the success bodies, and profile update explicitly returns HTTP 200 to match its contract. `pnpm contracts:check`, `apps/api/tests/contracts.integration.ts` and the shared `tests/commercial-crm.integration.ts` passed; `pnpm verify:affected` passed with 30 Vitest files/137 tests and an Angular production build. The connected entities screen remains open, so T052 stays `IN_REVIEW`.

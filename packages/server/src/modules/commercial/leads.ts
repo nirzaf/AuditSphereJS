@@ -45,7 +45,11 @@ export async function createLead(actorId: string, engagementId: string, input: u
 
 export async function listLeads(engagementId: string) {
   const engagement = await loadEngagement(db, engagementId);
-  return db.lead.findMany({ where: { firmId: engagement.firmId }, orderBy: { createdAt: 'asc' } });
+  const leads = await db.lead.findMany({
+    where: { firmId: engagement.firmId }, orderBy: { createdAt: 'asc' },
+    select: { id: true, source: true, legalName: true, contactName: true, contactEmail: true, scope: true, status: true, duplicateOfId: true, createdAt: true },
+  });
+  return leads.map(lead => ({ ...lead, createdAt: lead.createdAt.toISOString() }));
 }
 
 export async function profileLead(actorId: string, engagementId: string, leadId: string, input: unknown) {

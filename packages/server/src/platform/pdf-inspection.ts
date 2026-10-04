@@ -8,7 +8,10 @@ export class PdfPolicyRejectedError extends Error {
   }
 }
 
+const WORKER_STARTUP_TIMEOUT_MS = 10_000;
 const INSPECTION_TIMEOUT_MS = 5_000;
+
+type InspectionWorkerMessage = { ready: true } | InspectionResult;
 
 type InspectionResult = { safe: true } | { safe: false };
 
@@ -16,6 +19,8 @@ type InspectionResult = { safe: true } | { safe: false };
 export async function inspectPdfFile(filePath: string): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     let settled = false;
+    let inspecting = false;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     const worker = new Worker(new URL('./pdf-inspection-worker.js', import.meta.url), {
       workerData: { filePath },
       execArgv: [],
@@ -24,14 +29,26 @@ export async function inspectPdfFile(filePath: string): Promise<void> {
     const finish = (error?: Error) => {
       if (settled) return;
       settled = true;
-      clearTimeout(timeout);
+      if (timeout) clearTimeout(timeout);
       void worker.terminate();
       if (error) reject(error);
       else resolve();
     };
-    const timeout = setTimeout(() => finish(new ServiceUnavailableException('PDF security inspection exceeded its time limit; the file was not stored.')), INSPECTION_TIMEOUT_MS);
-    worker.once('message', (result: InspectionResult) => {
-      if (result?.safe === true) finish();
+    timeout = setTimeout(() => finish(new ServiceUnavailableException('PDF security inspection worker did not start; the file was not stored.')), WORKER_STARTUP_TIMEOUT_MS);
+    worker.on('message', (result: InspectionWorkerMessage) => {
+      if ('ready' in result && result.ready === true) {
+        if (settled || inspecting) return;
+        inspecting = true;
+        if (timeout) clearTimeout(timeout);
+        timeout = setTimeout(() => finish(new ServiceUnavailableException('PDF security inspection exceeded its time limit; the file was not stored.')), INSPECTION_TIMEOUT_MS);
+        try {
+          worker.postMessage({ command: 'inspect' });
+        } catch {
+          finish(new ServiceUnavailableException('PDF security inspection is unavailable; the file was not stored.'));
+        }
+        return;
+      }
+      if ('safe' in result && result.safe === true) finish();
       else finish(new PdfPolicyRejectedError());
     });
     worker.once('error', () => finish(new ServiceUnavailableException('PDF security inspection is unavailable; the file was not stored.')));

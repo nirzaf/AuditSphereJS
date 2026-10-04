@@ -108,7 +108,11 @@ async function inspect() {
   }
 }
 
-void inspect().then(
-  safe => parentPort?.postMessage({ safe }),
-  () => parentPort?.postMessage({ safe: false }),
-);
+parentPort?.postMessage({ ready: true });
+parentPort?.once('message', (message: { command?: string }) => {
+  if (message?.command !== 'inspect') return;
+  void inspect().then(
+    safe => parentPort?.postMessage({ safe }),
+    () => parentPort?.postMessage({ safe: false }),
+  );
+});

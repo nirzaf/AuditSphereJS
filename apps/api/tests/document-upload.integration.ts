@@ -156,6 +156,7 @@ test('document upload sessions validate bytes and recheck authorization/workflow
       assert.equal((await db.documentUploadSession.findUniqueOrThrow({ where: { id: interrupted.id } })).status, 'INITIATED');
       const unauthorizedBytes = Buffer.from('%PDF-1.7\nforeign');
       await assert.rejects(receiveDocumentUpload(otherActorId, interrupted.id, { filename: 'interrupted.pdf', mimetype: 'application/pdf', file: (async function* () { yield unauthorizedBytes; })() }), /Upload session not found/);
+      await assert.rejects(finalizeDocumentUpload(otherActorId, interrupted.id), /Upload session not found/);
 
       const spoofed = await initiateDocumentUpload(actorId, { engagementId, category: '03_Fieldwork & Testing', filename: 'spoofed.pdf', contentType: 'application/pdf', sizeBytes: 9 }) as { id: string };
       const csvBytes = Buffer.from('code,name');

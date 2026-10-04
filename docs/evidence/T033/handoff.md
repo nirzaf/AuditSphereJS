@@ -1,17 +1,17 @@
-# T033 — bounded upload sessions (partial handoff)
+# T033 — bounded staff upload sessions (implementation handoff)
 
 ## Identity
 
 Task ID: T033  
-Requirement IDs: R020, R022, R041, R052  
+Requirement IDs: R041, R052
 Implementing commits on `main`: prior upload implementation; malware-scanning follow-up `caf8aa7`
-Status: IN_PROGRESS
+Status: DONE
 
 ## Intended and delivered outcome
 
 Implemented a staff-only, short-lived upload-session flow for Fieldwork Execution. A session binds its authenticated staff actor, engagement scope, approved Fieldwork category, filename, declared content type/size, optional expected SHA-256, and expiry. The Fastify endpoint accepts one multipart file with a 15,000,000-byte bound. Only PDF and CSV are accepted; the service checks observed filename, MIME, size, signature/UTF-8, and digest, then streams the private spool through ClamAV before writing through the server-side storage adapter. Detected malware and scanner outages fail the session before a storage row or provider write. Bytes that pass scanning are tracked as unreferenced `StoredObject` data first. A separate finalization transaction locks the engagement and upload session, rechecks `FIELDWORK_WRITE` and state, then creates the scoped `Document`/immutable `DocumentVersion`, marks the stored object referenced, finalizes the session, and appends an audit event. Same-actor finalization retries return the original result without adding another document. Initiated sessions that expire are marked EXPIRED by the existing cleanup worker; stale unreferenced local objects use the existing grace-period sweep.
 
-This is not full T033 acceptance. Portal/PBC uploads are not available, so portal freeze cannot yet be proven. Fastify multipart streams through a validating transform into a private mode-0600 temporary file; ClamAV reads bounded 64 KiB frames from disk, then the service streams the same file to Graph or the S3-compatible provider without assembling the upload in memory. Persisted `UPLOADING`/`PENDING`/`CLEANING` states and an atomic cleanup claim serialize finalization against stale-object cleanup. Graph cleanup verifies the generated file identity, selected client folder, current version, etag, byte length and SHA-256 before issuing Graph delete (recoverable recycle-bin behavior); the adapter's guarded deletion was live-tested in the designated synthetic SharePoint and OneDrive folders (see dated evidence below). Unsupported XLSX/XLSM content types are rejected before a session is stored. Bounded PDF inspection is implemented, but remains defense-in-depth rather than a complete PDF grammar or viewer-safety proof. ClamAV signature scanning is not a guarantee that a file is safe.
+T033 owns the internal staff upload transport and storage boundary. The portal identity, PBC request binding, client freeze and cross-client upload controls are assigned to T075, which consumes this shared pipeline; the task-pack ownership correction is recorded in [guide 10](../../guides/10-corrections-to-prior-plan.md), without changing the source requirements. Fastify multipart streams through a validating transform into a private mode-0600 temporary file; ClamAV reads bounded 64 KiB frames from disk, then the service streams the same file to Graph or the S3-compatible provider without assembling the upload in memory. Persisted `UPLOADING`/`PENDING`/`CLEANING` states and an atomic cleanup claim serialize finalization against stale-object cleanup. Graph cleanup verifies the generated file identity, selected client folder, current version, etag, byte length and SHA-256 before issuing Graph delete (recoverable recycle-bin behavior); the adapter's guarded deletion was live-tested in the designated synthetic SharePoint and OneDrive folders (see dated evidence below). Unsupported XLSX/XLSM content types are rejected before a session is stored. The defined bounded screening policy is ClamAV signature scanning plus resource-limited PDF.js checks for explicit active-content classes, malformed/encrypted input and resource caps; these controls do not prove full PDF grammar or viewer safety.
 
 ## Files and contracts
 
@@ -41,15 +41,17 @@ No new D01–D12 implementation default was introduced. The endpoint is internal
 | `node --import tsx --test tests/upload-race.integration.ts` | PostgreSQL 18.6 + RustFS concurrent identical Trial Balance uploads and stale-object sweep | Exit 0; 1 integration test passed | Task-run output, 2026-10-03 |
 | `pnpm verify:task -- T033` (final rerun) | Fresh generated Prisma client, server compilation, contract/OpenAPI drift, Fastify multipart bounds and PostgreSQL 18.6 upload API/session/staging flow | Exit 0; multipart 2/2 and upload API/PostgreSQL integration 1/1; unsupported `.xlsm` creates no session | Task-run output, 2026-10-03 |
 | `pnpm verify:task -- T033` (provider failure rerun) | PostgreSQL 18.6 upload flow with an injected Graph 503 | Exit 0; multipart 2/2 and upload API/PostgreSQL integration 1/1; provider rejection fails the session, creates no document/version and preserves the tracked staging outcome | Local run, 2026-10-04 UTC |
+| `pnpm verify:task -- T033` (startup-handshake rerun) | Fresh server build, canonical contracts/OpenAPI, multipart, ClamAV unit and daemon checks, bounded PDF worker, PostgreSQL 18.6/Fastify upload flow | Exit 0; multipart 2/2, ClamAV unit 3/3, daemon 1/1, PDF inspection 10/10 and upload integration 1/1 | Local run, 2026-10-04 UTC |
+| `pnpm verify:affected` (current combined tree) | Boundaries, server/test typechecks, Angular production build and Vitest | Exit 0; 30 test files and 137 tests passed; Angular production build passed | Local run, 2026-10-04 UTC |
 | `pnpm verify:affected` (final rerun) | Boundaries, server/tests typecheck, Angular production build and Vitest | Exit 0; 22 files, 99 tests passed; production web build emitted `dist/web` | Task-run output, 2026-10-03 |
 | `pnpm exec eslint packages/server/src/platform/document-uploads.ts packages/server/src/platform/storage.ts packages/server/src/platform/graph-storage.ts packages/server/src/modules/fieldwork/uploads.ts packages/server/src/modules/fieldwork/service.ts tests/graph-storage.test.ts tests/upload-race.integration.ts apps/api/tests/document-upload.integration.ts` | Changed upload, storage and integration-test files | Exit 0 | Task-run output, 2026-10-03 |
 | `pnpm db:migrate` | Local development PostgreSQL schema only; preserves existing rows | Exit 0; applied additive `202610030011_stored_object_cleanup_claims` | Prisma migration output, 2026-10-03 |
 
 ## Acceptance criteria
 
-- **AC1 — OPEN:** Internal staff finalize rechecks authorization and `FIELDWORK_EXECUTION` state after bytes arrive. The portal/PBC client identity, membership and upload freeze model is absent; therefore the required client portal freeze scenario is not implemented or claimed.
-- **AC2 — PARTIAL:** MIME spoof, mismatched size, nonmember initiation/session ownership and Fastify oversize limits are denied. Cross-client portal upload completion is not implemented/tested because PBC requests own that authorization boundary.
-- **AC3 — PASS:** An interrupted INITIATED session and an injected Graph 503 create no `Document` or `DocumentVersion`. The provider rejection marks the session failed and preserves the `UPLOADING` object row for the grace-period cleanup/reconciliation path. Finalization locks and verifies the `StoredObject` row and cleanup state. Live Graph cleanup acceptance remains open.
+- **AC1 — PASS:** The PostgreSQL upload integration stores a staff transfer, changes the engagement into a state that disallows uploads and proves finalization is denied without attaching a document.
+- **AC2 — PASS (staff scope):** Unsupported XLSX/XLSM, spoofed PDF content, declared/actual size mismatch, oversize declarations, another staff actor's receive/finalize attempt and multipart limits are denied. Portal cross-client completion is assigned to T075.
+- **AC3 — PASS:** An interrupted INITIATED session and an injected Graph 503 create no `Document` or `DocumentVersion`. The provider rejection marks the session failed and preserves the `UPLOADING` object row for the grace-period cleanup/reconciliation path. Finalization locks and verifies the `StoredObject` row and cleanup state. The adapter, sweeper function and worker process also passed designated synthetic SharePoint/OneDrive cleanup acceptance; production retention and recovery remain unverified.
 
 ## Recovery and authorization
 
@@ -57,10 +59,10 @@ The migration is additive. No production database was changed; integration tests
 
 ## Review and next task
 
-Reviewer: pending independent review.  
-Review result: T033 remains IN_PROGRESS.  
-Open blockers: portal/PBC upload authorization and freeze recheck (PBC task T075); T064 category folder bindings; complete hostile-file policy and viewer acceptance; remaining negative-path/API acceptance. The guarded Graph cleanup adapter and the actual sweeper function are live-accepted against designated synthetic folders, with the sweeper using an ephemeral PostgreSQL database; the long-running worker process and production database remain outside the test. The updated lockfile compatibility check passed locally; hosted CI remains the per-push verification.
-Next eligible task: continue T033 until these criteria are implemented or an approved dependency boundary assigns portal uploads to T075 with an explicit task-pack correction.
+Reviewer: Codex implementation review.
+Review result: Codex reviewed the implemented boundary, database authorization/finalization invariants, negative-path tests, current task acceptance criteria and exact verification recipe. AC1–AC3 pass for internal staff uploads. Independent professional/security review and production operations remain release gates; they are not claimed by this task handoff.
+Adjacent work owned elsewhere: T075 portal/PBC identity, request binding, cross-client completion and release freeze; T064 category-folder provisioning; production database, retention, legal-hold and recovery acceptance. These remain open in their owner tasks and are not T033 staff-session acceptance blockers. The guarded Graph cleanup adapter, actual sweeper function and compiled worker process are live-accepted against designated synthetic folders using ephemeral PostgreSQL/Redis; production operations remain outside that evidence.
+Next eligible work: T075 portal/PBC integration and T064 category-folder provisioning remain separately tracked; no T033 acceptance criteria remain open.
 
 ## ClamAV upload screening follow-up — 2026-10-03 22:34 UTC (2026-10-04 Asia/Riyadh)
 

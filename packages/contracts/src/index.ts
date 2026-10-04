@@ -845,6 +845,9 @@ export const updateClientProfileSchema = z.object({
   status: z.enum(['ACTIVE', 'SUSPENDED', 'ARCHIVED']).optional(),
 });
 export const setClientParentSchema = z.object({ idempotencyKey: z.uuid(), parentClientId: z.uuid().nullable() });
+export const commercialClientCreatedResultSchema = z.object({ id: z.uuid(), name: z.string().max(200), legalName: z.string().max(200).nullable(), status: z.string().max(40), parentClientId: z.uuid().nullable() });
+export const commercialClientProfileViewSchema = z.object({ id: z.uuid(), legalName: z.string().max(200).nullable(), taxId: z.string().max(60).nullable(), legalForm: z.string().max(100).nullable(), address: z.string().max(500).nullable(), status: z.string().max(40) });
+export const commercialClientParentResultSchema = z.object({ id: z.uuid(), parentClientId: z.uuid().nullable() });
 
 /** T053: contacts with MD/GM, CFO/FD and audit-liaison routing roles. */
 export const contactRoles = ['MANAGING_DIRECTOR', 'CFO_FD', 'AUDIT_LIAISON'] as const;
@@ -865,6 +868,16 @@ export const createContactSchema = z.object({
   role: contactRoleSchema,
   isPrimary: z.boolean(),
 });
+export const commercialContactViewSchema = z.object({ id: z.uuid(), clientId: z.uuid(), name: z.string().max(200), email: z.string().email().max(200), role: contactRoleSchema, isPrimary: z.boolean(), createdAt: z.iso.datetime() });
+export const commercialContactListSchema = z.array(commercialContactViewSchema);
+export const commercialContactCreatedResultSchema = z.object({ id: z.uuid(), clientId: z.uuid(), name: z.string().max(200), role: contactRoleSchema, isPrimary: z.boolean() });
+export const commercialContactSnapshotSchema = z.object({ contactId: z.uuid(), clientId: z.uuid(), name: z.string().max(200), email: z.string().email().max(200), role: contactRoleSchema, resolvedAt: z.iso.datetime() });
+export const commercialClientDirectoryItemSchema = z.object({
+  id: z.uuid(), name: z.string().max(200), legalName: z.string().max(200).nullable(), taxId: z.string().max(60).nullable(),
+  legalForm: z.string().max(100).nullable(), address: z.string().max(500).nullable(), status: z.string().max(40),
+  parentClientId: z.uuid().nullable(), contacts: z.array(commercialContactViewSchema),
+});
+export const commercialClientDirectorySchema = z.array(commercialClientDirectoryItemSchema);
 
 /** T054: multi-channel lead intake with gated profile-to-proposal progression. */
 export const leadSources = ['PHONE', 'WHATSAPP', 'EMAIL', 'WEB', 'REFERRAL'] as const;
@@ -882,3 +895,20 @@ export const profileLeadSchema = z.object({
   contactEmail: z.string().trim().email().max(200),
   scope: z.string().trim().min(3).max(500),
 });
+export const commercialLeadViewSchema = z.object({
+  id: z.uuid(), source: z.enum(leadSources), legalName: z.string().max(200), contactName: z.string().max(200).nullable(),
+  contactEmail: z.string().email().max(200).nullable(), scope: z.string().max(500).nullable(), status: z.string().max(40),
+  duplicateOfId: z.uuid().nullable(), createdAt: z.iso.datetime(),
+});
+export const commercialLeadListSchema = z.array(commercialLeadViewSchema);
+export const commercialLeadCreatedResultSchema = z.object({ id: z.uuid(), source: z.enum(leadSources), status: z.string().max(40), duplicateOfId: z.uuid().nullable() });
+export const commercialLeadProfileResultSchema = z.object({ id: z.uuid(), status: z.string().max(40), contactName: z.string().max(200), scope: z.string().max(500) });
+export const commercialLeadAdvanceResultSchema = z.object({ id: z.uuid(), status: z.string().max(40) });
+export type CommercialClientCreatedResult = z.infer<typeof commercialClientCreatedResultSchema>;
+export type CommercialClientProfileView = z.infer<typeof commercialClientProfileViewSchema>;
+export type CommercialClientParentResult = z.infer<typeof commercialClientParentResultSchema>;
+export type CommercialClientDirectory = z.infer<typeof commercialClientDirectorySchema>;
+export type CommercialContact = z.infer<typeof commercialContactViewSchema>;
+export type CommercialContactSnapshot = z.infer<typeof commercialContactSnapshotSchema>;
+export type CommercialLead = z.infer<typeof commercialLeadViewSchema>;
+export type CommercialLeadCreatedResult = z.infer<typeof commercialLeadCreatedResultSchema>;

@@ -39,7 +39,11 @@ export async function addContact(actorId: string, engagementId: string, input: u
 
 export async function listContacts(engagementId: string) {
   const engagement = await loadEngagement(db, engagementId);
-  return db.clientContact.findMany({ where: { firmId: engagement.firmId }, orderBy: { createdAt: 'asc' } });
+  const contacts = await db.clientContact.findMany({
+    where: { firmId: engagement.firmId }, orderBy: { createdAt: 'asc' },
+    select: { id: true, clientId: true, name: true, email: true, role: true, isPrimary: true, createdAt: true },
+  });
+  return contacts.map(contact => ({ ...contact, createdAt: contact.createdAt.toISOString() }));
 }
 
 export type ContactSnapshot = { contactId: string; clientId: string; name: string; email: string; role: string; resolvedAt: string };

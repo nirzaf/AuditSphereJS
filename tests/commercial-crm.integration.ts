@@ -5,6 +5,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
+import {
+  commercialClientCreatedResultSchema, commercialClientDirectorySchema, commercialClientParentResultSchema,
+  commercialClientProfileViewSchema, commercialContactCreatedResultSchema, commercialContactListSchema,
+  commercialContactSnapshotSchema, commercialLeadAdvanceResultSchema, commercialLeadCreatedResultSchema,
+  commercialLeadListSchema, commercialLeadProfileResultSchema,
+} from '@auditsphere/contracts';
 
 const cli = resolve('node_modules/prisma', JSON.parse(readFileSync('node_modules/prisma/package.json', 'utf8')).bin.prisma);
 const key = () => randomUUID();
@@ -18,7 +24,7 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, createClient, updateClientProfile, setClientParent, addContact, resolveRecipient, createLead, profileLead, advanceLeadToProposal, createProposal, presentProposal, acceptProposal, recordRiskClearance, applyLifecycleCommand } = await import('@auditsphere/server');
+    const { db, createClient, listClientDirectory, updateClientProfile, setClientParent, addContact, listContacts, resolveRecipient, createLead, listLeads, profileLead, advanceLeadToProposal, createProposal, presentProposal, acceptProposal, recordRiskClearance, applyLifecycleCommand } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), userId = randomUUID(), partnerId = randomUUID();
       await db.user.createMany({ data: [
@@ -44,22 +50,29 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
       // T052 AC2 — similar legal names never merge: both clients stay distinct rows.
       const holding = asRecord(await createClient(userId, engagementId, { idempotencyKey: key(), name: 'Acme Trading', legalName: 'Acme Trading W.L.L.', taxId: 'QA-CR-112233', legalForm: 'W.L.L.', address: 'Doha, Building 1' }));
       const subsidiary = asRecord(await createClient(userId, engagementId, { idempotencyKey: key(), name: 'Acme Trading W.L.L. (Subsidiary)', legalName: 'Acme Trading W.L.L.', parentClientId: holding.id }));
+      commercialClientCreatedResultSchema.parse(holding);
+      commercialClientCreatedResultSchema.parse(subsidiary);
+      const directory = commercialClientDirectorySchema.parse(await listClientDirectory(engagementId));
+      assert.equal(JSON.stringify(directory).includes('firmId'), false, 'client directory output omits persistence scope');
       assert.notEqual(holding.id, subsidiary.id);
       assert.equal(await db.client.count({ where: { firmId, legalName: 'Acme Trading W.L.L.' } }), 2, 'similar names remain distinct clients');
 
       // T052 AC1 — an organizational cycle is rejected in both directions.
-      await setClientParent(userId, engagementId, subsidiary.id, { idempotencyKey: key(), parentClientId: holding.id });
+      commercialClientParentResultSchema.parse(await setClientParent(userId, engagementId, subsidiary.id, { idempotencyKey: key(), parentClientId: holding.id }));
       await assert.rejects(setClientParent(userId, engagementId, holding.id, { idempotencyKey: key(), parentClientId: subsidiary.id }), /organizational cycle/);
       await assert.rejects(setClientParent(userId, engagementId, holding.id, { idempotencyKey: key(), parentClientId: holding.id }), /parent not found|organizational cycle|not found/i, 'self-parenting is rejected');
 
       // T053 — contacts with routing roles; AC2: a missing mandatory recipient blocks dispatch.
       await assert.rejects(resolveRecipient(engagementId, 'INVOICE'), /no primary CFO_FD contact/);
-      await addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Maysoon Tariq', email: 'md@bootstrap.test', role: 'MANAGING_DIRECTOR', isPrimary: true });
-      await addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Dana Khalil', email: 'cfo@bootstrap.test', role: 'CFO_FD', isPrimary: true });
-      await addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Sami Haddad', email: 'liaison@bootstrap.test', role: 'AUDIT_LIAISON', isPrimary: true });
+      commercialContactCreatedResultSchema.parse(await addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Maysoon Tariq', email: 'md@bootstrap.test', role: 'MANAGING_DIRECTOR', isPrimary: true }));
+      commercialContactCreatedResultSchema.parse(await addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Dana Khalil', email: 'cfo@bootstrap.test', role: 'CFO_FD', isPrimary: true }));
+      commercialContactCreatedResultSchema.parse(await addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Sami Haddad', email: 'liaison@bootstrap.test', role: 'AUDIT_LIAISON', isPrimary: true }));
+      const safeContacts = commercialContactListSchema.parse(await listContacts(engagementId));
+      assert.equal(JSON.stringify(safeContacts).includes('createdBy'), false, 'contact list output omits internal actor identity');
       await assert.rejects(addContact(userId, engagementId, { idempotencyKey: key(), clientId, name: 'Second CFO', email: 'cfo2@bootstrap.test', role: 'CFO_FD', isPrimary: true }), /primary CFO_FD contact already exists/);
       // T053 AC1 — categories route to the expected contact roles.
       const proposalRoute = await resolveRecipient(engagementId, 'PROPOSAL');
+      commercialContactSnapshotSchema.parse(proposalRoute);
       assert.equal(proposalRoute.email, 'md@bootstrap.test');
       assert.equal((await resolveRecipient(engagementId, 'INVOICE')).email, 'cfo@bootstrap.test');
       assert.equal((await resolveRecipient(engagementId, 'PBC')).email, 'liaison@bootstrap.test');
@@ -77,17 +90,21 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
       await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
       await lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId);
       const letterBefore = (await db.engagementLetterRecord.findUniqueOrThrow({ where: { engagementId } })).letterText;
-      await updateClientProfile(userId, engagementId, clientId, { idempotencyKey: key(), address: 'Doha, New Towers, Floor 9' });
+      commercialClientProfileViewSchema.parse(await updateClientProfile(userId, engagementId, clientId, { idempotencyKey: key(), address: 'Doha, New Towers, Floor 9' }));
       const letterAfter = (await db.engagementLetterRecord.findUniqueOrThrow({ where: { engagementId } })).letterText;
       assert.equal(letterAfter, letterBefore, 'a profile edit never rewrites the issued letter snapshot');
 
       // T054 AC1 — an incomplete profile cannot advance to proposal generation.
       const lead = asRecord(await createLead(userId, engagementId, { idempotencyKey: key(), source: 'WEB', legalName: 'Gulf Logistics L.L.C.' }));
+      commercialLeadCreatedResultSchema.parse(lead);
       assert.equal(lead.status, 'NEW');
       await assert.rejects(advanceLeadToProposal(userId, engagementId, lead.id), /incomplete; required fields missing: contactName, contactEmail, scope/);
-      await profileLead(userId, engagementId, lead.id, { idempotencyKey: key(), contactName: 'Tareq Salem', contactEmail: 'tareq@gulflog.test', scope: 'Annual statutory audit of consolidated accounts' });
+      commercialLeadProfileResultSchema.parse(await profileLead(userId, engagementId, lead.id, { idempotencyKey: key(), contactName: 'Tareq Salem', contactEmail: 'tareq@gulflog.test', scope: 'Annual statutory audit of consolidated accounts' }));
       const advanced = asRecord(await advanceLeadToProposal(userId, engagementId, lead.id));
+      commercialLeadAdvanceResultSchema.parse(advanced);
       assert.equal(advanced.status, 'PROPOSAL_ENTRY');
+      const safeLeads = commercialLeadListSchema.parse(await listLeads(engagementId));
+      assert.equal(JSON.stringify(safeLeads).includes('createdBy'), false, 'lead list output omits internal actor identity');
 
       // T054 AC2 — a duplicate submission stays visible as its own lead linked to the first.
       const duplicate = asRecord(await createLead(userId, engagementId, { idempotencyKey: key(), source: 'REFERRAL', legalName: 'Gulf Logistics L.L.C.' }));

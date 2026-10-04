@@ -92,9 +92,13 @@ export async function setClientParent(actorId: string, engagementId: string, cli
 
 export async function listClientDirectory(engagementId: string) {
   const engagement = await loadEngagement(db, engagementId);
-  return db.client.findMany({
+  const clients = await db.client.findMany({
     where: { firmId: engagement.firmId },
     orderBy: { createdAt: 'asc' },
-    select: { id: true, name: true, legalName: true, taxId: true, legalForm: true, address: true, status: true, parentClientId: true, contacts: true },
+    select: {
+      id: true, name: true, legalName: true, taxId: true, legalForm: true, address: true, status: true, parentClientId: true,
+      contacts: { select: { id: true, clientId: true, name: true, email: true, role: true, isPrimary: true, createdAt: true } },
+    },
   });
+  return clients.map(client => ({ ...client, contacts: client.contacts.map(contact => ({ ...contact, createdAt: contact.createdAt.toISOString() })) }));
 }
