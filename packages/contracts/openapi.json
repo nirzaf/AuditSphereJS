@@ -5560,7 +5560,15 @@
         ],
         "responses": {
           "200": {
-            "description": "Exact approved asset bytes; the partner catalog permission is required."
+            "description": "Exact approved asset bytes; the partner catalog permission is required.",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           },
           "default": {
             "description": "",

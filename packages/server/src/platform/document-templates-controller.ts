@@ -107,7 +107,10 @@ export class DocumentTemplatesController {
 
   @Get('assets/:assetId/versions/:versionId/content')
   @ApiProduces('application/octet-stream')
-  @ApiOkResponse({ description: 'Exact approved asset bytes; the partner catalog permission is required.' })
+  @ApiOkResponse({
+    description: 'Exact approved asset bytes; the partner catalog permission is required.',
+    content: { 'application/octet-stream': { schema: { type: 'string', format: 'binary' } } },
+  })
   async assetContent(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('assetId') assetId: string, @Param('versionId') versionId: string, @Res({ passthrough: true }) reply: DownloadReply) {
     const prepared = await prepareApprovedAssetDownload(actorId, engagementId, assetId, versionId);
     reply.header('Content-Disposition', `attachment; filename="${prepared.filename.replace(/["\\\r\n]/g, '_')}"`);

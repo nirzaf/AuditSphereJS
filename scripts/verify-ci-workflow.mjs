@@ -64,6 +64,16 @@ assert.doesNotMatch(
 const integration = section("integration");
 const shardFiles = [...integration.matchAll(/^            (\S+\.ts)$/gm)].map((match) => match[1]);
 assert.ok(shardFiles.length >= 30, "Integration must shard the full suite list");
+assert.match(
+  integration,
+  /mapfile -t tests < <\(printf '%s\\n' "\$INTEGRATION_TESTS" \| awk 'NF'\)[\s\S]*?node --import tsx --test "\$\{tests\[@\]\}"/,
+  "Integration shard paths must be passed as arguments rather than shell commands",
+);
+assert.match(
+  integration,
+  /contains\(matrix\.shard\.files, 'pdf-renderer\.integration\.ts'\)[\s\S]*?pnpm exec playwright install --with-deps chromium/,
+  "The PDF integration shard must install its pinned Chromium runtime",
+);
 const declared = new Set(shardFiles);
 const packageScripts = JSON.parse(readFileSync("package.json", "utf8")).scripts;
 const suiteFiles = packageScripts["test:integration"].split(" ").filter((file) => file.endsWith(".ts"));
@@ -95,6 +105,11 @@ assert.match(
 );
 
 const image = section("image");
+assert.match(
+  image,
+  /pnpm exec playwright install --with-deps chromium[\s\S]*?pnpm verify:task -- T035/,
+  "The image job must install the PDF renderer browser before the T035 gate",
+);
 assert.match(
   image,
   /pnpm verify:task -- T035/,

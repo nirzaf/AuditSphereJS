@@ -117,7 +117,14 @@ jobs:
       - run: pnpm db:migrate
       - run: pnpm db:roles
       - run: pnpm db:seed
-      - run: node --import tsx --test ${{ matrix.shard.files }}
+      - if: contains(matrix.shard.files, 'pdf-renderer.integration.ts')
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run integration shard
+        run: |
+          mapfile -t tests < <(printf '%s\n' "$INTEGRATION_TESTS" | awk 'NF')
+          node --import tsx --test "${tests[@]}"
+        env:
+          INTEGRATION_TESTS: ${{ matrix.shard.files }}
 
   e2e:
     runs-on: ubuntu-24.04
@@ -184,6 +191,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm setup:local
       - run: pnpm build:server
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm verify:task -- T035
       - run: pnpm smoke:linux
       - name: Package verified build
