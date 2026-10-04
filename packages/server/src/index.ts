@@ -20,6 +20,7 @@ export { PortalAuthController } from './platform/portal-auth-controller.js';
 export { DocumentUploadsController } from './platform/document-uploads-controller.js';
 export { DocumentDownloadsController } from './platform/document-downloads-controller.js';
 export { prepareDocumentVersionDownload } from './platform/document-downloads.js';
+export { PdfRenderError, renderAndPublishPdf, renderTrustedPdf } from './platform/pdf-renderer.js';
 export { initiateDocumentUpload, receiveDocumentUpload, finalizeDocumentUpload, getDocumentUploadSession } from './platform/document-uploads.js';
 export { issuePortalInvitation, issuePortalPasswordReset, redeemPortalInvitation, loginPortalUser, completePortalPasswordReset, completePortalFirstLogin, resolvePortalSession, logoutPortalSession, assertPortalUploadAllowed } from './platform/portal-auth.js';
 export { requireCapability, hasCapability, anyCapability, grantCoversScope, revokeGrant } from './platform/authorization.js';

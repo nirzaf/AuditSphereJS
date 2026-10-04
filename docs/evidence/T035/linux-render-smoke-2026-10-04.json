@@ -1,0 +1,24 @@
+{
+  "date": "2026-10-04",
+  "result": "PASS",
+  "sourceFingerprint": "84774b34f8e3b96cfd049a3e77374fb9470086c944bf76f7b5971667aba8cb1a",
+  "imageId": "sha256:91ef97ef29e1fdbcff909197e2a8d929ade5b29ca261b0a3b2237ab2f871be9e",
+  "runtimeUser": "node (uid 1000)",
+  "containerLimits": {
+    "memory": "1g",
+    "cpus": 1,
+    "network": "none",
+    "seccomp": "unconfined for Chromium user-namespace sandbox smoke only"
+  },
+  "renderer": "playwright-chromium",
+  "playwrightVersion": "1.58.2",
+  "chromiumVersion": "145.0.7632.6",
+  "fontMatch": "NotoSans-Regular.ttf: \"Noto Sans\" \"Regular\"",
+  "pageCount": 1,
+  "sizeBytes": 14260,
+  "sha256": "daec559856c11b51dac1c78e6943a9bcaf75863acaa57ccea41a7fde1204ee52",
+  "limitations": [
+    "A production least-privilege seccomp profile permitting Chromium user namespaces is not selected; unconfined seccomp was used only for this isolated, network-disabled smoke.",
+    "This smoke proves an immutable renderer artifact and provenance, not a PostgreSQL DocumentVersion write or provider retention behavior."
+  ]
+}

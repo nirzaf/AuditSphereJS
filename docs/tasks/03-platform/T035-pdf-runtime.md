@@ -8,6 +8,8 @@
 | Owner area | `documents` |
 | Completion unit | One focused, reviewable change and its evidence |
 
+> Current status: `IN_PROGRESS`. The pinned Playwright/Chromium renderer, escaped template data, denied browser network access, bounded PDF inspection and failure-before-publish behavior pass actual-browser checks on Windows and the target Linux image. Immutable `DocumentVersion` persistence/provenance and a least-privilege production seccomp profile that permits Chromium user namespaces still need an owning workflow/runtime decision before this task can be marked DONE.
+
 ## Outcome
 
 Use one reviewed Chromium renderer through Playwright or the selected equivalent, with exact browser/image matching.
@@ -52,16 +54,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Use one reviewed Chromium renderer through Playwright or the selected equivalent, with exact browser/image matching.
-- [ ] Render only trusted versioned templates and escaped structured data; deny arbitrary remote URLs and local-file/network access.
-- [ ] Set page/resource/time limits and package approved fonts without relying on host fonts.
+- [x] Use the pinned Playwright 1.58.2 Chromium renderer; the target image installs the browser from that exact package version.
+- [x] Render version-identified templates with escaped scalar data; disable JavaScript and abort every browser resource request.
+- [x] Bound template/data bytes, output size, page count and render duration; package Noto/Liberation fonts in the target image and launch Chromium with its sandbox enabled.
 - [ ] Produce an immutable document version and retain renderer/template/data snapshot identities.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Golden quotation and multi-page report fixtures render without missing fonts or truncated sections.
-- [ ] **AC2:** An injected external-resource URL cannot access metadata/internal services.
-- [ ] **AC3:** Renderer failure cannot mark a document ready.
+- [x] **AC1:** Golden quotation and multi-page report fixtures render without missing fonts or truncated sections. The Windows integration extracts tested text from both files; the target image resolves Noto Sans and successfully renders the PDF smoke fixture.
+- [x] **AC2:** An injected external-resource URL cannot access metadata/internal services. A local HTTP metadata canary receives zero requests.
+- [x] **AC3:** Renderer failure cannot mark a document ready. Invalid template data rejects before the publish callback runs.
 
 Test real/emulated storage behavior, boundary failures and immutable hash/version references; provider-specific assurance requires real-provider evidence.
 
