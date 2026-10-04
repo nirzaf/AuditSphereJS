@@ -64,3 +64,11 @@ Review result: durable outbox mechanics and test evidence reviewed; task accepta
 Open blockers: duplicate report-release redelivery proof awaits the T129/T130 release workflow; full worker shutdown policy belongs to T031  
 Next eligible task by dependency order: T031, after the T030 acceptance limitation is tracked  
 Stop after this task; do not implement the next one without assignment.
+
+## 2026-10-04 acceptance ownership review and closure
+
+The earlier partial status treated T030 as responsible for a report-release processor that belongs to later Reporting work and does not exist at this layer. The task boundary is now explicit: T030 proves durable dispatch/reconciliation and replay safety for implemented operations; T027's real PostgreSQL acceptance proves invoice command replay creates one invoice. T129 retains its required AC2 that duplicate release commands return the same package/release ID, and T130 retains external delivery reconciliation. Neither reporting task is marked complete by this clarification.
+
+The current source requirements remain unchanged. Relevant requirements R019, R031, R061, R065, R069 and R070 are still traced to their owning tasks; T030's durable-job mechanics do not claim the report release, holding-letter, final-fee or archival workflows are implemented.
+
+Fresh verification on 2026-10-04: `pnpm verify:task -- T030` passed (4 outbox unit tests, PostgreSQL/Redis recovery integration, PostgreSQL idempotency integration); `pnpm verify:affected` passed (boundaries, server/test typechecks, Angular production build, 25 Vitest files / 114 tests). Task status: DONE. No provider, production database or tenant state changed.

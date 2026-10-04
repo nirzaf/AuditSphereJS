@@ -8,7 +8,7 @@
 | Owner area | `async` |
 | Completion unit | One focused, reviewable change and its evidence |
 
-> Current status: `IN_PROGRESS`. Producer waits are bounded, worker Redis reconnects persist, failed jobs are retained with stable operation correlation, active parsers checkpoint BullMQ cancellation between bounded row batches, and real Redis tests cover killed-worker stalled recovery. Linux CI will verify the child-process SIGTERM drain; T030 must also reach `DONE` before this task can close under the dependency gate.
+> Current status: `DONE`. Producer waits are bounded, worker Redis reconnects persist, failed jobs are retained with stable operation correlation, active parsers checkpoint BullMQ cancellation between bounded row batches, and real Redis tests cover killed-worker stalled recovery. Linux CI verifies the child-process SIGTERM drain. T030's generic outbox acceptance is complete; workflow-specific release idempotency remains owned by T129.
 
 ## Outcome
 
@@ -54,9 +54,9 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Redis disconnect, worker kill and restart are recoverable in integration tests.
-- [ ] **AC2:** A failed job is visible with correlation and safe replay controls.
-- [ ] **AC3:** API latency does not stall during a synthetic CPU job.
+- [x] **AC1:** Redis disconnect, worker kill and restart are recoverable in integration tests.
+- [x] **AC2:** A failed job is visible with correlation and safe replay controls.
+- [x] **AC3:** API latency does not stall during a synthetic CPU job.
 
 Exercise commit/enqueue gaps, retries, worker shutdown and recovery on real PostgreSQL/Redis.
 

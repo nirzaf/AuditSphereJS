@@ -27,5 +27,10 @@ Hosted GitHub Actions run [37163095493](https://github.com/nirzaf/AuditSphereJS/
 ## Open acceptance
 
 - No public cancellation endpoint is exposed; an owning workflow must define its authorization surface before one is added.
-- `T030` remains `IN_PROGRESS` for duplicate report-release delivery until T129/T130 implements release. T031's direct prerequisite therefore remains open despite its own runtime acceptance evidence.
 - No live production service or provider was changed. One additive PostgreSQL migration was added; no package dependency was added.
+
+## 2026-10-04 dependency review and closure
+
+T030 is now reviewed as DONE for the generic outbox and operations implemented at that layer. T129 still owns duplicate release-command idempotency; T130 owns outbound delivery reconciliation. Those are workflow-specific acceptance items and do not keep the queue-runtime prerequisite open.
+
+Fresh `pnpm verify:task -- T031` passed on 2026-10-04: queue policy tests (4/4), parser tests (6/6), live Redis runtime integration, and PostgreSQL/Redis durable-outbox recovery integration. `pnpm verify:affected` passed (25 Vitest files / 114 tests), and hosted Linux CI run [37163095493](https://github.com/nirzaf/AuditSphereJS/actions/runs/37163095493) previously verified actual child-process SIGTERM drain. Task status: DONE. No live production service or provider changed.

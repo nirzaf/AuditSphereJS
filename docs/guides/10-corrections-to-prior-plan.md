@@ -25,6 +25,7 @@ The unchanged [original architecture](../sources/architecture-original-reference
 | Every requirement has one obvious interpretation. | D01–D12 preserve fee timing, LOR, portal closure, numerical/sampling and scope conflicts with approval gates. |
 | Microsoft administration is implicitly a core feature. | M365 is a separately approved optional/provider-specific track; core communication requirements do not grant tenant-wide administration authority. |
 | A large list of tasks proves implementation or regulatory compliance. | Traceability is planned coverage only. All statuses start NOT_STARTED and close only with real evidence and professional approvals. |
+| A generic outbox task must wait for every future workflow that will use it before its dependency can close. | T030 verifies durable dispatch/reconciliation and replay safety for operations that exist at that layer; T027 proves invoice command replay. Reporting owns its own later guarantees: T129 must prove duplicate release commands return the same release identity, and T130 must prove safe outbound delivery reconciliation. This assigns tests to their implemented owner without weakening any source requirement or marking those later workflows complete. |
 
 ## Change management
 

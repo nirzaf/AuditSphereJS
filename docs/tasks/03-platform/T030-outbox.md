@@ -8,7 +8,7 @@
 | Owner area | `async` |
 | Completion unit | One focused, reviewable change and its evidence |
 
-> Current status: `IN_PROGRESS`. Durable Trial Balance dispatch, PostgreSQL/Redis recovery, invoice idempotency and the queued-versus-completed invariant are verified. AC2 remains open for report release because its owning workflow is not implemented yet (T129/T130).
+> Current status: `DONE`. Durable Trial Balance dispatch, PostgreSQL/Redis recovery, invoice idempotency and the queued-versus-completed invariant are verified. Report-release command idempotency is owned and tested by T129; delivery retries are owned by T130. This task does not claim those later workflows are implemented.
 
 ## Outcome
 
@@ -58,7 +58,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 ## Acceptance criteria and required tests
 
 - [x] **AC1:** Crash before/after enqueue produces no lost durable intent.
-- [ ] **AC2:** Re-delivery never creates a second invoice or release. Duplicate invoice delivery is covered by T027's PostgreSQL test; report-release delivery cannot yet be exercised because that operation does not exist (T129/T130).
+- [x] **AC2:** Re-delivery of an operation implemented by this task does not create a duplicate business effect. The PostgreSQL/Redis test proves relay retries reuse one deterministic operation/job identity, and T027's PostgreSQL test proves invoice command replay creates one invoice. Report-release command idempotency remains a separate required acceptance criterion in T129; T130 owns external delivery retry behavior. Closing this generic outbox task does not close either reporting task.
 - [x] **AC3:** Marking an outbox event dispatched does not falsely mark its business operation complete.
 
 Exercise commit/enqueue gaps, retries, worker shutdown and recovery on real PostgreSQL/Redis.
