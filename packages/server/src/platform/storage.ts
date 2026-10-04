@@ -33,6 +33,7 @@ export async function storeFile(key: string, path: string, sizeBytes: number, sh
     return graph().putStream(repository, key.replaceAll('/', '_'), createReadStream(path), sizeBytes, sha256, contentType, onStored);
   }
   await client.send(new PutObjectCommand({ Bucket, Key: key, Body: createReadStream(path), ContentLength: sizeBytes, ContentType: contentType, IfNoneMatch: '*' }));
+  await onStored?.(key);
   return key;
 }
 export async function store(key: string, body: string, repository?: GraphRepository): Promise<string> {

@@ -40,3 +40,17 @@ export async function resolveFirmPracticeRepository(client: FirmRepositoryClient
   if (!driveId || !folderId) throw new Error('No firm-private Practice repository binding or local fixture configuration is available');
   return { driveId, folderId, purpose: 'practice-private' };
 }
+
+/** Resolve a separate firm-private repository for approved document artwork and credentials. */
+export async function resolveFirmTemplateAssetRepository(client: FirmRepositoryClient, firmId: string): Promise<GraphRepository> {
+  const binding = await client.firmRepository.findFirst({
+    where: { firmId, purpose: 'template-assets-private', provider: 'graph', retiredAt: null },
+    orderBy: { createdAt: 'desc' },
+  });
+  if (binding) return { driveId: binding.driveId, folderId: binding.folderId, purpose: 'template-assets-private' };
+  if (process.env.NODE_ENV === 'production') throw new Error('No firm-private document-template asset repository is provisioned');
+  const driveId = process.env.M365_TEMPLATE_ASSETS_DRIVE_ID;
+  const folderId = process.env.M365_TEMPLATE_ASSETS_FOLDER_ID;
+  if (!driveId || !folderId) throw new Error('No firm-private document-template asset repository binding or local fixture configuration is available');
+  return { driveId, folderId, purpose: 'template-assets-private' };
+}

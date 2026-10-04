@@ -1027,7 +1027,7 @@
                   },
                   "capabilities": {
                     "minItems": 1,
-                    "maxItems": 24,
+                    "maxItems": 25,
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -1053,6 +1053,7 @@
                         "PRACTICE_POST",
                         "PRACTICE_REOPEN_PERIOD",
                         "TEAM_ASSIGNMENT_MANAGE",
+                        "DOCUMENT_TEMPLATE_MANAGE",
                         "EXTERNAL_COMMUNICATION_READ",
                         "EXTERNAL_COMMUNICATION_SEND",
                         "EXTERNAL_COMMUNICATION_RECONCILE"
@@ -1137,6 +1138,7 @@
                           "PRACTICE_POST",
                           "PRACTICE_REOPEN_PERIOD",
                           "TEAM_ASSIGNMENT_MANAGE",
+                          "DOCUMENT_TEMPLATE_MANAGE",
                           "EXTERNAL_COMMUNICATION_READ",
                           "EXTERNAL_COMMUNICATION_SEND",
                           "EXTERNAL_COMMUNICATION_RECONCILE"
@@ -2935,6 +2937,2900 @@
         ],
         "tags": [
           "Documents"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates": {
+      "get": {
+        "operationId": "DocumentTemplatesController_catalog",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canManage": {
+                      "type": "boolean"
+                    },
+                    "templates": {
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "BRIEF_QUOTATION",
+                              "COMPREHENSIVE_PROPOSAL",
+                              "ENGAGEMENT_LETTER",
+                              "D1_AUDITOR_REPORT",
+                              "D2_MANAGEMENT_LETTER",
+                              "D3_REPRESENTATION_LETTER",
+                              "D4_CORRESPONDENCE_TRAIL",
+                              "D5_FINAL_FEE_NOTE"
+                            ]
+                          },
+                          "engagementType": {
+                            "type": "string",
+                            "enum": [
+                              "EXTERNAL_STATUTORY_AUDIT",
+                              "INTERNAL_AUDIT",
+                              "AGREED_UPON_PROCEDURES"
+                            ]
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "version": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "exclusiveMinimum": true,
+                            "maximum": 9007199254740991
+                          },
+                          "activeVersionId": {
+                            "nullable": true,
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "versions": {
+                            "maxItems": 100,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "sequence": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "exclusiveMinimum": true,
+                                  "maximum": 9007199254740991
+                                },
+                                "contentSha256": {
+                                  "type": "string",
+                                  "pattern": "^[a-f0-9]{64}$"
+                                },
+                                "blocks": {
+                                  "maxItems": 100,
+                                  "type": "array",
+                                  "items": {
+                                    "oneOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                                          },
+                                          "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                              "TITLE"
+                                            ]
+                                          },
+                                          "text": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind",
+                                          "text"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                                          },
+                                          "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                              "HEADING"
+                                            ]
+                                          },
+                                          "text": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind",
+                                          "text"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                                          },
+                                          "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                              "PARAGRAPH"
+                                            ]
+                                          },
+                                          "text": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 4000
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind",
+                                          "text"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                                          },
+                                          "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                              "BULLET_LIST"
+                                            ]
+                                          },
+                                          "items": {
+                                            "minItems": 1,
+                                            "maxItems": 30,
+                                            "type": "array",
+                                            "items": {
+                                              "type": "string",
+                                              "minLength": 1,
+                                              "maxLength": 4000
+                                            }
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind",
+                                          "items"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                                          },
+                                          "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                              "APPROVED_ASSET"
+                                            ]
+                                          },
+                                          "assetVersionId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                          },
+                                          "use": {
+                                            "type": "string",
+                                            "enum": [
+                                              "FIRM_PROFILE",
+                                              "REGISTRATION",
+                                              "CREDENTIAL",
+                                              "TEAM_CV",
+                                              "PARTNER_SIGNATURE",
+                                              "FIRM_SEAL"
+                                            ]
+                                          },
+                                          "caption": {
+                                            "type": "string",
+                                            "maxLength": 200
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind",
+                                          "assetVersionId",
+                                          "use",
+                                          "caption"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                                          },
+                                          "kind": {
+                                            "type": "string",
+                                            "enum": [
+                                              "PARTNER_SIGNATURE"
+                                            ]
+                                          },
+                                          "signatureAssetVersionId": {
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                          },
+                                          "sealAssetVersionId": {
+                                            "nullable": true,
+                                            "type": "string",
+                                            "format": "uuid",
+                                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind",
+                                          "signatureAssetVersionId",
+                                          "sealAssetVersionId"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    ]
+                                  }
+                                },
+                                "allowedVariables": {
+                                  "maxItems": 30,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "enum": [
+                                      "firmName",
+                                      "firmHistory",
+                                      "firmProfile",
+                                      "registrationNumber",
+                                      "clientLegalName",
+                                      "clientAddress",
+                                      "periodStart",
+                                      "periodEnd",
+                                      "statutoryPeriod",
+                                      "engagementScope",
+                                      "agreedFee",
+                                      "advanceFee",
+                                      "finalFee",
+                                      "currencyCode",
+                                      "paymentTerms",
+                                      "timeline",
+                                      "assignedPartner",
+                                      "auditTeam",
+                                      "industryCredentials",
+                                      "auditMethodology",
+                                      "submissionDeadline",
+                                      "opinion",
+                                      "opinionBasis",
+                                      "financialStatements",
+                                      "deficiencies",
+                                      "impacts",
+                                      "recommendations",
+                                      "managementRepresentations",
+                                      "correspondenceTrail",
+                                      "finalFeeDueDate"
+                                    ]
+                                  }
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "DRAFT",
+                                    "APPROVED",
+                                    "REVOKED"
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "sequence",
+                                "contentSha256",
+                                "blocks",
+                                "allowedVariables",
+                                "status",
+                                "createdAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind",
+                          "engagementType",
+                          "name",
+                          "version",
+                          "activeVersionId",
+                          "versions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "assets": {
+                      "maxItems": 500,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 160
+                          },
+                          "category": {
+                            "type": "string",
+                            "enum": [
+                              "FIRM_PROFILE",
+                              "REGISTRATION",
+                              "CREDENTIAL",
+                              "TEAM_CV",
+                              "PARTNER_SIGNATURE",
+                              "FIRM_SEAL"
+                            ]
+                          },
+                          "version": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "exclusiveMinimum": true,
+                            "maximum": 9007199254740991
+                          },
+                          "versions": {
+                            "maxItems": 100,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                                },
+                                "sequence": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "exclusiveMinimum": true,
+                                  "maximum": 9007199254740991
+                                },
+                                "contentType": {
+                                  "type": "string",
+                                  "enum": [
+                                    "application/pdf",
+                                    "image/png",
+                                    "image/jpeg"
+                                  ]
+                                },
+                                "sizeBytes": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "exclusiveMinimum": true,
+                                  "maximum": 9007199254740991
+                                },
+                                "sha256": {
+                                  "type": "string",
+                                  "pattern": "^[a-f0-9]{64}$"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "enum": [
+                                    "UPLOADING",
+                                    "CLEANING",
+                                    "STORED",
+                                    "CLEANED"
+                                  ]
+                                },
+                                "approval": {
+                                  "type": "string",
+                                  "enum": [
+                                    "UNREVIEWED",
+                                    "APPROVED",
+                                    "REVOKED"
+                                  ]
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "sequence",
+                                "contentType",
+                                "sizeBytes",
+                                "sha256",
+                                "status",
+                                "approval",
+                                "createdAt"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "category",
+                          "version",
+                          "versions"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "canManage",
+                    "templates",
+                    "assets"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      },
+      "post": {
+        "operationId": "DocumentTemplatesController_create",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "BRIEF_QUOTATION",
+                      "COMPREHENSIVE_PROPOSAL",
+                      "ENGAGEMENT_LETTER",
+                      "D1_AUDITOR_REPORT",
+                      "D2_MANAGEMENT_LETTER",
+                      "D3_REPRESENTATION_LETTER",
+                      "D4_CORRESPONDENCE_TRAIL",
+                      "D5_FINAL_FEE_NOTE"
+                    ]
+                  },
+                  "engagementType": {
+                    "type": "string",
+                    "enum": [
+                      "EXTERNAL_STATUTORY_AUDIT",
+                      "INTERNAL_AUDIT",
+                      "AGREED_UPON_PROCEDURES"
+                    ]
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "blocks": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "TITLE"
+                              ]
+                            },
+                            "text": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "HEADING"
+                              ]
+                            },
+                            "text": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "PARAGRAPH"
+                              ]
+                            },
+                            "text": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "BULLET_LIST"
+                              ]
+                            },
+                            "items": {
+                              "minItems": 1,
+                              "maxItems": 30,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 4000
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "items"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "APPROVED_ASSET"
+                              ]
+                            },
+                            "assetVersionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "use": {
+                              "type": "string",
+                              "enum": [
+                                "FIRM_PROFILE",
+                                "REGISTRATION",
+                                "CREDENTIAL",
+                                "TEAM_CV",
+                                "PARTNER_SIGNATURE",
+                                "FIRM_SEAL"
+                              ]
+                            },
+                            "caption": {
+                              "type": "string",
+                              "maxLength": 200
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "assetVersionId",
+                            "use",
+                            "caption"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "PARTNER_SIGNATURE"
+                              ]
+                            },
+                            "signatureAssetVersionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "sealAssetVersionId": {
+                              "nullable": true,
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "signatureAssetVersionId",
+                            "sealAssetVersionId"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "allowedVariables": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "firmName",
+                        "firmHistory",
+                        "firmProfile",
+                        "registrationNumber",
+                        "clientLegalName",
+                        "clientAddress",
+                        "periodStart",
+                        "periodEnd",
+                        "statutoryPeriod",
+                        "engagementScope",
+                        "agreedFee",
+                        "advanceFee",
+                        "finalFee",
+                        "currencyCode",
+                        "paymentTerms",
+                        "timeline",
+                        "assignedPartner",
+                        "auditTeam",
+                        "industryCredentials",
+                        "auditMethodology",
+                        "submissionDeadline",
+                        "opinion",
+                        "opinionBasis",
+                        "financialStatements",
+                        "deficiencies",
+                        "impacts",
+                        "recommendations",
+                        "managementRepresentations",
+                        "correspondenceTrail",
+                        "finalFeeDueDate"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "kind",
+                  "engagementType",
+                  "name",
+                  "blocks",
+                  "allowedVariables"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "version": {
+                      "type": "number",
+                      "enum": [
+                        1
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT"
+                      ]
+                    },
+                    "contentSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "versionId",
+                    "version",
+                    "status",
+                    "contentSha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/{templateId}/versions": {
+      "post": {
+        "operationId": "DocumentTemplatesController_appendVersion",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "templateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "blocks": {
+                    "minItems": 1,
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "TITLE"
+                              ]
+                            },
+                            "text": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "HEADING"
+                              ]
+                            },
+                            "text": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "PARAGRAPH"
+                              ]
+                            },
+                            "text": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4000
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "text"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "BULLET_LIST"
+                              ]
+                            },
+                            "items": {
+                              "minItems": 1,
+                              "maxItems": 30,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 4000
+                              }
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "items"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "APPROVED_ASSET"
+                              ]
+                            },
+                            "assetVersionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "use": {
+                              "type": "string",
+                              "enum": [
+                                "FIRM_PROFILE",
+                                "REGISTRATION",
+                                "CREDENTIAL",
+                                "TEAM_CV",
+                                "PARTNER_SIGNATURE",
+                                "FIRM_SEAL"
+                              ]
+                            },
+                            "caption": {
+                              "type": "string",
+                              "maxLength": 200
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "assetVersionId",
+                            "use",
+                            "caption"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$"
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "PARTNER_SIGNATURE"
+                              ]
+                            },
+                            "signatureAssetVersionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            },
+                            "sealAssetVersionId": {
+                              "nullable": true,
+                              "type": "string",
+                              "format": "uuid",
+                              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "kind",
+                            "signatureAssetVersionId",
+                            "sealAssetVersionId"
+                          ]
+                        }
+                      ]
+                    }
+                  },
+                  "allowedVariables": {
+                    "maxItems": 30,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "firmName",
+                        "firmHistory",
+                        "firmProfile",
+                        "registrationNumber",
+                        "clientLegalName",
+                        "clientAddress",
+                        "periodStart",
+                        "periodEnd",
+                        "statutoryPeriod",
+                        "engagementScope",
+                        "agreedFee",
+                        "advanceFee",
+                        "finalFee",
+                        "currencyCode",
+                        "paymentTerms",
+                        "timeline",
+                        "assignedPartner",
+                        "auditTeam",
+                        "industryCredentials",
+                        "auditMethodology",
+                        "submissionDeadline",
+                        "opinion",
+                        "opinionBasis",
+                        "financialStatements",
+                        "deficiencies",
+                        "impacts",
+                        "recommendations",
+                        "managementRepresentations",
+                        "correspondenceTrail",
+                        "finalFeeDueDate"
+                      ]
+                    }
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "blocks",
+                  "allowedVariables",
+                  "expectedVersion"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "DRAFT"
+                      ]
+                    },
+                    "contentSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "versionId",
+                    "version",
+                    "status",
+                    "contentSha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/{templateId}/versions/{versionId}/decision": {
+      "post": {
+        "operationId": "DocumentTemplatesController_decideVersion",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "templateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "APPROVED",
+                      "REVOKED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "expectedVersion",
+                  "action",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "APPROVED",
+                        "REVOKED"
+                      ]
+                    },
+                    "decidedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "versionId",
+                    "status",
+                    "decidedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/{templateId}/activation": {
+      "post": {
+        "operationId": "DocumentTemplatesController_activation",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "templateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "versionId": {
+                    "nullable": true,
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "versionId",
+                  "expectedVersion",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "templateId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "activeVersionId": {
+                      "nullable": true,
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "ACTIVE",
+                        "INACTIVE"
+                      ]
+                    },
+                    "activatedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "templateId",
+                    "activeVersionId",
+                    "status",
+                    "activatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/{templateId}/versions/{versionId}/preview": {
+      "post": {
+        "operationId": "DocumentTemplatesController_preview",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "templateId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string",
+                      "maxLength": 4000
+                    }
+                  }
+                },
+                "required": [
+                  "data"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "contentSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "blocks": {
+                      "maxItems": 100,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "type": "string",
+                            "enum": [
+                              "TITLE",
+                              "HEADING",
+                              "PARAGRAPH",
+                              "BULLET_LIST",
+                              "APPROVED_ASSET",
+                              "PARTNER_SIGNATURE"
+                            ]
+                          },
+                          "text": {
+                            "type": "string"
+                          },
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "assetName": {
+                            "type": "string"
+                          },
+                          "assetCategory": {
+                            "type": "string",
+                            "enum": [
+                              "FIRM_PROFILE",
+                              "REGISTRATION",
+                              "CREDENTIAL",
+                              "TEAM_CV",
+                              "PARTNER_SIGNATURE",
+                              "FIRM_SEAL"
+                            ]
+                          },
+                          "sequence": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "exclusiveMinimum": true,
+                            "maximum": 9007199254740991
+                          },
+                          "signatureLabel": {
+                            "type": "string"
+                          },
+                          "sealLabel": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "kind"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "versionId",
+                    "contentSha256",
+                    "blocks"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/assets": {
+      "post": {
+        "operationId": "DocumentTemplatesController_initiateAsset",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 160
+                  },
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "FIRM_PROFILE",
+                      "REGISTRATION",
+                      "CREDENTIAL",
+                      "TEAM_CV",
+                      "PARTNER_SIGNATURE",
+                      "FIRM_SEAL"
+                    ]
+                  },
+                  "filename": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "application/pdf",
+                      "image/png",
+                      "image/jpeg"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 5000000
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                },
+                "required": [
+                  "name",
+                  "category",
+                  "filename",
+                  "contentType",
+                  "sizeBytes",
+                  "sha256"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "sequence": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "UPLOADING"
+                      ]
+                    },
+                    "sizeBytes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "versionId",
+                    "sequence",
+                    "status",
+                    "sizeBytes",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/assets/{assetId}/versions": {
+      "post": {
+        "operationId": "DocumentTemplatesController_initiateAssetVersion",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filename": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "application/pdf",
+                      "image/png",
+                      "image/jpeg"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 5000000
+                  },
+                  "sha256": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "filename",
+                  "contentType",
+                  "sizeBytes",
+                  "sha256",
+                  "expectedVersion"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "sequence": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "UPLOADING"
+                      ]
+                    },
+                    "sizeBytes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "versionId",
+                    "sequence",
+                    "status",
+                    "sizeBytes",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/assets/{assetId}/versions/{versionId}/content": {
+      "put": {
+        "operationId": "DocumentTemplatesController_uploadAsset",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "STORED"
+                      ]
+                    },
+                    "sizeBytes": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": true,
+                      "maximum": 9007199254740991
+                    },
+                    "sha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    }
+                  },
+                  "required": [
+                    "versionId",
+                    "status",
+                    "sizeBytes",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      },
+      "get": {
+        "operationId": "DocumentTemplatesController_assetContent",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Exact approved asset bytes; the partner catalog permission is required."
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
+        ]
+      }
+    },
+    "/api/v1/engagements/{engagementId}/document-templates/assets/{assetId}/versions/{versionId}/decision": {
+      "post": {
+        "operationId": "DocumentTemplatesController_decideAsset",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "assetId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "versionId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "expectedVersion": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "exclusiveMinimum": true,
+                    "maximum": 9007199254740991
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "APPROVED",
+                      "REVOKED"
+                    ]
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 1000
+                  }
+                },
+                "required": [
+                  "expectedVersion",
+                  "action",
+                  "reason"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "versionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "APPROVED",
+                        "REVOKED"
+                      ]
+                    },
+                    "decidedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "versionId",
+                    "status",
+                    "decidedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Document templates"
         ]
       }
     },

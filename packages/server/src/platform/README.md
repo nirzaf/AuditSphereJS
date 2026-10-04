@@ -8,6 +8,12 @@ The platform owns cross-module mechanisms and shared records: identity and autho
 
 `persistRenderedPdfVersion` accepts only a bounded, hash-verified `PdfArtifact` from the pinned Playwright/Chromium renderer. Its caller must supply the owning workflow's authorization guard. The guard runs before the storage write and again in the transaction that attaches the immutable version. Persisted JSON provenance contains renderer and browser versions, template identity/hash, canonical data-snapshot hash, page count, and blocked-resource count; it never stores the source data snapshot itself. The current helper creates draft deliverables under `04_Drafts & Deliverables`. It does not issue, sign, release, or archive reports; those actions remain owned by Reporting workflows.
 
+## Versioned firm templates and approved assets
+
+`DocumentTemplate` stores firm template identity and optimistic revision; `DocumentTemplateVersion` and the approval/activation ledgers are append-only. Template content uses a closed set of text/list/artwork blocks and an explicit variable allow-list. The Reporting workspace sends structured preview values to the server; raw HTML or executable template code is rejected, and missing values produce actionable validation errors. Ordinary engagement readers see only an exact approved active version. The `DOCUMENT_TEMPLATE_MANAGE` capability is partner-role bounded and every write rechecks the engagement scope inside its transaction.
+
+`FirmApprovedAssetVersion` binds scanned bytes to SHA-256, content type, size, provider version and a separate firm-private repository. Signature and seal categories accept PNG/JPEG image appearance only; they are not cryptographic PDF signatures. Templates bind exact stored, approved artwork versions, and activation rechecks those exact links. A template update appends a new version; existing rendered `DocumentVersion` bytes and provenance remain unchanged. Upload staging is swept in bounded worker passes and database triggers preserve upload identity and append-only decision history. Production requires a provisioned `FirmRepository` with purpose `template-assets-private`; no client evidence, working-file or practice folder fallback is permitted.
+
 ## Required invariants
 
 - PostgreSQL owns metadata truth; Redis leases and queues never authorize or replace database state.

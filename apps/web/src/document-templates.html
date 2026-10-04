@@ -1,0 +1,93 @@
+<section class="intro title-row"><div><div class="eyebrow">REPORTING WORKSPACE</div><h1>Document templates</h1><p>Preview controlled wording and manage approved versions and private firm artwork.</p></div><span class="availability">{{ canManage() ? 'Template manager' : 'Read only' }}</span></section>
+
+@if (error()) { <div class="template-alert" role="alert" tabindex="-1">{{ error() }}</div> }
+@if (message()) { <p class="template-success" role="status">{{ message() }}</p> }
+
+<section class="template-panel" aria-labelledby="catalog-heading" [attr.aria-busy]="busy()">
+  <div class="template-panel-heading"><div><h2 id="catalog-heading">Approved template catalog</h2><p>Every revision and approval remains tied to its immutable content hash.</p></div><button type="button" (click)="loadCatalog()" [disabled]="busy()">{{ busy() ? 'Loading…' : 'Refresh catalog' }}</button></div>
+  @if (busy() && !catalog()) { <p class="template-empty" role="status">Loading the authorized catalog…</p> }
+  @else if (catalog()?.templates?.length) {
+    <div class="template-picker" aria-label="Templates">
+      @for (template of catalog()!.templates; track template.id) {
+        <button type="button" class="template-card" [class.selected]="selectedTemplateId() === template.id" (click)="selectTemplate(template.id)" [attr.aria-pressed]="selectedTemplateId() === template.id">
+          <span class="template-card-name">{{ template.name }}</span><span>{{ pretty(template.kind) }} · {{ pretty(template.engagementType) }}</span>
+          <span>Revision {{ template.version }} · {{ template.activeVersionId ? 'Active' : 'Inactive' }}</span>
+        </button>
+      }
+    </div>
+  } @else { <div class="template-empty"><h3>No templates are available</h3><p>Approved active templates appear here. Template managers can create a controlled draft below.</p></div> }
+
+  @if (selectedTemplate(); as template) {
+    <div class="template-detail">
+      <div class="template-detail-heading"><div><h3>{{ template.name }}</h3><p>{{ pretty(template.kind) }} · {{ pretty(template.engagementType) }} · aggregate revision {{ template.version }}</p></div>
+        <label>Template version<select [value]="selectedVersionId()" (change)="setVersion($event)"><option value="" disabled>Choose a version</option>@for(version of template.versions; track version.id){<option [value]="version.id">Version {{ version.sequence }} · {{ version.status }}{{ template.activeVersionId === version.id ? ' · ACTIVE' : '' }}</option>}</select></label>
+      </div>
+      @if (selectedVersion(); as version) {
+        <div class="template-meta"><span class="state-pill">{{ version.status }}</span><span>{{ version.contentSha256 }}</span></div>
+        <div class="template-actions">
+          <button type="button" class="primary" (click)="runPreview()" [disabled]="busy()">Preview selected version</button>
+          @if (canManage()) {
+            @if (version.status === 'DRAFT') { <button type="button" (click)="decideTemplate('APPROVED')" [disabled]="busy() || reason().trim().length < 10">Approve this version</button> }
+            @if (version.status === 'APPROVED' && template.activeVersionId !== version.id) { <button type="button" (click)="setActivation(true)" [disabled]="busy() || reason().trim().length < 10">Activate this version</button> }
+            @if (template.activeVersionId === version.id) { <button type="button" (click)="setActivation(false)" [disabled]="busy() || reason().trim().length < 10">Deactivate template</button> }
+            @if (version.status === 'APPROVED' && template.activeVersionId !== version.id) { <button type="button" (click)="decideTemplate('REVOKED')" [disabled]="busy() || reason().trim().length < 10">Revoke approval</button> }
+          }
+        </div>
+        @if (canManage()) { <label class="reason-field">Decision reason <span>Required for approval and activation actions (10–1,000 characters).</span><textarea rows="2" maxlength="1000" [value]="reason()" (input)="setText('reason',$event)"></textarea></label> }
+        <section class="preview-data" aria-labelledby="preview-data-heading"><div><h4 id="preview-data-heading">Preview values</h4><p>Only variables explicitly allowed by this exact version are requested.</p></div>
+          @if (version.allowedVariables.length) { <div class="preview-fields">@for(key of version.allowedVariables; track key){<label>{{ pretty(key) }}<input [value]="previewValues()[key] ?? ''" (input)="setPreviewValue(key,$event)" [attr.aria-label]="'Preview value for ' + pretty(key)"></label>}</div> } @else { <p>This template version has no substitution variables.</p> }
+        </section>
+        @if (preview(); as result) {
+          <section class="rendered-preview" aria-label="Controlled template preview"><div class="template-meta"><strong>Version {{ version.sequence }} preview</strong><span>SHA-256 {{ result.contentSha256 }}</span></div>
+            @for(block of result.blocks; track block.id) {
+              @if(block.kind === 'TITLE'){<h2>{{ block.text }}</h2>}
+              @else if(block.kind === 'HEADING'){<h3>{{ block.text }}</h3>}
+              @else if(block.kind === 'PARAGRAPH'){<p>{{ block.text }}</p>}
+              @else if(block.kind === 'BULLET_LIST'){<ul>@for(item of block.items ?? [];track $index){<li>{{ item }}</li>}</ul>}
+              @else if(block.kind === 'APPROVED_ASSET'){<p class="asset-preview">{{ block.assetName }} · {{ pretty(block.assetCategory ?? '') }} · v{{ block.sequence }} · {{ block.text }}</p>}
+              @else {<p class="asset-preview">{{ block.signatureLabel }}@if(block.sealLabel){<span> · {{ block.sealLabel }}</span>}</p>}
+            }
+          </section>
+        }
+      } @else { <p class="template-empty">This catalog entry has no readable version.</p> }
+    </div>
+  }
+</section>
+
+@if (canManage()) {
+  <section class="template-panel manager-panel" aria-labelledby="version-heading">
+    <div class="template-panel-heading"><div><h2 id="version-heading">Version management</h2><p>Creating or editing always appends a draft. Approved and generated history is never overwritten.</p></div><button type="button" (click)="creating.set(!creating())">{{ creating() ? 'Cancel new template' : 'New template' }}</button></div>
+    @if (creating() || selectedTemplate()) {
+      <div class="template-form">
+        @if (creating()) {
+          <label>Document kind<select [value]="kind()" (change)="setKind($event)">@for(value of kinds;track value){<option [value]="value">{{ pretty(value) }}</option>}</select></label>
+          <label>Engagement type<select [value]="engagementType()" (change)="setEngagementType($event)">@for(value of types;track value){<option [value]="value">{{ pretty(value) }}</option>}</select></label>
+          <label class="wide-field">Template name<input maxlength="160" [value]="name()" (input)="setText('name',$event)"></label>
+        } @else { <p class="form-context">Append a new immutable version to <strong>{{ selectedTemplate()?.name }}</strong>. Choose its new wording and allowed variables below.</p> }
+        <label class="wide-field">Title block<textarea rows="2" maxlength="4000" [value]="title()" (input)="setText('title',$event)"></textarea></label>
+        <label class="wide-field">Body paragraph<textarea rows="3" maxlength="4000" [value]="paragraph()" (input)="setText('paragraph',$event)"></textarea></label>
+        <fieldset class="variable-list wide-field"><legend>Allowed variables</legend><div class="variable-options">@for(key of variableKeys;track key){<label><input type="checkbox" [checked]="selectedVariables().includes(key)" (change)="toggleVariable(key,$event)">{{ pretty(key) }}</label>}</div></fieldset>
+        <label>Approved firm asset <span class="field-note">Optional, exact approved version.</span><select [value]="assetBlockVersion()" (change)="setAssetBlock($event)"><option value="">No additional asset</option>@for(item of ordinaryAssetOptions();track item.versionId){<option [value]="item.versionId">{{ item.label }}</option>}</select></label>
+        <label>Partner signature artwork <span class="field-note">Optional image signature, never a cryptographic signature.</span><select [value]="signatureVersion()" (change)="setSignature($event)"><option value="">No signature artwork</option>@for(item of signatureOptions();track item.versionId){<option [value]="item.versionId">{{ item.label }}</option>}</select></label>
+        @if(signatureVersion()){<label>Firm seal artwork <span class="field-note">Optional exact approved image.</span><select [value]="sealVersion()" (change)="setSeal($event)"><option value="">No seal artwork</option>@for(item of sealOptions();track item.versionId){<option [value]="item.versionId">{{ item.label }}</option>}</select></label>}
+        <div class="template-form-footer"><p>{{ creating() ? 'This saves a draft only. A separate authorized approval and activation are required before ordinary engagement users can preview it.' : 'The selected template stays unchanged until a Partner approves and activates the new version.' }}</p><button type="button" class="primary" (click)="saveTemplate()" [disabled]="busy() || !title().trim() || !paragraph().trim() || (creating() && !name().trim())">{{ creating() ? 'Create draft version' : 'Append draft version' }}</button></div>
+      </div>
+    } @else { <p class="template-empty">Select a template or create one to manage its versions.</p> }
+  </section>
+
+  <section class="template-panel manager-panel" aria-labelledby="asset-heading">
+    <div class="template-panel-heading"><div><h2 id="asset-heading">Approved firm artwork and assets</h2><p>Private files are scanned, hash-checked and approved against their exact stored version.</p></div></div>
+    <div class="template-form asset-form">
+      <label>Asset name<input maxlength="160" [value]="assetName()" (input)="setText('assetName',$event)"></label>
+      <label>Category<select [value]="assetCategory()" (change)="setAssetCategory($event)">@for(value of assetCategories;track value){<option [value]="value">{{ pretty(value) }}</option>}</select></label>
+      <label class="wide-field">File<input type="file" accept="application/pdf,image/png,image/jpeg,.pdf,.png,.jpg,.jpeg" (change)="setFile($event)"><span class="field-note">Maximum 5 MB. Partner signatures and seals must be PNG or JPEG image artwork.</span></label>
+      <label class="wide-field">Asset approval reason <textarea rows="2" maxlength="1000" [value]="assetReason()" (input)="setText('assetReason',$event)"></textarea><span class="field-note">Required for asset approval or revocation (10–1,000 characters).</span></label>
+      <div class="template-form-footer"><p>The file is screened before storage. Uploading a new artwork creates a separate immutable version.</p><button type="button" class="primary" (click)="uploadAsset()" [disabled]="busy() || !assetName().trim() || !file() || assetReason().trim().length < 10">Upload, scan and approve</button></div>
+      <label class="wide-field">Append a version to an existing asset<select [value]="assetToRevise()" (change)="setAssetToRevise($event)"><option value="">Choose an existing firm asset</option>@for(asset of assets();track asset.id){<option [value]="asset.id">{{ asset.name }} · {{ pretty(asset.category) }} · current aggregate revision {{ asset.version }}</option>}</select></label>
+      <div class="template-form-footer"><p>Revisions do not replace artwork already pinned by an active template.</p><button type="button" (click)="uploadAssetVersion()" [disabled]="busy() || !assetToRevise() || !file() || assetReason().trim().length < 10">Upload new asset version</button></div>
+    </div>
+    @if (assets().length) {
+      <div class="asset-table-wrap" tabindex="0" role="region" aria-label="Firm asset versions"><table><caption>Firm asset approval history</caption><thead><tr><th scope="col">Asset</th><th scope="col">Category</th><th scope="col">Version</th><th scope="col">State</th><th scope="col">Approval</th><th scope="col">SHA-256</th><th scope="col">Actions</th></tr></thead><tbody>@for(asset of assets();track asset.id){@for(version of asset.versions;track version.id){<tr><td>{{ asset.name }}</td><td>{{ pretty(asset.category) }}</td><td>{{ version.sequence }}</td><td>{{ version.status }}</td><td>{{ version.approval }}</td><td><code>{{ version.sha256 }}</code></td><td><div class="asset-row-actions"><button type="button" (click)="selectAsset(asset.id,version.id)" [attr.aria-pressed]="selectedAssetVersionId() === version.id">Review exact version</button>@if(selectedAssetVersionId() === version.id && version.status === 'STORED'){@if(version.approval !== 'APPROVED'){<button type="button" (click)="decideAsset('APPROVED')" [disabled]="busy() || assetReason().trim().length < 10">Approve</button>}@else{<button type="button" (click)="decideAsset('REVOKED')" [disabled]="busy() || assetReason().trim().length < 10">Revoke approval</button>}}</div></td></tr>}}</tbody></table></div>
+    } @else { <p class="template-empty">No firm assets have been uploaded.</p> }
+  </section>
+}

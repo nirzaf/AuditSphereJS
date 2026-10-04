@@ -61,6 +61,11 @@ try {
   await client.query('GRANT SELECT, INSERT ON "DocumentVersion" TO auditsphere_api');
   await client.query('GRANT SELECT ON "ClientRepository", "DocumentVersion" TO auditsphere_worker');
   await client.query('GRANT SELECT ON "ClientRepository", "DocumentVersion" TO auditsphere_report');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "DocumentTemplate", "FirmApprovedAsset" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT ON "DocumentTemplateVersion", "DocumentTemplateApproval", "DocumentTemplateActivation", "DocumentTemplateVersionAsset", "FirmApprovedAssetApproval" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT, UPDATE ON "FirmApprovedAssetVersion" TO auditsphere_api');
+  await client.query('GRANT SELECT ON "FirmApprovedAsset" TO auditsphere_worker');
+  await client.query('GRANT SELECT, UPDATE ON "FirmApprovedAssetVersion" TO auditsphere_worker');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "TaxonomyVersion", "TaxonomyLine" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "MappingApproval" TO auditsphere_api');
   await client.query('GRANT SELECT ON "TaxonomyVersion", "TaxonomyLine", "MappingApproval" TO auditsphere_worker');

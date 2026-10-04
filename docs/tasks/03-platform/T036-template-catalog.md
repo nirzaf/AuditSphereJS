@@ -52,16 +52,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Store approved template versions, allowed variables, engagement types and activation history.
-- [ ] Bind firm profile, registration, credentials, team CVs, signature appearance and seal assets to explicit versions.
-- [ ] Separate draft preview from partner-authorized generation; reject arbitrary template code from ordinary users.
-- [ ] Add a controlled preview page and rendered golden fixtures.
+- [x] Store approved template versions, allowed variables, engagement types and activation history.
+- [x] Bind firm profile, registration, credentials, team CVs, signature appearance and seal assets to explicit versions.
+- [x] Separate draft preview from partner-authorized generation; reject arbitrary template code from ordinary users.
+- [x] Add a controlled preview page and rendered golden fixtures.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Updating a template cannot change a previously generated document.
-- [ ] **AC2:** Missing required template variables fail with useful errors.
-- [ ] **AC3:** Unapproved signature assets are not accessible to preparers.
+- [x] **AC1:** Updating a template cannot change a previously generated document.
+- [x] **AC2:** Missing required template variables fail with useful errors.
+- [x] **AC3:** Unapproved signature assets are not accessible to preparers.
 
 Test real/emulated storage behavior, boundary failures and immutable hash/version references; provider-specific assurance requires real-provider evidence.
 

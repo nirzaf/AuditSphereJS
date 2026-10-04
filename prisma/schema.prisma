@@ -23,6 +23,8 @@ model Firm {
   practiceTimeEntries           PracticeTimeEntry[]
   practiceExpenseReceipts       PracticeExpenseReceipt[]
   practiceExpenseReceiptUploads PracticeExpenseReceiptUploadSession[]
+  documentTemplates             DocumentTemplate[]
+  approvedDocumentAssets        FirmApprovedAsset[]
 }
 
 /// Client belongs to exactly one firm. Ids are only unique inside their firm so child
@@ -108,6 +110,13 @@ model User {
   practiceExpenseReceiptsCreated    PracticeExpenseReceipt[]              @relation("PracticeExpenseReceiptCreator")
   practiceExpenseReceiptUploads     PracticeExpenseReceiptUploadSession[]
   outboundMessages                  OutboundMessage[]                   @relation("OutboundMessageCreator")
+  documentTemplatesCreated         DocumentTemplate[]                   @relation("DocumentTemplateCreator")
+  documentTemplateVersionsCreated  DocumentTemplateVersion[]            @relation("DocumentTemplateVersionCreator")
+  documentTemplateApprovals         DocumentTemplateApproval[]           @relation("DocumentTemplateApprovalActor")
+  documentTemplateActivations       DocumentTemplateActivation[]         @relation("DocumentTemplateActivationActor")
+  approvedDocumentAssetsCreated    FirmApprovedAsset[]                  @relation("FirmApprovedAssetCreator")
+  approvedAssetVersionsCreated     FirmApprovedAssetVersion[]           @relation("FirmApprovedAssetVersionCreator")
+  approvedAssetApprovals           FirmApprovedAssetApproval[]           @relation("FirmApprovedAssetApprovalActor")
   outboundMessageActions            OutboundMessageAction[]             @relation("OutboundMessageActionActor")
 
   @@unique([tenantId, entraObjectId])
@@ -402,6 +411,171 @@ model DocumentVersion {
   @@unique([engagementId, documentId, id])
   @@index([engagementId, documentId, sequence])
   @@index([driveId, itemId])
+}
+
+/// Firm-owned catalog identity. Content changes append DocumentTemplateVersion rows.
+model DocumentTemplate {
+  id                String                       @id @default(uuid()) @db.Uuid
+  firmId            String                       @db.Uuid
+  kind              String                       @db.VarChar(40)
+  engagementType    String                       @db.VarChar(40)
+  name              String                       @db.VarChar(160)
+  version           Int                          @default(1)
+  createdBy         String                       @db.Uuid
+  createdAt         DateTime                     @default(now()) @db.Timestamptz(6)
+  firm              Firm                         @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  creator           User                         @relation("DocumentTemplateCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  versions          DocumentTemplateVersion[]
+  approvals         DocumentTemplateApproval[]
+  activationEvents  DocumentTemplateActivation[]
+
+  @@unique([firmId, id])
+  @@unique([firmId, kind, engagementType])
+  @@index([firmId, kind, engagementType])
+}
+
+/// Immutable structured blocks, allow-listed variables and content digest for one template revision.
+model DocumentTemplateVersion {
+  id               String                       @id @default(uuid()) @db.Uuid
+  firmId           String                       @db.Uuid
+  templateId       String                       @db.Uuid
+  sequence         Int
+  blocks           Json                         @db.JsonB
+  allowedVariables Json                         @db.JsonB
+  contentSha256    String                       @db.VarChar(64)
+  createdBy        String                       @db.Uuid
+  createdAt        DateTime                     @default(now()) @db.Timestamptz(6)
+  template         DocumentTemplate             @relation(fields: [firmId, templateId], references: [firmId, id], onDelete: Restrict)
+  creator          User                         @relation("DocumentTemplateVersionCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  approvals        DocumentTemplateApproval[]
+  activationEvents DocumentTemplateActivation[]
+  assets           DocumentTemplateVersionAsset[]
+
+  @@unique([firmId, templateId, id])
+  @@unique([firmId, templateId, sequence])
+  @@index([firmId, templateId, sequence])
+}
+
+/// Approval is an append-only decision over one exact template version.
+model DocumentTemplateApproval {
+  id               String               @id @default(uuid()) @db.Uuid
+  firmId           String               @db.Uuid
+  templateId       String               @db.Uuid
+  templateVersionId String              @db.Uuid
+  action           String               @db.VarChar(16)
+  reason           String               @db.VarChar(1000)
+  actorId          String               @db.Uuid
+  createdAt        DateTime             @default(now()) @db.Timestamptz(6)
+  template         DocumentTemplate     @relation(fields: [firmId, templateId], references: [firmId, id], onDelete: Restrict)
+  version          DocumentTemplateVersion @relation(fields: [firmId, templateId, templateVersionId], references: [firmId, templateId, id], onDelete: Restrict)
+  actor            User                 @relation("DocumentTemplateApprovalActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([firmId, templateId, templateVersionId, createdAt])
+}
+
+/// Activation/deactivation event history. No prior event is rewritten to change the active version.
+model DocumentTemplateActivation {
+  id                String                 @id @default(uuid()) @db.Uuid
+  firmId            String                 @db.Uuid
+  templateId        String                 @db.Uuid
+  templateVersionId String?                @db.Uuid
+  action            String                 @db.VarChar(16)
+  reason            String                 @db.VarChar(1000)
+  actorId           String                 @db.Uuid
+  createdAt         DateTime               @default(now()) @db.Timestamptz(6)
+  template          DocumentTemplate       @relation(fields: [firmId, templateId], references: [firmId, id], onDelete: Restrict)
+  version           DocumentTemplateVersion? @relation(fields: [firmId, templateId, templateVersionId], references: [firmId, templateId, id], onDelete: Restrict)
+  actor             User                   @relation("DocumentTemplateActivationActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([firmId, templateId, createdAt])
+}
+
+/// Firm-owned approved asset identity. Each binary revision has an immutable version row.
+model FirmApprovedAsset {
+  id             String                    @id @default(uuid()) @db.Uuid
+  firmId         String                    @db.Uuid
+  key            String                    @db.VarChar(100)
+  category       String                    @db.VarChar(32)
+  name           String                    @db.VarChar(160)
+  version        Int                       @default(1)
+  createdBy      String                    @db.Uuid
+  createdAt      DateTime                  @default(now()) @db.Timestamptz(6)
+  firm           Firm                      @relation(fields: [firmId], references: [id], onDelete: Restrict)
+  creator        User                      @relation("FirmApprovedAssetCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  versions       FirmApprovedAssetVersion[]
+  approvals      FirmApprovedAssetApproval[]
+  templateLinks  DocumentTemplateVersionAsset[]
+
+  @@unique([firmId, id])
+  @@unique([firmId, key])
+  @@index([firmId, category])
+}
+
+/// Uploads are tracked before external storage, then move once to STORED. The binary stays in the provider.
+model FirmApprovedAssetVersion {
+  id               String                      @id @default(uuid()) @db.Uuid
+  firmId           String                      @db.Uuid
+  assetId          String                      @db.Uuid
+  sequence         Int
+  status           String                      @default("UPLOADING") @db.VarChar(16)
+  storageKey       String                      @unique
+  storageReference String?                     @unique
+  provider         String?                     @db.VarChar(24)
+  driveId          String?
+  itemId           String?
+  versionId        String?
+  eTag             String?
+  originalFilename String                      @db.VarChar(200)
+  contentType      String                      @db.VarChar(80)
+  sha256           String                      @db.VarChar(64)
+  sizeBytes        Int
+  createdBy        String                      @db.Uuid
+  createdAt        DateTime                    @default(now()) @db.Timestamptz(6)
+  asset            FirmApprovedAsset           @relation(fields: [firmId, assetId], references: [firmId, id], onDelete: Restrict)
+  creator          User                        @relation("FirmApprovedAssetVersionCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+  approvals        FirmApprovedAssetApproval[]
+  templateLinks    DocumentTemplateVersionAsset[]
+
+  @@unique([firmId, assetId, id])
+  @@unique([firmId, assetId, sequence])
+  @@unique([driveId, itemId, versionId])
+  @@index([firmId, assetId, sequence])
+  @@index([firmId, status, createdAt])
+}
+
+/// Append-only approval/revocation history for one immutable firm asset version.
+model FirmApprovedAssetApproval {
+  id          String                  @id @default(uuid()) @db.Uuid
+  firmId      String                  @db.Uuid
+  assetId     String                  @db.Uuid
+  versionId   String                  @db.Uuid
+  action      String                  @db.VarChar(16)
+  reason      String                  @db.VarChar(1000)
+  actorId     String                  @db.Uuid
+  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
+  asset       FirmApprovedAsset       @relation(fields: [firmId, assetId], references: [firmId, id], onDelete: Restrict)
+  version     FirmApprovedAssetVersion @relation(fields: [firmId, assetId, versionId], references: [firmId, assetId, id], onDelete: Restrict)
+  actor       User                    @relation("FirmApprovedAssetApprovalActor", fields: [actorId], references: [id], onDelete: Restrict)
+
+  @@index([firmId, assetId, versionId, createdAt])
+}
+
+/// Pins exact approved asset versions into an immutable template revision.
+model DocumentTemplateVersionAsset {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  firmId             String                  @db.Uuid
+  templateId         String                  @db.Uuid
+  templateVersionId  String                  @db.Uuid
+  assetId            String                  @db.Uuid
+  assetVersionId     String                  @db.Uuid
+  use                String                  @db.VarChar(32)
+  createdAt          DateTime                @default(now()) @db.Timestamptz(6)
+  templateVersion    DocumentTemplateVersion @relation(fields: [firmId, templateId, templateVersionId], references: [firmId, templateId, id], onDelete: Restrict)
+  asset              FirmApprovedAsset       @relation(fields: [firmId, assetId], references: [firmId, id], onDelete: Restrict)
+  assetVersion       FirmApprovedAssetVersion @relation(fields: [firmId, assetId, assetVersionId], references: [firmId, assetId, id], onDelete: Restrict)
+
+  @@unique([templateVersionId, assetVersionId, use])
+  @@index([firmId, templateVersionId])
 }
 
 /// A short-lived staff-authorized upload. Bytes remain unreferenced storage until finalize

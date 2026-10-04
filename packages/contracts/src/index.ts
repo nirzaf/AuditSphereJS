@@ -61,9 +61,90 @@ export const finalizeSchema = z.object({ expectedVersion: z.number().int().posit
 export const moneySchema = z.string().regex(/^-?\d{1,22}(\.\d{1,6})?$/);
 /** Capability vocabulary evaluated against a firm/client/engagement scope. Local grants are
  *  never Microsoft directory authority and never infer one from the other. */
-export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND','COMMERCIAL_MANAGE','PRACTICE_READ','PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_REOPEN_PERIOD','TEAM_ASSIGNMENT_MANAGE','EXTERNAL_COMMUNICATION_READ','EXTERNAL_COMMUNICATION_SEND','EXTERNAL_COMMUNICATION_RECONCILE'] as const;
+export const capabilities = ['ENGAGEMENT_READ','FIELDWORK_WRITE','FIELDWORK_FINALIZE','TB_PUBLISH','MAPPING_APPROVE','TAXONOMY_MANAGE','MATERIALITY_MANAGE','MATERIALITY_APPROVE','RISK_MANAGE','RISK_PARTNER_CLEAR','REVIEW_RAISE','REVIEW_RESOLVE','ADJUSTMENT_MANAGE','ADJUSTMENT_POST','LIFECYCLE_COMMAND','COMMERCIAL_MANAGE','PRACTICE_READ','PRACTICE_MANAGE','PRACTICE_POST','PRACTICE_REOPEN_PERIOD','TEAM_ASSIGNMENT_MANAGE','DOCUMENT_TEMPLATE_MANAGE','EXTERNAL_COMMUNICATION_READ','EXTERNAL_COMMUNICATION_SEND','EXTERNAL_COMMUNICATION_RECONCILE'] as const;
 export const capabilitySchema = z.enum(capabilities);
 export const staffRoles = ['PREPARER', 'REVIEWER', 'APPROVER', 'BILLING', 'ADMIN'] as const;
+
+/** The catalog supports the source-required quote, proposal, engagement-letter and D1-D5 documents. */
+export const documentTemplateKinds = ['BRIEF_QUOTATION','COMPREHENSIVE_PROPOSAL','ENGAGEMENT_LETTER','D1_AUDITOR_REPORT','D2_MANAGEMENT_LETTER','D3_REPRESENTATION_LETTER','D4_CORRESPONDENCE_TRAIL','D5_FINAL_FEE_NOTE'] as const;
+export const documentTemplateKindSchema = z.enum(documentTemplateKinds);
+export const documentTemplateEngagementTypes = ['EXTERNAL_STATUTORY_AUDIT','INTERNAL_AUDIT','AGREED_UPON_PROCEDURES'] as const;
+export const documentTemplateEngagementTypeSchema = z.enum(documentTemplateEngagementTypes);
+export const approvedAssetCategories = ['FIRM_PROFILE','REGISTRATION','CREDENTIAL','TEAM_CV','PARTNER_SIGNATURE','FIRM_SEAL'] as const;
+export const approvedAssetCategorySchema = z.enum(approvedAssetCategories);
+export const documentTemplateVariableKeys = [
+  'firmName','firmHistory','firmProfile','registrationNumber','clientLegalName','clientAddress','periodStart','periodEnd',
+  'statutoryPeriod','engagementScope','agreedFee','advanceFee','finalFee','currencyCode','paymentTerms','timeline',
+  'assignedPartner','auditTeam','industryCredentials','auditMethodology','submissionDeadline','opinion','opinionBasis',
+  'financialStatements','deficiencies','impacts','recommendations','managementRepresentations','correspondenceTrail','finalFeeDueDate',
+] as const;
+export const documentTemplateVariableKeySchema = z.enum(documentTemplateVariableKeys);
+const templateTextSchema = z.string().trim().min(1).max(4_000).refine(value => !/<\/?[a-z][^>]*>/i.test(value), 'Template text must not contain HTML or executable markup.');
+export const documentTemplateBlockSchema = z.discriminatedUnion('kind', [
+  z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i), kind: z.literal('TITLE'), text: templateTextSchema }),
+  z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i), kind: z.literal('HEADING'), text: templateTextSchema }),
+  z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i), kind: z.literal('PARAGRAPH'), text: templateTextSchema }),
+  z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i), kind: z.literal('BULLET_LIST'), items: z.array(templateTextSchema).min(1).max(30) }),
+  z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i), kind: z.literal('APPROVED_ASSET'), assetVersionId: z.uuid(), use: approvedAssetCategorySchema, caption: z.string().trim().max(200) }),
+  z.object({ id: z.string().regex(/^[a-z0-9][a-z0-9_-]{0,63}$/i), kind: z.literal('PARTNER_SIGNATURE'), signatureAssetVersionId: z.uuid(), sealAssetVersionId: z.uuid().nullable() }),
+]);
+export const createDocumentTemplateSchema = z.object({
+  kind: documentTemplateKindSchema,
+  engagementType: documentTemplateEngagementTypeSchema,
+  name: z.string().trim().min(1).max(160),
+  blocks: z.array(documentTemplateBlockSchema).min(1).max(100),
+  allowedVariables: z.array(documentTemplateVariableKeySchema).max(30)
+    .refine(values => new Set(values).size === values.length, 'Duplicate template variables are not allowed.'),
+});
+export const createDocumentTemplateVersionSchema = createDocumentTemplateSchema.omit({ kind: true, engagementType: true, name: true }).extend({ expectedVersion: z.number().int().positive() });
+export const documentTemplateDecisionSchema = z.object({ expectedVersion: z.number().int().positive(), action: z.enum(['APPROVED','REVOKED']), reason: z.string().trim().min(10).max(1000) });
+export const documentTemplateActivationSchema = z.object({ versionId: z.uuid().nullable(), expectedVersion: z.number().int().positive(), reason: z.string().trim().min(10).max(1000) });
+export const documentTemplateDeactivationSchema = z.object({ expectedVersion: z.number().int().positive(), reason: z.string().trim().min(10).max(1000) });
+export const documentTemplatePreviewRequestSchema = z.object({ data: z.record(z.string(), z.string().max(4_000)) }).superRefine((value, context) => {
+  if (Object.keys(value.data).length > 30) context.addIssue({ code: 'custom', message: 'A template preview can include at most 30 variables.' });
+});
+export const createApprovedAssetSchema = z.object({
+  name: z.string().trim().min(1).max(160), category: approvedAssetCategorySchema,
+  filename: z.string().trim().min(1).max(200), contentType: z.enum(['application/pdf','image/png','image/jpeg']),
+  sizeBytes: z.number().int().positive().max(5_000_000), sha256: z.string().regex(/^[a-f0-9]{64}$/),
+});
+export const createApprovedAssetVersionSchema = createApprovedAssetSchema.omit({ name: true, category: true }).extend({ expectedVersion: z.number().int().positive() });
+export const documentTemplateVersionViewSchema = z.object({
+  id: z.uuid(), sequence: z.number().int().positive(), contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  blocks: z.array(documentTemplateBlockSchema).max(100), allowedVariables: z.array(documentTemplateVariableKeySchema).max(30),
+  status: z.enum(['DRAFT','APPROVED','REVOKED']), createdAt: z.iso.datetime(),
+});
+export const documentTemplateViewSchema = z.object({
+  id: z.uuid(), kind: documentTemplateKindSchema, engagementType: documentTemplateEngagementTypeSchema,
+  name: z.string().min(1).max(160), version: z.number().int().positive(), activeVersionId: z.uuid().nullable(),
+  versions: z.array(documentTemplateVersionViewSchema).max(100),
+});
+export const approvedAssetVersionViewSchema = z.object({
+  id: z.uuid(), sequence: z.number().int().positive(), contentType: z.enum(['application/pdf','image/png','image/jpeg']),
+  sizeBytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/), status: z.enum(['UPLOADING','CLEANING','STORED','CLEANED']),
+  approval: z.enum(['UNREVIEWED','APPROVED','REVOKED']), createdAt: z.iso.datetime(),
+});
+export const approvedAssetViewSchema = z.object({
+  id: z.uuid(), name: z.string().min(1).max(160), category: approvedAssetCategorySchema,
+  version: z.number().int().positive(), versions: z.array(approvedAssetVersionViewSchema).max(100),
+});
+export const documentTemplateCatalogSchema = z.object({
+  canManage: z.boolean(), templates: z.array(documentTemplateViewSchema).max(200), assets: z.array(approvedAssetViewSchema).max(500),
+});
+export const documentTemplatePreviewSchema = z.object({
+  versionId: z.uuid(), contentSha256: z.string().regex(/^[a-f0-9]{64}$/),
+  blocks: z.array(z.object({ id: z.string(), kind: z.enum(['TITLE','HEADING','PARAGRAPH','BULLET_LIST','APPROVED_ASSET','PARTNER_SIGNATURE']), text: z.string().optional(), items: z.array(z.string()).optional(), assetName: z.string().optional(), assetCategory: approvedAssetCategorySchema.optional(), sequence: z.number().int().positive().optional(), signatureLabel: z.string().optional(), sealLabel: z.string().optional() })).max(100),
+});
+export const documentTemplateCreatedSchema = z.object({ id: z.uuid(), versionId: z.uuid(), version: z.literal(1), status: z.literal('DRAFT'), contentSha256: z.string().regex(/^[a-f0-9]{64}$/) });
+export const documentTemplateVersionCreatedSchema = z.object({ id: z.uuid(), versionId: z.uuid(), version: z.number().int().positive(), status: z.literal('DRAFT'), contentSha256: z.string().regex(/^[a-f0-9]{64}$/) });
+export const approvedAssetCreatedSchema = z.object({ id: z.uuid(), versionId: z.uuid(), version: z.literal(1), status: z.literal('UPLOADING'), sizeBytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
+export const approvedAssetVersionCreatedSchema = z.object({ id: z.uuid(), versionId: z.uuid(), version: z.number().int().positive(), status: z.literal('UPLOADING'), sizeBytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
+export const approvedAssetUploadInitiatedSchema = z.object({ id: z.uuid(), versionId: z.uuid(), sequence: z.number().int().positive(), status: z.literal('UPLOADING'), sizeBytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
+export const approvedAssetUploadResultSchema = z.object({ versionId: z.uuid(), status: z.literal('STORED'), sizeBytes: z.number().int().positive(), sha256: z.string().regex(/^[a-f0-9]{64}$/) });
+export const documentTemplateApprovalResultSchema = z.object({ versionId: z.uuid(), status: z.enum(['APPROVED','REVOKED']), decidedAt: z.iso.datetime() });
+export const documentTemplateActivationResultSchema = z.object({ templateId: z.uuid(), activeVersionId: z.uuid().nullable(), status: z.enum(['ACTIVE','INACTIVE']), activatedAt: z.iso.datetime() });
+export const documentTemplateDecisionResultSchema = documentTemplateApprovalResultSchema;
+export const documentTemplateStateResultSchema = documentTemplateActivationResultSchema;
 /** Full desired engagement role and capability set, issued with a finite expiry and reason. */
 export const assignEngagementStaffSchema = z.object({
   idempotencyKey: z.uuid(),

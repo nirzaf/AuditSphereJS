@@ -19,6 +19,9 @@ export { assignEngagementStaff, revokeEngagementStaff } from './platform/staff-a
 export { PortalAuthController } from './platform/portal-auth-controller.js';
 export { DocumentUploadsController } from './platform/document-uploads-controller.js';
 export { DocumentDownloadsController } from './platform/document-downloads-controller.js';
+export { DocumentTemplatesController } from './platform/document-templates-controller.js';
+export { listDocumentTemplateCatalog, createDocumentTemplate, appendDocumentTemplateVersion, decideDocumentTemplateVersion, changeDocumentTemplateActivation, previewDocumentTemplate, initiateApprovedAsset, initiateApprovedAssetVersion, receiveApprovedAsset, decideApprovedAsset, prepareApprovedAssetDownload, sweepUnfinishedDocumentTemplateAssetUploads } from './platform/document-templates.js';
+export { compileDocumentTemplatePreview, documentTemplateDigest, templatePreviewHtml } from './platform/document-template-compiler.js';
 export { prepareDocumentVersionDownload } from './platform/document-downloads.js';
 export { PdfRenderError, renderAndPublishPdf, renderTrustedPdf } from './platform/pdf-renderer.js';
 export { persistRenderedPdfVersion } from './platform/rendered-documents.js';

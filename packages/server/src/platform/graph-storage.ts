@@ -4,7 +4,7 @@ import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
 /** A resolved client repository. Drive and folder always come from the client binding. */
-export type GraphRepository = { driveId: string; folderId: string; purpose?: 'evidence' | 'working' | 'practice-private' };
+export type GraphRepository = { driveId: string; folderId: string; purpose?: 'evidence' | 'working' | 'practice-private' | 'template-assets-private' };
 export type GraphReference = { driveId: string; repositoryFolderId?: string; itemId: string; versionId: string; eTag: string; sha256: string; sizeBytes: number };
 const graph = 'https://graph.microsoft.com/v1.0';
 const encode = (value: string) => encodeURIComponent(value);

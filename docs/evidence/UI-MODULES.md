@@ -1,6 +1,6 @@
 # Module UI coverage
 
-Verified 2026-10-02. 37 workspaces across five modules; 10 connected views and 27 preparation-only views. Preparation forms keep memory-only drafts and cannot approve, bill, send, sign, release or archive records.
+Verified 2026-10-04. 38 workspaces across five modules; 11 connected views and 27 preparation-only views. Preparation forms keep memory-only drafts and cannot approve, bill, send, sign, release or archive records.
 
 | Module | Workspace | Current UI boundary |
 | --- | --- | --- |
@@ -26,6 +26,7 @@ Verified 2026-10-02. 37 workspaces across five modules; 10 connected views and 2
 | Fieldwork | Taxonomy & mapping approval | Protected records, reviewed submission, repeating line editor and read-only mapping suggestions |
 | Fieldwork | Published balances | Protected records and reviewed submission |
 | Reporting | Review notes | Protected records and reviewed submission |
+| Reporting | Document templates | Server-backed version catalog, controlled preview, partner-capability-gated asset/version approval and activation |
 | Reporting | Summary review memorandum | Session-only preparation; persistence and execution pending |
 | Reporting | Audit opinion | Session-only preparation; persistence and execution pending |
 | Reporting | Management letter | Session-only preparation; persistence and execution pending |
@@ -44,6 +45,8 @@ Verified 2026-10-02. 37 workspaces across five modules; 10 connected views and 2
 | Practice | Firm financial reports | Session-only preparation; persistence and execution pending |
 
 ## Verification
+
+Document-template workspace — 2026-10-04: the new Reporting screen loads the shared Zod-validated catalog from the selected engagement, previews only the selected version's allowed variables and renders block text through Angular interpolation (no HTML injection). Only the API's `canManage` result exposes draft/version/asset controls; every mutation still rechecks `DOCUMENT_TEMPLATE_MANAGE` in PostgreSQL. The focused Angular suite passes 4/4. The T036 task recipe covers compiler/golden fixture tests, PostgreSQL 18.6 + fake Graph acceptance, PDF worker checks and Angular component tests. Changing engagement or staff session immediately clears catalog data, draft values and selected artwork. In the built-in browser, the mapped Staff Fixture selected its synthetic engagement and loaded the empty catalog; it saw no draft, asset metadata or manager control. The local migration and restricted-role grants were applied. Live Graph acceptance for these firm assets is pending a dedicated `template-assets-private` folder binding and selected-folder grant; the two existing client-folder grants are not reused.
 
 Practice receipt UI update — 2026-10-04: Operating Expenses now lists receipt metadata per expense and accepts PDF/JPEG/PNG files up to 15 MB with visible upload status and validation. The focused Angular suite passes 5/5 and `pnpm verify:task -- T144` passes its PostgreSQL receipt integration. The live browser identity is the mapped Staff Fixture and resolves successfully, but its only business grant remains the scoped ENGAGEMENT_READ grant; the Practice UI therefore correctly stays behind the firm-wide Practice permission gate. The real Graph folder binding is also pending an administrator-provisioned `practice-private` folder grant. No identity or permission was widened for this UI check.
 

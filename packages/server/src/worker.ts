@@ -8,6 +8,7 @@ import { ensureBucket, retrieve } from './platform/storage.js';
 import { resolveClientRepository } from './platform/repository.js';
 import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
 import { sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';
+import { sweepUnfinishedDocumentTemplateAssetUploads } from './platform/document-templates.js';
 import { createTrialBalanceImportProcessor } from './modules/fieldwork/import-worker.js';
 import { dispatchPendingOutbox } from './platform/outbox.js';
 import { configuredGraphMailProvider, dispatchPendingNotifications } from './platform/notifications.js';
@@ -98,11 +99,13 @@ export async function runWorker() {
     sweepInFlight ??= Promise.all([
       sweepUnreferencedUploads({ olderThanMinutes: 60 }),
       sweepPracticeExpenseReceiptUploads({ staleCleaningMinutes: 60 }),
+      sweepUnfinishedDocumentTemplateAssetUploads({ olderThanMinutes: 60 }),
     ])
-      .then(([fieldwork, practice]) => {
-        if (fieldwork.scanned || practice.scanned) console.log('Upload sweep', JSON.stringify({
+      .then(([fieldwork, practice, templates]) => {
+        if (fieldwork.scanned || practice.scanned || templates.scanned) console.log('Upload sweep', JSON.stringify({
           fieldwork: { scanned: fieldwork.scanned, cleaned: fieldwork.cleaned, reviewRequired: fieldwork.reviewRequired },
           practice: { scanned: practice.scanned, cleaned: practice.cleaned, reviewRequired: practice.reviewRequired },
+          templateAssets: { scanned: templates.scanned, cleaned: templates.cleaned, reviewRequired: templates.reviewRequired },
         }));
       })
       .catch(() => console.error('Upload sweep failed'))
