@@ -6,7 +6,7 @@
 | :--- | :--- |
 | Task ID | T040 |
 | Requirement IDs | R030, R061, R070 |
-| Implementing commit/branch | main (the corresponding scheduler changeset) |
+| Implementing commit/branch | `ec8db41ecef8a3668c124a127a35ab180b82fff8` on `main` |
 | Status | DONE |
 
 ## Intended and delivered outcome
@@ -43,6 +43,8 @@ D09 is `APPROVED_IMPLEMENTATION_DEFAULT` by user delegation. This task does not 
 | `pnpm verify:affected` | Boundaries, server and test TypeScript, Angular production build, Vitest | PASS, exit 0; 29 files and 130 tests | Local command output, 2026-10-04 |
 | `pnpm lint` | ESLint and module/browser boundaries | PASS, exit 0 | Local command output, 2026-10-04 |
 | `git diff --check` | Final T040 diff | PASS, exit 0 | Local command output, 2026-10-04 |
+| [GitHub Actions Build and test](https://github.com/nirzaf/AuditSphereJS/actions/runs/37224218687) | Exact implementation commit `ec8db41`; static, unit, all integration shards, e2e, Linux compatibility/image gate and public asset publishing | PASS; every job completed successfully | Hosted run, 2026-10-04 |
+| [Verified public web build](https://github.com/nirzaf/AuditSphereJS/releases/tag/build-ec8db41ecef8a3668c124a127a35ab180b82fff8) | `web.tar.gz` and `web-SHA256SUMS`; prerelease asset only, no deployment | Published; archive SHA-256 `8c2aa9ae8c573a9941406dda0b639931e271bb2a1e146b6a630717e6c3a0aaf4` | GitHub prerelease, 2026-10-04 |
 
 ## Acceptance criteria
 
@@ -62,6 +64,6 @@ The migration is additive. A scheduler failure leaves either the original `SCHED
 | :--- | :--- |
 | Reviewer | Codex self-review |
 | Review result | Acceptance assertions, scoped relation/migration, runtime grants and queue recovery reviewed; all recorded local gates pass. |
-| Open blockers | Domain-specific milestone, confirmation and archive handlers remain with T084, T112/T113 and T131; the platform worker intentionally registers no business deadline handlers until those tasks land. Hosted Actions remains to be checked on the pushed commit. |
+| Open blockers | Domain-specific milestone, confirmation and archive handlers remain with T084, T112/T113 and T131; the platform worker intentionally registers no business deadline handlers until those tasks land. |
 | Next eligible task by dependency order | T041 — operational metrics, redaction and dependency health. |
 | Stop rule | Stop after this task; do not implement the next feature without assignment. |
