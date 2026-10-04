@@ -22,9 +22,10 @@ Implementation head at handoff: local changes on `main`; hosted CI for this incr
 
 `pnpm verify:affected` passed: boundaries, server/test TypeScript checks, Angular production build, and Vitest (24 files / 107 tests). `pnpm lint` passed with zero errors and four existing unused-disable warnings under the excluded `visual-prototype-simulation/worker/worker-configuration.d.ts`. `git diff --check` passed; the only output was Git's existing LF-to-CRLF normalization notices.
 
+Hosted GitHub Actions run [37163095493](https://github.com/nirzaf/AuditSphereJS/actions/runs/37163095493) passed on commit `d9a360d16a84ce199f2141dcfec2d107c3b96808`, including the Linux SIGTERM integration path, `pnpm verify:all`, contract checks, dependency audit, Linux runtime image smoke, and public web asset publication. The generated nonproduction [web asset release](https://github.com/nirzaf/AuditSphereJS/releases/tag/build-d9a360d16a84ce199f2141dcfec2d107c3b96808) contains `web.tar.gz` and `web-SHA256SUMS`.
+
 ## Open acceptance
 
 - No public cancellation endpoint is exposed; an owning workflow must define its authorization surface before one is added.
 - `T030` remains `IN_PROGRESS` for duplicate report-release delivery until T129/T130 implements release. T031's direct prerequisite therefore remains open despite its own runtime acceptance evidence.
-- T030 remains `IN_PROGRESS` for duplicate report-release delivery until T129/T130 implements release. The current T030 implementation and invoice idempotency prerequisite are in place, but its documented status is retained rather than bypassed.
-- No live production service or provider was changed. No database migration or package dependency was added.
+- No live production service or provider was changed. One additive PostgreSQL migration was added; no package dependency was added.
