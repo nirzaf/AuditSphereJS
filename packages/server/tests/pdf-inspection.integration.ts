@@ -34,10 +34,15 @@ function pdf(catalogEntries = '', trailerEntries = '', encryption = false, pageE
   return Buffer.from(parts.join(''), 'ascii');
 }
 
-function compressedCatalogPdf(catalogEntries = '') {
+function compressedCatalogPdf(
+  catalogEntries = '',
+  compressedObject?: { number: 7; body: string },
+  pageEntries = '',
+) {
   const catalog = `<< /Type /Catalog /Pages 2 0 R ${catalogEntries} >>`;
-  const objectStreamHeader = '1 0 ';
-  const compressedObjects = deflateSync(Buffer.from(`${objectStreamHeader}${catalog}`, 'ascii'));
+  const compressedObjectOffset = Buffer.byteLength(catalog) + 1;
+  const objectStreamHeader = compressedObject ? `1 0 ${compressedObject.number} ${compressedObjectOffset} ` : '1 0 ';
+  const compressedObjects = deflateSync(Buffer.from(`${objectStreamHeader}${catalog}${compressedObject ? ` ${compressedObject.body}` : ''}`, 'ascii'));
   const pageContent = Buffer.from('q Q', 'ascii');
   const prefix = ['%PDF-1.5\n'];
   const offsets = new Map<number, number>();
@@ -52,14 +57,14 @@ function compressedCatalogPdf(catalogEntries = '') {
   };
 
   appendObject(2, '<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
-  appendObject(3, '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << >> /Contents 4 0 R >>');
+  appendObject(3, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Resources << >> /Contents 4 0 R ${pageEntries} >>`);
   appendObject(4, Buffer.concat([
     Buffer.from(`<< /Length ${pageContent.length} >>\nstream\n`, 'ascii'),
     pageContent,
     Buffer.from('\nendstream', 'ascii'),
   ]));
   const objectStream = Buffer.concat([
-    Buffer.from(`<< /Type /ObjStm /N 1 /First ${Buffer.byteLength(objectStreamHeader)} /Length ${compressedObjects.length} /Filter /FlateDecode >>\nstream\n`, 'ascii'),
+    Buffer.from(`<< /Type /ObjStm /N ${compressedObject ? 2 : 1} /First ${Buffer.byteLength(objectStreamHeader)} /Length ${compressedObjects.length} /Filter /FlateDecode >>\nstream\n`, 'ascii'),
     compressedObjects,
     Buffer.from('\nendstream', 'ascii'),
   ]);
@@ -73,14 +78,17 @@ function compressedCatalogPdf(catalogEntries = '') {
     entry.writeUInt16BE(field3, 5);
     return entry;
   };
-  const xref = Buffer.concat([
+  const xrefEntries = [
     xrefEntry(0, 0, 0xffff),
     xrefEntry(2, 5, 0),
     ...[2, 3, 4, 5].map(number => xrefEntry(1, offsets.get(number)!, 0)),
     xrefEntry(1, xrefOffset, 0),
-  ]);
+    ...(compressedObject ? [xrefEntry(2, 5, 1)] : []),
+  ];
+  const xrefSize = compressedObject ? 8 : 7;
+  const xref = Buffer.concat(xrefEntries);
   const xrefObject = Buffer.concat([
-    Buffer.from(`6 0 obj\n<< /Type /XRef /Size 7 /Root 1 0 R /W [1 4 2] /Index [0 7] /Length ${xref.length} >>\nstream\n`, 'ascii'),
+    Buffer.from(`6 0 obj\n<< /Type /XRef /Size ${xrefSize} /Root 1 0 R /W [1 4 2] /Index [0 ${xrefSize}] /Length ${xref.length} >>\nstream\n`, 'ascii'),
     xref,
     Buffer.from('\nendstream\nendobj\n', 'ascii'),
   ]);
@@ -136,6 +144,17 @@ describe('bounded PDF active-content inspection', () => {
       PdfPolicyRejectedError,
     );
     await inspect(compressedCatalogPdf('/Lang (JavaScript)'));
+  });
+
+  it('rejects active actions and links stored as compressed indirect objects', async () => {
+    await assert.rejects(
+      inspect(compressedCatalogPdf('/OpenAction 7 0 R', { number: 7, body: '<< /S /JavaScript /JS (app.alert\\(1\\)) >>' })),
+      PdfPolicyRejectedError,
+    );
+    await assert.rejects(
+      inspect(compressedCatalogPdf('', { number: 7, body: '<< /Type /Annot /Subtype /Link /Rect [0 0 10 10] /A << /S /URI /URI (https://example.test) >> >>' }, '/Annots [7 0 R]')),
+      PdfPolicyRejectedError,
+    );
   });
 
   it('fails closed on malformed PDFs', async () => {
