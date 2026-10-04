@@ -1,0 +1,35 @@
+{
+  "taskId": "T033",
+  "runId": "46512cd9-becb-4a57-bb7b-f068b7150373",
+  "command": "M365_ACCEPTANCE_ENV_FILE=.env.m365.acceptance pnpm test:m365:upload-cleanup:live",
+  "checkedAt": "2026-10-04T03:10:52.75Z",
+  "database": "ephemeral PostgreSQL 18.6 Testcontainers database",
+  "result": "LIVE_GRAPH_CLEANUP_WORKER_PASSED",
+  "scanned": 2,
+  "cleaned": 2,
+  "reviewRequired": 0,
+  "testsPassed": 1,
+  "testsFailed": 0,
+  "testsSkipped": 0,
+  "providers": [
+    {
+      "provider": "SHAREPOINT",
+      "status": "CLEANED_AND_READ_FAILS_CLOSED",
+      "fixtureRetained": false,
+      "sha256": "b902ba82c4989559669c096d9b19c45bd313704c066596a784c07b8dd20a7519",
+      "sizeBytes": 134
+    },
+    {
+      "provider": "ONEDRIVE",
+      "status": "CLEANED_AND_READ_FAILS_CLOSED",
+      "fixtureRetained": false,
+      "sha256": "e433b1788ae514cae8b5cc2ca6090388f538ac70e45a8a22a67758283ce99fcd",
+      "sizeBytes": 132
+    }
+  ],
+  "limitations": [
+    "Only unique synthetic files in the designated nonproduction SharePoint and OneDrive folders were used.",
+    "The sweeper function ran against an ephemeral PostgreSQL 18.6 Testcontainers database, not the persistent development or a production database.",
+    "This does not establish backup, retention or legal-hold behavior."
+  ]
+}

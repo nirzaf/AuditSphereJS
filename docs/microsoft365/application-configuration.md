@@ -89,3 +89,5 @@ M365_ACCEPTANCE_ONEDRIVE_FOLDER_ID=<verified test folder>
 ```
 
 Supply the path using `M365_ACCEPTANCE_ENV_FILE`. The harness uses dotenv without overriding pre-existing process variables; run from a clean shell or remove conflicting M365 variables before selecting a tenant. Keep secrets and preauthenticated download URLs out of evidence and public build assets.
+
+The direct storage-adapter acceptance uses `pnpm test:m365:storage:live`. To exercise the actual PostgreSQL upload sweeper with Graph, run `pnpm test:m365:upload-cleanup:live`; it starts an ephemeral PostgreSQL 18.6 Testcontainers database and writes only unique synthetic files into the two designated acceptance folders. Both commands require the explicit nonproduction gate above; neither is part of CI. The sweeper acceptance records hashes and provider outcomes, never credentials or provider item IDs.

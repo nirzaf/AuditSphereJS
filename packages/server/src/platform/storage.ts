@@ -39,8 +39,9 @@ export async function store(key: string, body: string, repository?: GraphReposit
   return storeBytes(key, Buffer.from(body), 'text/csv', repository);
 }
 /**
- * Removes an unreferenced object. Only the local storage fixture is automated: durable SharePoint
- * evidence is never deleted by a background sweep, and a caller must resolve it manually.
+ * Removes only an unreferenced staging object. Graph cleanup requires its owning client repository
+ * and immutable version reference, verifies the accepted bytes, then uses conditional recycle-bin
+ * deletion. The S3-compatible path is limited to the local non-production storage fixture.
  */
 export async function removeObject(reference: string, repository?: GraphRepository, expectedSha256?: string) {
   if (reference.startsWith('graph:')) {

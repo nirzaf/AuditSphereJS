@@ -26,4 +26,4 @@ The lexical check is a defense-in-depth rule, not a full PDF grammar verifier. A
 | `pnpm dependencies:check` | PASS; engine/license metadata recorded above. |
 | `pnpm audit --audit-level=moderate` | PASS; no known vulnerabilities found. |
 
-This PDF-policy verification does not establish live PDF-provider acceptance. Portal/PBC freeze and cross-client upload authorization, T064 category-folder binding, broader compressed-object/viewer coverage, and credentialed PostgreSQL maintenance-worker cleanup acceptance remain separate open items. The Graph adapter cleanup path has separate live evidence in [the T033 acceptance record](m365-graph-cleanup-2026-10-04.json).
+This PDF-policy verification does not establish live PDF-provider acceptance. Portal/PBC freeze and cross-client upload authorization, T064 category-folder binding, broader compressed-object/viewer coverage, and long-running worker-process/production-database operational acceptance remain separate open items. The Graph adapter and sweeper function have separate live evidence in [the adapter record](m365-graph-cleanup-2026-10-04.json) and [the worker-function record](m365-upload-sweep-2026-10-04.json).
