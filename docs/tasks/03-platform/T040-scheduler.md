@@ -32,7 +32,7 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 ## Scope and implementation boundary
 
-**Allowed areas:** packages/server/src/platform/jobs and owning processors; apps/worker/; outbox records; tests
+**Allowed areas:** `packages/server/src/platform/` shared services (flat files); `apps/worker/`; outbox records; least-privilege database role provisioning; tests
 
 **Non-goals:** No network wait inside database transactions or exactly-once claims for external systems.
 
@@ -46,16 +46,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Persist deadlines in PostgreSQL; run a bounded scanner with single-claim logic rather than relying only on delayed Redis jobs.
-- [ ] Enqueue idempotent operations with deterministic IDs and re-scan after downtime.
-- [ ] Distinguish informational reminders from state-changing enforcement.
-- [ ] Keep archive-state enforcement independent of successful PDF generation.
+- [x] Persist deadlines in PostgreSQL; run a bounded scanner with single-claim logic rather than relying only on delayed Redis jobs.
+- [x] Enqueue idempotent operations with deterministic IDs and re-scan after downtime.
+- [x] Distinguish informational reminders from state-changing enforcement.
+- [x] Keep archive-state enforcement independent of successful PDF generation; the generic enforcement handler is document-agnostic, while T131 owns actual archive state transitions.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Missed schedules are caught up after restart.
-- [ ] **AC2:** Two scheduler replicas cannot create duplicate deadline effects.
-- [ ] **AC3:** Clock-controlled tests cover before, at and after a deadline.
+- [x] **AC1:** Missed schedules are caught up after restart.
+- [x] **AC2:** Two scheduler replicas cannot create duplicate deadline effects.
+- [x] **AC3:** Clock-controlled tests cover before, at and after a deadline.
 
 Exercise commit/enqueue gaps, retries, worker shutdown and recovery on real PostgreSQL/Redis.
 

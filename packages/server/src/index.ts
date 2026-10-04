@@ -79,6 +79,8 @@ export type { AuthorizedContact, ContactRole, NotificationEvent, RecipientSnapsh
 export { readConfiguration } from './platform/config.js';
 export { RealtimeModule } from './platform/realtime/module.js';
 export { EditLeaseConnection } from './platform/leases.js';
+export { scheduleDeadline, cancelScheduledDeadline, enqueueDueDeadlines, createScheduledDeadlineProcessor } from './platform/scheduler.js';
+export type { DeadlineClassification, ScheduleDeadlineInput, ScheduledDeadlineContext, ScheduledDeadlineHandler, ScheduledDeadlineHandlers } from './platform/scheduler.js';
 export { RealtimeGateway } from './platform/realtime/gateway.js';
 export { authorizeRealtimeJoin, resolveRealtimePrincipal } from './platform/realtime/authorization.js';
 export type { RealtimePrincipal, AuthorizedRealtimeJoin } from './platform/realtime/authorization.js';

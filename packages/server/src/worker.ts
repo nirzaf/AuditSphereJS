@@ -11,8 +11,10 @@ import { sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-r
 import { sweepUnfinishedDocumentTemplateAssetUploads } from './platform/document-templates.js';
 import { createTrialBalanceImportProcessor } from './modules/fieldwork/import-worker.js';
 import { dispatchPendingOutbox } from './platform/outbox.js';
+import { createScheduledDeadlineProcessor, enqueueDueDeadlines } from './platform/scheduler.js';
 import { configuredGraphMailProvider, dispatchPendingNotifications } from './platform/notifications.js';
 import { RuntimeModule, Readiness } from './platform/runtime.js';
+import { CLOCK } from './platform/clock.js';
 import { readConfiguration } from './platform/config.js';
 import {
   durableQueueJobOptions,
@@ -36,7 +38,11 @@ export async function runWorker() {
   const queue = new Queue('tb-import', {
     connection: redisConnectionOptions(process.env.REDIS_URL!, 'producer'),
   });
+  const deadlineQueue = new Queue('scheduled-deadlines', {
+    connection: redisConnectionOptions(process.env.REDIS_URL!, 'producer'),
+  });
   queue.on('error', error => console.error('Trial-balance producer Redis error', safeQueueErrorCode(error)));
+  deadlineQueue.on('error', error => console.error('Deadline producer Redis error', safeQueueErrorCode(error)));
   const processImport = createTrialBalanceImportProcessor(async (document, batch) => {
     const repository = document.key.startsWith('graph:')
       ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence')
@@ -55,16 +61,31 @@ export async function runWorker() {
     errorCode: safeQueueErrorCode(error),
   })));
 
+  const deadlineProcessor = createScheduledDeadlineProcessor({}, () => app.get(CLOCK).now());
+  const deadlineWorker = new Worker('scheduled-deadlines', deadlineProcessor, {
+    connection: redisConnectionOptions(process.env.REDIS_URL!, 'worker'),
+    ...trialBalanceWorkerOptions,
+  });
+  deadlineWorker.on('error', error => console.error('Deadline worker Redis error', safeQueueErrorCode(error)));
+  deadlineWorker.on('failed', (job, error) => console.error('Deadline worker delivery failed', JSON.stringify({
+    jobId: job?.id,
+    operationId: job?.data.operationId,
+    attempt: job ? job.attemptsMade + 1 : undefined,
+    errorCode: safeQueueErrorCode(error),
+  })));
+
   let relayInFlight: Promise<void> | undefined;
   let sweepInFlight: Promise<void> | undefined;
   let notificationInFlight: Promise<void> | undefined;
+  let deadlineScanInFlight: Promise<void> | undefined;
   let publishing = false;
   const relay = async () => {
     if (publishing) return;
     publishing = true;
     try {
       const result = await dispatchPendingOutbox(async dispatch => {
-        await publishWithTimeout(() => queue.add(dispatch.name, dispatch.data, {
+        const targetQueue = dispatch.queue === 'tb-import' ? queue : deadlineQueue;
+        await publishWithTimeout(() => targetQueue.add(dispatch.name, dispatch.data, {
           jobId: dispatch.jobId,
           ...durableQueueJobOptions,
         }));
@@ -79,6 +100,24 @@ export async function runWorker() {
   const relayOnce = () => relayInFlight ??= relay().finally(() => { relayInFlight = undefined; });
   const timer = setInterval(() => { void relayOnce(); }, 1_000);
   void relayOnce();
+
+  let scanningDeadlines = false;
+  const scanDeadlines = async () => {
+    if (scanningDeadlines) return;
+    scanningDeadlines = true;
+    try {
+      const result = await enqueueDueDeadlines({ now: app.get(CLOCK).now(), batchSize: 50 });
+      if (result.scanned) console.log('Deadline scanner', JSON.stringify(result));
+    } catch {
+      // Due intents remain in PostgreSQL and will be picked up by the next bounded scan.
+      console.error('Deadline scan failed; durable deadlines remain available for recovery');
+    } finally {
+      scanningDeadlines = false;
+    }
+  };
+  const scanDeadlinesOnce = () => deadlineScanInFlight ??= scanDeadlines().finally(() => { deadlineScanInFlight = undefined; });
+  const deadlineTimer = setInterval(() => { void scanDeadlinesOnce(); }, 15_000);
+  void scanDeadlinesOnce();
 
   const notificationProvider = configuredGraphMailProvider();
   const dispatchNotifications = async () => {
@@ -118,12 +157,13 @@ export async function runWorker() {
 
   const shutdown = onceAsync(async () => {
     clearInterval(timer);
+    clearInterval(deadlineTimer);
     clearInterval(sweepTimer);
     clearInterval(notificationTimer);
-    await Promise.allSettled([relayInFlight, sweepInFlight, notificationInFlight].filter((job): job is Promise<void> => !!job));
+    await Promise.allSettled([relayInFlight, sweepInFlight, notificationInFlight, deadlineScanInFlight].filter((job): job is Promise<void> => !!job));
     // close() stops new claims and waits for the current import to reach its transaction boundary.
-    await worker.close();
-    await queue.close();
+    await Promise.all([worker.close(), deadlineWorker.close()]);
+    await Promise.all([queue.close(), deadlineQueue.close()]);
     await db.$disconnect();
     await app.close();
   });

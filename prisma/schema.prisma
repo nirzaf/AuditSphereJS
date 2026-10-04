@@ -74,6 +74,7 @@ model Engagement {
   operationRequests      OperationRequest[]
   backgroundOperations   BackgroundOperation[]
   outboxEvents           OutboxEvent[]
+  scheduledDeadlines     ScheduledDeadline[]
   documentLinks          DocumentLink[]
   documentUploadSessions DocumentUploadSession[]
   proposals              CommercialProposal[]
@@ -1487,6 +1488,33 @@ model BackgroundOperation {
   @@map("background_operations")
 }
 
+/// Durable business deadline intent. Due work becomes a BackgroundOperation and OutboxEvent in one transaction.
+model ScheduledDeadline {
+  id             String      @id @default(uuid()) @db.Uuid
+  firmId         String      @db.Uuid
+  clientId       String      @db.Uuid
+  engagementId   String      @db.Uuid
+  idempotencyKey String      @db.VarChar(200)
+  eventType      String      @db.VarChar(120)
+  classification String      @db.VarChar(16)
+  dueAt          DateTime    @db.Timestamptz(6)
+  payload        Json
+  state          String      @default("SCHEDULED") @db.VarChar(16)
+  queuedAt       DateTime?   @db.Timestamptz(6)
+  completedAt    DateTime?   @db.Timestamptz(6)
+  failedAt       DateTime?   @db.Timestamptz(6)
+  cancelledAt    DateTime?   @db.Timestamptz(6)
+  createdAt      DateTime    @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime    @updatedAt @db.Timestamptz(6)
+  engagement     Engagement  @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
+  outboxEvent    OutboxEvent?
+
+  @@unique([firmId, clientId, engagementId, id], map: "scheduled_deadlines_scope_id_key")
+  @@unique([firmId, clientId, engagementId, idempotencyKey], map: "scheduled_deadlines_scope_key_key")
+  @@index([state, dueAt, id], map: "scheduled_deadlines_due")
+  @@map("scheduled_deadlines")
+}
+
 model OutboxEvent {
   id                     String              @id @default(uuid()) @db.Uuid
   operationId            String              @unique @db.Uuid
@@ -1497,6 +1525,8 @@ model OutboxEvent {
   operation              BackgroundOperation @relation(fields: [firmId, clientId, engagementId, operationId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_operation_scope_fkey")
   importId               String?             @db.Uuid
   import                 TbImport?           @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_import_scope_fkey")
+  deadlineId             String?             @unique @db.Uuid
+  deadline               ScheduledDeadline?  @relation(fields: [firmId, clientId, engagementId, deadlineId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "OutboxEvent_deadline_scope_fkey")
   type                   String              @db.VarChar(120)
   payloadVersion         Int                 @default(1)
   payload                Json
@@ -1511,6 +1541,7 @@ model OutboxEvent {
   createdAt              DateTime            @default(now())
 
   @@unique([firmId, clientId, engagementId, operationId], map: "OutboxEvent_operation_scope_id_key")
+  @@unique([firmId, clientId, engagementId, deadlineId], map: "OutboxEvent_deadline_scope_id_key")
   @@index([completedAt, type, createdAt], map: "OutboxEvent_unfinished_scope")
   @@index([type, createdAt], map: "OutboxEvent_dispatchable")
 }

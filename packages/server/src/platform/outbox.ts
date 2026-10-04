@@ -5,15 +5,24 @@ import type { Prisma } from '../generated/prisma/client.js';
 import { db } from './db.js';
 
 export const TRIAL_BALANCE_IMPORT_EVENT = 'tb.import' as const;
+export const SCHEDULED_DEADLINE_EVENT = 'scheduler.deadline' as const;
 const outboxIdSchema = z.uuid();
 const trialBalancePayloadSchema = z.object({}).strict();
+const scheduledDeadlinePayloadSchema = z.object({}).strict();
 const outboxJobSchema = z.object({
   outboxEventId: outboxIdSchema,
   operationId: outboxIdSchema,
   payloadVersion: z.literal(1),
 }).strict();
+const scheduledDeadlineJobSchema = z.object({
+  outboxEventId: outboxIdSchema,
+  operationId: outboxIdSchema,
+  deadlineId: outboxIdSchema,
+  payloadVersion: z.literal(1),
+}).strict();
 
 export type TrialBalanceOutboxJob = z.infer<typeof outboxJobSchema>;
+export type ScheduledDeadlineOutboxJob = z.infer<typeof scheduledDeadlineJobSchema>;
 export type OutboxScope = { firmId: string; clientId: string; engagementId: string };
 
 export function parseTrialBalanceOutboxJob(value: unknown): TrialBalanceOutboxJob {
@@ -24,11 +33,19 @@ export function parseTrialBalanceOutboxJob(value: unknown): TrialBalanceOutboxJo
   }
 }
 
-export type OutboxDispatch = {
-  jobId: string;
-  name: 'parse';
-  data: TrialBalanceOutboxJob;
-};
+export function parseScheduledDeadlineOutboxJob(value: unknown): ScheduledDeadlineOutboxJob {
+  try {
+    const job = scheduledDeadlineJobSchema.parse(value);
+    if (job.outboxEventId !== job.operationId || job.operationId !== job.deadlineId) throw new Error('Scheduled-deadline job identity does not match');
+    return job;
+  } catch {
+    throw Object.assign(new Error('Invalid scheduled-deadline queue payload'), { code: 'OUTBOX_EVENT_INVALID' });
+  }
+}
+
+export type OutboxDispatch =
+  | { queue: 'tb-import'; jobId: string; name: 'parse'; data: TrialBalanceOutboxJob }
+  | { queue: 'scheduled-deadlines'; jobId: string; name: 'execute'; data: ScheduledDeadlineOutboxJob };
 type OutboxRecord = {
   id: string;
   operationId: string;
@@ -36,6 +53,8 @@ type OutboxRecord = {
   payloadVersion: number;
   payload: Prisma.JsonValue;
   dispatchClaimToken: string;
+  importId: string | null;
+  deadlineId: string | null;
 };
 
 /**
@@ -91,6 +110,29 @@ export function parseTrialBalanceOutbox(event: {
   }
 }
 
+export function parseScheduledDeadlineOutbox(event: {
+  id: unknown;
+  operationId: unknown;
+  deadlineId: unknown;
+  type: unknown;
+  payloadVersion: unknown;
+  payload: unknown;
+}): ScheduledDeadlineOutboxJob {
+  if (event.type !== SCHEDULED_DEADLINE_EVENT || event.payloadVersion !== 1) {
+    throw Object.assign(new Error('Unsupported scheduled-deadline outbox event'), { code: 'OUTBOX_EVENT_INVALID' });
+  }
+  try {
+    scheduledDeadlinePayloadSchema.parse(event.payload);
+    const id = outboxIdSchema.parse(event.id);
+    const operationId = outboxIdSchema.parse(event.operationId);
+    const deadlineId = outboxIdSchema.parse(event.deadlineId);
+    if (id !== operationId || operationId !== deadlineId) throw new Error('Scheduled-deadline operation identity does not match');
+    return scheduledDeadlineJobSchema.parse({ outboxEventId: id, operationId, deadlineId, payloadVersion: 1 });
+  } catch {
+    throw Object.assign(new Error('Invalid scheduled-deadline outbox record'), { code: 'OUTBOX_EVENT_INVALID' });
+  }
+}
+
 function safeDispatchErrorCode(error: unknown): string {
   const candidate = error && typeof error === 'object' && 'code' in error
     ? (error as { code?: unknown }).code
@@ -117,8 +159,8 @@ async function claimDispatchBatch(options: {
   return db.$transaction(async tx => {
     await tx.$executeRaw`
       UPDATE background_operations
-      SET state = CASE WHEN type = ${TRIAL_BALANCE_IMPORT_EVENT} THEN 'QUEUED' ELSE 'UNKNOWN' END,
-          "unknownCode" = CASE WHEN type = ${TRIAL_BALANCE_IMPORT_EVENT} THEN NULL ELSE 'OPERATION_LEASE_EXPIRED' END,
+      SET state = CASE WHEN type IN (${TRIAL_BALANCE_IMPORT_EVENT}, ${SCHEDULED_DEADLINE_EVENT}) THEN 'QUEUED' ELSE 'UNKNOWN' END,
+          "unknownCode" = CASE WHEN type IN (${TRIAL_BALANCE_IMPORT_EVENT}, ${SCHEDULED_DEADLINE_EVENT}) THEN NULL ELSE 'OPERATION_LEASE_EXPIRED' END,
           "updatedAt" = ${options.now}
       WHERE state = 'RUNNING'
         AND "updatedAt" <= ${staleBefore}
@@ -133,7 +175,7 @@ async function claimDispatchBatch(options: {
          AND operation."firmId" = event."firmId"
          AND operation."clientId" = event."clientId"
          AND operation."engagementId" = event."engagementId"
-        WHERE event.type = ${TRIAL_BALANCE_IMPORT_EVENT}
+        WHERE event.type IN (${TRIAL_BALANCE_IMPORT_EVENT}, ${SCHEDULED_DEADLINE_EVENT})
           AND event."completedAt" IS NULL
           AND event."failedAt" IS NULL
           AND operation.state = 'QUEUED'
@@ -153,7 +195,9 @@ async function claimDispatchBatch(options: {
                 event.type,
                 event."payloadVersion",
                 event.payload,
-                event."dispatchClaimToken"
+                event."dispatchClaimToken",
+                event."importId",
+                event."deadlineId"
     `;
   });
 }
@@ -185,8 +229,17 @@ export async function dispatchPendingOutbox(
 
   for (const event of events) {
     try {
-      const job = parseTrialBalanceOutbox(event);
-      await publish({ jobId: job.operationId, name: 'parse', data: job });
+      let dispatch: OutboxDispatch;
+      if (event.type === TRIAL_BALANCE_IMPORT_EVENT && event.importId && !event.deadlineId) {
+        const job = parseTrialBalanceOutbox(event);
+        dispatch = { queue: 'tb-import', jobId: job.operationId, name: 'parse', data: job };
+      } else if (event.type === SCHEDULED_DEADLINE_EVENT && !event.importId && event.deadlineId) {
+        const job = parseScheduledDeadlineOutbox(event);
+        dispatch = { queue: 'scheduled-deadlines', jobId: job.operationId, name: 'execute', data: job };
+      } else {
+        throw Object.assign(new Error('Outbox event type and business scope do not match'), { code: 'OUTBOX_EVENT_INVALID' });
+      }
+      await publish(dispatch);
       await db.outboxEvent.updateMany({
         where: { id: event.id, dispatchClaimToken: event.dispatchClaimToken },
         data: {

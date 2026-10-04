@@ -5,6 +5,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { Queue, Worker } from '../packages/server/tests/bullmq-test-adapter.js';
+import type { OutboxDispatch } from '../packages/server/src/platform/outbox.js';
 import { GenericContainer, Wait } from 'testcontainers';
 import { PostgreSqlContainer } from '@testcontainers/postgresql';
 
@@ -110,15 +111,19 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
         removeOnFail: true,
       });
     };
-    const afterEnqueueCrash = await outbox.dispatchPendingOutbox(async dispatch => {
+    const enqueueOutbox = async (dispatch: OutboxDispatch) => {
+      if (dispatch.queue !== 'tb-import') throw new Error(`Unexpected outbox queue ${dispatch.queue}`);
       await enqueue(dispatch);
+    };
+    const afterEnqueueCrash = await outbox.dispatchPendingOutbox(async dispatch => {
+      await enqueueOutbox(dispatch);
       throw Object.assign(new Error('enqueue response was lost after Redis accepted the job'), { code: 'ECONNRESET' });
     });
     assert.deepEqual(afterEnqueueCrash, { claimed: 1, published: 0, failed: 1 });
     assert.ok(await queue.getJob(event.operationId), 'the accepted Redis job remains present after the relay loses its response');
     assert.equal((await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } })).completedAt, null);
 
-    const retryDispatch = await outbox.dispatchPendingOutbox(enqueue);
+    const retryDispatch = await outbox.dispatchPendingOutbox(enqueueOutbox);
     assert.deepEqual(retryDispatch, { claimed: 1, published: 1, failed: 0 });
     assert.ok(await queue.getJob(event.operationId), 'retry uses the stable operation UUID and does not create a second job');
     const queuedEvent = await db.outboxEvent.findUniqueOrThrow({ where: { id: event.id } });
@@ -140,7 +145,7 @@ test('durable outbox survives enqueue gaps and worker loss using PostgreSQL and 
     assert.equal(await queue.getJob(event.operationId), undefined, 'the failed Redis delivery is removed so it can be reconstructed');
 
     const recoveryTime = new Date(Date.now() + 11 * 60_000);
-    const recovery = await outbox.dispatchPendingOutbox(enqueue, { now: recoveryTime, staleOperationMs: 10 * 60_000 });
+    const recovery = await outbox.dispatchPendingOutbox(enqueueOutbox, { now: recoveryTime, staleOperationMs: 10 * 60_000 });
     assert.deepEqual(recovery, { claimed: 1, published: 1, failed: 0 });
     assert.ok(await queue.getJob(event.operationId));
 

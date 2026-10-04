@@ -89,6 +89,7 @@ jobs:
             tests/audit-chain.integration.ts
             tests/practice-expense-receipts.integration.ts
             tests/outbox.integration.ts
+            tests/scheduler.integration.ts
         - files: |
             apps/api/tests/multipart-plugin.integration.ts
             tests/local-services.integration.ts

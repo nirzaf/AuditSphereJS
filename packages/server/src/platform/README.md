@@ -16,6 +16,10 @@ The platform owns cross-module mechanisms and shared records: identity and autho
 
 ## Required invariants
 
+- Deadline intent is committed to PostgreSQL in the source workflow transaction. A bounded `FOR UPDATE SKIP LOCKED` scan atomically moves due rows into deterministic background-operation and outbox identities; missed rows are recovered by later scans after a restart. Redis queue insertion is at-least-once and never owns deadline state.
+- The API database role may read/create/update scheduled rows and read/insert outbox rows; the worker role may select/insert/update deadline, background-operation and outbox rows. Neither runtime role receives DELETE on deadline or operation history.
+- Every deadline is explicitly `INFORMATIONAL` or `ENFORCEMENT`. Registered handlers receive that classification and execute database changes in the operation-completion transaction. External delivery must create separate durable outbox intent. A handler must not rely on a rendered PDF or successful document generation to enforce archive state.
+- Reuse a scoped idempotency key only for identical schedule content. A changed due instant, payload, event type or classification requires a new revision key; queued or terminal deadlines are immutable history and cannot be cancelled.
 - PostgreSQL owns metadata truth; Redis leases and queues never authorize or replace database state.
 - Mutations recheck caller authority in their transaction, bind document/version rows to the same engagement, append audit, and use optimistic/append-only semantics where applicable.
 - Graph production storage requires an explicit client-to-evidence repository binding. Local S3-compatible storage is limited to non-production fixtures.

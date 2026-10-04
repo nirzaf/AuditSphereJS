@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Client } from 'pg';
 import { randomBytes } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
+import { schedulerRoleGrants } from '../src/platform/scheduler-role-grants.js';
 const administrativeUrl = process.env.MIGRATION_DATABASE_URL || process.env.DATABASE_URL!;
 const url = new URL(administrativeUrl);
 if (!['localhost', '127.0.0.1'].includes(url.hostname) || url.pathname !== '/auditsphere') throw new Error('This provisioner is restricted to the named local development database');
@@ -21,12 +22,12 @@ try {
   await client.query('REVOKE CREATE ON SCHEMA public FROM PUBLIC');
   // Grants are explicit per table on purpose: a new table is inaccessible until this list is
   // deliberately extended, so least privilege is not silently widened by a migration.
-  await client.query('GRANT SELECT, INSERT, UPDATE, DELETE ON "Firm", "Client", "User", "Membership", "Engagement", "Document", "TbImport", "TbRow", "OutboxEvent", "CommandReceipt" TO auditsphere_api');
+  await client.query('GRANT SELECT, INSERT, UPDATE, DELETE ON "Firm", "Client", "User", "Membership", "Engagement", "Document", "TbImport", "TbRow", "CommandReceipt" TO auditsphere_api');
+  for (const grant of schedulerRoleGrants) await client.query(grant);
   await client.query('GRANT SELECT, INSERT ON "AuditEvent", "EngagementTransition" TO auditsphere_api');
   // API commands create durable operation intent in the same business transaction; workers
   // claim and transition it. Neither role can delete operation history.
   await client.query('GRANT SELECT, INSERT ON "background_operations" TO auditsphere_api');
-  await client.query('GRANT SELECT, UPDATE ON "background_operations" TO auditsphere_worker');
   await client.query('GRANT SELECT, INSERT ON "IdentitySessionRevocation" TO auditsphere_api');
   await client.query('GRANT SELECT, INSERT ON "SecurityEvent" TO auditsphere_api, auditsphere_worker');
   await client.query('GRANT SELECT, INSERT, UPDATE ON "CommercialProposal" TO auditsphere_api');
@@ -88,8 +89,8 @@ try {
   await client.query('GRANT SELECT, INSERT, UPDATE ON "AdjustmentJournal", "AdjustmentJournalLine" TO auditsphere_api');
   await client.query('GRANT SELECT ON "AdjustmentJournal", "AdjustmentJournalLine" TO auditsphere_worker');
   await client.query('GRANT SELECT ON "AdjustmentJournal", "AdjustmentJournalLine" TO auditsphere_report');
-  await client.query('GRANT SELECT ON "Firm", "Client", "Document", "TbImport", "TbRow", "OutboxEvent" TO auditsphere_worker');
-  await client.query('GRANT UPDATE ON "TbImport", "OutboxEvent" TO auditsphere_worker');
+  await client.query('GRANT SELECT ON "Firm", "Client", "Document", "TbImport", "TbRow" TO auditsphere_worker');
+  await client.query('GRANT UPDATE ON "TbImport" TO auditsphere_worker');
   await client.query('GRANT INSERT, UPDATE, DELETE ON "TbRow" TO auditsphere_worker');
   await client.query('GRANT SELECT ON "Firm", "Client", "Engagement", "TbImport", "TbRow" TO auditsphere_report');
   let environment = readFileSync('.env', 'utf8');
