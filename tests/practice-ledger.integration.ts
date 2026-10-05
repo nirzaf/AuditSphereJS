@@ -41,8 +41,8 @@ test('firm practice ledger enforces scope, balanced posting, period locks, immut
       const expenseDraft = await createPracticeExpenseDraft(actorId, engagementId, expenseInput);
       assert.equal(expenseDraft.status, 'DRAFT');
       assert.equal(expenseDraft.memo, '[OFFICE_RENT_FACILITIES] October office rent');
-      assert.equal(expenseDraft.lines?.[0].debit.toString(), '1250.25');
-      assert.equal(expenseDraft.lines?.[1].credit.toString(), '1250.25');
+      assert.equal(expenseDraft.lines?.find(line => line.accountId === rent.id)?.debit.toString(), '1250.25');
+      assert.equal(expenseDraft.lines?.find(line => line.accountId === payable.id)?.credit.toString(), '1250.25');
       for (const category of ['STAFF_SALARIES', 'BENEFITS_END_OF_SERVICE', 'OVERHEAD', 'PETTY_CASH'] as const) {
         const draft = await createPracticeExpenseDraft(actorId, engagementId, { ...expenseInput, category, reference: `EXP-${category}`, idempotencyKey: randomUUID() });
         assert.match(draft.memo, new RegExp(`^\\[${category}\\]`), `${category} is recorded with its own classification`);
