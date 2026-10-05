@@ -69,3 +69,34 @@ nav button span{color:var(--ste-primary-light)}nav button.active span{color:var(
   .connection .auth-user { flex: 1 1 180px; min-width: 0; max-width: none; overflow-wrap: anywhere; }
   .connection small { flex: 1 1 100%; min-width: 0; max-width: none; }
 }
+
+:root {
+  --ste-primary-text: #2E6688;
+  --ste-body-text: #5F6F83;
+}
+
+main p { color: var(--ste-body-text); }
+header { color: var(--ste-body-text); }
+.eyebrow,.avatar,.pill,.portal-mode-switch button.active,.error-notice a,main a { color: var(--ste-primary-text); }
+.nav-label,nav button span,nav button.active span { color: var(--ste-text-inverse); }
+.pill { border: 1px solid var(--ste-border-light); background: var(--ste-row-hover); }
+.sidebar-note .pill { border-color: transparent; }
+button:active:not(:disabled) { filter: brightness(.94); }
+button,input,select,textarea { touch-action: manipulation; -webkit-tap-highlight-color: rgb(56 124 166 / 16%); }
+input,select,textarea { min-height: 44px; }
+.line-number button { min-height: 44px; }
+.account-select { min-height: 44px; }
+.grid-head { font-size: 11px; letter-spacing: .45px; }
+.mapping-cell small { font-size: 11px; line-height: 1.35; }
+.summary-row small { font-size: 11px; }
+.money,.summary-row strong { font-variant-numeric: tabular-nums; }
+.mapping-scroll { max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; }
+@media (min-width: 1001px) {
+  .module-layout { grid-template-columns: minmax(0, 1fr) minmax(220px, 260px); }
+  .workflow-guide ol { display: block; }
+  .workflow-guide li { overflow-wrap: anywhere; }
+}
+@media (max-width: 1100px) {
+  .panel { overflow: hidden; }
+  .mapping-scroll > .grid-head,.mapping-scroll > .viewport { min-width: 640px; }
+}

@@ -1,15 +1,43 @@
 import { test, expect } from '@playwright/test';
 import { moduleScreens } from '../../apps/web/src/module-catalog.js';
 test('every module workspace renders with clear authority boundaries and mobile containment', async ({page}) => {
-  test.setTimeout(60_000);
+  test.setTimeout(120_000);
   await page.route('**/api/v1/identity/config', route => route.fulfill({json:{provider:'development'}}));
+  const viewports = [320, 390, 768, 900, 1024, 1280, 1440];
   for (const screen of moduleScreens) {
     await page.goto(`/?module=${screen.module}&view=${screen.id}`);
     await expect(page.getByRole('navigation',{name:'Module workspaces'}).getByRole('button',{name:screen.title,exact:true})).toHaveAttribute('aria-current','page');
     await expect(page.locator('main h1')).toBeVisible();
     if (!screen.endpoint && screen.fields.length > 0 && screen.id!=='trial-balance') await expect(page.getByText('Preparation only',{exact:true})).toBeVisible();
-    await page.setViewportSize({width:390,height:844});
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),screen.id).toBe(true);
+    if (!screen.endpoint && screen.fields.length > 0) {
+      const unnamedFields = await page.locator('.editor-panel form :is(input,select,textarea)').evaluateAll(elements => elements.filter(element => !(element as HTMLInputElement).name).length);
+      expect(unnamedFields, `${screen.id} form fields need stable names`).toBe(0);
+      const emailField = screen.fields.find(field => field.type === 'email');
+      if (emailField) await expect(page.locator(`#${screen.id}-${emailField.key}`)).toHaveAttribute('autocomplete', 'email');
+    }
+    for (const width of viewports) {
+      await page.setViewportSize({width,height:844});
+      const layout = await page.evaluate(() => {
+        const smallTargets = [...document.querySelectorAll<HTMLElement>('button,input:not([type="file"]):not([type="checkbox"]):not([type="radio"]),select,textarea,[role="button"],label.button,.variable-options label,label:has(input[type="checkbox"]),label:has(input[type="radio"])')]
+          .filter(element => {
+            const rect = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+          })
+          .filter(element => element.getBoundingClientRect().height < 44)
+          .map(element => `${element.tagName.toLowerCase()}: ${element.textContent?.trim() || element.getAttribute('aria-label') || element.getAttribute('name') || element.id}`);
+        const overflowing = [...document.querySelectorAll<HTMLElement>('*')]
+          .filter(element => {
+            const rect = element.getBoundingClientRect();
+            return rect.right > innerWidth + 1 || element.scrollWidth > element.clientWidth + 1;
+          })
+          .slice(0, 12)
+          .map(element => `${element.tagName.toLowerCase()}.${String(element.className).replaceAll(' ', '.')}#${element.id}(${Math.round(element.getBoundingClientRect().right)}/${element.clientWidth}/${element.scrollWidth})`);
+        return { documentWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth, smallTargets, overflowing };
+      });
+      expect(layout.documentWidth, `${screen.id} overflows at ${width}px: ${layout.overflowing.join(', ')}`).toBeLessThanOrEqual(layout.viewportWidth);
+      if (width <= 390) expect(layout.smallTargets, `${screen.id} has undersized touch targets at ${width}px`).toEqual([]);
+    }
   }
 });
 test('Practice expenses creates and posts a classified journal through the real API boundary', async ({page}) => {

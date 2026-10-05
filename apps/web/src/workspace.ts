@@ -84,23 +84,20 @@ export class Workspace implements OnDestroy {
       const config = await this.identity.identityConfiguration();
       this.identityProvider.set(config.provider);
       if (config.provider === 'entra') {
-        this.message.set('Sign in to load engagements assigned to your account.');
         this.sessionRestoring.set(true);
         void this.identity.restoreSession().then(user => {
           if (!user) return;
           this.currentUser.set(user); this.signedIn.set(true);
-          void this.loadReadableEngagements().then(() => this.message.set(this.readableEngagements().length ? 'Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.'))
+          void this.loadReadableEngagements()
             .catch(error => this.message.set(error instanceof Error ? error.message : 'Assigned engagements could not be loaded.'));
         }).catch(error => this.message.set(error instanceof Error ? error.message : 'Microsoft sign-in could not be restored.'))
           .finally(() => this.sessionRestoring.set(false));
       }
       if (config.provider === 'development') {
         this.engagementId.set('00000000-0000-4000-8000-000000000002');
-        this.message.set('Local development access is ready.');
       }
     } catch {
       this.identityProvider.set('unavailable');
-      this.message.set('Identity configuration is unavailable. Check the AuditSphere API connection, then retry.');
     }
   }
   retryIdentityConfiguration() { void this.initializeIdentity(); }
@@ -109,7 +106,7 @@ export class Workspace implements OnDestroy {
   readonly screenList = computed(() => screensFor(this.active()));
   readonly summaryTypes = ['Balance sheet','Profit & loss'];
   readonly fslis = fslis; readonly rows = signal<TrialBalanceRow[]>([]); readonly imports = signal<TrialBalanceImport[]>([]); readonly summary = signal<TrialBalanceSummaryLine[]>([]);
-  readonly message = signal('Select an engagement and connect to load authorized records.'); readonly busy = signal(false); readonly batch = signal<TrialBalanceImport | null>(null);
+  readonly message = signal(''); readonly busy = signal(false); readonly batch = signal<TrialBalanceImport | null>(null);
   readonly changes = signal<Record<string, { rowId: string; expectedVersion: number; fsli: string }>>({});
   readonly rowLeases = signal<Record<string, z.output<typeof editLeaseResultSchema>>>({});
   readonly rowLeaseTokens = signal<Record<string, string>>({});
@@ -166,7 +163,6 @@ export class Workspace implements OnDestroy {
   }
   retryReadableEngagements() { void this.run(async () => {
     await this.loadReadableEngagements();
-    this.message.set(this.readableEngagements().length ? 'Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.');
   }); }
   selectEngagement(id: string) {
     const selected = this.readableEngagements().some(item => item.id === id) ? id : '';
@@ -175,7 +171,7 @@ export class Workspace implements OnDestroy {
     this.engagementId.set(selected);
     this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
     this.realtimeConnection?.close(); this.realtimeConnection = undefined; this.realtimeStatus.set('offline');
-    this.message.set(selected ? 'Engagement selected. Load its records to continue.' : 'Choose an engagement assigned to your account.');
+    this.message.set('');
     if (selected && (this.identityProvider() === 'development' || this.signedIn())) this.openRealtimeEngagement(selected);
   }
   private openRealtimeEngagement(engagementId: string) {
@@ -219,7 +215,6 @@ export class Workspace implements OnDestroy {
     const user = await this.identity.currentIdentity();
     this.currentUser.set(user); this.signedIn.set(true);
     await this.loadReadableEngagements();
-    this.message.set(this.readableEngagements().length ? 'Signed in. Choose an assigned engagement to continue.' : 'You are signed in, but no engagement with current read access is assigned to this account. Ask your administrator to check your membership and ENGAGEMENT_READ grant.');
   }); }
   microsoftSignOut() { void this.run(async () => {
     await this.releaseEditLeases();

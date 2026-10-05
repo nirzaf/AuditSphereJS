@@ -155,7 +155,7 @@ export class ModuleWorkspace {
     // adjustments and taxonomy editors keep their own line lists outside that draft form.
     const schema = screen.id === 'materiality' ? calculateMaterialitySchema : screen.id === 'risks' ? createRiskSchema : screen.id === 'reviews' ? raiseReviewNoteSchema : screen.id === 'publications' ? publishSchema : screen.id === 'proposals' ? createProposalSchema : screen.id === 'dual-key' ? recordRiskClearanceSchema : screen.id === 'advance' ? issueInvoiceSchema : screen.lineKind === 'taxonomy' ? createTaxonomySchema : createAdjustmentJournalSchema;
     const parsed = schema.safeParse(body);
-    if (!parsed.success) { this.error.set(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(' � ')); return; }
+    if (!parsed.success) { this.error.set(parsed.error.issues.map(issue => `${issue.path.join('.')}: ${issue.message}`).join(' · ')); return; }
     void this.run(async generation => {
       await this.request(screen.id === 'publications' ? '/publications' : screen.id === 'dual-key' ? `${screen.endpoint}/risk-clearance` : screen.endpoint!, 'POST', parsed.data);
       if (generation !== this.generation) return;

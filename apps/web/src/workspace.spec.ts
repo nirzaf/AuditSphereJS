@@ -19,6 +19,9 @@ it('exposes only the five real business workspaces without demo messaging', asyn
   fixture.destroy();
 });
 it('shows the selected-engagement state instead of asking the user to select again', async () => {
+  TestBed.configureTestingModule({ providers: [
+    { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ module: 'Fieldwork', view: 'workprogram' })) } },
+  ] });
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ provider: 'development' }))));
   const fixture = TestBed.createComponent(Workspace);
   fixture.detectChanges(); await fixture.whenStable();
@@ -30,8 +33,12 @@ it('shows the selected-engagement state instead of asking the user to select aga
   view.selectEngagement(engagementId);
   fixture.detectChanges();
 
+  expect(fixture.nativeElement.querySelector('main h1')?.textContent).toContain('Workprograms');
   expect(fixture.nativeElement.textContent).toContain('Engagement selected. The server checks your access again for every request.');
   expect(fixture.nativeElement.textContent).not.toContain('Choose an engagement to continue;');
+  expect(fixture.nativeElement.textContent).toContain('Preparation only');
+  expect(fixture.nativeElement.textContent).not.toContain('Load its records to continue.');
+  expect(fixture.nativeElement.querySelector('p.notice')).toBeNull();
 
   view.selectEngagement('');
   fixture.detectChanges();
@@ -71,7 +78,7 @@ it('keeps the browser title aligned with the workspace and avoids duplicate repo
   fixture.componentInstance.navigate('Reporting', 'templates');
   fixture.detectChanges();
   expect(title.getTitle()).toBe('Document templates | Reporting | AuditSphere');
-  expect(fixture.nativeElement.querySelector('p.notice')).not.toBeNull();
+  expect(fixture.nativeElement.querySelector('p.notice')).toBeNull();
   fixture.destroy();
 });
 it('prevents paging away from unsaved mappings and discards explicitly', async () => {
