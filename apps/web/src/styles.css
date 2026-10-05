@@ -39,6 +39,27 @@ nav button span{color:var(--ste-primary-light)}nav button.active span{color:var(
 @media(max-width:1000px){.practice-rate-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:620px){.practice-rate-form{grid-template-columns:minmax(0,1fr)}.practice-rate-form .form-submit{align-items:stretch}.practice-rate-form .form-submit button{width:100%}.practice-rates table{min-width:720px}}
 
+/* Keep workspace navigation discoverable at every viewport width. */
+.shell{grid-template-columns:230px minmax(0,1fr)}
+.shell>aside{min-width:0}
+.workspace-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));align-items:stretch;gap:8px;overflow:visible;padding:14px 0}
+.workspace-tabs button{width:100%;min-width:0;white-space:normal;text-align:center;line-height:1.35}
+.metrics{grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr))}
+@media(max-width:1100px){.shell{grid-template-columns:180px minmax(0,1fr)}}
+@media(max-width:760px){
+  .shell{display:block}
+  .shell>aside{padding:16px}
+  .shell>aside>nav[aria-label="Business modules"]{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible;margin-top:14px}
+  .shell>aside>nav[aria-label="Business modules"] button{min-width:0;padding-inline:12px}
+  .workspace-tabs{grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr))}
+  main{min-width:0;padding-inline:16px}
+  .connection{align-items:stretch}
+  .connection>div{width:100%;min-width:0;flex-wrap:wrap}
+  .connection select,.connection input{width:100%;min-width:0;flex:1 1 100%}
+  .connection .auth-user{max-width:none;min-width:0;overflow-wrap:anywhere}
+}
+@media(max-width:420px){.metrics{grid-template-columns:minmax(0,1fr)}.workspace-tabs button{padding-inline:10px}}
+
 .mapping-cell{display:grid;gap:3px;min-width:0}.mapping-cell small{font-size:9px;line-height:1.15;color:var(--ste-text-body);overflow-wrap:anywhere}.grid-row{height:72px}.viewport{height:420px}
 .connection { min-width: 0; }
 @media (min-width: 761px) and (max-width: 900px) {
