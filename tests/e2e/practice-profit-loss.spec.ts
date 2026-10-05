@@ -36,3 +36,27 @@ test('Practice Profit and Loss stays usable at phone, tablet, and desktop widths
     if (width <= 390) expect(table.scrollWidth).toBeGreaterThan(table.clientWidth);
   }
 });
+
+test('Practice access recovery stays readable and contained on narrow screens', async ({ page }) => {
+  await page.route('**/api/v1/identity/config', route => route.fulfill({ json: { provider: 'development' } }));
+  await page.route('**/api/v1/engagements/*/practice/reports/profit-loss**', route => route.fulfill({
+    status: 403,
+    json: { error: { code: 'FORBIDDEN', status: 403, message: 'Firm-wide Practice reporting access is missing.', correlationId: 'e2e-support-403' } },
+  }));
+  await page.goto('/?module=Practice&view=profit-loss');
+  await page.getByRole('button', { name: 'Load report' }).click();
+
+  const alert = page.getByRole('alert');
+  await expect(alert.getByRole('heading', { name: 'Firm-wide Practice access is required' })).toBeVisible();
+  await expect(alert.getByText('PRACTICE_READ', { exact: true })).toBeVisible();
+  await expect(alert.getByText('e2e-support-403', { exact: true })).toBeVisible();
+
+  for (const width of [320, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `document overflow at ${width}px`).toBe(true);
+    const copyButton = await alert.getByRole('button', { name: 'Copy reference' }).boundingBox();
+    expect(copyButton?.height, `copy reference touch target at ${width}px`).toBeGreaterThanOrEqual(44);
+    const alertBounds = await alert.boundingBox();
+    expect(alertBounds ? alertBounds.x + alertBounds.width : undefined, `recovery panel overflows at ${width}px`).toBeLessThanOrEqual(width + 1);
+  }
+});

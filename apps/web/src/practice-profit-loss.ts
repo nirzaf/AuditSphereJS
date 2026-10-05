@@ -1,9 +1,11 @@
-import { Component, input, signal } from '@angular/core';
+import { Component, computed, input, signal } from '@angular/core';
 import { practiceFirmProfitLossDetailSchema, practiceFirmProfitLossSchema } from '@auditsphere/contracts';
 import type { PracticeFirmProfitLoss, PracticeFirmProfitLossDetail, PracticeFirmProfitLossRow } from '@auditsphere/contracts';
 import type { z } from 'zod';
 import { ApiContractError, authenticatedFetch, requestContractJson } from './api-client';
 import { currentAccessToken } from './identity';
+
+type ReportErrorKind = 'authentication' | 'authorization' | 'conflict' | 'validation' | 'general';
 
 function localMonth() {
   const now = new Date();
@@ -43,6 +45,18 @@ export class PracticeProfitLoss {
   readonly detail = signal<PracticeFirmProfitLossDetail | null>(null);
   readonly busy = signal(false);
   readonly error = signal(false);
+  readonly errorKind = signal<ReportErrorKind | null>(null);
+  readonly errorReference = signal('');
+  readonly referenceFeedback = signal('');
+  readonly errorTitle = computed(() => {
+    switch (this.errorKind()) {
+      case 'authentication': return 'Sign-in needs attention';
+      case 'authorization': return 'Firm-wide Practice access is required';
+      case 'conflict': return 'This report snapshot is out of date';
+      case 'validation': return 'Check the reporting periods';
+      default: return 'The report could not be loaded';
+    }
+  });
   readonly month = signal(localMonth());
   readonly compareMonth = signal('');
   readonly message = signal('Choose an accounting month to load the firm Profit and Loss statement.');
@@ -60,9 +74,16 @@ export class PracticeProfitLoss {
   private async run(work: () => Promise<void>) {
     this.busy.set(true);
     this.error.set(false);
+    this.errorKind.set(null);
+    this.errorReference.set('');
+    this.referenceFeedback.set('');
     try { await work(); }
     catch (error) {
       this.error.set(true);
+      this.errorKind.set(error instanceof ApiContractError
+        ? error.status === 401 ? 'authentication' : error.status === 403 ? 'authorization' : error.status === 409 ? 'conflict' : 'general'
+        : 'general');
+      this.errorReference.set(error instanceof ApiContractError ? error.correlationId ?? '' : '');
       this.message.set(this.userFacingError(error));
     }
     finally { this.busy.set(false); }
@@ -70,16 +91,18 @@ export class PracticeProfitLoss {
 
   private userFacingError(error: unknown) {
     if (error instanceof ApiContractError) {
-      const reference = error.correlationId ? ` Reference: ${error.correlationId}.` : '';
-      if (error.status === 401) return `Your sign-in could not be verified. Sign in again, then retry.${reference}`;
-      if (error.status === 403) return `Firm-wide Practice reporting access (PRACTICE_READ) is missing. Ask an administrator to assign it; selecting an engagement only identifies the firm context.${reference}`;
-      if (error.status === 409) return `The report changed after it was loaded. Reload the statement, then retry the account detail.${reference}`;
+      if (error.status === 401) return 'Your sign-in could not be verified. Sign in again, then retry.';
+      if (error.status === 403) return 'Ask an administrator to assign it for the firm. Selecting an engagement only identifies the firm context.';
+      if (error.status === 409) return 'The report changed after it was loaded. Reload the statement, then retry the account detail.';
     }
     return error instanceof Error ? error.message : 'The Practice Profit and Loss report could not be loaded.';
   }
 
   private filtersChanged() {
     this.error.set(false);
+    this.errorKind.set(null);
+    this.errorReference.set('');
+    this.referenceFeedback.set('');
     this.message.set('Report periods changed. Load the report to view an updated snapshot.');
   }
 
@@ -88,7 +111,22 @@ export class PracticeProfitLoss {
 
   private validationError(message: string) {
     this.error.set(true);
+    this.errorKind.set('validation');
+    this.errorReference.set('');
+    this.referenceFeedback.set('');
     this.message.set(message);
+  }
+
+  async copyReference() {
+    const reference = this.errorReference();
+    if (!reference) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard is unavailable.');
+      await navigator.clipboard.writeText(reference);
+      this.referenceFeedback.set('Support reference copied.');
+    } catch {
+      this.referenceFeedback.set('Clipboard unavailable. Select the reference text to copy it.');
+    }
   }
 
   refresh() {

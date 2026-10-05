@@ -20,7 +20,22 @@
   </header>
 
   @if (error()) {
-    <p class="report-status report-error" role="alert">{{ message() }}</p>
+    <section class="report-status report-error" role="alert" aria-labelledby="profit-loss-error-title">
+      <div class="report-error-copy">
+        <h2 id="profit-loss-error-title">{{ errorTitle() }}</h2>
+        <p>{{ message() }}</p>
+      </div>
+      @if (errorKind() === 'authorization') {
+        <div class="required-permission"><span>Required permission</span><code>PRACTICE_READ</code></div>
+      }
+      @if (errorReference()) {
+        <div class="report-error-reference">
+          <div><span>Support reference</span><code>{{ errorReference() }}</code></div>
+          <button type="button" (click)="copyReference()">Copy reference</button>
+          <span class="sr-only" role="status" aria-live="polite">{{ referenceFeedback() }}</span>
+        </div>
+      }
+    </section>
   } @else {
     <p class="report-status" role="status" aria-live="polite">{{ message() }}</p>
   }
