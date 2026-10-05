@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 04-tb-proof — Trial Balance technical proof |
 | Owner area | `fieldwork` |
@@ -48,16 +49,16 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Create reproducible 5k/25k/50k-row synthetic CSV/XLSX fixtures with known debit/credit totals and mapping outcomes.
-- [ ] Include zero-PY, negatives, duplicate accounts, malformed rows and cross-client lookalikes.
-- [ ] Seed authorized engagement states only through test factories or public workflow commands in test mode; no production bypass route.
-- [ ] Record dataset digests and reference-machine specs for benchmarks.
+- [x] Create reproducible 5k/25k/50k-row synthetic CSV/XLSX fixtures with known debit/credit totals and mapping outcomes.
+- [x] Include zero-PY, negatives, duplicate accounts, malformed rows and cross-client lookalikes.
+- [x] Seed authorized engagement states only through test factories or public workflow commands in test mode; no production bypass route.
+- [x] Record dataset digests and reference-machine specs for benchmarks.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Fixtures regenerate byte-stably where the format permits or carry stable semantic hashes.
-- [ ] **AC2:** A known unbalanced file is rejected by the fixture oracle.
-- [ ] **AC3:** No real client data or production credentials are used.
+- [x] **AC1:** Fixtures regenerate byte-stably where the format permits or carry stable semantic hashes.
+- [x] **AC2:** A known unbalanced file is rejected by the fixture oracle.
+- [x] **AC3:** No real client data or production credentials are used.
 
 Run relevant deterministic rule tests, real PostgreSQL race/lineage tests and the affected browser/editor flow.
 

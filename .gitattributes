@@ -1,3 +1,5 @@
 * text=auto
 packages/server/tests/fixtures/*.html text eol=lf
 tests/fixtures/*.html text eol=lf
+fixtures/trial-balance/generated/*.csv text eol=lf
+fixtures/trial-balance/generated/manifest.json text eol=lf

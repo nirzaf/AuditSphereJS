@@ -16,3 +16,5 @@ Critical invariants: scoped authorization re-checked inside write transactions, 
 Relevant tests: tests/invariants.test.ts, tests/database.integration.ts, tests/publication.integration.ts, tests/repository.integration.ts, tests/document-version.integration.ts (document version and link invariants), tests/taxonomy.integration.ts, tests/adjustments.integration.ts, tests/sampling.test.ts, tests/upload-race.integration.ts, packages/server/tests/clamav.test.ts, tests/clamav.integration.ts, apps/api/tests/document-upload.integration.ts.
 
 Functional source: docs/requirements/CURRENT.md (unchanged v2.1). Decision defaults: docs/decisions/register.json. Production evidence and task completion remain separate from this module scaffold.
+
+T042 synthetic technical proof assets are in `fixtures/trial-balance/`: deterministic balanced 5k/25k/50k CSV and XLSX files, debit/credit and FSLI-prefix expectations, parser-negative examples, and byte digests. `tests/factories/tb-engagement-seed.ts` is test-only and throws unless `NODE_ENV=test`; the PostgreSQL integration confirms its grants cannot cross client engagements. No production seed or API bypass route is added.

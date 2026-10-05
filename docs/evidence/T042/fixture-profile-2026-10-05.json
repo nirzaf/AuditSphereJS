@@ -1,0 +1,73 @@
+{
+  "task": "T042",
+  "capturedAt": "2026-10-05T04:02:46.556Z",
+  "purpose": "Reference hardware and deterministic input digests for later Trial Balance benchmarks",
+  "referenceMachine": {
+    "platform": "win32",
+    "osRelease": "10.0.26300",
+    "architecture": "x64",
+    "cpuModel": "11th Gen Intel(R) Core(TM) i5-1135G7 @ 2.40GHz",
+    "logicalCpuCount": 8,
+    "memoryGiB": 15.7,
+    "node": "v24.19.0",
+    "pnpm": "12.8.1"
+  },
+  "performanceMeasurements": null,
+  "limitations": "No runtime timing or capacity claim is made here; T051 owns measured interaction and ingestion benchmarks.",
+  "fixtureDigests": [
+    {
+      "filename": "balance-5000.csv",
+      "rows": 5000,
+      "bytes": 225158,
+      "sha256": "fd1da57f15bc806ae4e4892fdbc67c67a2afb61658d267c32562dea4e69dcf37"
+    },
+    {
+      "filename": "balance-5000.xlsx",
+      "rows": 5000,
+      "bytes": 111108,
+      "sha256": "62cfdab788a9a8b99c540e6a5a6d8920f656b54db146977886ea3b90d90a7680"
+    },
+    {
+      "filename": "balance-25000.csv",
+      "rows": 25000,
+      "bytes": 1126273,
+      "sha256": "68b804147e37693d0221489922de9c270c59b3fdfbb0d7ef0645ab3b35a287ba"
+    },
+    {
+      "filename": "balance-25000.xlsx",
+      "rows": 25000,
+      "bytes": 552761,
+      "sha256": "fb53ea2e9e51b83e3596be063a68e78a119e914a3322986f7eee0b843c691293"
+    },
+    {
+      "filename": "balance-50000.csv",
+      "rows": 50000,
+      "bytes": 2252713,
+      "sha256": "a18fd79ec6cf895f68bdc2c0bac218307e60ea1448e5c3287b607639f1276965"
+    },
+    {
+      "filename": "balance-50000.xlsx",
+      "rows": 50000,
+      "bytes": 1107557,
+      "sha256": "408ce4901d8c43f8e2659df1d159b8ebd99f698017dc66a2b96e024106963d86"
+    },
+    {
+      "filename": "duplicate-account.csv",
+      "rows": null,
+      "bytes": 104,
+      "sha256": "0b3f42788a92840ca1324dfde6e41742ae9a5b964461d8a13fc6dcfbc8327000"
+    },
+    {
+      "filename": "malformed-row.csv",
+      "rows": null,
+      "bytes": 69,
+      "sha256": "acd76402166bb8cd6022627978f9c497b274fdefa9eae5c3af42e48c429d90be"
+    },
+    {
+      "filename": "unbalanced.csv",
+      "rows": null,
+      "bytes": 72,
+      "sha256": "8ef0d0a1fc891c45eec2868bacdc89ea598d1146fd1c787251953d080e3343e3"
+    }
+  ]
+}

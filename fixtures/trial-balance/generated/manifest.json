@@ -1,0 +1,181 @@
+{
+  "fixtureVersion": 1,
+  "generator": "AuditSphere deterministic Trial Balance fixture generator v1",
+  "algorithm": "counted alternating integer-cent balances; prior zero for first half and paired nonzero values for the rest; prefix-coded FSLI classes",
+  "datasets": [
+    {
+      "filename": "balance-5000.csv",
+      "bytes": 225158,
+      "sha256": "fd1da57f15bc806ae4e4892fdbc67c67a2afb61658d267c32562dea4e69dcf37",
+      "rows": 5000,
+      "expectedCurrentNet": "0.00",
+      "expectedPriorNet": "0.00",
+      "expectedCurrentDebits": "13707.77",
+      "expectedCurrentCredits": "13707.77",
+      "expectedPriorDebits": "6533.84",
+      "expectedPriorCredits": "6533.84",
+      "negativeCurrentRows": 2500,
+      "negativePriorRows": 1250,
+      "zeroPriorRows": 2500,
+      "mappingOutcomes": {
+        "Cash and cash equivalents": 834,
+        "Trade receivables": 834,
+        "Inventory": 833,
+        "Trade payables": 833,
+        "Retained earnings": 833,
+        "Revenue": 833
+      }
+    },
+    {
+      "filename": "balance-5000.xlsx",
+      "bytes": 111108,
+      "sha256": "62cfdab788a9a8b99c540e6a5a6d8920f656b54db146977886ea3b90d90a7680",
+      "rows": 5000,
+      "expectedCurrentNet": "0.00",
+      "expectedPriorNet": "0.00",
+      "expectedCurrentDebits": "13707.77",
+      "expectedCurrentCredits": "13707.77",
+      "expectedPriorDebits": "6533.84",
+      "expectedPriorCredits": "6533.84",
+      "negativeCurrentRows": 2500,
+      "negativePriorRows": 1250,
+      "zeroPriorRows": 2500,
+      "mappingOutcomes": {
+        "Cash and cash equivalents": 834,
+        "Trade receivables": 834,
+        "Inventory": 833,
+        "Trade payables": 833,
+        "Retained earnings": 833,
+        "Revenue": 833
+      }
+    },
+    {
+      "filename": "balance-25000.csv",
+      "bytes": 1126273,
+      "sha256": "68b804147e37693d0221489922de9c270c59b3fdfbb0d7ef0645ab3b35a287ba",
+      "rows": 25000,
+      "expectedCurrentNet": "0.00",
+      "expectedPriorNet": "0.00",
+      "expectedCurrentDebits": "73514.52",
+      "expectedCurrentCredits": "73514.52",
+      "expectedPriorDebits": "36398.14",
+      "expectedPriorCredits": "36398.14",
+      "negativeCurrentRows": 12500,
+      "negativePriorRows": 6250,
+      "zeroPriorRows": 12500,
+      "mappingOutcomes": {
+        "Cash and cash equivalents": 4167,
+        "Trade receivables": 4167,
+        "Inventory": 4167,
+        "Trade payables": 4167,
+        "Retained earnings": 4166,
+        "Revenue": 4166
+      }
+    },
+    {
+      "filename": "balance-25000.xlsx",
+      "bytes": 552761,
+      "sha256": "fb53ea2e9e51b83e3596be063a68e78a119e914a3322986f7eee0b843c691293",
+      "rows": 25000,
+      "expectedCurrentNet": "0.00",
+      "expectedPriorNet": "0.00",
+      "expectedCurrentDebits": "73514.52",
+      "expectedCurrentCredits": "73514.52",
+      "expectedPriorDebits": "36398.14",
+      "expectedPriorCredits": "36398.14",
+      "negativeCurrentRows": 12500,
+      "negativePriorRows": 6250,
+      "zeroPriorRows": 12500,
+      "mappingOutcomes": {
+        "Cash and cash equivalents": 4167,
+        "Trade receivables": 4167,
+        "Inventory": 4167,
+        "Trade payables": 4167,
+        "Retained earnings": 4166,
+        "Revenue": 4166
+      }
+    },
+    {
+      "filename": "balance-50000.csv",
+      "bytes": 2252713,
+      "sha256": "a18fd79ec6cf895f68bdc2c0bac218307e60ea1448e5c3287b607639f1276965",
+      "rows": 50000,
+      "expectedCurrentNet": "0.00",
+      "expectedPriorNet": "0.00",
+      "expectedCurrentDebits": "149154.25",
+      "expectedCurrentCredits": "149154.25",
+      "expectedPriorDebits": "73514.52",
+      "expectedPriorCredits": "73514.52",
+      "negativeCurrentRows": 25000,
+      "negativePriorRows": 12500,
+      "zeroPriorRows": 25000,
+      "mappingOutcomes": {
+        "Cash and cash equivalents": 8334,
+        "Trade receivables": 8334,
+        "Inventory": 8333,
+        "Trade payables": 8333,
+        "Retained earnings": 8333,
+        "Revenue": 8333
+      }
+    },
+    {
+      "filename": "balance-50000.xlsx",
+      "bytes": 1107557,
+      "sha256": "408ce4901d8c43f8e2659df1d159b8ebd99f698017dc66a2b96e024106963d86",
+      "rows": 50000,
+      "expectedCurrentNet": "0.00",
+      "expectedPriorNet": "0.00",
+      "expectedCurrentDebits": "149154.25",
+      "expectedCurrentCredits": "149154.25",
+      "expectedPriorDebits": "73514.52",
+      "expectedPriorCredits": "73514.52",
+      "negativeCurrentRows": 25000,
+      "negativePriorRows": 12500,
+      "zeroPriorRows": 25000,
+      "mappingOutcomes": {
+        "Cash and cash equivalents": 8334,
+        "Trade receivables": 8334,
+        "Inventory": 8333,
+        "Trade payables": 8333,
+        "Retained earnings": 8333,
+        "Revenue": 8333
+      }
+    }
+  ],
+  "exceptionalFiles": [
+    {
+      "filename": "duplicate-account.csv",
+      "bytes": 104,
+      "sha256": "0b3f42788a92840ca1324dfde6e41742ae9a5b964461d8a13fc6dcfbc8327000",
+      "expectedDisposition": "csv-parser-reject"
+    },
+    {
+      "filename": "malformed-row.csv",
+      "bytes": 69,
+      "sha256": "acd76402166bb8cd6022627978f9c497b274fdefa9eae5c3af42e48c429d90be",
+      "expectedDisposition": "csv-parser-reject"
+    },
+    {
+      "filename": "unbalanced.csv",
+      "bytes": 72,
+      "sha256": "8ef0d0a1fc891c45eec2868bacdc89ea598d1146fd1c787251953d080e3343e3",
+      "expectedDisposition": "fixture-oracle-reject"
+    }
+  ],
+  "mapping": {
+    "10": "Cash and cash equivalents",
+    "11": "Trade receivables",
+    "12": "Inventory",
+    "20": "Trade payables",
+    "30": "Retained earnings",
+    "40": "Revenue"
+  },
+  "crossClientLookalike": {
+    "accountCode": "10000000",
+    "clients": [
+      "Synthetic Fixture Client A",
+      "Synthetic Fixture Client B"
+    ],
+    "expected": "The identical account code may occur in separate client engagements; no mapping or row data crosses scope."
+  }
+}
