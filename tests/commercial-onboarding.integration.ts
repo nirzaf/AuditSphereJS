@@ -142,7 +142,39 @@ test('the commercial onboarding spine enforces the dual-key and advance gates en
       await assert.rejects(lifecycle('ACTIVATE_PORTAL', billingId), /full 50% advance payment/);
       await assert.rejects(recordInvoicePayment(billingId, engagementId, reissued.id, { idempotencyKey: key(), amount: '0.00', reference: 'TRF-ZERO' }), /amount: must be positive/);
       await assert.rejects(db.$executeRaw`INSERT INTO "InvoicePayment" ("firmId", "invoiceId", "engagementId", "amount", "reference", "recordedBy") VALUES (${firmId}::uuid, ${reissued.id}::uuid, ${engagementId}::uuid, 60000.02, 'TRF-OVERPAY', ${billingId}::uuid)`, /Payment exceeds outstanding invoice balance/);
+      const journalsBeforeMissingCash = await db.practiceJournal.count({ where: { firmId } });
+      await assert.rejects(
+        recordInvoicePayment(billingId, engagementId, reissued.id, { idempotencyKey: key(), amount: '25000.01', reference: 'TRF-MISSING-CASH' }),
+        /Active posting accounts 100 \(cash\/bank\) and 120 \(receivables\)/,
+      );
+      assert.equal(await db.invoicePayment.count({ where: { invoiceId: reissued.id } }), 0, 'a missing cash account leaves no payment behind');
+      assert.equal(await db.practiceJournal.count({ where: { firmId } }), journalsBeforeMissingCash, 'a refused payment leaves no cash journal behind');
+      await assert.rejects(
+        db.$transaction(tx => tx.invoicePayment.create({ data: { firmId, invoiceId: reissued.id, engagementId, amount: '1.00', reference: 'TRF-DIRECT-BYPASS', recordedBy: billingId } })),
+        /Invoice payment must commit with one posted cash-receipt journal/,
+        'the database rejects an unposted direct payment insert',
+      );
+      const cashAccount = await db.practiceAccount.create({ data: { firmId, code: '100', name: 'Cash and bank', kind: 'ASSET' } });
       await recordInvoicePayment(billingId, engagementId, reissued.id, { idempotencyKey: key(), amount: '25000.01', reference: 'TRF-001' });
+      const firstPayment = await db.invoicePayment.findFirstOrThrow({ where: { invoiceId: reissued.id, reference: 'TRF-001' }, include: { ledgerPosting: { include: { journal: { include: { lines: true } } } } } });
+      assert.equal(firstPayment.ledgerPosting?.journal.status, 'POSTED');
+      assert.equal(firstPayment.ledgerPosting?.journal.reference, `PAY-${firstPayment.id}`);
+      assert.equal(firstPayment.ledgerPosting?.journal.accountingDate.toISOString().slice(0, 10), firstPayment.recordedAt.toISOString().slice(0, 10));
+      const firstPaymentLines = new Map(firstPayment.ledgerPosting?.journal.lines.map(line => [line.accountId, { debit: line.debit.toString(), credit: line.credit.toString() }]));
+      assert.deepEqual(firstPaymentLines.get(cashAccount.id), { debit: '25000.01', credit: '0' });
+      assert.deepEqual(firstPaymentLines.get(receivableAccount.id), { debit: '0', credit: '25000.01' });
+      assert.equal(firstPayment.ledgerPosting?.journal.lines.length, 2, 'the cash receipt is a balanced two-line journal');
+      const invoiceJournal = await db.invoiceLedgerPosting.findFirstOrThrow({ where: { invoiceId: reissued.id }, select: { journalId: true } });
+      await assert.rejects(
+        db.$transaction(async tx => {
+          const unlinkedPayment = await tx.invoicePayment.create({ data: { firmId, invoiceId: reissued.id, engagementId, amount: '1.00', reference: 'TRF-WRONG-JOURNAL', recordedBy: billingId } });
+          await tx.invoicePaymentLedgerPosting.create({ data: { firmId, engagementId, paymentId: unlinkedPayment.id, journalId: invoiceJournal.journalId, createdBy: billingId } });
+        }),
+        /Invoice payment journal reference does not match the payment/,
+        'the database rejects linking a payment to another posted journal',
+      );
+      assert.equal(await db.invoicePayment.count({ where: { invoiceId: reissued.id } }), 1, 'a journal mismatch rolls back the attempted payment');
+      await assert.rejects(db.invoicePaymentLedgerPosting.delete({ where: { paymentId_firmId_engagementId: { paymentId: firstPayment.id, firmId, engagementId } } }), /Invoice payment ledger posting links are immutable/);
       assert.equal((await listInvoices(engagementId)).find(row => row.id === reissued.id)?.paidToDate, '25000.01');
       await recordInvoicePayment(billingId, engagementId, reissued.id, { idempotencyKey: key(), amount: '34999.99', reference: 'TRF-002' });
       assert.equal((await listInvoices(engagementId)).find(row => row.id === reissued.id)?.paidToDate, '60000.00');
@@ -150,6 +182,7 @@ test('the commercial onboarding spine enforces the dual-key and advance gates en
       await recordInvoicePayment(billingId, engagementId, reissued.id, { idempotencyKey: key(), amount: '0.01', reference: 'TRF-003' });
       assert.equal((await listInvoices(engagementId)).find(row => row.id === reissued.id)?.paidToDate, '60000.01');
       assert.equal((await db.engagementInvoice.findUnique({ where: { id: reissued.id } }))?.status, 'PAID');
+      assert.equal(await db.invoicePaymentLedgerPosting.count({ where: { engagementId } }), 3, 'every partial payment has one immutable cash journal link');
       await assert.rejects(voidInvoice(billingId, engagementId, reissued.id, { idempotencyKey: key(), reason: 'Cannot void a settled invoice.' }), /only an issued, unpaid invoice/i);
       await assert.rejects(lifecycle('ACTIVATE_PORTAL', billingId), /official advance receipt/);
       await issueInvoiceReceipt(billingId, engagementId, reissued.id, key());

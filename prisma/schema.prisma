@@ -144,6 +144,7 @@ model User {
   practiceGradeAssignmentsMade      PracticeStaffGradeAssignment[]        @relation("PracticeGradeAssigner")
   practiceTimeEntries               PracticeTimeEntry[]
   invoiceLedgerPostingsCreated      InvoiceLedgerPosting[]                @relation("InvoiceLedgerPostingCreator")
+  invoicePaymentLedgerPostingsCreated InvoicePaymentLedgerPosting[]         @relation("InvoicePaymentLedgerPostingCreator")
   documentLinksCreated              DocumentLink[]                        @relation("DocumentLinkCreator")
   documentUploadSessions            DocumentUploadSession[]
   practiceExpensesCreated           PracticeExpense[]                     @relation("PracticeExpenseCreator")
@@ -1155,6 +1156,9 @@ model InvoicePayment {
   reference    String
   recordedBy   String            @db.Uuid
   recordedAt   DateTime          @default(now())
+  ledgerPosting InvoicePaymentLedgerPosting?
+
+  @@unique([id, firmId, engagementId])
 }
 
 model InvoiceReceipt {
@@ -1350,6 +1354,7 @@ model PracticeJournal {
   reversedJournals   PracticeJournal[]          @relation("PracticeJournalReversal")
   lines              PracticeJournalLine[]
   invoicePosting     InvoiceLedgerPosting?
+  invoicePaymentPosting InvoicePaymentLedgerPosting?
   expenseRecognition PracticeExpense?           @relation("PracticeExpenseRecognition")
   expenseSettlement  PracticeExpenseSettlement? @relation("PracticeExpenseSettlementJournal")
 
@@ -1475,6 +1480,25 @@ model InvoiceLedgerPosting {
   @@unique([firmId, id])
   @@unique([invoiceId, firmId, engagementId])
   @@unique([firmId, journalId])
+}
+
+/// Immutable cash receipt posting linked to one recorded invoice payment.
+model InvoicePaymentLedgerPosting {
+  id           String          @id @default(uuid()) @db.Uuid
+  firmId       String          @db.Uuid
+  engagementId String          @db.Uuid
+  paymentId    String          @db.Uuid
+  journalId    String          @db.Uuid
+  createdBy    String          @db.Uuid
+  createdAt    DateTime        @default(now()) @db.Timestamptz(6)
+  payment      InvoicePayment  @relation(fields: [paymentId, firmId, engagementId], references: [id, firmId, engagementId], onDelete: Restrict, map: "invoice_payment_ledger_posting_payment_scope_fkey")
+  journal      PracticeJournal @relation(fields: [firmId, journalId], references: [firmId, id], onDelete: Restrict, map: "invoice_payment_ledger_posting_journal_scope_fkey")
+  creator      User            @relation("InvoicePaymentLedgerPostingCreator", fields: [createdBy], references: [id], onDelete: Restrict)
+
+  @@unique([firmId, id])
+  @@unique([paymentId, firmId, engagementId])
+  @@unique([firmId, journalId])
+  @@index([firmId, engagementId, createdAt])
 }
 
 model PracticeJournalLine {

@@ -46,6 +46,7 @@ test('operation idempotency is durable, scoped, authorized and safe under concur
         { userId: actorId, capability: 'PRACTICE_POST', firmId, grantedBy: actorId },
       ] });
       await db.practiceAccount.createMany({ data: [
+        { firmId, code: '100', name: 'Cash and bank', kind: 'ASSET' },
         { firmId, code: '120', name: 'Client receivables', kind: 'ASSET' },
         { firmId, code: '200', name: 'Deferred engagement fees', kind: 'LIABILITY' },
       ] });

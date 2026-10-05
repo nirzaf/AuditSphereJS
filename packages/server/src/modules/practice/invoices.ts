@@ -197,14 +197,46 @@ export async function recordInvoicePayment(actorId: string, engagementId: string
     if (paidBefore.add(paymentAmount).compare(Decimal6.from(invoice.amount.toString())) > 0) {
       throw new BadRequestException('Payment exceeds the outstanding invoice balance');
     }
-    await tx.invoicePayment.create({ data: { firmId: engagement.firmId, invoiceId, engagementId, amount: body.amount, reference: body.reference, recordedBy: actorId } });
+    const payment = await tx.invoicePayment.create({ data: { firmId: engagement.firmId, invoiceId, engagementId, amount: body.amount, reference: body.reference, recordedBy: actorId } });
+    const paymentAccounts = await tx.practiceAccount.findMany({
+      where: { firmId: engagement.firmId, code: { in: ['100', RECEIVABLE_ACCOUNT_CODE] }, active: true, posting: true },
+    });
+    const cash = paymentAccounts.find(account => account.code === '100' && account.kind === 'ASSET');
+    const receivable = paymentAccounts.find(account => account.code === RECEIVABLE_ACCOUNT_CODE && account.kind === 'ASSET');
+    if (!cash || !receivable) {
+      throw new ConflictException('Active posting accounts 100 (cash/bank) and 120 (receivables) are required to record invoice payments');
+    }
+    const accountingDate = AccountingDate.fromUtcInstant(payment.recordedAt).toISO();
+    const day = AccountingDate.fromISO(accountingDate).startOfUtcDay();
+    const period = await tx.practicePeriod.findFirst({
+      where: { firmId: engagement.firmId, closed: false, startsOn: { lte: day }, endsOn: { gte: day } },
+      select: { id: true },
+    });
+    if (!period) throw new ConflictException('An open accounting period containing the payment date is required to record an invoice payment');
+    const journalAmount = Decimal6.from(payment.amount.toString()).roundQar().toFixed(2);
+    const journalReference = `PAY-${payment.id}`;
+    const paymentDraft = await createPracticeJournal(actorId, engagementId, {
+      periodId: period.id,
+      accountingDate,
+      reference: journalReference,
+      memo: `Invoice payment ${body.reference}`,
+      idempotencyKey: randomUUID(),
+      lines: [
+        { accountId: cash.id, debit: journalAmount, credit: '0.000000' },
+        { accountId: receivable.id, debit: '0.000000', credit: journalAmount },
+      ],
+    }, scope);
+    const paymentJournal = await postPracticeJournal(actorId, engagementId, paymentDraft.id, { expectedVersion: paymentDraft.version, idempotencyKey: randomUUID() }, scope);
+    await tx.invoicePaymentLedgerPosting.create({ data: {
+      firmId: engagement.firmId, engagementId, paymentId: payment.id, journalId: paymentJournal.id, createdBy: actorId,
+    } });
     const paidAmount = paidBefore.add(paymentAmount);
     const settled = paidAmount.compare(Decimal6.from(invoice.amount.toString())) >= 0;
     if (settled) {
       const changed = await tx.engagementInvoice.updateMany({ where: { id: invoiceId, status: 'ISSUED' }, data: { status: 'PAID' } });
       if (changed.count !== 1) throw new ConflictException('Invoice changed; reload before recording the payment');
     }
-    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'INVOICE_PAYMENT_RECORDED', payload: { invoiceId, amount: body.amount, reference: body.reference, settled } } });
+    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'INVOICE_PAYMENT_RECORDED', payload: { invoiceId, paymentId: payment.id, journalId: paymentJournal.id, accountingDate, amount: body.amount, reference: body.reference, settled } } });
     const result = { invoiceId, settled };
     await completeOperation(tx, operation.operationId, result);
     return result;

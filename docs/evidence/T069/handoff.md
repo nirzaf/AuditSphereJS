@@ -16,7 +16,7 @@ Task ID T069 · Requirement IDs R061–R065 (commercial flows), R077 (billing) �
 `pnpm exec prisma validate`; `pnpm contracts:generate` / `contracts:check`; `pnpm build:server`; `tsc -p tsconfig.tests.json --noEmit`; `pnpm boundaries`; `pnpm exec ng build web`; `pnpm test` (vitest 81/81); `ng test web` (51/51); `pnpm verify:task -- T069` — `tests/commercial-onboarding.integration.ts` against PostgreSQL 18.6 Testcontainers: PASS. The test walks the real journey (draft → present → dispatch → Key 1 → Key 2 → letter with pinned fee → advance invoice → partial payment → settlement → receipt → PORTAL_ACTIVE_PLANNING), asserts both invariants fail closed in every partial state, proves letter/payment immutability at the database boundary, and replays an idempotent command.
 
 ## Limitations (honest)
-Proposal acceptance records commercial evidence under `COMMERCIAL_MANAGE` on the firm scope; binding it to real client-portal identities is T020 follow-up. Invoices keep their own records and do not yet post into the firm practice ledger's books; credit notes and AR aging remain open. No live browser walkthrough of the new screens; no deployment occurred.
+Proposal acceptance records commercial evidence under `COMMERCIAL_MANAGE` on the firm scope; binding it to real client-portal identities is T020 follow-up. Paid credit notes and AR aging remain open. No live browser walkthrough of the new screens; no deployment occurred.
 
 ## Decimal and retry hardening — 2026-10-03
 
@@ -72,4 +72,13 @@ The present and accept commands now compare the caller's `expectedVersion` with 
 | `git diff --check` | Passed; Git reported existing working-tree line-ending normalization warnings. |
 | Built-in browser smoke | The Entra staff fixture remains signed in and assigned to the synthetic acceptance engagement. The Practice screen displays the expected firm-wide Practice permission gate; no business data or grants were changed. |
 
-T069 remains `IN_REVIEW`: invoice payment allocations/cash postings, paid-invoice credit notes and AR aging remain unimplemented, and independent review is still pending. The migration intentionally does not fabricate journal history for pre-existing invoices.
+T069 remains `IN_REVIEW`: explicit multi-invoice payment allocations, paid-invoice credit notes and AR aging remain open, and independent review is still pending. The migration intentionally does not fabricate journal history for pre-existing invoices.
+
+## Payment cash-posting integrity — 2026-10-05
+
+- Each invoice payment now commits with one immutable `InvoicePaymentLedgerPosting` and one canonical posted Practice journal: debit active posting account 100 (cash/bank), credit active posting account 120 (receivables), for the exact payment amount and UTC accounting date. Payment, journal, link, audit and idempotency outcome share the same PostgreSQL transaction.
+- Migration `202610050002_invoice_payment_ledger` rejects populated legacy payment tables until an approved journal backfill exists. PostgreSQL validates the journal identity, status, date, exact lines and scope, and a deferred constraint rejects direct payment inserts without a posting link.
+- `tests/commercial-onboarding.integration.ts` verifies missing-account rollback, direct-insert denial, exact partial-payment posting, wrong-journal-link denial, immutable link behavior and one posting per payment. `tests/idempotency.integration.ts` now provisions the cash account and continues to cover concurrent payment retries.
+- `pnpm verify:task -- T069` passed on fresh PostgreSQL 18.6 Testcontainers: server compile, contracts/OpenAPI, commercial onboarding (1/1), idempotency (1/1) and API contract serialization (1/1). `pnpm verify:affected` passed boundaries, server/test typechecks, Angular production build and Vitest (137 tests across 30 files). `pnpm lint`, `pnpm exec prisma validate` and `git diff --check` passed.
+
+This increment only establishes the single-invoice cash posting. T071 remains open for payment date/method capture, cleared-versus-pending state and explicit allocations across invoices; T072 owns routed receipt delivery. Paid credit notes, AR aging and independent review also remain open. No historic payment ledger entries are inferred.
