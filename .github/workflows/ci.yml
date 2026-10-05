@@ -92,6 +92,7 @@ jobs:
             tests/practice-expense-receipts.integration.ts
             tests/outbox.integration.ts
             tests/scheduler.integration.ts
+            tests/tb-fixtures.integration.ts
         - files: |
             apps/api/tests/multipart-plugin.integration.ts
             tests/local-services.integration.ts
