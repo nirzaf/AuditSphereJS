@@ -91,4 +91,13 @@ Invoke-MgGraphRequest -Method POST -Uri "https://graph.microsoft.com/v1.0/drives
 
 Repeat only for the intended SharePoint and OneDrive folders. Folder grants break permission inheritance at that resource; review the resulting boundary. Do not give the runtime app tenant-wide `Files.ReadWrite.All`, `Sites.ReadWrite.All` or administrative scopes. References: [selected permissions](https://learn.microsoft.com/en-us/graph/permissions-selected-overview), [folder grant request](https://learn.microsoft.com/en-us/graph/api/driveitem-post-permissions?view=graph-rest-1.0).
 
+For live T036 acceptance, use the existing nonproduction SharePoint site and create a second, sibling folder in its Documents library named `AuditSphereJS-Template-Assets-Acceptance`; do not place it inside the client acceptance folder. Use the same folder-level selected-permission request above with role `write` and the existing storage client ID. Verify the returned permission targets that exact application and folder before updating the private acceptance environment with `M365_ACCEPTANCE_TEMPLATE_ASSETS_DRIVE_ID` and `M365_ACCEPTANCE_TEMPLATE_ASSETS_FOLDER_ID`. The live check is opt-in and uses only a generated one-pixel PNG, verifies the exact version and folder boundary, then recycles only its own item:
+
+```powershell
+$env:M365_ACCEPTANCE_ENV_FILE = '.env.m365.acceptance'
+pnpm test:m365:template-assets:live
+```
+
+The test writes redacted evidence under the ignored `test-results/m365-live/` directory. Do not commit the private environment file or provider tokens. Record only the drive/folder IDs and permission scope in [the current tenant inventory](current-tenant.md), plus the dated test evidence; no signature artwork or client content belongs in this acceptance folder.
+
 Re-read app-role assignments and folder permissions, then proceed to [private application configuration](application-configuration.md) and [verification](verification-and-troubleshooting.md). App creation, consent and admin login alone are not application acceptance.

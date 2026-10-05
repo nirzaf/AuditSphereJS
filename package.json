@@ -17,6 +17,7 @@
     "test:e2e": "playwright test",
     "test:m365:storage:live": "node --import tsx --test tests/live/m365-storage.acceptance.ts",
     "test:m365:upload-cleanup:live": "node --import tsx --test tests/live/m365-upload-cleanup.acceptance.ts",
+    "test:m365:template-assets:live": "node --import tsx --test tests/live/m365-template-assets.acceptance.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",

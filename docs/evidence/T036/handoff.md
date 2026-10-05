@@ -57,3 +57,7 @@ Reviewer: Codex implementation review
 Review result: local acceptance criteria, affected checks and hosted CI pass. The hosted workflow published the labelled nonproduction web bundle; no deployment occurred. Keep T036 in review until an administrator-provisioned firm-private SharePoint/OneDrive asset repository and its separate selected-folder grant are available for live Graph upload/download acceptance.
 Open blockers: live Graph asset repository binding/grant and provider roundtrip; no signing-provider task applies because the user selected image appearance only.
 Next eligible task: T037 is already complete; T038 remains next in dependency order after T036 review closure.
+
+## Live provider harness update — 2026-10-05
+
+Added `tests/live/m365-template-assets.acceptance.ts` and the opt-in `pnpm test:m365:template-assets:live` command. The harness targets only the dedicated `template-assets-private` folder, checks byte-identical version retrieval and denies a write to `root`, then recycles only the item it created. Setup instructions and acceptance-only environment key names are in [tenant setup](../../microsoft365/tenant-setup.md) and [application configuration](../../microsoft365/application-configuration.md). `pnpm verify:affected` passed 137/137 tests, `pnpm lint` passed, and `pnpm verify:task -- T036` passed. The live command remains unrun because the Graph PowerShell device flow timed out; no folder or permission change was made. See [dated harness evidence](live-provider-harness-2026-10-05.md).
