@@ -18,6 +18,33 @@ it('exposes only the five real business workspaces without demo messaging', asyn
   expect(fixture.nativeElement.textContent).not.toContain('Synthetic records');
   fixture.destroy();
 });
+it('explains the firm context and separate Practice permission on firm-wide screens', async () => {
+  TestBed.configureTestingModule({ providers: [
+    { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ module: 'Practice', view: 'profit-loss' })) } },
+  ] });
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ provider: 'development' }))));
+  const fixture = TestBed.createComponent(Workspace);
+  fixture.detectChanges(); await fixture.whenStable();
+  const view = fixture.componentInstance;
+  view.identityProvider.set('entra');
+  view.signedIn.set(true);
+  fixture.detectChanges();
+
+  expect(fixture.nativeElement.querySelector('.access-gate h1')?.textContent).toContain('No firm context is available');
+  expect(fixture.nativeElement.querySelector('.access-gate')?.textContent).toContain('Firm-wide Practice permission is checked separately.');
+
+  const engagementId = '11111111-1111-4111-8111-111111111111';
+  view.readableEngagements.set([{ id: engagementId, name: 'Acceptance engagement', clientId: '22222222-2222-4222-8222-222222222222', clientName: 'Acceptance client', version: 1 }]);
+  fixture.detectChanges();
+  const selector = fixture.nativeElement.querySelector('#engagement') as HTMLSelectElement;
+  expect(fixture.nativeElement.querySelector('label[for="engagement"]')?.textContent).toContain('Firm context');
+  expect(selector.getAttribute('aria-describedby')).toBe('engagement-help');
+  expect(selector.options[0].textContent).toBe('Choose firm context');
+  expect(fixture.nativeElement.querySelector('.connection')?.textContent).toContain('separate firm-wide permission');
+  expect(fixture.nativeElement.querySelector('.access-gate h1')?.textContent).toContain('Choose a firm context');
+  expect(fixture.nativeElement.querySelector('practice-profit-loss')).toBeNull();
+  fixture.destroy();
+});
 it('shows the selected-engagement state instead of asking the user to select again', async () => {
   TestBed.configureTestingModule({ providers: [
     { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ module: 'Fieldwork', view: 'workprogram' })) } },

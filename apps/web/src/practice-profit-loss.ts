@@ -72,7 +72,7 @@ export class PracticeProfitLoss {
     if (error instanceof ApiContractError) {
       const reference = error.correlationId ? ` Reference: ${error.correlationId}.` : '';
       if (error.status === 401) return `Your sign-in could not be verified. Sign in again, then retry.${reference}`;
-      if (error.status === 403) return `Firm Practice reporting permission (PRACTICE_READ) is required. Ask an administrator to assign it.${reference}`;
+      if (error.status === 403) return `Firm-wide Practice reporting access (PRACTICE_READ) is missing. Ask an administrator to assign it; selecting an engagement only identifies the firm context.${reference}`;
       if (error.status === 409) return `The report changed after it was loaded. Reload the statement, then retry the account detail.${reference}`;
     }
     return error instanceof Error ? error.message : 'The Practice Profit and Loss report could not be loaded.';

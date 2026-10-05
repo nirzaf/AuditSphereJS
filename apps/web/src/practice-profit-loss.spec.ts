@@ -93,6 +93,7 @@ it('gives a clear recovery step for a firm Practice permission denial', async ()
   fixture.detectChanges();
   const alert = fixture.nativeElement.querySelector('[role="alert"]')?.textContent ?? '';
   expect(alert).toContain('PRACTICE_READ');
+  expect(alert).toContain('selecting an engagement only identifies the firm context');
   expect(alert).toContain('Ask an administrator to assign it');
   expect(alert).toContain('trace-403');
   expect(alert).not.toContain('raw authorization response');
