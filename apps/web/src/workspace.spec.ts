@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { Title } from '@angular/platform-browser';
 import { Workspace } from './workspace';
 import { IDENTITY_ADAPTER } from './identity';
 import { afterEach, it, expect, vi } from 'vitest';
@@ -51,6 +52,26 @@ it('replaces the retired Simulation URL with the real Fieldwork workspace', asyn
   expect(fixture.componentInstance.screenId()).toBe('trial-balance');
   expect(navigate).toHaveBeenCalledWith([], { queryParams: { module: 'Fieldwork', view: 'trial-balance' }, replaceUrl: true });
   expect(fixture.nativeElement.textContent).not.toContain('SIMULATION PROTOTYPE');
+  fixture.destroy();
+});
+it('keeps the browser title aligned with the workspace and avoids duplicate report status', async () => {
+  const navigate = vi.fn().mockResolvedValue(true);
+  TestBed.configureTestingModule({ providers: [
+    { provide: ActivatedRoute, useValue: { queryParamMap: of(convertToParamMap({ module: 'Practice', view: 'profit-loss' })) } },
+    { provide: Router, useValue: { navigate } },
+  ] });
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ provider: 'development' }))));
+  const fixture = TestBed.createComponent(Workspace);
+  fixture.detectChanges(); await fixture.whenStable(); fixture.detectChanges();
+  const title = TestBed.inject(Title);
+
+  expect(title.getTitle()).toBe('Monthly Profit & Loss | Practice | AuditSphere');
+  expect(fixture.nativeElement.querySelector('p.notice')).toBeNull();
+
+  fixture.componentInstance.navigate('Reporting', 'templates');
+  fixture.detectChanges();
+  expect(title.getTitle()).toBe('Document templates | Reporting | AuditSphere');
+  expect(fixture.nativeElement.querySelector('p.notice')).not.toBeNull();
   fixture.destroy();
 });
 it('prevents paging away from unsaved mappings and discards explicitly', async () => {

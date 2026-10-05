@@ -1,5 +1,6 @@
 import { Component, signal, computed, OnDestroy, inject, ElementRef, afterRenderEffect } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ModuleWorkspace } from './module-workspace';
@@ -30,6 +31,7 @@ export class Workspace implements OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly identity = inject(IDENTITY_ADAPTER);
   private readonly realtime = inject(RealtimeClient);
+  private readonly pageTitle = inject(Title);
   private readonly router = inject(Router, { optional: true });
   private readonly route = inject(ActivatedRoute, { optional: true });
   private navigation?: { unsubscribe(): void };
@@ -63,6 +65,7 @@ export class Workspace implements OnDestroy {
       const screen = screens.find(value => value.id === requestedView) ?? screens[0];
       this.releaseLeasesWhenLeavingTrialBalance(module, screen.id);
       this.active.set(module); this.screenId.set(screen.id);
+      this.updatePageTitle(module, screen.id);
       if (requestedModule !== module || requestedView !== screen.id) {
         void this.router?.navigate([], { queryParams: { module, view: screen.id }, replaceUrl: true });
       }
@@ -121,7 +124,12 @@ export class Workspace implements OnDestroy {
     const selected = screensFor(module).find(screen => screen.id === view) ?? screensFor(module)[0];
     this.releaseLeasesWhenLeavingTrialBalance(module, selected.id);
     this.active.set(module); this.screenId.set(selected.id);
+    this.updatePageTitle(module, selected.id);
     void this.router?.navigate([], { queryParams: { module, view: selected.id } });
+  }
+  private updatePageTitle(module: string, view: string) {
+    const screen = screensFor(module).find(value => value.id === view);
+    this.pageTitle.setTitle(screen ? `${screen.title} | ${module} | AuditSphere` : `${module} | AuditSphere`);
   }
   private releaseLeasesWhenLeavingTrialBalance(module: string, view: string) {
     if (this.active() === 'Fieldwork' && this.screenId() === 'trial-balance' && (module !== 'Fieldwork' || view !== 'trial-balance')) void this.releaseEditLeases();
