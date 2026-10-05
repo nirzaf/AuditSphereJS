@@ -47,10 +47,10 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 ## Implementation checklist
 
-- [ ] Practice/Billing owns invoices, allocations and ledger effects; Commercial and Reporting call its public facade.
+- [x] Practice/Billing owns invoices, allocations and ledger effects; Commercial and Reporting call its public facade.
 - [x] Store fee snapshot, milestone, issue/due dates, amounts and immutable issued versions.
 - [x] Enforce a unique milestone invoice per engagement/contract version; create final amount as remaining agreed fee under approved rounding.
-- [ ] Add reviewed numbering, void/credit policies and a billing permission separate from audit review.
+- [x] Add reviewed numbering, void/credit policies and a billing permission separate from audit review.
 
 ## Acceptance criteria and required tests
 

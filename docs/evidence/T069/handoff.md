@@ -1,7 +1,7 @@
 # T069 handoff — canonical invoices and the real commercial onboarding spine
 
 ## Identity
-Task ID T069 · Requirement IDs R061–R065 (commercial flows), R077 (billing) · Branch `main` · Status `IN_REVIEW`
+Task ID T069 · Requirement IDs R010, R017, R069 and R078 · Branch `main` · Current status `DONE` after the 2026-10-05 scope review; the interim `IN_REVIEW` state is recorded below.
 
 ## Delivered (real implementation, replacing the simulated onboarding journey)
 
@@ -82,3 +82,13 @@ T069 remains `IN_REVIEW`: explicit multi-invoice payment allocations, paid-invoi
 - `pnpm verify:task -- T069` passed on fresh PostgreSQL 18.6 Testcontainers: server compile, contracts/OpenAPI, commercial onboarding (1/1), idempotency (1/1) and API contract serialization (1/1). `pnpm verify:affected` passed boundaries, server/test typechecks, Angular production build and Vitest (137 tests across 30 files). `pnpm lint`, `pnpm exec prisma validate` and `git diff --check` passed.
 
 This increment only establishes the single-invoice cash posting. T071 remains open for payment date/method capture, cleared-versus-pending state and explicit allocations across invoices; T072 owns routed receipt delivery. Paid credit notes, AR aging and independent review also remain open. No historic payment ledger entries are inferred.
+
+## Acceptance review — 2026-10-05
+
+Reviewed the implementation against the T069 source ranges, D01 final-fee timing and D12 role/capability separation. Practice owns invoice issuance, numbering, payment journals, receipts and voids; Commercial and Reporting use the Practice public facade and do not write invoice tables directly. Firm sequence allocation is serialized, the accepted proposal revision and fee are snapshotted, one active invoice is allowed per milestone, and unpaid corrections require a reasoned void with an exact reversal before a new numbered revision. `BILLING` is the only membership role with Practice capabilities; each command also requires its current `PRACTICE_MANAGE` grant. PostgreSQL enforces invoice/line and payment immutability and requires the corresponding posted ledger links.
+
+Paid invoices remain immutable and cannot be voided. T069 AC2 explicitly treats their credit-note correction as a separate workflow; this handoff does not claim that workflow is implemented. T071 owns payment date/method, pending-versus-cleared state and multi-invoice allocations; T072 owns routed receipt delivery; T147 owns AR aging. These are separate task scopes rather than unfinished T069 invoice-foundation acceptance.
+
+The T069 verification recipe was strengthened to include `billing-gates`, which exercises approved-policy failure, milestone amount rounding and billing authority. Current verification: `pnpm verify:task -- T069` passed server build, contract/OpenAPI checks, commercial onboarding (PostgreSQL 18.6, 1/1), billing gates (PostgreSQL 18.6, 1/1), idempotency (PostgreSQL 18.6, 1/1) and API contracts (1/1). `pnpm verify:affected` passed with 30 Vitest files / 137 tests, server/test typechecks, boundaries and Angular production build. `pnpm lint` and `git diff --check` passed. Hosted run [37248556040](https://github.com/nirzaf/AuditSphereJS/actions/runs/37248556040) passed all jobs for the unchanged invoice implementation at commit `3359c61`.
+
+Review result: all T069 checklist items and AC1–AC3 are satisfied at the invoice-foundation boundary; no invoice-specific blocker remains. No dependency, database, tenant permission or business-record change was made during this review.

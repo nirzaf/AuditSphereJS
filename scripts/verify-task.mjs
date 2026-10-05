@@ -30,7 +30,7 @@ const tasks = {
   T066: ['build:server', 'practice-ledger'],
   T067: ['build:server', 'practice-ledger'],
   T068: ['build:server', 'practice-ledger'],
-  T069: ['build:server', 'contracts:check', 'commercial-onboarding', 'idempotency-postgres', 'api-contracts'],
+  T069: ['build:server', 'contracts:check', 'commercial-onboarding', 'billing-gates', 'idempotency-postgres', 'api-contracts'],
   T063: ['build:server', 'commercial-onboarding', 'billing-gates'],
   T065: ['build:server', 'commercial-onboarding', 'billing-gates'],
   T070: ['build:server', 'commercial-onboarding', 'billing-gates'],
