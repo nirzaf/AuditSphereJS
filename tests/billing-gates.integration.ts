@@ -83,6 +83,7 @@ test('the dual-key gate closes all key combinations and billing milestones round
 
       // T070 AC2 — both milestones derive from the fee; their sum never exceeds it.
       await db.practiceAccount.createMany({ data: [
+        { firmId, code: '100', name: 'Cash and bank', kind: 'ASSET' },
         { firmId, code: '120', name: 'Client receivables', kind: 'ASSET' },
         { firmId, code: '200', name: 'Deferred engagement fees', kind: 'LIABILITY' },
       ] });
