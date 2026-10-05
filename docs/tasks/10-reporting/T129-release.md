@@ -59,6 +59,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [ ] **AC1:** Concurrent release and upload-finalize yield only an authorized consistent outcome.
 - [ ] **AC2:** Duplicate release command returns the same package/release ID.
 - [ ] **AC3:** Newly blocked fieldwork prevents release even if an earlier preview was ready.
+- [ ] **AC4:** A PostgreSQL release racing with a fieldwork child-evidence mutation serializes against the engagement barrier and cannot release a stale readiness manifest. Verify both lock orderings; a rejected or stale release leaves no release event, invoice association, upload freeze, delivery intent or lifecycle advance.
 
 Test version-bound gates, evidence/signature identity, failure recovery and portal/archival boundaries.
 

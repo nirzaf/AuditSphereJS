@@ -269,6 +269,18 @@ test('guarded lifecycle commands reject invalid paths, enforce evidence and stay
               (error: { message?: string }) => Boolean(error.message?.includes(expectedCode)),
               `${command} from ${state} must be evidence-gated by ${expectedCode}`,
             );
+            if (command === 'RELEASE_FINAL_PACKAGE') {
+              const unchanged = await db.engagement.findUniqueOrThrow({
+                where: { id: commandEngagementId },
+                select: { state: true, version: true },
+              });
+              assert.deepEqual(unchanged, { state, version: 1 }, 'blocked package release must not advance lifecycle state or version');
+              assert.equal(
+                await db.engagementTransition.count({ where: { engagementId: commandEngagementId } }),
+                0,
+                'blocked package release must not append transition history',
+              );
+            }
           } else {
             const result = await applyLifecycleCommand(commandEngagementId, approverId, input);
             assert.ok(result && typeof result === 'object' && !Array.isArray(result), `${command} returns an object outcome`);

@@ -4,8 +4,8 @@
 
 Task ID: T028  
 Requirement IDs: R002, R012, R013, R024, R027, R055, R056, R059, R070, R079, R080  
-Implementing commit/branch: uncommitted increment on `main` (repository already has unrelated dirty work)  
-Status: IN_PROGRESS
+Implementing commit/branch: `main`; original lifecycle increment was uncommitted at the 2026-10-03 handoff, and the T028 closeout is in the commit containing this record.
+Status history: `IN_PROGRESS` at original handoff; `DONE` in the closeout addendum dated 2026-10-05.
 
 ## Intended and delivered outcome
 
@@ -78,3 +78,17 @@ Next eligible work: continue the independent dependency-ready tasks; T031 remain
 - `pnpm lint`: passed with 0 errors and four existing unused-disable warnings in untouched `visual-prototype-simulation/worker/worker-configuration.d.ts`.
 - `git diff --check`: passed; Git emitted only Windows line-ending normalization notices.
 - No runtime code, migration, package, tenant setting or provider permission changed in this update. AC2 remains open: report-release and fieldwork-evidence child workflows are not yet implemented, so a real PostgreSQL release-versus-child-edit race cannot yet be exercised.
+
+## T028 closeout addendum — 2026-10-05
+
+Status: DONE. The kernel acceptance is now bounded to its existing owner: every lifecycle edge and denied jump is checked against PostgreSQL, and a final-package release without owner evidence must return `SIGNED_LOR_MISSING` without changing engagement state/version or appending transition history. The full release-versus-fieldwork-child-edit race remains required under T129 AC4 against the actual release readiness manifest; that acceptance is still open and no package-release behavior is claimed.
+
+The dependency clarification is recorded in `docs/guides/10-corrections-to-prior-plan.md`. T028 remains a prerequisite of T129, so the race stays with T129 rather than creating a T028↔T129 dependency cycle.
+
+Closeout verification on 2026-10-05:
+- `pnpm verify:task -- T028`: passed; PostgreSQL lifecycle integration 1/1, Nest/Fastify API contract integration 1/1; command ended `T028: recorded checks passed`.
+- `pnpm verify:affected`: passed; boundaries, server/test typechecks, Angular production build, Vitest 30 files / 137 tests.
+- `pnpm lint`: passed.
+- `git diff --check`: passed; Git emitted only Windows line-ending normalization notices.
+
+Changed in this closeout: lifecycle integration assertion, T028/T129 acceptance ownership, correction guide, execution ledger, implementation status and this addendum. No runtime behavior, migration, dependency, tenant setting or provider permission changed. T042 is the next eligible task because T023, T028 and T041 are DONE.

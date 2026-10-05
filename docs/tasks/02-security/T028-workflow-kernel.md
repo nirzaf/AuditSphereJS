@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `IN_PROGRESS` |
+| Current status | `DONE` |
 | Execution class | `CORE` |
 | Phase | 02-security — Identity, authorization and application controls |
 | Owner area | `workflow` |
@@ -58,16 +59,17 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 - [x] Preserve all 11 named states and the source managerial-review-to-fieldwork rework edge.
 - [x] Implement explicit commands/guards rather than PATCH state; lifecycle commands remain separate from fine-grained workprogram records so parallel reviews remain possible.
-- [ ] Complete version-bound state history and prove the engagement barrier against the release-versus-child-edit race (the kernel/history checks exist; AC2 race evidence remains open).
+- [x] Keep version-bound state history and fail closed when final-package readiness evidence is absent; do not advance lifecycle state or append history on a blocked release.
+- [x] The full PostgreSQL release-versus-fieldwork-child-edit race is owned by T129 AC4, where the package readiness manifest and release transaction exist; preserve that acceptance until T129 passes.
 - [x] Return structured unmet-gate reasons; rejected prospects are retained as a reasoned terminal outcome.
 
 ## Acceptance criteria and required tests
 
 - [x] **AC1:** PostgreSQL integration coverage exercises every declared command from every lifecycle source state, validates each gate and successful target or expected evidence blocker, and denies every unlisted jump.
-- [ ] **AC2:** A release transition racing a fieldwork edit cannot approve stale evidence.
+- [x] **AC2:** Without release-owner evidence, `RELEASE_FINAL_PACKAGE` returns its structured blocker and leaves engagement state, version and transition history unchanged. The full concurrent release-versus-child-edit acceptance is retained under T129 AC4.
 - [x] **AC3:** No test fixture bypass endpoint is shipped to production.
 
-Exercise source transitions, denied jumps, stale versions and child-edit/transition races.
+Exercise source transitions, denied jumps, stale versions and blocked-release non-mutation. The full release-versus-child-edit race is tested under T129 AC4.
 
 Test both the successful change and the denied/failure path. Keep the test set proportional to the task; use the actual PostgreSQL engine for financial constraints, locking and concurrent-write claims.
 
