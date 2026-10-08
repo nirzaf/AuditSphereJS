@@ -56,6 +56,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-05 — Firm-wide mapping memory
 
+**Resolved 2026-10-08 by the owner: option A.** Recorded as D17.
+
 **Context.** Memory is client-scoped (T080). The card asks whether an approved firm-wide memory exists.
 
 **Options.** A: client-scoped only. B: firm-wide suggestions as a lower-priority source, always labelled.
@@ -66,6 +68,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-06 — Supersession of finalized TB versions
 
+**Resolved 2026-10-08 by the owner: option A.** Recorded as D18.
+
 **Context.** Two imports in one engagement can both be `FINALIZED` today (T081 handoff).
 
 **Options.** A: at most one active finalized version per engagement; a new one requires an explicit supersede command naming the old version and invalidating its approvals. B: several finalized versions; the latest publication wins.
@@ -75,6 +79,8 @@ Format: context → options → recommendation (engineering view only) → block
 **Blocks.** T081, T089, T082.
 
 ## DN-07 — Benchmarks outside the specification, and "normalized" PBT
+
+**Resolved 2026-10-08 by the owner: remove the extras; normalize PBT only through recorded adjustments.** Recorded as D19.
 
 **Context.** CURRENT lists four benchmarks; code also offers `TOTAL_EXPENSES` and `MAPPED_LINE`; D05 says not to substitute them silently. CURRENT says "Normalized Profit Before Tax"; code excludes tax lines only.
 
@@ -131,6 +137,8 @@ Format: context → options → recommendation (engineering view only) → block
 **Blocks.** T143.
 
 ## DN-13 — Parallel lanes instead of one serial dependency chain
+
+**Resolved 2026-10-08 by the owner: option B.** Recorded as D20.
 
 **Context.** The longest card dependency chain holds 78 of the 114 remaining tasks (`05-roadmap.md` §1). Some edges are sequencing choices rather than data needs: T052 (client directory) ← T051 (TB proof gate); T078 (TB column mapping) ← T077 (portal isolation); T140 (time entry) ← T088 (planning approval). Work already lands out of order.
 

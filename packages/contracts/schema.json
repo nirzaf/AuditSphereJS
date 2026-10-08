@@ -5731,15 +5731,8 @@
           "REVENUE",
           "PROFIT_BEFORE_TAX",
           "TOTAL_ASSETS",
-          "NET_ASSETS",
-          "TOTAL_EXPENSES",
-          "MAPPED_LINE"
+          "NET_ASSETS"
         ]
-      },
-      "destinationCode": {
-        "type": "string",
-        "minLength": 1,
-        "maxLength": 120
       },
       "ratePercent": {
         "type": "string",
@@ -5752,6 +5745,45 @@
       "trivialPercent": {
         "type": "string",
         "pattern": "^-?\\d{1,3}(\\.\\d{1,4})?$"
+      },
+      "roundedPlanningMateriality": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "normalizationAdjustments": {
+        "maxItems": 20,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "description": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 200
+            },
+            "amount": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 10,
+              "maxLength": 500
+            },
+            "approvedBy": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            }
+          },
+          "required": [
+            "description",
+            "amount",
+            "reason",
+            "approvedBy"
+          ],
+          "additionalProperties": false
+        }
       },
       "idempotencyKey": {
         "type": "string",
@@ -6178,6 +6210,10 @@
         "type": "string",
         "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
       },
+      "rawPlanningMateriality": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
       "planningMateriality": {
         "type": "string",
         "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
@@ -6189,6 +6225,48 @@
       "sadThreshold": {
         "type": "string",
         "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "normalizationAdjustments": {
+        "anyOf": [
+          {
+            "maxItems": 20,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "description": {
+                  "type": "string",
+                  "minLength": 3,
+                  "maxLength": 200
+                },
+                "amount": {
+                  "type": "string",
+                  "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                },
+                "reason": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 500
+                },
+                "approvedBy": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                }
+              },
+              "required": [
+                "description",
+                "amount",
+                "reason",
+                "approvedBy"
+              ],
+              "additionalProperties": false
+            }
+          },
+          {
+            "type": "null"
+          }
+        ]
       },
       "ratePercent": {
         "type": "string",
@@ -6260,9 +6338,11 @@
       "sourceLineCount",
       "currency",
       "benchmarkAmount",
+      "rawPlanningMateriality",
       "planningMateriality",
       "tolerableError",
       "sadThreshold",
+      "normalizationAdjustments",
       "ratePercent",
       "performancePercent",
       "trivialPercent",
@@ -6294,9 +6374,7 @@
           "REVENUE",
           "PROFIT_BEFORE_TAX",
           "TOTAL_ASSETS",
-          "NET_ASSETS",
-          "TOTAL_EXPENSES",
-          "MAPPED_LINE"
+          "NET_ASSETS"
         ]
       },
       "currency": {
@@ -6304,6 +6382,10 @@
         "pattern": "^[A-Z]{3}$"
       },
       "benchmarkAmount": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "rawPlanningMateriality": {
         "type": "string",
         "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
       },
@@ -6340,6 +6422,7 @@
       "benchmarkKind",
       "currency",
       "benchmarkAmount",
+      "rawPlanningMateriality",
       "planningMateriality",
       "tolerableError",
       "sadThreshold",

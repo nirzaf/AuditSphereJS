@@ -228,5 +228,61 @@
     "approvalEvidence": "Owner answers to DN-04: no required-account list; period from engagement, mismatch blocks; duplicates refused; only balance and mapping failures block.",
     "implementationDefault": "No required-account list. The statutory period is stored on the engagement and snapshotted on each Trial Balance import when it is staged; finalization refuses a missing period and any period that differs from the snapshot. A duplicate engagement is one with the same client, name and period. Duplicate account codes in a file are refused. Only unbalanced periods and unmapped accounts block finalization.",
     "decisionRecord": "docs/02-decisions-needed.md#dn-04--trial-balance-validation-policies"
+  },
+  {
+    "id": "D17",
+    "title": "Mapping memory scope (DN-05)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "docs/02-decisions-needed.md DN-05; T080",
+    "ambiguity": "Mapping memory is client-scoped in code. The card asked whether a firm-wide approved memory exists.",
+    "approvedBy": "Repository owner, in the chat decision for DN-05 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-05: \"A: client-scoped only (Recommended)\".",
+    "implementationDefault": "Mapping memory is client-scoped only. Firm-wide suggestions are not offered until a firm approval exists for them. Every suggestion names its source approval.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-05"
+  },
+  {
+    "id": "D18",
+    "title": "Supersession of finalized Trial Balance versions (DN-06)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "docs/02-decisions-needed.md DN-06; T081; T089; T082",
+    "ambiguity": "Two imports in one engagement could both be FINALIZED, so materiality, sampling and the SRM could cite different versions.",
+    "approvedBy": "Repository owner, in the chat decision for DN-06 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-06: \"A: one active version; supersede explicitly (Recommended)\".",
+    "implementationDefault": "At most one active finalized Trial Balance version per engagement. A new version is finalized only after an explicit supersede command names the earlier version, invalidates the approvals that cite it, and is audited.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-06"
+  },
+  {
+    "id": "D19",
+    "title": "Materiality benchmarks and normalized profit before tax (DN-07)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "docs/requirements/CURRENT.md 4.2.4 and 3.2; docs/02-decisions-needed.md DN-07; T085; T086",
+    "ambiguity": "The code offered two benchmarks outside the specification, its ranges differed from CURRENT, the manager rounding rule was absent, and profit before tax was not normalized.",
+    "approvedBy": "Repository owner, in the chat decision for DN-07 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-07: \"Remove extras; PBT adjustments as recorded inputs (Recommended)\".",
+    "implementationDefault": "Only the four CURRENT benchmarks are offered, with CURRENT ranges (PBT 5-10 %, revenue 0.5-2 %, total assets 0.5-1 %, equity or net assets 1-2 %, TE 50-75 % of PM, SAD 3-5 % of PM). Normalized PBT is the tax-excluded PBT plus recorded, approved adjustments supplied to the pure calculator. Manager rounding of PM is limited to plus or minus 5 %.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-07"
+  },
+  {
+    "id": "D20",
+    "title": "Parallel lanes instead of one serial dependency chain (DN-13)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "docs/02-decisions-needed.md DN-13; docs/05-roadmap.md; docs/06-spikes.md SPK-05",
+    "ambiguity": "The longest card dependency chain held most remaining tasks, and several edges were sequencing choices rather than data needs.",
+    "approvedBy": "Repository owner, in the chat decision for DN-13 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-13: \"B: keep data edges, drop sequencing edges (Recommended)\".",
+    "implementationDefault": "Only data dependencies are kept. Sequencing edges are replaced by lane entry criteria and each removed edge is recorded in its task card. Gates keep their full dependencies.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-13"
   }
 ]

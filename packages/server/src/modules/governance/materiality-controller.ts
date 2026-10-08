@@ -13,7 +13,7 @@ type FixedMoney = string | { toFixed(scale: number): string };
 type MaterialityRecordViewSource = {
   id: string; publicationId: string; taxonomyVersionId: string; benchmarkKind: string; destinationCode: string | null;
   sourceLineCount: number; currency: string; benchmarkAmount: FixedMoney;
-  planningMateriality: FixedMoney; tolerableError: FixedMoney;
+  rawPlanningMateriality?: FixedMoney | null; planningMateriality: FixedMoney; tolerableError: FixedMoney; normalizationAdjustments?: unknown;
   sadThreshold: FixedMoney; ratePercent: FixedMoney;
   performancePercent: FixedMoney; trivialPercent: FixedMoney;
   policyVersion: string; inputHash: string; status: string; calculatedAt: Date; approvedAt: Date | null;
@@ -21,12 +21,23 @@ type MaterialityRecordViewSource = {
 };
 const fixedMoney = (value: FixedMoney) => typeof value === 'string' ? value : value.toFixed(6);
 
+/** Assessments calculated before D19 carry no adjustments; new ones carry the recorded, approved adjustments. */
+function normalizationView(value: unknown) {
+  if (!Array.isArray(value)) return null;
+  return value.map((item) => {
+    const record = item as { description: string; amount: string; reason: string; approvedBy: string };
+    return { description: record.description, amount: record.amount, reason: record.reason, approvedBy: record.approvedBy };
+  });
+}
+
 function materialityView(assessment: MaterialityRecordViewSource) {
   return {
     assessmentId: assessment.id, publicationId: assessment.publicationId, taxonomyVersionId: assessment.taxonomyVersionId,
     benchmarkKind: assessment.benchmarkKind, destinationCode: assessment.destinationCode, sourceLineCount: assessment.sourceLineCount,
     currency: assessment.currency, benchmarkAmount: fixedMoney(assessment.benchmarkAmount),
+    rawPlanningMateriality: fixedMoney(assessment.rawPlanningMateriality ?? assessment.planningMateriality),
     planningMateriality: fixedMoney(assessment.planningMateriality), tolerableError: fixedMoney(assessment.tolerableError),
+    normalizationAdjustments: normalizationView(assessment.normalizationAdjustments),
     sadThreshold: fixedMoney(assessment.sadThreshold), ratePercent: fixedMoney(assessment.ratePercent),
     performancePercent: fixedMoney(assessment.performancePercent), trivialPercent: fixedMoney(assessment.trivialPercent),
     policyVersion: assessment.policyVersion, inputHash: assessment.inputHash, status: assessment.status,

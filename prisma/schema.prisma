@@ -891,7 +891,9 @@ model MaterialityAssessment {
   sourceLineCount     Int
   currency            String
   benchmarkAmount     Decimal            @db.Decimal(28, 6)
+  rawPlanningMateriality Decimal?        @db.Decimal(28, 6)
   planningMateriality Decimal            @db.Decimal(28, 6)
+  normalizationAdjustments Json?         @db.JsonB
   tolerableError      Decimal            @db.Decimal(28, 6)
   sadThreshold        Decimal            @db.Decimal(28, 6)
   ratePercent         Decimal            @db.Decimal(28, 6)

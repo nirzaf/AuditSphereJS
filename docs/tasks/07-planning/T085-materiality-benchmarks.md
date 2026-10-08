@@ -44,7 +44,7 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
 
-**Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
+**Applicable decisions:** D19 (DN-07, resolved 2026-10-08): only the four CURRENT benchmarks are offered, with their CURRENT ranges; profit before tax is normalized only through recorded, approved adjustments. D05 (numeric boundaries and rounding) applies to the range checks.
 
 ## Implementation checklist
 

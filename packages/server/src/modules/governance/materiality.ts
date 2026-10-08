@@ -4,37 +4,50 @@ import { Decimal6 } from '../../platform/decimal6.js';
 /**
  * Pure materiality and risk-band rules, ported from the pinned source
  * (AuditSphereOps.Application/Audit/MaterialityCalculator.cs and
- * AuditSphereOps.Domain/Audit/MaterialityAndRiskBands.cs).
+ * AuditSphereOps.Domain/Audit/MaterialityAndRiskBands.cs), then aligned to
+ * docs/requirements/CURRENT.md section 4.2.4 by decision D19.
  *
  * No database, clock or randomness. A benchmark that is not positive fails closed rather than
  * producing a zero or negative threshold, and out-of-policy rates are rejected rather than clamped.
+ * Only the four CURRENT benchmarks are offered. Profit before tax is normalized only through
+ * recorded, approved adjustments that the caller supplies.
  */
-export const materialityBenchmarks = ['REVENUE', 'PROFIT_BEFORE_TAX', 'TOTAL_ASSETS', 'NET_ASSETS', 'TOTAL_EXPENSES', 'MAPPED_LINE'] as const;
+export const materialityBenchmarks = ['REVENUE', 'PROFIT_BEFORE_TAX', 'TOTAL_ASSETS', 'NET_ASSETS'] as const;
 export type MaterialityBenchmark = (typeof materialityBenchmarks)[number];
-export const materialityPolicyVersion = 'STE-MATERIALITY-2026.1';
+export const materialityPolicyVersion = 'STE-MATERIALITY-2026.2';
 export const riskBands = ['GREEN', 'AMBER', 'RED'] as const;
 export type RiskBand = (typeof riskBands)[number];
 
+/** CURRENT 4.2.4 benchmark percentages. The source calculator's wider ranges are not used (D19). */
 const rateRanges: Record<string, { min: Decimal6; max: Decimal6 }> = {
   REVENUE: { min: Decimal6.from('0.5'), max: Decimal6.from('2') },
-  PROFIT_BEFORE_TAX: { min: Decimal6.from('3'), max: Decimal6.from('10') },
-  TOTAL_ASSETS: { min: Decimal6.from('0.5'), max: Decimal6.from('2') },
-  NET_ASSETS: { min: Decimal6.from('1'), max: Decimal6.from('5') },
-  TOTAL_EXPENSES: { min: Decimal6.from('0.5'), max: Decimal6.from('2') },
-  MAPPED_LINE: { min: Decimal6.from('0.5'), max: Decimal6.from('10') },
+  PROFIT_BEFORE_TAX: { min: Decimal6.from('5'), max: Decimal6.from('10') },
+  TOTAL_ASSETS: { min: Decimal6.from('0.5'), max: Decimal6.from('1') },
+  NET_ASSETS: { min: Decimal6.from('1'), max: Decimal6.from('2') },
 };
+/** CURRENT 4.2.4: tolerable error is 50%–75% of planning materiality. */
 const performanceRange = { min: Decimal6.from('50'), max: Decimal6.from('75') };
-const trivialRange = { min: Decimal6.from('1'), max: Decimal6.from('5') };
+/** CURRENT 4.2.4: the SAD threshold is 3%–5% of planning materiality. */
+const trivialRange = { min: Decimal6.from('3'), max: Decimal6.from('5') };
+/** CURRENT 4.2.4: manager practical rounding may move planning materiality by at most this share of the computed value. */
+export const practicalRoundingLimitPercent = Decimal6.from('5');
 const incomeSections = ['INCOME', 'REVENUE', 'P&L', 'PROFIT_LOSS', 'P_AND_L'];
 
 /** One mapped trial-balance line: signed amount, debit positive, in its statement section. */
 export type MappedBenchmarkLine = { sourceAccountCode: string; destinationCode: string; statementSection: string; amount: Decimal6 };
 
+/** A recorded, approved one-off adjustment to profit before tax (D19). A positive amount increases profit. */
+export type NormalizationAdjustment = { description: string; amount: Decimal6 };
+
 const inSection = (line: MappedBenchmarkLine, names: readonly string[]) => names.includes(line.statementSection.trim().toUpperCase());
 const isTax = (line: MappedBenchmarkLine) => line.destinationCode.toUpperCase().includes('TAX');
 
-/** Selects the lines that make up the benchmark. Returns null when no supported benchmark applies. */
-export function deriveBenchmark(kind: string, destinationCode: string | null, lines: readonly MappedBenchmarkLine[]): { amount: Decimal6; lineCount: number } | null {
+/**
+ * Selects the lines that make up the benchmark and applies any normalization. Returns null when no
+ * supported benchmark applies. Normalization is accepted only for profit before tax.
+ */
+export function deriveBenchmark(kind: string, lines: readonly MappedBenchmarkLine[], adjustments: readonly NormalizationAdjustment[] = []): { amount: Decimal6; lineCount: number; normalization: Decimal6 } | null {
+  if (kind !== 'PROFIT_BEFORE_TAX' && adjustments.length > 0) throw new Error('Only profit before tax can be normalized.');
   let chosen: MappedBenchmarkLine[];
   let sign: (value: Decimal6) => Decimal6;
   switch (kind) {
@@ -42,18 +55,12 @@ export function deriveBenchmark(kind: string, destinationCode: string | null, li
     case 'PROFIT_BEFORE_TAX': chosen = lines.filter((line) => (inSection(line, incomeSections) || inSection(line, ['EXPENSE', 'EXPENSES'])) && !isTax(line)); sign = (value) => value.negate(); break;
     case 'TOTAL_ASSETS': chosen = lines.filter((line) => inSection(line, ['ASSETS', 'ASSET'])); sign = (value) => value; break;
     case 'NET_ASSETS': chosen = lines.filter((line) => inSection(line, ['ASSETS', 'ASSET', 'LIABILITIES', 'LIABILITY'])); sign = (value) => value; break;
-    case 'TOTAL_EXPENSES': chosen = lines.filter((line) => inSection(line, ['EXPENSE', 'EXPENSES'])); sign = (value) => value; break;
-    case 'MAPPED_LINE': {
-      if (!destinationCode || !destinationCode.trim()) return null;
-      const wanted = destinationCode.trim().toLowerCase();
-      chosen = lines.filter((line) => line.destinationCode.toLowerCase() === wanted);
-      sign = (value) => value.abs();
-      break;
-    }
     default: return null;
   }
   if (chosen.length === 0) return null;
-  return { amount: sign(Decimal6.sum(chosen.map((line) => line.amount))), lineCount: chosen.length };
+  const base = sign(Decimal6.sum(chosen.map((line) => line.amount)));
+  const normalization = adjustments.length > 0 ? Decimal6.sum(adjustments.map((adjustment) => adjustment.amount)) : Decimal6.zero();
+  return { amount: base.add(normalization), lineCount: chosen.length, normalization };
 }
 
 /** Returns a policy message when the rate, tolerable-error percentage or SAD percentage is out of policy. */
@@ -69,29 +76,56 @@ export function validateMateriality(kind: string, ratePercent: Decimal6, perform
   return null;
 }
 
-export type MaterialityFigures = { benchmarkAmount: Decimal6; sourceLineCount: number; planningMateriality: Decimal6; tolerableError: Decimal6; sadThreshold: Decimal6 };
+/**
+ * Manager practical rounding (CURRENT 4.2.4). The rounded planning materiality must stay within
+ * plus or minus 5% of the computed value. The comparison is exact: |rounded − computed| × 100 must
+ * not exceed computed × 5.
+ */
+export function roundingPolicyMessage(computed: Decimal6, rounded: Decimal6): string | null {
+  if (!computed.isPositive()) return 'The computed planning materiality must be positive.';
+  if (!rounded.isPositive()) return 'The rounded planning materiality must be positive.';
+  const deviation = rounded.subtract(computed).abs();
+  if (deviation.multiply(Decimal6.from('100')).compare(computed.multiply(practicalRoundingLimitPercent)) > 0)
+    return `Manager rounding may move planning materiality by at most ${practicalRoundingLimitPercent.toFixed(6)}% of the computed value under ${materialityPolicyVersion}.`;
+  return null;
+}
 
-/** Three-tier materiality. PM = benchmark × rate; TE = PM × performance; SAD = PM × trivial. */
-export function calculateMateriality(benchmarkAmount: Decimal6, sourceLineCount: number, ratePercent: Decimal6, performancePercent: Decimal6, trivialPercent: Decimal6): MaterialityFigures {
+export type MaterialityFigures = { benchmarkAmount: Decimal6; sourceLineCount: number; rawPlanningMateriality: Decimal6; planningMateriality: Decimal6; tolerableError: Decimal6; sadThreshold: Decimal6 };
+
+/**
+ * Three-tier materiality. PM = benchmark × rate, optionally rounded within policy; TE = PM × performance;
+ * SAD = PM × trivial. The computed value is kept beside the applied value so the rounding is visible.
+ */
+export function calculateMateriality(benchmarkAmount: Decimal6, sourceLineCount: number, ratePercent: Decimal6, performancePercent: Decimal6, trivialPercent: Decimal6, roundedPlanningMateriality?: Decimal6): MaterialityFigures {
   if (!benchmarkAmount.isPositive()) throw new Error('The benchmark must be positive.');
-  const planningMateriality = Decimal6.percentOf(benchmarkAmount, ratePercent);
+  const rawPlanningMateriality = Decimal6.percentOf(benchmarkAmount, ratePercent);
+  if (roundedPlanningMateriality) {
+    const problem = roundingPolicyMessage(rawPlanningMateriality, roundedPlanningMateriality);
+    if (problem) throw new Error(problem);
+  }
+  const planningMateriality = roundedPlanningMateriality ?? rawPlanningMateriality;
   return {
     benchmarkAmount,
     sourceLineCount,
+    rawPlanningMateriality,
     planningMateriality,
     tolerableError: Decimal6.percentOf(planningMateriality, performancePercent),
     sadThreshold: Decimal6.percentOf(planningMateriality, trivialPercent),
   };
 }
 
+/** Input hash for an assessment. The 'v2' prefix separates these hashes from the earlier calculator's. */
 export function materialityInputHash(input: {
-  mappingVersionId: string; datasetDigest: string; kind: string; destinationCode: string | null;
-  benchmarkAmount: Decimal6; ratePercent: Decimal6; performancePercent: Decimal6; trivialPercent: Decimal6;
+  mappingVersionId: string; datasetDigest: string; kind: string;
+  benchmarkAmount: Decimal6; normalization: readonly NormalizationAdjustment[];
+  rawPlanningMateriality: Decimal6; planningMateriality: Decimal6;
+  ratePercent: Decimal6; performancePercent: Decimal6; trivialPercent: Decimal6;
 }): string {
+  const adjustments = input.normalization.map((adjustment) => `${adjustment.description.trim()}=${adjustment.amount.toFixed(6)}`).sort().join(';');
   return createHash('sha256').update([
-    'materiality.v1', materialityPolicyVersion, input.mappingVersionId.toLowerCase(), input.datasetDigest, input.kind,
-    (input.destinationCode ?? '').trim().toUpperCase(),
-    input.benchmarkAmount.toFixed(6), input.ratePercent.toFixed(4), input.performancePercent.toFixed(4), input.trivialPercent.toFixed(4),
+    'materiality.v2', materialityPolicyVersion, input.mappingVersionId.toLowerCase(), input.datasetDigest, input.kind,
+    input.benchmarkAmount.toFixed(6), adjustments, input.rawPlanningMateriality.toFixed(6), input.planningMateriality.toFixed(6),
+    input.ratePercent.toFixed(4), input.performancePercent.toFixed(4), input.trivialPercent.toFixed(4),
   ].join('|')).digest('hex');
 }
 

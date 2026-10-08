@@ -2,11 +2,11 @@ import { BadRequestException, ConflictException, ForbiddenException, NotFoundExc
 import { createHash } from 'node:crypto';
 import { db } from '../../platform/db.js';
 import { Decimal6 } from '../../platform/decimal6.js';
-import { requireCapability, type Scope } from '../../platform/authorization.js';
+import { hasCapability, requireCapability, type Scope } from '../../platform/authorization.js';
 import { withUnitOfWork, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { calculateMaterialitySchema, approveMaterialitySchema } from '@auditsphere/contracts';
 import type { PaginationQuery } from '@auditsphere/contracts';
-import { calculateMateriality, deriveBenchmark, materialityInputHash, materialityPolicyVersion, validateMateriality, type MappedBenchmarkLine } from './materiality.js';
+import { calculateMateriality, deriveBenchmark, materialityInputHash, materialityPolicyVersion, roundingPolicyMessage, validateMateriality, type MappedBenchmarkLine, type NormalizationAdjustment } from './materiality.js';
 
 /**
  * Persisted planning materiality bound to an exact published accounting version and taxonomy.
@@ -56,26 +56,48 @@ export async function calculateMaterialityAssessment(actorId: string, engagement
     const trivialPercent = Decimal6.from(body.trivialPercent);
     const policyMessage = validateMateriality(body.benchmarkKind, ratePercent, performancePercent, trivialPercent);
     if (policyMessage) throw new BadRequestException(policyMessage);
-    const derived = deriveBenchmark(body.benchmarkKind, body.destinationCode ?? null, lines);
+    // D19: normalization is recorded per adjustment, for profit before tax only, and approved by someone other than the calculator.
+    const adjustments = body.normalizationAdjustments ?? [];
+    if (adjustments.length > 0 && body.benchmarkKind !== 'PROFIT_BEFORE_TAX') throw new BadRequestException('Only profit before tax can be normalized');
+    for (const adjustment of adjustments) {
+      if (adjustment.approvedBy === actorId) throw new ForbiddenException(`The calculator cannot approve the adjustment "${adjustment.description}"`);
+      if (!(await hasCapability(tx, adjustment.approvedBy, 'MATERIALITY_APPROVE', firmScope(engagement)))) {
+        throw new BadRequestException(`The approver of "${adjustment.description}" does not hold materiality approval authority on this engagement`);
+      }
+    }
+    const normalization: Array<NormalizationAdjustment & { reason: string; approvedBy: string }> = adjustments.map((adjustment) => ({
+      description: adjustment.description, amount: Decimal6.from(adjustment.amount), reason: adjustment.reason, approvedBy: adjustment.approvedBy,
+    }));
+    const derived = deriveBenchmark(body.benchmarkKind, lines, normalization);
     if (!derived) throw new ConflictException('The requested benchmark is not available from the published balances');
-    const figures = calculateMateriality(derived.amount, derived.lineCount, ratePercent, performancePercent, trivialPercent);
+    if (!derived.amount.isPositive()) throw new BadRequestException('The benchmark is not positive after normalization; a loss benchmark fails closed');
+    const roundedPlanningMateriality = body.roundedPlanningMateriality ? Decimal6.from(body.roundedPlanningMateriality) : undefined;
+    if (roundedPlanningMateriality) {
+      const problem = roundingPolicyMessage(Decimal6.percentOf(derived.amount, ratePercent), roundedPlanningMateriality);
+      if (problem) throw new BadRequestException(problem);
+    }
+    const figures = calculateMateriality(derived.amount, derived.lineCount, ratePercent, performancePercent, trivialPercent, roundedPlanningMateriality);
     const inputHash = materialityInputHash({
-      mappingVersionId: approval.taxonomyVersionId, datasetDigest: publication.digest, kind: body.benchmarkKind, destinationCode: body.destinationCode ?? null,
-      benchmarkAmount: figures.benchmarkAmount, ratePercent, performancePercent, trivialPercent,
+      mappingVersionId: approval.taxonomyVersionId, datasetDigest: publication.digest, kind: body.benchmarkKind,
+      benchmarkAmount: figures.benchmarkAmount, normalization, rawPlanningMateriality: figures.rawPlanningMateriality,
+      planningMateriality: figures.planningMateriality, ratePercent, performancePercent, trivialPercent,
     });
     const assessment = await tx.materialityAssessment.create({ data: {
       firmId: engagement.firmId, clientId: engagement.clientId, engagementId,
       publicationId: publication.id, taxonomyVersionId: approval.taxonomyVersionId,
-      benchmarkKind: body.benchmarkKind, destinationCode: body.destinationCode ?? null, sourceLineCount: figures.sourceLineCount, currency: publication.currency,
-      benchmarkAmount: figures.benchmarkAmount.toFixed(6), planningMateriality: figures.planningMateriality.toFixed(6),
+      benchmarkKind: body.benchmarkKind, destinationCode: null, sourceLineCount: figures.sourceLineCount, currency: publication.currency,
+      benchmarkAmount: figures.benchmarkAmount.toFixed(6), rawPlanningMateriality: figures.rawPlanningMateriality.toFixed(6),
+      planningMateriality: figures.planningMateriality.toFixed(6),
       tolerableError: figures.tolerableError.toFixed(6), sadThreshold: figures.sadThreshold.toFixed(6),
       ratePercent: ratePercent.toFixed(6), performancePercent: performancePercent.toFixed(6), trivialPercent: trivialPercent.toFixed(6),
       policyVersion: materialityPolicyVersion, inputHash, calculatedBy: actorId,
+      ...(normalization.length > 0 ? { normalizationAdjustments: normalization.map((adjustment) => ({ description: adjustment.description, amount: adjustment.amount.toFixed(6), reason: adjustment.reason, approvedBy: adjustment.approvedBy })) } : {}),
     } });
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'MATERIALITY_CALCULATED', payload: { assessmentId: assessment.id, benchmarkKind: body.benchmarkKind, publicationId: publication.id, inputHash } } });
     const result = {
       assessmentId: assessment.id, status: 'DRAFT', benchmarkKind: body.benchmarkKind, currency: publication.currency,
-      benchmarkAmount: figures.benchmarkAmount.toFixed(6), planningMateriality: figures.planningMateriality.toFixed(6),
+      benchmarkAmount: figures.benchmarkAmount.toFixed(6), rawPlanningMateriality: figures.rawPlanningMateriality.toFixed(6),
+      planningMateriality: figures.planningMateriality.toFixed(6),
       tolerableError: figures.tolerableError.toFixed(6), sadThreshold: figures.sadThreshold.toFixed(6),
       inputHash, publicationId: publication.id, publicationSequence: publication.sequence,
     };

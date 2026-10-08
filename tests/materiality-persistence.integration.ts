@@ -114,6 +114,29 @@ test('materiality assessments bind a published version, enforce segregation of d
       assert.equal(latest.status, 'APPROVED');
       assert.equal(latest.currentPublicationId, second.publicationId);
 
+      // D19: profit before tax is normalized only through a recorded adjustment approved by someone else,
+      // and manager rounding stays within plus or minus 5 %. Profit before tax on the second version is 1,000,000.
+      const noAuthorityId = randomUUID();
+      await db.user.create({ data: { id: noAuthorityId, email: 'no-authority@example.test', role: 'APPROVER' } });
+      const adjustment = { description: 'One-off legal settlement', amount: '100000', reason: 'Settled dispute, not expected to recur', approvedBy: partnerId };
+      const normalized = await calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'PROFIT_BEFORE_TAX', ratePercent: '5', performancePercent: '75', trivialPercent: '3', roundedPlanningMateriality: '57500', normalizationAdjustments: [adjustment], idempotencyKey: randomUUID() }) as { assessmentId: string; benchmarkAmount: string; rawPlanningMateriality: string; planningMateriality: string; tolerableError: string; sadThreshold: string };
+      assert.equal(normalized.benchmarkAmount, '1100000.000000');
+      assert.equal(normalized.rawPlanningMateriality, '55000.000000');
+      assert.equal(normalized.planningMateriality, '57500.000000');
+      assert.equal(normalized.tolerableError, '43125.000000');
+      assert.equal(normalized.sadThreshold, '1725.000000');
+      const storedNormalized = await db.materialityAssessment.findUniqueOrThrow({ where: { id: normalized.assessmentId } });
+      assert.equal((storedNormalized.normalizationAdjustments as Array<{ approvedBy: string }>)[0].approvedBy, partnerId);
+      await assert.rejects(calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'PROFIT_BEFORE_TAX', ratePercent: '5', performancePercent: '75', trivialPercent: '3', normalizationAdjustments: [{ ...adjustment, approvedBy: preparerId }], idempotencyKey: randomUUID() }), /cannot approve the adjustment/);
+      await assert.rejects(calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'PROFIT_BEFORE_TAX', ratePercent: '5', performancePercent: '75', trivialPercent: '3', normalizationAdjustments: [{ ...adjustment, approvedBy: noAuthorityId }], idempotencyKey: randomUUID() }), /does not hold materiality approval authority/);
+      await assert.rejects(calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'REVENUE', ratePercent: '1', performancePercent: '75', trivialPercent: '5', normalizationAdjustments: [adjustment], idempotencyKey: randomUUID() }), /Only profit before tax/);
+      await assert.rejects(calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'PROFIT_BEFORE_TAX', ratePercent: '5', performancePercent: '75', trivialPercent: '3', roundedPlanningMateriality: '60000', idempotencyKey: randomUUID() }), /at most 5.000000%/);
+      await assert.rejects(calculateMaterialityAssessment(preparerId, engagementId, { benchmarkKind: 'TOTAL_EXPENSES', ratePercent: '1', performancePercent: '75', trivialPercent: '5', idempotencyKey: randomUUID() }));
+      // The database enforces the same rules for any writer, not only this service.
+      const constrained = { firmId, clientId, engagementId, publicationId: second.publicationId, taxonomyVersionId: taxonomy.id, benchmarkKind: 'REVENUE', sourceLineCount: 1, currency: 'QAR', benchmarkAmount: '2000000.000000', planningMateriality: '30000.000000', tolerableError: '15000.000000', sadThreshold: '1000.000000', ratePercent: '1.000000', performancePercent: '75.000000', trivialPercent: '5.000000', policyVersion: 'STE-MATERIALITY-2026.2', inputHash: 'b'.repeat(64), calculatedBy: preparerId };
+      await assert.rejects(db.materialityAssessment.create({ data: { ...constrained, rawPlanningMateriality: '20000.000000' } }), /materiality_rounding_check/);
+      await assert.rejects(db.materialityAssessment.create({ data: { ...constrained, rawPlanningMateriality: null, normalizationAdjustments: [adjustment] } }), /materiality_normalization_check/);
+
       // An approved assessment is frozen; assessments are never deleted.
       await assert.rejects(db.$executeRaw`UPDATE "MaterialityAssessment" SET "planningMateriality" = 1 WHERE id = ${recalculated.assessmentId}::uuid`, /immutable/);
       await assert.rejects(db.$executeRaw`DELETE FROM "MaterialityAssessment" WHERE id = ${recalculated.assessmentId}::uuid`, /append-only/);

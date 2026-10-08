@@ -41,7 +41,7 @@ export type { AuditEventInput, SecurityEventInput } from './platform/audit.js';
 export { FieldworkController } from './modules/fieldwork/controller.js';
 export { GovernanceController } from './modules/governance/controller.js';
 export { applyLifecycleCommand, lifecycleHistory, lifecycleGates, transitions, permittedCommands, canApply } from './modules/governance/lifecycle.js';
-export { deriveBenchmark, validateMateriality, calculateMateriality, materialityInputHash, riskBand, minimumRiskOwnerRank, riskRoute, materialityBenchmarks, materialityPolicyVersion, riskBandRuleVersion } from './modules/governance/materiality.js';
+export { deriveBenchmark, validateMateriality, calculateMateriality, materialityInputHash, riskBand, minimumRiskOwnerRank, riskRoute, materialityBenchmarks, materialityPolicyVersion, riskBandRuleVersion, roundingPolicyMessage, practicalRoundingLimitPercent } from './modules/governance/materiality.js';
 export { MaterialityController } from './modules/governance/materiality-controller.js';
 export { calculateMaterialityAssessment, approveMaterialityAssessment, latestMaterialityAssessment, listMaterialityAssessments } from './modules/governance/materiality-service.js';
 export { RiskController } from './modules/governance/risk-controller.js';
@@ -58,7 +58,7 @@ export { normalizedRequestHash, startOperation, completeOperation, recordUnknown
 export type { OperationScope, OperationKey, OperationStart } from './platform/idempotency.js';
 export { calculateQuotation, validateQuotation, quotationInputHash, requiredApprovals, commercialRuleKinds, defaultDiscountThresholdPercent, defaultApprovalRole, quotationCurrencyScale, minimumComplexity, maximumComplexity, maximumPercent, maximumQuotationLines, maximumHoursPerLine } from './modules/commercial/quotation.js';
 export type { QuotationPricingInput, QuotationPricingResult, QuotationLineInput, QuotationLineResult, CommercialApprovalRule, RequiredApproval } from './modules/commercial/quotation.js';
-export type { MappedBenchmarkLine, MaterialityFigures, RiskBand, MaterialityBenchmark } from './modules/governance/materiality.js';
+export type { MappedBenchmarkLine, MaterialityFigures, NormalizationAdjustment, RiskBand, MaterialityBenchmark } from './modules/governance/materiality.js';
 export type { Capability, Scope } from './platform/authorization.js';
 export { parseTrialBalance, parseTrialBalanceStream, TrialBalanceValidationError, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
 export { upload, importFromDocument, mapBatch, finalize, statementSummary } from './modules/fieldwork/service.js';

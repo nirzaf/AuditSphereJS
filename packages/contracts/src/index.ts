@@ -260,21 +260,33 @@ export const mappingSuggestionsSchema = z.object({
 });
 /** Percentages for materiality are strings so no binary floating point enters the calculation. */
 export const percentSchema = z.string().trim().regex(/^-?\d{1,3}(\.\d{1,4})?$/);
-export const materialityBenchmarkKinds = ['REVENUE', 'PROFIT_BEFORE_TAX', 'TOTAL_ASSETS', 'NET_ASSETS', 'TOTAL_EXPENSES', 'MAPPED_LINE'] as const;
+/** Benchmarks offered for new assessments (CURRENT 4.2.4, D19). */
+export const materialityBenchmarkKinds = ['REVENUE', 'PROFIT_BEFORE_TAX', 'TOTAL_ASSETS', 'NET_ASSETS'] as const;
+/** Kinds that earlier assessments may carry. They are read for history and never offered for new calculations (D19). */
+export const materialityHistoricalBenchmarkKinds = [...materialityBenchmarkKinds, 'TOTAL_EXPENSES', 'MAPPED_LINE'] as const;
+/** A recorded, approved adjustment to profit before tax. The approver must hold MATERIALITY_APPROVE and must not be the calculator. */
+export const normalizationAdjustmentSchema = z.object({
+  description: z.string().trim().min(3).max(200),
+  amount: moneySchema,
+  reason: z.string().trim().min(10).max(500),
+  approvedBy: z.uuid(),
+});
 export const calculateMaterialitySchema = z.object({
   benchmarkKind: z.enum(materialityBenchmarkKinds),
-  destinationCode: z.string().trim().min(1).max(120).optional(),
   ratePercent: percentSchema,
   performancePercent: percentSchema,
   trivialPercent: percentSchema,
+  roundedPlanningMateriality: moneySchema.optional(),
+  normalizationAdjustments: z.array(normalizationAdjustmentSchema).max(20).optional(),
   idempotencyKey: z.uuid(),
 });
 export const approveMaterialitySchema = z.object({ idempotencyKey: z.uuid() });
 export const materialityAssessmentSchema = z.object({
   assessmentId: z.uuid(), publicationId: z.uuid(), taxonomyVersionId: z.uuid(),
-  benchmarkKind: z.enum(materialityBenchmarkKinds), destinationCode: z.string().max(120).nullable(),
+  benchmarkKind: z.enum(materialityHistoricalBenchmarkKinds), destinationCode: z.string().max(120).nullable(),
   sourceLineCount: z.number().int().nonnegative(), currency: z.string().regex(/^[A-Z]{3}$/),
-  benchmarkAmount: moneySchema, planningMateriality: moneySchema, tolerableError: moneySchema, sadThreshold: moneySchema,
+  benchmarkAmount: moneySchema, rawPlanningMateriality: moneySchema, planningMateriality: moneySchema, tolerableError: moneySchema, sadThreshold: moneySchema,
+  normalizationAdjustments: z.array(normalizationAdjustmentSchema).max(20).nullable(),
   ratePercent: moneySchema, performancePercent: moneySchema, trivialPercent: moneySchema,
   policyVersion: z.string().trim().min(1).max(80), inputHash: z.string().regex(/^[a-f0-9]{64}$/),
   status: z.enum(['DRAFT', 'APPROVED']), calculatedAt: z.iso.datetime(), approvedAt: z.iso.datetime().nullable(),
@@ -283,7 +295,7 @@ export const materialityAssessmentSchema = z.object({
 export const materialityAssessmentsSchema = z.array(materialityAssessmentSchema).max(200);
 export const materialityCalculationResultSchema = z.object({
   assessmentId: z.uuid(), status: z.literal('DRAFT'), benchmarkKind: z.enum(materialityBenchmarkKinds), currency: z.string().regex(/^[A-Z]{3}$/),
-  benchmarkAmount: moneySchema, planningMateriality: moneySchema, tolerableError: moneySchema, sadThreshold: moneySchema,
+  benchmarkAmount: moneySchema, rawPlanningMateriality: moneySchema, planningMateriality: moneySchema, tolerableError: moneySchema, sadThreshold: moneySchema,
   inputHash: z.string().regex(/^[a-f0-9]{64}$/), publicationId: z.uuid(), publicationSequence: z.number().int().positive(),
 });
 export const materialityApprovalResultSchema = z.object({ assessmentId: z.uuid(), status: z.literal('APPROVED'), publicationId: z.uuid(), inputHash: z.string().regex(/^[a-f0-9]{64}$/) });
