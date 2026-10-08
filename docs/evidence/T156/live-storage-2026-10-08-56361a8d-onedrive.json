@@ -1,0 +1,18 @@
+{
+  "runId": "56361a8d-3343-4f36-a374-ca2fc5d58c17",
+  "checkedAt": "2026-10-08T19:53:51.573Z",
+  "provider": "ONEDRIVE",
+  "result": "STREAMED_VERSION_ROUNDTRIP_GUARDED_STAGING_CLEANUP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+  "byteCount": 129,
+  "sha256": "f0349f24efb07ae901580989701cfb7de0f8782cea56e379269c1ee3f25ce7e1",
+  "repositoryIdentityHash": "38b8d00d5737bf07d3aba9005aadc68d258b0002ec0a8b47be5a056e655f5014",
+  "versionIdentityHash": "2dca84d6c9666b31d568beec89bd5b626ccea38b8074e93233f3389993f5170d",
+  "stagingIdentityHash": "c487b5a54c1091e03263452f763c956809c5247c6cb4de4cd090b889f7b0603a",
+  "stagingSha256": "fc7e706b2a561be0e321f4bba4d1ffea40e122283c67fd81869662c2a939a371",
+  "stagingCleanupOutcome": "RECYCLED_AND_READ_FAILS_CLOSED",
+  "fixtureRetained": false,
+  "deletedReadOutcome": "READ_FAILS_CLOSED",
+  "limitations": [
+    "Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance"
+  ]
+}

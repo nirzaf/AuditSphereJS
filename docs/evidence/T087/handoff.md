@@ -40,6 +40,10 @@ Reviewer: pending independent review
 Review result: pending
 Open blockers: independent review of the card acceptance criteria.
 Next eligible task by dependency order: not assigned.
+
+## Verification addendum (2026-10-08)
+
+This addendum supersedes the stale limitations above about the broad stale/invalidation assertion and the not-regenerated differential report. `tests/risk.integration.ts` now asserts the exact invalidated-materiality refusal because this fixture explicitly supersedes the Trial Balance and creates a `MaterialityInvalidation`; it does not claim to test the separate stale-publication branch. `pnpm migration:differential` regenerated the output: 53 checks, 50 matches, 0 differences and 3 `SUPERSEDED` cases (including the former risk-band matrix). `pnpm verify:task -- T087` passed with exit 0, including Testcontainers PostgreSQL integration. `pnpm verify:affected` passed on retry: 33 files / 176 tests. The first restricted run hit Windows loopback `EACCES` in three tests; the authorized retry succeeded. The recorded prior unit test result and the independent-review limitation remain unchanged.
 Stop after this task; do not implement the next one without assignment.
 
 ## Correction STE-JS-03: risk colour from balance against TE and PM (2026-10-08)

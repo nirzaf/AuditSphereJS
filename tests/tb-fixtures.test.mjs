@@ -18,7 +18,7 @@ const amountFromCents = minor => `${minor / 100n}.${String(minor % 100n).padStar
 describe('deterministic Trial Balance fixture pack', () => {
   const manifest = JSON.parse(readFileSync(resolve(root, 'manifest.json'), 'utf8'));
 
-  it.each([5_000, 25_000, 50_000])('parses the %i-row CSV, verifies exact totals and covers every mapping group', count => {
+  const assertCsvDataset = count => {
     const dataset = manifest.datasets.find(entry => entry.filename === `balance-${count}.csv`);
     const bytes = readFileSync(resolve(root, dataset.filename));
     expect(bytes.length).toBe(dataset.bytes);
@@ -63,7 +63,10 @@ describe('deterministic Trial Balance fixture pack', () => {
     expect(rows.some(row => row.current.startsWith('-'))).toBe(true);
     expect(rows.some(row => row.prior.startsWith('-'))).toBe(true);
     expect(rows.some(row => row.prior === '0.00')).toBe(true);
-  });
+  };
+
+  it('parses the 5,000-row CSV, verifies exact totals and covers every mapping group', () => assertCsvDataset(5_000));
+  it.each([25_000, 50_000])('parses the %i-row CSV, verifies exact totals and covers every mapping group', count => assertCsvDataset(count), 15_000);
 
   it.each([5_000, 25_000, 50_000])('contains a deterministic, readable %i-row XLSX workbook', count => {
     const dataset = manifest.datasets.find(entry => entry.filename === `balance-${count}.xlsx`);

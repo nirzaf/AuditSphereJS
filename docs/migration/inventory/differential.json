@@ -1,12 +1,13 @@
 {
-  "generatedAt": "2026-10-02T00:58:45.083Z",
+  "generatedAt": "2026-10-08T20:14:04.849Z",
   "harness": "scripts/migration/differential.mjs",
   "sourceCommit": "64713e808d165b4ef91ea4be4979e0f98fb2def3",
   "boundary": "Expected values are quoted from the pinned source domain tests; the source stack was not executed here. MATCH means the destination calculator agrees with the source test assertion, not that the source produced it in this session.",
   "totals": {
     "checks": 53,
-    "matched": 53,
+    "matched": 50,
     "differences": 0,
+    "superseded": 3,
     "destinationAbsentFamilies": 0,
     "notYetExtracted": [
       "C17 currency remeasurement and translation",
@@ -83,16 +84,18 @@
       "case": "benchmark-derivation-from-mapped-tb",
       "check": "derive:TOTAL_EXPENSES",
       "expected": "1500000",
-      "actual": "1500000.000000",
-      "outcome": "MATCH"
+      "actual": "Not evaluated; excluded by D19/CURRENT",
+      "outcome": "SUPERSEDED",
+      "supersededBy": "D19/CURRENT section 4.2.4 limits selected benchmarks to REVENUE, PROFIT_BEFORE_TAX, TOTAL_ASSETS and NET_ASSETS."
     },
     {
       "fixture": "materiality",
       "case": "benchmark-derivation-from-mapped-tb",
-      "check": "derive:MAPPED_LINE",
+      "check": "derive:MAPPED_LINE:RECEIVABLES",
       "expected": "400000",
-      "actual": "400000.000000",
-      "outcome": "MATCH"
+      "actual": "Not evaluated; excluded by D19/CURRENT",
+      "outcome": "SUPERSEDED",
+      "supersededBy": "D19/CURRENT section 4.2.4 limits selected benchmarks to REVENUE, PROFIT_BEFORE_TAX, TOTAL_ASSETS and NET_ASSETS."
     },
     {
       "fixture": "materiality",
@@ -123,8 +126,9 @@
       "case": "risk-band-matrix",
       "check": "bands",
       "expected": "Green,Amber,Amber,Red,Red,Red",
-      "actual": "Green,Amber,Amber,Red,Red,Red",
-      "outcome": "MATCH"
+      "actual": "Not evaluated; legacy risk matrix superseded",
+      "outcome": "SUPERSEDED",
+      "supersededBy": "STE-RISK-BAND-2026.2 (STE-JS-03, T087): CURRENT section 4 stratifies the absolute balance against TE and PM, with significant or fraud-risk forced red. This likelihood-by-impact expectation is kept as the legacy record and is no longer asserted."
     },
     {
       "fixture": "sampling",

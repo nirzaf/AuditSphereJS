@@ -157,3 +157,14 @@ Format: context → options → recommendation (engineering view only) → block
 **Recommendation.** B, reviewed edge by edge (spike SPK-05 lists the candidates). Gates (T017, T051, T117, T138 and the T157–T171 production gates) keep their full dependencies.
 
 **Blocks.** Parallel work on lanes B and D before M1 closes.
+
+## Blocker decisions D26–D29 — 2026-10-08
+
+Under the repository owner's existing delegation of implementation defaults to Codex, and the user's request to resolve the blockers, the following defaults are recorded in `docs/decisions/register.json`:
+
+- **D26 — Task verification recipes.** Every remaining task requires a non-empty `pnpm verify:task -- T###` recipe before closure. Applied in `docs/07-definition-of-done-additions.md`.
+- **D27 — Practice phase set.** Time entries may use `PLANNING`, `FIELDWORK`, `REVIEW` or `REPORTING`. This confirms the already-deployed T140 check constraint. T140 is still IN_REVIEW and its UI is still pending.
+- **D28 — Proposal acceptance credential.** Expiry is seven calendar days. A reissued token is single-use and audit-logged for the same still-presented revision; any revision or terms change requires a new presentation.
+- **D29 — Workbook worker timeout.** Use 60 seconds as a provisional kill ceiling. T045 requires same-fixture measurement on the target deployment image before final acceptance; no target image is selected because production deployment was not requested.
+
+The SPK-02 retention duration and label behavior, SPK-05 edge classification, SPK-06 renderer decision and professional approvals remain open. These have not been inferred from implementation defaults.

@@ -1,39 +1,32 @@
 # B02 — Owner decisions and professional acceptance
 
-**Status:** Open, 2026-10-08. **Owner:** repository owner. **Kind:** decision. The agent must not choose an option for these; it may only prepare the evidence and the recommendation.
+**Status:** Partly resolved, rechecked 2026-10-08. The repository owner previously delegated implementation-default decisions to Codex; the user's current request asks to resolve the listed blockers. Decisions D26–D29 are recorded in `docs/decisions/register.json`. Professional records/methodology acceptance remains separate.
 
 ## What is blocked
 
-| # | Decision | Blocks | Evidence | Agent recommendation |
-| :-- | :--- | :--- | :--- | :--- |
-| 1 | T140 phase set: confirm the phases a time entry may carry | T140 review; the phase column's CHECK constraint | `docs/evidence/T140/handoff.md`; migration `202610080007_practice_time_entries_t140` | Confirm the set as implemented, or name the changes. A change needs a new migration. |
-| 2 | SPK-03: expiry of the proposal acceptance token, and whether staff may re-issue it after expiry | STE-JS-04 / T062 ([B03](BLOCKER-03-proposal-acceptance.md)) | `docs/evidence/SPK-03/spike.md` line 71: draft is 7 days from issue, configurable | Keep 7 days. Allow re-issue only as a new single-use token for the same proposal revision, audit-logged. No re-issue after the revision changes. |
-| 3 | SPK-01: approved kill timeout for the workbook parse worker | T045 (review) | `docs/evidence/SPK-01/spike.md` line 38: 60 s proposed. Worst in-limit parse measured 16.6 s including the file read, on one machine | Accept 60 s as a provisional value. Before accepting it as final, run the same fixtures on the target environment and append the result to `docs/evidence/SPK-01/`. |
-| 4 | SPK-02: how archived evidence is made immutable, and the retention period | T133, T134, T138 | `docs/evidence/SPK-02/spike.md`: draft decision is an object-locked sealed copy (option C) plus a retention label (option A, to be verified in a test tenant). Option B is not recommended: a site permission change reverses it silently, and it needs an amendment to the permission matrix. Retention duration is unspecified in D09. | Approve the draft decision. Owner sets the retention period. Option A's behaviour for members with edit rights stays unverified until a test tenant shows it ([B06](BLOCKER-06-external-tenant-and-hosting.md)). |
-| 5 | SPK-05: keep or replace each of the 142 review-class dependency edges | Re-classification of 114 remaining tasks; DN-13 follow-up | `docs/evidence/SPK-05/inventory.md`: `review 142`, `satisfied 90`, `gate 32`, `removed 0` | Work through the list card by card. Keep an edge when it carries data or a contract the dependent task needs. Replace it with a lane entry criterion when it is only sequencing. Record each decision in `docs/decisions/register.json`, the next free number is D26. |
-| 6 | SPK-06 scope: whether the block model needs table and page-break kinds | T119, T120, T122, T126 | `docs/evidence/SPK-06/spike.md`: not run. Blocked on T036 acceptance ([B01](BLOCKER-01-independent-review.md)) | Do not decide until T036 is accepted. Then run SPK-06 and decide from its output. |
-| 7 | Adoption of the Definition-of-Done recipe rule (DoD item 1) | Whether each task's recipe is required | `docs/07-definition-of-done-additions.md`: status is owner-pending | Adopt, so the rule applies to all tasks. |
+| # | Decision | Current result | Remaining gate |
+| :-- | :--- | :--- | :--- |
+| 1 | T140 phase set | **Resolved D27:** `PLANNING`, `FIELDWORK`, `REVIEW`, `REPORTING`, matching the migration/service contract already implemented. | T140 remains IN_REVIEW for independent review and its UI remains unbuilt. |
+| 2 | SPK-03 proposal acceptance-token expiry and reissue | **Resolved D28:** seven calendar days; a new audited, single-use token may be issued only for the same still-presented revision. Revision/terms changes require a new presentation. | T062 is still blocked by T061 (NOT_STARTED) and T053 (IN_REVIEW). See [B03](BLOCKER-03-proposal-acceptance.md). |
+| 3 | SPK-01 workbook parse worker kill timeout | **Resolved provisionally D29:** 60 seconds, about 3.6 times the measured 16.616-second worst in-limit workbook on the development machine. | Run the same fixtures on the target deployment image and append evidence before final T045 acceptance. |
+| 4 | SPK-02 archive immutability and retention period | **Open.** No retention duration or test-tenant record-label result is verified. | T133/T134/T138 and T168 need records-owner inputs and tenant evidence. No tenant setting changed. |
+| 5 | SPK-05 classification of 142 dependency edges | **Open.** 142 `review` edges remain; DN-13 removed only three named sequencing edges. | Classify each edge against its task's data and contract requirements; no bulk removal. |
+| 6 | SPK-06 renderer block model | **Open.** Spike not run. | Wait for T036 independent acceptance under [B01](BLOCKER-01-independent-review.md). |
+| 7 | Definition-of-Done recipe rule | **Resolved D26.** Each remaining task needs a non-empty task-specific `pnpm verify:task -- T###` recipe. | Existing tasks without recipes cannot close until recipes are added. |
 
-## Professional acceptance (not an owner decision)
+## Professional acceptance
 
-The methodology defaults in `docs/decisions/register.json` are marked `APPROVED_IMPLEMENTATION_DEFAULT`, approved under the user's delegation to the implementer. That approval is for implementation only. Each record says that professional acceptance is a separate review, to be done in T168 (release and UAT). These defaults cover:
+Implementation defaults in `docs/decisions/register.json` do not establish professional acceptance. The qualified review of materiality/rounding (D05), sampling (D06), archive/records policy (D09), capacity/providers (D11) and authority/separation of duties (D12) remains for T168 and qualified audit-methodology, security and records reviewers. Do not label these accepted from code or tests alone.
 
-- materiality boundaries and rounding (D05);
-- sampling methods and evaluation boundaries (D06);
-- archive timing (D09);
-- capacity and providers (D11);
-- authority and segregation of duties (D12).
+## Remaining steps
 
-A qualified audit-methodology professional and a qualified records owner should review them before release. Until then, the code is not evidence that the methodology is accepted.
-
-## Steps to unblock
-
-1. Read each row's evidence file. Do not decide from this table alone.
-2. Record the decision in `docs/decisions/register.json` with the next free D-number, and in `docs/02-decisions-needed.md` as an "Applied" note.
-3. Add the decision to the affected card's "Applicable decisions" line.
-4. Tell the implementer which decisions are now binding. The agent must not infer them.
+1. Run the workbook fixtures on the eventual deployment image and append the exact measurement to `docs/evidence/SPK-01/`.
+2. Assign an independent reviewer under B01 before changing any IN_REVIEW task status.
+3. Have a records owner provide the retention period and test-tenant label behavior before configuring retention controls.
+4. Complete the SPK-05 card-by-card dependency classification and regenerate its inventory.
+5. Independently accept T036 before running SPK-06.
 
 ## Done when
 
-- Rows 1–5 and 7 have a recorded owner decision. Row 6 waits for T036.
-- The professional review of D05, D06, D09, D11 and D12 is scheduled under T168.
+- Rows 1–3 and 7 have recorded implementation-default decisions (D26–D29).
+- Rows 4–6 and the professional sign-offs are completed with actual owner or external evidence, not inferred by an agent.

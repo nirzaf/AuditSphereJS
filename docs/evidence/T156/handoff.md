@@ -53,3 +53,9 @@ The live harness removes its own synthetic objects and verifies that deleted ref
 ## Review and next task
 
 Reviewer: Codex evidence review | Review result: Pass for the approved nonproduction Microsoft 365 scope | Open blockers: Production retention/residency/readiness; no actual tenant consent revocation was performed | Next eligible task: T157 full source lifecycle acceptance
+
+## Recheck — 2026-10-08
+
+`pnpm test:m365:storage:live` passed against the existing designated nonproduction acceptance folders: SharePoint 1/1 and OneDrive 1/1, zero failures/skips. It verified exact version bytes and SHA-256 through buffered and streamed reads, selected-folder binding, outside-folder 403 denial, same-size external-edit isolation, staged-item cleanup and fail-closed reads after deleting only the test-created objects. The two redacted records are [SharePoint](live-storage-2026-10-08-56361a8d.json) and [OneDrive](live-storage-2026-10-08-56361a8d-onedrive.json). Both state `fixtureRetained: false` and contain only synthetic fixture hashes/byte counts and hashed provider identities.
+
+The first run without network escalation failed before reaching Graph because the sandbox could not resolve `login.microsoftonline.com`; it created no objects. The same run was retried with network access after the existing explicit authorization for synthetic acceptance-folder tests, and passed. The configured private environment file was read without printing values. No Entra permission, app registration, user, local authority, retention policy or production resource changed. This refreshes selected-folder provider evidence only; it does not establish consent revocation, SharePoint retention behavior or production readiness.

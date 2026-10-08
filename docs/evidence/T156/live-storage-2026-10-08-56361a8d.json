@@ -1,0 +1,18 @@
+{
+  "runId": "56361a8d-3343-4f36-a374-ca2fc5d58c17",
+  "checkedAt": "2026-10-08T19:53:33.684Z",
+  "provider": "SHAREPOINT",
+  "result": "STREAMED_VERSION_ROUNDTRIP_GUARDED_STAGING_CLEANUP_EXTERNAL_EDIT_AND_OUTSIDE_FOLDER_DENIAL_PASSED",
+  "byteCount": 131,
+  "sha256": "bb42bcd7f485ac907187a47a37338af2adb1c0bdee6674e06b76be2ea7fa5109",
+  "repositoryIdentityHash": "bdbb6540c79efc5ce222b2cc31efcd0b3223d57f864d0ffbe96e3d22d548ca2d",
+  "versionIdentityHash": "1a68a5ea12bb03d4e9fcb47358fa26b00d254a639d4e9bd0dab2ac5f569c72b0",
+  "stagingIdentityHash": "cf602ba5df309b47c3aaff5f61e79e9213fc442a55c802e8f18af47831326e19",
+  "stagingSha256": "2740b647edcb6e0b8cd266610087a12b0fc9bd4c02d4345e1d2ebe3f9e27ae24",
+  "stagingCleanupOutcome": "RECYCLED_AND_READ_FAILS_CLOSED",
+  "fixtureRetained": false,
+  "deletedReadOutcome": "READ_FAILS_CLOSED",
+  "limitations": [
+    "Does not establish Entra SPA sign-in, consent revocation, throttling or full T156 acceptance"
+  ]
+}

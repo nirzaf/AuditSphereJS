@@ -1,10 +1,10 @@
 # B04 — Unconditional lifecycle gates still fail every time
 
-**Status:** Open, 2026-10-08. **Owner:** engineering, card by card. **Kind:** engineering dependency.
+**Status:** Open, rechecked 2026-10-08. **Owner:** engineering, card by card. **Kind:** engineering dependency. The code currently contains eight unconditional gates; the earlier blocker list omitted the upload-freeze gate.
 
 ## What is blocked
 
-In `packages/server/src/modules/governance/lifecycle.ts`, seven `fail(...)` calls run with no condition. Whatever the engagement's data, the command they guard is always refused. They are placeholders for evidence that the owning tasks have not yet built.
+In `packages/server/src/modules/governance/lifecycle.ts`, eight `fail(...)` calls run with no condition. Whatever the engagement's data, the command they guard is always refused. They are placeholders for evidence that the owning tasks have not yet built.
 
 | Lines | Command | Failure code | Owning task (ledger title) | Status |
 | :--- | :--- | :--- | :--- | :--- |
@@ -15,6 +15,7 @@ In `packages/server/src/modules/governance/lifecycle.ts`, seven `fail(...)` call
 | 247 | `AUTHORIZE_FINAL_REPORT` | `PARTNER_IMAGE_APPROVAL_MISSING` | T126 Implement approved partner signature and seal controls | NOT_STARTED |
 | 250 | `RELEASE_FINAL_PACKAGE` | `SIGNED_LOR_MISSING` | T122 Generate D3 LOR for client letterhead and signature; T126 | NOT_STARTED |
 | 251 | `RELEASE_FINAL_PACKAGE` | `FINAL_BUNDLE_MISSING` | T127 Build the mandatory five-part deliverable package; T128 Validate final package completeness; T129 Release the package | NOT_STARTED |
+| 255 | `RELEASE_FINAL_PACKAGE` | `CLIENT_UPLOAD_FREEZE_MISSING` | T129 Release the package and freeze uploads atomically; T130 Track delivery | NOT_STARTED |
 
 The owning tasks were inferred from their titles and from the comment above line 233 ("owned by the pending workprogram, SRM and confirmation tasks"). Confirm each mapping against the card before building.
 
@@ -39,5 +40,5 @@ Each gate needs its owning task to supply a real record and a query. Those tasks
 
 ## Done when
 
-- None of the seven lines is an unconditional `fail(...)`.
+- None of the eight lines is an unconditional `fail(...)`.
 - Each replacement check has tests in both directions.

@@ -119,3 +119,9 @@ The owner decided DN-02 as option B. A workbook formula cell now contributes its
 Verified by `packages/server/tests/workbook.test.ts` (22 of 22 with the parser suite): a cached formula is accepted with its text kept, an uncached formula is refused with its source line, and the golden fixtures are unchanged. The fixtures contain no formulas.
 
 Limitation: a row warning for formula cells is represented by the stored formula text in provenance. The product has no warning channel yet (the warnings-versus-blockers decision is still open under T079), so the formula is recorded, not surfaced.
+
+## Addendum — B07 timing measurement and D29 (2026-10-08)
+
+The isolated deterministic fixture suite was rerun with Node 24.19.0 on the Windows 11 development machine: `pnpm exec vitest run tests/tb-fixtures.test.mjs --reporter=verbose` passed 8/8. CSV parse-and-oracle cases took 280 ms for 5,000 rows, 1,496 ms for 25,000 rows and 2,778 ms for 50,000 rows. The complete file took 27.96 seconds (transform/import 26.17 seconds, tests 5.91 seconds; overall duration also includes process startup). The 25k/50k tests now have explicit 15-second budgets, over five times the largest observed case, while the 5k case retains the default. This is a local test budget, not a production performance claim.
+
+D29 approves a provisional 60-second worker kill ceiling based on SPK-01's 16.616-second worst measured workbook. The target deployment image has not been selected under T006, so no target-image timing is claimed and T045 remains IN_REVIEW. No task status changed.

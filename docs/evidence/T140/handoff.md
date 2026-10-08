@@ -78,3 +78,7 @@ Review result: pending
 Open blockers: the phase set needs owner confirmation; the timesheet screen is not built.
 Next eligible task by dependency order: not assigned. T140's dependency T139 is DONE; T088 was removed from T140's dependencies by DN-13.
 Stop after this task; do not implement the next one without assignment.
+
+## Decision update — D27 (2026-10-08)
+
+The delegated implementation-default decision confirms the phase set already enforced in migration `202610080007_practice_time_entries_t140`: `PLANNING`, `FIELDWORK`, `REVIEW`, and `REPORTING`. Historical entries may remain null. The migration and service contract are unchanged. The task remains IN_REVIEW for independent review; its timesheet screen remains unbuilt.

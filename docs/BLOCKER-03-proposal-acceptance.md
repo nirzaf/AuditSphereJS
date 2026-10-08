@@ -1,6 +1,6 @@
 # B03 — Staff can record client acceptance of a proposal (STE-JS-04, T062 AC3)
 
-**Status:** Open, 2026-10-08. **Owner:** engineering, after the expiry decision in [B02](BLOCKER-02-owner-decisions.md) row 2. **Kind:** engineering dependency on a decision and on the portal path.
+**Status:** Open, rechecked 2026-10-08. Expiry/reissue policy is recorded as D28. **Owner:** engineering after T061 and T053 are accepted. **Kind:** engineering dependency on prerequisites and the portal path.
 
 ## What is wrong
 
@@ -17,10 +17,12 @@ Removing the staff path without a portal path makes Key 1 unreachable: nothing e
 
 - **T020 is DONE**: separate portal authentication and the first-reset gate, with `PortalCredentialToken` (single-use, hashed, with `expiresAt` and `consumedAt`).
 - **SPK-03 designed the flow**: `docs/evidence/SPK-03/spike.md`. A proposal-acceptance token is bound to proposal ID, revision, fee and terms digest. It is single-use, has its own expiry, and grants no portal access beyond acceptance.
+- **Expiry decision resolved:** D28 uses seven calendar days and permits a new audited single-use token only for the same still-presented proposal revision.
+- **Prerequisites are not ready:** T061 is `NOT_STARTED`; T053 is `IN_REVIEW`. T062 requires each dependency to be DONE or explicitly NOT_APPLICABLE. D28 does not waive those requirements.
 
 ## Steps to unblock
 
-1. **Get the owner's expiry decision** (B02 row 2). The draft is 7 days from issue, configurable, with re-issue as in B02.
+1. **Honor D28.** Use a seven-calendar-day expiry and allow reissue only for the same still-presented revision.
 2. **Migration.** Add a `PROPOSAL_ACCEPTANCE` purpose and a proposal reference, revision, and terms digest on `PortalCredentialToken`. Use an explicit reviewed migration.
 3. **Staff issue endpoint.** `COMMERCIAL_MANAGE` may issue a token only for a presented proposal revision. Store only the hash. Return the plain token once. Audit the issue.
 4. **Portal accept endpoint.** Only a portal user with the matching membership can accept. It verifies hash, purpose, expiry, membership, revision and digest, then consumes the token in the same transaction as the acceptance record.
@@ -28,6 +30,10 @@ Removing the staff path without a portal path makes Key 1 unreachable: nothing e
 6. **Only then remove the staff path** from `acceptProposal`, in the same change.
 7. **Tests** (from SPK-03 section "tests"): issue refused without a presented proposal; accept succeeds once; replay refused; forwarding refused (different portal user); wrong client refused; revision drift refused; expiry refused; staff acceptance refused; Key 1 stays closed until the portal acceptance exists.
 8. **Docs and evidence.** Update the T062 card, the portal README, the ledger row (by the owner, after review), and the decision register entry for the expiry value. Append to `docs/evidence/T062/`.
+
+## Current gate and done criteria
+
+Do not begin T062 until T061 is accepted and T053 is independently accepted (or the owner explicitly changes their dependency dispositions). Do not close this blocker based on the policy decision alone.
 
 ## Done when
 

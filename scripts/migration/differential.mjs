@@ -9,7 +9,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import path from 'node:path';
-const { Decimal6, deriveBenchmark, calculateMateriality, validateMateriality, riskBand, selectSample, calculateQuotation, validateQuotation, quotationInputHash, requiredApprovals, calculateContractContribution } = await import('@auditsphere/server');
+const { Decimal6, deriveBenchmark, calculateMateriality, validateMateriality, selectSample, calculateQuotation, validateQuotation, quotationInputHash, requiredApprovals, calculateContractContribution } = await import('@auditsphere/server');
 const fixtureDir = 'fixtures/characterization';
 const outDir = 'docs/migration/inventory';
 const load = (name) => JSON.parse(readFileSync(path.join(fixtureDir, name + '.json'), 'utf8'));
@@ -19,7 +19,11 @@ const equal = (actual, expected) => decimalLike(actual) && decimalLike(expected)
   : String(expected) === String(actual);
 const mapped = (raw) => raw.map((line) => ({ sourceAccountCode: line.sourceAccountCode ?? '', destinationCode: line.destinationCode ?? line.fsli ?? '', statementSection: line.statementSection ?? '', amount: Decimal6.from(line.amount) }));
 const results = [];
-const record = (fixture, id, check, expected, actual) => results.push({ fixture, case: id, check, expected, actual, outcome: equal(actual, expected) ? 'MATCH' : 'DIFF' });
+const record = (fixture, id, check, expected, actual, supersededBy = null) => results.push({
+  fixture, case: id, check, expected, actual,
+  outcome: supersededBy ? 'SUPERSEDED' : equal(actual, expected) ? 'MATCH' : 'DIFF',
+  ...(supersededBy ? { supersededBy } : {}),
+});
 
 // --- Materiality: a destination implementation exists (governance/materiality.ts). -----------
 {
@@ -34,9 +38,12 @@ const record = (fixture, id, check, expected, actual) => results.push({ fixture,
 
   const derivation = byId['benchmark-derivation-from-mapped-tb'];
   const lines = mapped(derivation.reconstructedInput.lines);
-  for (const [kind, code, expected] of [['REVENUE', null, derivation.expected.revenue], ['PROFIT_BEFORE_TAX', null, derivation.expected.profitBeforeTax], ['TOTAL_ASSETS', null, derivation.expected.totalAssets], ['NET_ASSETS', null, derivation.expected.netAssets], ['TOTAL_EXPENSES', null, derivation.expected.totalExpenses], ['MAPPED_LINE', 'RECEIVABLES', derivation.expected.mappedLineReceivables]]) {
-    const derived = deriveBenchmark(kind, code, lines);
+  for (const [kind, expected] of [['REVENUE', derivation.expected.revenue], ['PROFIT_BEFORE_TAX', derivation.expected.profitBeforeTax], ['TOTAL_ASSETS', derivation.expected.totalAssets], ['NET_ASSETS', derivation.expected.netAssets]]) {
+    const derived = deriveBenchmark(kind, lines);
     record('materiality', derivation.id, 'derive:' + kind, expected, derived ? derived.amount.toFixed(6) : 'null');
+  }
+  for (const [kind, expected] of [['TOTAL_EXPENSES', derivation.expected.totalExpenses], ['MAPPED_LINE:RECEIVABLES', derivation.expected.mappedLineReceivables]]) {
+    record('materiality', derivation.id, 'derive:' + kind, expected, 'Not evaluated; excluded by D19/CURRENT', 'D19/CURRENT section 4.2.4 limits selected benchmarks to REVENUE, PROFIT_BEFORE_TAX, TOTAL_ASSETS and NET_ASSETS.');
   }
 
   const invalidRate = byId['out-of-policy-rate'];
@@ -45,14 +52,13 @@ const record = (fixture, id, check, expected, actual) => results.push({ fixture,
 
   const lossCase = byId['loss-fails-closed'];
   const lossLines = mapped(lossCase.input.lines.map((line) => ({ destinationCode: line.fsli, statementSection: line.fsli, amount: line.amount })));
-  const loss = deriveBenchmark('PROFIT_BEFORE_TAX', null, lossLines);
+  const loss = deriveBenchmark('PROFIT_BEFORE_TAX', lossLines);
   record('materiality', lossCase.id, 'derivedBenchmark', lossCase.expected.derivedBenchmarkAmount, loss.amount.toFixed(6));
   let threw = false; try { calculateMateriality(loss.amount, 1, Decimal6.from('2'), Decimal6.from('5'), Decimal6.from('5')); } catch { threw = true; }
   record('materiality', lossCase.id, 'failsClosed', 'true', String(threw));
 
   const bands = byId['risk-band-matrix'];
-  const actual = bands.input.cases.map((entry) => riskBand(entry.likelihood, entry.impact, entry.significant, entry.fraud));
-  record('materiality', bands.id, 'bands', bands.expected.bands.join(','), actual.map((band) => band.charAt(0) + band.slice(1).toLowerCase()).join(','));
+  record('materiality', bands.id, 'bands', bands.expected.bands.join(','), 'Not evaluated; legacy risk matrix superseded', bands.supersededBy);
 }
 
 // --- Sampling: a destination implementation exists (fieldwork/sampling.ts). ------------------
@@ -177,12 +183,13 @@ const notYetExtracted = ['C17 currency remeasurement and translation', 'C18/C19 
 
 mkdirSync(outDir, { recursive: true });
 const diffs = results.filter((row) => row.outcome === 'DIFF');
+const superseded = results.filter((row) => row.outcome === 'SUPERSEDED');
 const report = {
   generatedAt: new Date().toISOString(),
   harness: 'scripts/migration/differential.mjs',
   sourceCommit: load('materiality').provenance.commit,
   boundary: 'Expected values are quoted from the pinned source domain tests; the source stack was not executed here. MATCH means the destination calculator agrees with the source test assertion, not that the source produced it in this session.',
-  totals: { checks: results.length, matched: results.length - diffs.length, differences: diffs.length, destinationAbsentFamilies: absent.length, notYetExtracted },
+  totals: { checks: results.length, matched: results.filter((row) => row.outcome === 'MATCH').length, differences: diffs.length, superseded: superseded.length, destinationAbsentFamilies: absent.length, notYetExtracted },
   results, absent,
 };
 writeFileSync(path.join(outDir, 'differential.json'), JSON.stringify(report, null, 2) + '\n');
@@ -201,6 +208,7 @@ const markdown = [
   '| Checks run | ' + report.totals.checks + ' |',
   '| Matched | ' + report.totals.matched + ' |',
   '| Differences | ' + report.totals.differences + ' |',
+  '| Superseded source cases (not asserted) | ' + report.totals.superseded + ' |',
   '| Fixture families with no destination implementation | ' + report.totals.destinationAbsentFamilies + ' |',
   '',
   '## Checks',
@@ -221,7 +229,7 @@ const markdown = [
   '',
 ].join('\n');
 writeFileSync(path.join(outDir, '..', '03-differential-report.md'), markdown);
-for (const row of results) console.log((row.outcome === 'MATCH' ? 'MATCH ' : 'DIFF  ') + row.fixture + ' ' + row.case + ' ' + row.check + ' expected=' + row.expected + ' actual=' + row.actual);
+for (const row of results) console.log(row.outcome.padEnd(10) + row.fixture + ' ' + row.case + ' ' + row.check + ' expected=' + row.expected + ' actual=' + row.actual + (row.supersededBy ? ` supersededBy=${row.supersededBy}` : ''));
 for (const row of absent) console.log('ABSENT ' + row.fixture + ' (' + row.capability + ') cases=' + row.cases);
-console.log('checks=' + results.length + ' matched=' + (results.length - diffs.length) + ' differences=' + diffs.length);
+console.log('checks=' + results.length + ' matched=' + report.totals.matched + ' differences=' + diffs.length + ' superseded=' + superseded.length);
 if (diffs.length) process.exitCode = 2;

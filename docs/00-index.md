@@ -45,6 +45,7 @@ Work done on 2026-10-08, recorded here so that agents skip it:
 - Verification recipes were added for the IN_REVIEW tasks that lacked one (T046, T051, T060, T080, T087, T088, T098–T101, T103, T104, T108), and T085, T086, T089 and T140 have recipes.
 - Spikes SPK-01 to SPK-06 have recorded outputs in `docs/evidence/SPK-0x/`. SPK-06 is recorded as not run.
 - The UI summary in `docs/evidence/UI-MODULES.md` was recounted from its table: 39 workspaces, 14 connected and 25 session-only.
+- Blockers B01–B07 were rechecked on 2026-10-08: D26–D29 record delegated implementation defaults; `docs/09-removal-guideline.md` maps all 25 session-only workspaces; B07's test and differential evidence follow-ups were fixed; nonproduction SharePoint/OneDrive acceptance passed 2/2. No task status was changed.
 
 ## 3. What the verification found, and where each finding stands
 
@@ -54,7 +55,7 @@ Work done on 2026-10-08, recorded here so that agents skip it:
 4. **Risk colours came from likelihood times magnitude, not from balance against TE and PM.** Corrected in code (STE-JS-03, 2026-10-08; see `docs/evidence/T087/handoff.md`). The colour follows CURRENT section 4 on the absolute published balance against the approved TE and PM, with significant or fraud-risk forced RED (D05). T087 remains IN_REVIEW until an independent reviewer accepts the change.
 5. **Staff can record client acceptance of a proposal, contrary to T062 AC3.** Open (STE-JS-04). `acceptProposal` still accepts a `COMMERCIAL_MANAGE` actor, and Key 1 reads that record. The correction needs the portal acceptance path designed in SPK-03, which is not built. Removing the staff path without it would make Key 1 unreachable, so it was not removed in this pass.
 6. **The ledger lags the code.** Resolved for the cited tasks: T045, T049 and T079 are IN_REVIEW in the ledger, and T140 was added on 2026-10-08.
-7. **Session-only workspaces.** Open. 25 of 39 workspaces are session-only preparation forms (`docs/evidence/UI-MODULES.md`). Their server sides are the work of the tasks named in the removal guideline, which is not in the repository.
+7. **Session-only workspaces.** The planning gap is resolved: `docs/09-removal-guideline.md` maps all 25 preparation forms to owning tasks and their completion boundaries. The 25 screens remain session-only until those server-backed tasks, tests and review are complete (`docs/evidence/UI-MODULES.md`).
 8. **Placeholder gates in the lifecycle.** Open. Unconditional `fail(...)` calls remain in `packages/server/src/modules/governance/lifecycle.ts` for workprogram completion (T106), the SRM (T110), critical confirmations (T117) and the report opinion (T118). Each is removed by the task that supplies its evidence; those tasks are not done.
 
 ## 4. Completed — do not re-implement

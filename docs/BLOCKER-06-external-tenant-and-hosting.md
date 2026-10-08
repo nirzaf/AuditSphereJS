@@ -1,10 +1,10 @@
 # B06 — External access: Microsoft 365 tenant, Cloudflare, production inputs
 
-**Status:** Open, 2026-10-08. **Owner:** user (sign-in and inputs). **Kind:** external. The agent does not enter credentials and does not provision anything without an explicit request.
+**Status:** Partly resolved, rechecked 2026-10-08. The built-in browser is signed in to the `easyguide` Entra tenant and the designated SharePoint/OneDrive nonproduction storage acceptance was rerun. **Owner:** user for any production inputs. The agent does not enter credentials or provision anything without explicit authorization.
 
 ## Current state of the browser sessions
 
-- **Microsoft 365 / Entra.** The built-in browser pane is on the Microsoft sign-in page (`login.microsoftonline.com`, an organizations OAuth request for the Entra admin centre). Sign-in is not complete. The agent has not entered a username or password.
+- **Microsoft 365 / Entra.** Read-only browser observation on 2026-10-08 shows the signed-in `easyguide` tenant and its Users view loaded (15 users). The view includes the pre-existing AuditSphere synthetic Staff Fixture and client fixtures. No user, role, app registration, permission, grant or tenant data was changed.
 - **Cloudflare.** Google Chrome, Browser 1 (Windows), is on `dash.cloudflare.com/login`. The email field is filled and the password is empty. The agent has not entered a password or clicked Sign in.
 
 The user completes sign-in in those windows. After that, the agent can read pages in them, read-only, if asked.
@@ -13,29 +13,27 @@ The user completes sign-in in those windows. After that, the agent can read page
 
 | Item | Blocked on | Evidence |
 | :--- | :--- | :--- |
-| Verifying the Microsoft 365 permission and consent configuration against `docs/microsoft365/` | Tenant sign-in by the user; no purpose stated yet | `AGENTS.md`: keep `docs/microsoft365/*.md` current with tenant changes, and record verification dates |
-| SPK-02 option A (retention label behaviour for members with edit rights) | A test tenant with admin rights. Unverified in any tenant | `docs/evidence/SPK-02/spike.md`, "Not verified here" |
-| Live provider tests (`pnpm test:m365:storage:live`, `RUN_LIVE_E2E=1`) | Real tenant credentials, supplied through a secure store, never in chat or CI | `AGENTS.md`, "Which runner picks up which file" |
-| Production hosting, region, production recovery, retention, accountable owners | User-supplied inputs. T006 is DONE only for non-production scope | `docs/tasks/00-readiness/T006-deployment-decisions.md` (Outcome, and "production readiness remains separately gated") |
+| Verifying the Microsoft 365 configuration | Read-only browser session is now available; prior configuration is in the dated tenant guide | This pass did not change or recheck every Entra permission; see `docs/microsoft365/current-tenant.md` |
+| SPK-02 option A (retention label behavior for members with edit rights) | A test tenant with admin rights and configured labels; still unverified | `docs/evidence/SPK-02/spike.md`, "Not verified here" |
+| Live selected-folder provider tests | **Reverified 2026-10-08:** `pnpm test:m365:storage:live`, 2/2 passed against existing synthetic SharePoint/OneDrive folders | Redacted run records under `docs/evidence/T156/live-storage-2026-10-08-56361a8d*.json` |
+| Production hosting, region, recovery, retention and accountable owners | **Not in the requested scope:** user previously selected public assets without deployment. T006 is DONE for nonproduction scope only. | `docs/tasks/00-readiness/T006-deployment-decisions.md` |
 | T133 production object-version retention controls | NOT_STARTED; depends on B02 row 4 and on this block | `docs/guides/13-execution-ledger.md` |
 | SPK-06 renderer proof | T036 acceptance ([B01](BLOCKER-01-independent-review.md)), not this block | `docs/evidence/SPK-06/spike.md` |
 
 ## Cloudflare: what is and is not allowed
 
-T006 says the repository does not select or provision a production host, registry, database or cache on the user's behalf. Any Cloudflare resource creation (Workers, Pages, DNS, R2 buckets, tunnels) is therefore out of scope until the user explicitly asks for it and supplies the production inputs above. Viewing the dashboard is allowed. Changing it is not.
+T006 records the user's no-deployment/public-assets scope. No Cloudflare resource is needed for this blocker pass; creating Workers, Pages, DNS, R2 buckets or tunnels remains outside scope.
 
 ## Steps to unblock
 
-1. **User signs in** to the Microsoft 365 tenant and to Cloudflare in the windows above. The agent does not type credentials.
-2. **State the purpose** of each access. For example: read the app registration and admin consent for `docs/microsoft365/permission-matrix.md`; or check the Cloudflare account that the owner names.
-3. **Read-only first.** The agent records what it reads, with dates, in the relevant `docs/microsoft365/*.md` file, and never records a secret value.
-4. **Any change needs explicit approval** for that exact action. Consent grants, permission changes, DNS, and resource creation each need their own approval.
-5. **For SPK-02 option A**, the user provides a test tenant. Run the label test there, record the result in `docs/evidence/SPK-02/`, and only then change the "Not verified here" section.
-6. **For production**, the user supplies the T006 inputs in writing: region, recovery objective, retention, and accountable owners. Those become a new decision in `docs/decisions/register.json`.
-7. **Credentials** for live tests go into the secure store named in the runbook (`docs/runbooks/`), never into the repository, a chat message, or a log.
+1. Keep `docs/microsoft365/current-tenant.md` current after a read-only review and record the date and exact scope.
+2. Only configure tenant permissions or retention after explicit approval for that exact change.
+3. For SPK-02 option A, run the label test in a designated test tenant and record the result in `docs/evidence/SPK-02/`.
+4. Production remains gated until a deployment is requested and the T006 region, recovery, retention and accountable-owner inputs are supplied.
+5. Credentials for live tests stay in the designated ignored private environment file, never in the repository or chat.
 
 ## Done when
 
-- The purpose of each access is recorded, and any read-only verification is in `docs/microsoft365/` with a date.
-- No production resource exists unless the user has supplied the T006 inputs and asked for it.
-- SPK-02 option A has a result from a test tenant, or the owner accepts the unverified status in writing.
+- The nonproduction selected-folder SharePoint and OneDrive checks are evidenced; the run did not change tenant configuration.
+- Production hosting remains out of scope under T006; no deployment claim is made.
+- SPK-02 retention-label behavior and duration remain explicitly unverified until records-owner/test-tenant evidence exists.

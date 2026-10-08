@@ -1,6 +1,6 @@
 # Current acceptance tenant inventory
 
-Last verified: 2026-10-03 through Entra administration, SharePoint administration and authenticated Microsoft Graph PowerShell. This is a dated nonproduction inventory, not a claim that future tenant state is unchanged. Identifiers below are configuration metadata, not credentials.
+Configuration inventory last verified: 2026-10-03 through Entra/SharePoint administration and authenticated Microsoft Graph PowerShell. Read-only Entra session and selected-folder storage checks were observed again on 2026-10-08 as recorded below. This is a dated nonproduction inventory, not a claim that future tenant state is unchanged. Identifiers below are configuration metadata, not credentials.
 
 | Resource | Current value |
 | --- | --- |
@@ -93,3 +93,7 @@ Template asset repository update — 2026-10-04: T036 now requires a separate `F
 Template workspace browser recheck — 2026-10-04: the existing mapped Staff Fixture signed in, selected its synthetic engagement and loaded the Reporting > Document Templates route through the live local SPA/API. It received an empty read-only catalog with no draft or asset metadata and no management controls, as expected from its single scoped `ENGAGEMENT_READ` grant. Only the local development database schema and explicit local API/worker table grants were updated for T036. No Microsoft tenant, app registration, permission, credential, Graph repository binding, or client record changed. This is browser authorization/UI evidence, not firm-template Graph provider acceptance.
 
 T036 live-provider harness preparation — 2026-10-05: added an opt-in SharePoint asset-folder test and documented the proposed dedicated acceptance folder and environment keys. The Graph PowerShell `Files.ReadWrite` device flow timed out before authentication; no Graph request that creates a folder or permission was issued, and no tenant state changed. This is local code/setup work only; the tenant inventory above retains its prior verification date, and the dedicated `template-assets-private` repository/grant and real-provider round-trip remain pending.
+
+Recheck — 2026-10-08: the built-in browser showed an authenticated administrator session in the `easyguide` tenant and a loaded Entra Users view (15 users); the pre-existing AuditSphere synthetic Staff Fixture and Client X/Client Y fixtures were visible. This was read-only and changed no identity, membership, grant, app registration or permission.
+
+The credentialed `pnpm test:m365:storage:live` acceptance run passed 2/2 against only the configured synthetic SharePoint and OneDrive folders. See the [T156 handoff](../evidence/T156/handoff.md#recheck--2026-10-08) and its redacted [SharePoint](../evidence/T156/live-storage-2026-10-08-56361a8d.json) / [OneDrive](../evidence/T156/live-storage-2026-10-08-56361a8d-onedrive.json) run records. No tenant configuration changed. The test does not establish retention/record-label behavior, consent revocation, production data residency or production readiness.

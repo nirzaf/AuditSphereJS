@@ -354,5 +354,61 @@
     "approvalEvidence": "Owner answer to DN-12: \"Recommended label (Recommended)\".",
     "implementationDefault": "The contract-contribution metric is labelled \"Contract contribution (fee minus charge-out value of approved time) — not accounting profit\" wherever it is shown.",
     "decisionRecord": "docs/02-decisions-needed.md#dn-12"
+  },
+  {
+    "id": "D26",
+    "title": "Require a verification recipe for every remaining task",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "Codex, under user delegation",
+    "sourceLines": "AGENTS.md Definition of done; docs/07-definition-of-done-additions.md",
+    "ambiguity": "Several in-review or future task cards did not have a runnable task-specific verification recipe.",
+    "approvedBy": "User delegated blocker resolution to Codex on 2026-10-08, consistent with prior implementation-default delegation.",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "User request: resolve all blockers and complete the task.",
+    "implementationDefault": "Every remaining task must have a pnpm verify:task recipe that executes non-empty task-specific checks. Add or repair the recipe with the implementation. Do not close a task when its recorded recipe is absent or passes without running an intended check.",
+    "decisionRecord": "docs/07-definition-of-done-additions.md"
+  },
+  {
+    "id": "D27",
+    "title": "Practice time-entry phase set (T140)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "Codex, under user delegation",
+    "sourceLines": "T140; prisma/migrations/202610080007_practice_time_entries_t140/migration.sql",
+    "ambiguity": "The task handoff leaves the allowed phase set for time entries awaiting owner confirmation.",
+    "approvedBy": "User delegated blocker resolution to Codex on 2026-10-08, consistent with prior implementation-default delegation.",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "User request: resolve all blockers and complete the task.",
+    "implementationDefault": "A time entry may be tagged PLANNING, FIELDWORK, REVIEW, or REPORTING. This confirms the phase set already enforced by the T140 migration and service contract; historical rows may remain null.",
+    "decisionRecord": "docs/evidence/T140/handoff.md"
+  },
+  {
+    "id": "D28",
+    "title": "Proposal acceptance credential expiry and reissue (SPK-03)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "Codex, under user delegation",
+    "sourceLines": "docs/evidence/SPK-03/spike.md; T062",
+    "ambiguity": "The single-use portal-bound acceptance token needs an expiry and controlled reissue rule.",
+    "approvedBy": "User delegated blocker resolution to Codex on 2026-10-08, consistent with prior implementation-default delegation.",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "User request: resolve all blockers and complete the task.",
+    "implementationDefault": "A proposal-acceptance credential expires seven calendar days after issue. After expiry, COMMERCIAL_MANAGE may issue a new single-use credential for the same still-presented proposal revision; issuing it supersedes any unconsumed credential. A revision or terms change requires a new presentation and a newly bound credential. Every issue and supersession is audited; no token value is persisted.",
+    "decisionRecord": "docs/evidence/SPK-03/spike.md"
+  },
+  {
+    "id": "D29",
+    "title": "Workbook parsing worker kill timeout (SPK-01)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "Codex, under user delegation",
+    "sourceLines": "docs/evidence/SPK-01/spike.md; T045",
+    "ambiguity": "ExcelJS parsing cannot be interrupted in-process and an approved worker timeout was not recorded.",
+    "approvedBy": "User delegated blocker resolution to Codex on 2026-10-08, consistent with prior implementation-default delegation.",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "User request: resolve all blockers and complete the task.",
+    "implementationDefault": "Use a 60-second worker kill timeout as the provisional ceiling for one import. It is approximately 3.6 times the measured 16.616-second worst in-limit fixture on the development machine. Before T045 is accepted as final, append a same-fixture measurement from the target deployment image; a timeout is not an expected successful parse duration.",
+    "decisionRecord": "docs/evidence/SPK-01/spike.md"
   }
 ]

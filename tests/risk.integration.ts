@@ -155,7 +155,7 @@ test('risk colours follow the published balance against approved TE and PM, are 
       assert.equal(risks[0].owner, null, 'the assignment bound the superseded assessment, not the current one');
       await assert.rejects(clearRiskBand(partnerId, engagementId, red.assessmentId, { note: 'Stale' }), /supersedes/);
 
-      // A newer accepted balance version makes the approved materiality stale (or invalidated): risk colours are refused until it is recalculated.
+      // Superseding the cited balance writes a materiality invalidation, which is the specific refusal expected here.
       await publishBalanceVersion(2, [
         { code: '4000', name: 'Revenue', fsli: 'Revenue', current: '-2000000.000000' },
         { code: '5000', name: 'Operating expenses', fsli: 'Operating expenses', current: '1980000.000001' },
@@ -163,7 +163,7 @@ test('risk colours follow the published balance against approved TE and PM, are 
         { code: '1000', name: 'Cash', fsli: 'Cash and equivalents', current: '14999.999999' },
         { code: '2000', name: 'Payables', fsli: 'Trade payables', current: '-15000.000000' },
       ]);
-      await assert.rejects(assessRiskBand(managerId, engagementId, risk.riskId, { accountCode: '1000', significant: false, fraudRisk: false }), /stale|invalidated/);
+      await assert.rejects(assessRiskBand(managerId, engagementId, risk.riskId, { accountCode: '1000', significant: false, fraudRisk: false }), /The approved materiality is invalidated; recalculate and approve it first/);
 
       // Assessments and clearances are append-only.
       await assert.rejects(db.$executeRaw`UPDATE "RiskBandAssessment" SET band = 'GREEN' WHERE id = ${red.assessmentId}::uuid`, /append-only/);
