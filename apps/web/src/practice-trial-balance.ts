@@ -4,8 +4,7 @@ import type { PracticeFirmTrialBalance, PracticeFirmTrialBalanceDetail } from '@
 import type { z } from 'zod';
 import { authenticatedFetch, requestContractJson } from './api-client';
 import { currentAccessToken } from './identity';
-
-function csvCell(value: string) { return `"${value.replaceAll('"', '""')}"`; }
+import { csvLine } from './csv-export';
 
 /** Stable export of the exact report response; values stay decimal strings from PostgreSQL. */
 export function firmTrialBalanceCsv(report: PracticeFirmTrialBalance): string {
@@ -17,7 +16,8 @@ export function firmTrialBalanceCsv(report: PracticeFirmTrialBalance): string {
     ...report.rows.map(row => [row.code, row.name, row.kind, row.openingDebit, row.openingCredit, row.periodDebit, row.periodCredit, row.closingDebit, row.closingCredit]),
     ['TOTAL', '', '', report.totals.openingDebit, report.totals.openingCredit, report.totals.periodDebit, report.totals.periodCredit, report.totals.closingDebit, report.totals.closingCredit],
   ];
-  return rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  // Columns 3 to 8 are amounts; the other columns are text and are protected against spreadsheet formulas (DN-03).
+  return rows.map(row => csvLine(row, [3, 4, 5, 6, 7, 8])).join('\r\n') + '\r\n';
 }
 
 @Component({

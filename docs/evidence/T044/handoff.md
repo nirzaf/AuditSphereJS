@@ -85,3 +85,9 @@ New PostgreSQL assertions cover: three distinct defects recorded at lines 3, 4 a
 - The worker role's grants are verified by inspection of the provisioner, not by running the worker as that role; the tests run as the migration owner.
 - Row errors are stored but not yet exposed through an API or UI.
 - T043 remains IN_REVIEW, so T044's dependency on it is not yet DONE. T044 stays IN_REVIEW.
+
+## Addendum — DN-03 / D15: formula-like export text (2026-10-08)
+
+The owner decided DN-03 as option A. The Practice trial balance and profit and loss CSV exports now protect text cells that begin with =, +, -, @, tab or carriage return by prefixing an apostrophe. Amount and count cells are never altered, and each exporter names its amount columns explicitly. The shared helper is `apps/web/src/csv-export.ts`, covered by `apps/web/src/csv-export.spec.ts` (3 of 3).
+
+Verified: `pnpm verify:task -- T044`, `T145` and `T146` (exit 0); the Practice trial balance and profit and loss specs (existing assertions unchanged); `pnpm verify:affected` (161 tests); `pnpm lint`; `pnpm build` (Angular production build).

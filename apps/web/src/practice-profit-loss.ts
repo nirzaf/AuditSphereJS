@@ -4,6 +4,7 @@ import type { PracticeFirmProfitLoss, PracticeFirmProfitLossDetail, PracticeFirm
 import type { z } from 'zod';
 import { ApiContractError, authenticatedFetch, requestContractJson } from './api-client';
 import { currentAccessToken } from './identity';
+import { csvLine } from './csv-export';
 
 type ReportErrorKind = 'authentication' | 'authorization' | 'conflict' | 'validation' | 'general';
 
@@ -11,8 +12,6 @@ function localMonth() {
   const now = new Date();
   return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 }
-
-function csvCell(value: string) { return `"${value.replaceAll('"', '""')}"`; }
 
 /** Export the loaded, hashed report with enough context to identify and reproduce its query. */
 export function firmProfitLossCsv(report: PracticeFirmProfitLoss): string {
@@ -29,7 +28,8 @@ export function firmProfitLossCsv(report: PracticeFirmProfitLoss): string {
     ['TOTAL EXPENSES', '', '', report.currentTotals.expenses, report.comparisonTotals?.expenses ?? '', '', ''],
     ['NET PROFIT / (LOSS)', '', '', report.currentTotals.net, report.comparisonTotals?.net ?? '', '', ''],
   ];
-  return rows.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  // Columns 3 to 6 are amounts and counts; the other columns are text and are protected against spreadsheet formulas (DN-03).
+  return rows.map(row => csvLine(row, [3, 4, 5, 6])).join('\r\n') + '\r\n';
 }
 
 @Component({

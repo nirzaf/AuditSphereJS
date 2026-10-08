@@ -32,6 +32,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-03 — Formula-like text in exported CSV/XLSX
 
+**Resolved 2026-10-08 by the owner: option A.** Recorded as D15 in `docs/decisions/register.json`. Text cells beginning with a spreadsheet-evaluated character are prefixed with an apostrophe on export; amount and count cells are never altered. Implemented in `apps/web/src/csv-export.ts` and used by the Practice trial balance and profit and loss exports.
+
 **Context.** T044 flags the export hazard: cells beginning `=`, `+`, `-`, `@`, tab or carriage return execute in spreadsheet software.
 
 **Options.** A: prefix such cells with an apostrophe on export. B: refuse to export them. C: leave unchanged.

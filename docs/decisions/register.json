@@ -200,5 +200,19 @@
     "approvalEvidence": "Owner answer to DN-02: \"B: accept cached value, record formula (Recommended)\".",
     "implementationDefault": "Accept the cached result of a workbook formula cell and keep its formula text in the row raw values. Never evaluate a formula. Refuse a formula cell that has no usable cached result, with its source line. Errors and non-numeric cached results are refused.",
     "decisionRecord": "docs/02-decisions-needed.md#dn-02--cached-formula-values-in-workbooks"
+  },
+  {
+    "id": "D15",
+    "title": "Formula-like text in exported CSV and XLSX (DN-03)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "docs/02-decisions-needed.md DN-03; T044 export hazard",
+    "ambiguity": "Cells beginning with =, +, -, @, tab or carriage return can be evaluated by spreadsheet software when an export is opened. Numeric amounts also begin with a minus sign and must not change.",
+    "approvedBy": "Repository owner, in the chat decision for DN-03 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-03: \"A: prefix text cells with an apostrophe (Recommended)\".",
+    "implementationDefault": "On export, prefix a text cell that begins with =, +, -, @, tab or carriage return with an apostrophe. Never alter amount or count cells. Each exporter names its amount columns explicitly.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-03--formula-like-text-in-exported-csvxlsx"
   }
 ]

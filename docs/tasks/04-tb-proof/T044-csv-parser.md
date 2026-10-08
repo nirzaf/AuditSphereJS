@@ -46,7 +46,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 - [x] Use the existing `csv-parse` stream parser with explicit UTF-8/BOM, comma, header and quoted-value rules.
 - [x] Preserve account codes as strings including leading zeroes; parse monetary strings through the shared decimal policy.
 - [x] Process bounded chunks with cancellation/progress checkpoints and durable error rows carrying source line numbers. Streaming validation, 1,000-row transactional writes, source-line errors, per-chunk progress checkpoints, cooperative cancellation and append-only `TbImportRowError` records are implemented and PostgreSQL-tested (see T044 evidence increment 2).
-- [ ] Reject unexpected columns and resolve formula-like export hazards according to approved format policy without evaluating spreadsheet expressions. Unexpected/duplicate/missing columns are rejected; export policy remains unresolved.
+- [ ] Reject unexpected columns and resolve formula-like export hazards according to approved format policy without evaluating spreadsheet expressions. Unexpected/duplicate/missing columns are rejected. Export policy is decided (D15, DN-03): text cells are protected with an apostrophe and amount cells are never altered.
 
 ## Acceptance criteria and required tests
 
