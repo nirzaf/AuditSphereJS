@@ -47,3 +47,28 @@ Reviewer: Codex (implementation evidence review)
 Review result: records-policy fixture and task verifier passed  
 Open blockers: downstream implementation and professional/legal UAT  
 Next eligible task by dependency order: T006 (T005 is already DONE).
+
+## Follow-up — Qatar jurisdiction correction (2026-10-09)
+
+The prior D30 retention baseline assumed Saudi jurisdiction. The repository owner corrected the governing jurisdiction to Qatar, so D30 is superseded by D31; no task or acceptance status is changed by this addendum. D31 sets a conservative ten-year product default for Qatar statutory audit files from the end of the last audited financial year, while stating that Qatar Law No. 8 of 2020, Article 37, provides a five-year minimum unless a longer applicable rule applies. Covered AML/CFT records retain their separate ten-year statutory periods and date anchors; those categories apply only when the engagement meets the applicable scope. Qatar records/methodology approval and Purview tenant behavior remain open.
+
+The decision references the Qatar legal portal and MOCI guidance in [D31](../../decisions/D31-qatar-audit-record-retention.md). This is an implementation default, not legal advice or professional approval. No retention setting, label, tenant permission, archive lock, deletion or production configuration was changed.
+
+### Changed files
+
+- `docs/decisions/D30-saudi-audit-record-retention.md` — marked superseded, retained as history.
+- `docs/decisions/D31-qatar-audit-record-retention.md` and `docs/decisions/register.json` — recorded the Qatar-specific default and source links.
+- `docs/tasks/11-archive/T133-object-retention.md`, `T134-archive-seal.md`, `T138-archive-drill.md`, and `docs/tasks/14-production/T168-uat.md` — aligned their applicability references.
+- `docs/BLOCKER-02-owner-decisions.md`, `docs/BLOCKERS.md`, `docs/00-index.md`, `docs/evidence/SPK-02/spike.md`, and `docs/microsoft365/current-tenant.md` — updated blocker and tenant evidence.
+- `scripts/verify-records-policy.mjs` — added regression assertions for the Qatar jurisdiction, separate five-/ten-year categories and pending professional acceptance.
+
+### Verification
+
+| Command / check | Result | Evidence |
+| :--- | :--- | :--- |
+| `pnpm verify:task -- T004` | PASS, exit 0; records-policy and Qatar jurisdiction assertions passed | 2026-10-09 local run |
+| `pnpm verify:affected` | PASS; boundaries, typecheck/build and 33 Vitest files / 176 tests | 2026-10-09 local run; elevated retry after Windows temp-directory EPERM |
+| GitHub Actions [run #189](https://github.com/nirzaf/AuditSphereJS/actions/runs/37853295429), commit `d92d89a` | PASS; static, unit, 3 integration shards, E2E, image and public web-asset publication | 2026-10-09; one upstream Node 20 deprecation warning for `actions/download-artifact@v6` |
+| `git diff --check` | PASS | 2026-10-09 local run |
+
+**Acceptance boundary:** independent review and qualified Qatar records/methodology acceptance remain outstanding under B01/B02. This follow-up records measured implementation evidence only; it does not self-accept the policy or update the execution ledger.
