@@ -6,6 +6,7 @@ export { addContact, listContacts, resolveRecipient } from './modules/commercial
 export { createLead, listLeads, profileLead, advanceLeadToProposal } from './modules/commercial/leads.js';
 export { createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase } from './modules/commercial/acceptance.js';
 export { createEngagement, engagementIdentity } from './modules/commercial/engagements.js';
+export { generateProposalDocument, dispatchProposalDocument } from './modules/commercial/documents.js';
 export { issueInvoice, recordInvoicePayment, issueInvoiceReceipt, voidInvoice, listInvoices } from './modules/practice/invoices.js';
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
 export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';

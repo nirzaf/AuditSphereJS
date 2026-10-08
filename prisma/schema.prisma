@@ -1063,6 +1063,7 @@ model CommercialProposal {
   clientResponse    Json?
   createdBy         String                  @db.Uuid
   createdAt         DateTime                @default(now())
+  documents         ProposalDocument[]
   letter            EngagementLetterRecord?
   invoices          EngagementInvoice[]
 
@@ -1223,6 +1224,22 @@ model AcceptanceCase {
   clearedAt       DateTime?
   createdAt       DateTime  @default(now())
   clearances      RiskClearance[]
+}
+
+model ProposalDocument {
+  id           String   @id @default(uuid()) @db.Uuid
+  firmId       String   @db.Uuid
+  proposalId   String   @db.Uuid
+  proposal     CommercialProposal @relation(fields: [proposalId], references: [id], onDelete: Restrict)
+  engagementId String   @db.Uuid
+  kind         String
+  revision     Int
+  content      Json
+  contentHash  String
+  dispatchedAt DateTime?
+  createdBy    String   @db.Uuid
+  createdAt    DateTime @default(now())
+  @@unique([proposalId, kind, revision])
 }
 
 model SecurityEvent {
