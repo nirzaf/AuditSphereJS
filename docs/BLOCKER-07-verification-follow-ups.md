@@ -32,6 +32,12 @@ The T045 handoff and this blocker record both the exact isolated result and the 
 
 The pushed run exposed two CI issues that local affected tests did not cover: the matrix omitted ten existing integration files, and the full audit found `shell-quote@1.9.0` under `concurrently@10.0.5`. All ten suites are now listed in the integration matrix, and the CI workflow policy checker passes. A scoped `concurrently>shell-quote` override selects 1.12.0; the lockfile passed supply-chain policy, the full moderate audit found no known vulnerabilities, and the affected suite passed again. Exact dependency evidence is appended to `docs/evidence/T005/security-remediation.md`.
 
+### 8. CI browser and Trial Balance mapping follow-up
+
+The hosted run for `d81aa95` found a false T079 assertion and E2E setup gaps. The T079 test compared a statement-summary projection to `null` even though unmapped rows are represented as an explicit `Unmapped` line; it now asserts directly that no staged row has `fsli: null`. The live import E2E then exposed a real fresh-upload UI defect: the editor loaded approved FSLI choices only when opening an existing import, not immediately after creating a new one. `workspace.ts` now loads the current approved taxonomy after upload, before rendering the mapping controls. The development seed creates taxonomy lines in a DRAFT version and approves only after insertion, preserving the database immutability trigger; it reuses a complete approved development version without updating it. Practice E2E mocks now use the firm-report API route and assert the specific connection notice. These fixes preserve the local PREPARER role ceiling and server-only finalization authority.
+
+Local verification on 2026-10-09 passed: `pnpm verify:task -- T079`; `pnpm exec ng test web --watch=false` (16 files / 94 tests); `pnpm verify:affected` (33 files / 176 tests); and `RUN_LIVE_E2E=1 pnpm exec playwright test --workers=1` (14/14 browser journeys, including live import and Practice authorization). The first restricted Angular test attempt failed before collection with Windows temp-directory `EPERM`; the elevated retry passed. The first four-worker browser run hit a resource-only timeout in the responsive sweep; the full serial run passed. The new hosted Actions result remains pending for the fix commit.
+
 ## Verification
 
 | Command | Result |
@@ -44,9 +50,10 @@ The pushed run exposed two CI issues that local affected tests did not cover: th
 | `pnpm verify:affected` | First restricted run hit Windows loopback `EACCES` in 3 tests; elevated rerun passed 33 files / 176 tests, 2026-10-08 |
 | `node scripts/verify-ci-workflow.mjs`, `pnpm exec node scripts/verify-pnpm-install-policy.mjs` | Both passed after the integration matrix and lockfile correction, 2026-10-08 |
 | `pnpm audit --audit-level=moderate` | Passed after scoped parser override; no known vulnerabilities, 2026-10-08 |
+| `pnpm verify:task -- T079`; `pnpm exec ng test web --watch=false`; `pnpm verify:affected`; `RUN_LIVE_E2E=1 pnpm exec playwright test --workers=1` | Passed, respectively; Angular 16/94, affected 33/176, browser journeys 14/14, 2026-10-09 |
 
 ## Remaining acceptance
 
-T087 remains IN_REVIEW until an independent reviewer checks its card and handoff. B07's engineering follow-ups are resolved and reverified on the final tree. The latest GitHub Actions run is still the final external check; independent acceptance remains B01 and is not represented as complete.
+T087 remains IN_REVIEW until an independent reviewer checks its card and handoff. B07's engineering follow-ups are locally resolved and reverified on the final tree. The GitHub Actions run for the follow-up fix is still the final external check; independent acceptance remains B01 and is not represented as complete.
 
 The initial restricted `pnpm verify:affected` attempt failed three loopback tests with Windows `EACCES`; the authorized elevated retry completed successfully. This environment failure is retained rather than erased by the passing retry.

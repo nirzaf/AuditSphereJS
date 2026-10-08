@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import 'dotenv/config';
 
 const report = {
   currency: 'QAR',
@@ -15,11 +16,13 @@ const report = {
 
 test('Practice Profit and Loss stays usable at phone, tablet, and desktop widths', async ({ page }) => {
   await page.route('**/api/v1/identity/config', route => route.fulfill({ json: { provider: 'development' } }));
-  await page.route('**/api/v1/engagements/*/practice/reports/profit-loss**', route => route.fulfill({ json: report }));
+  await page.route('**/api/v1/firm/practice/reports/profit-loss**', route => route.fulfill({ json: report }));
   await page.goto('/?module=Practice&view=profit-loss');
+  await page.getByLabel('Local development access token').fill(process.env.DEV_AUTH_TOKEN!);
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await expect(page.locator('p.notice[role="status"]')).toContainText('Connected');
 
   await expect(page).toHaveTitle('Monthly Profit & Loss | Practice | AuditSphere');
-  await expect(page.locator('p.notice')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'How to read this report' })).toBeVisible();
   await page.getByRole('button', { name: 'Load report' }).click();
   await expect(page.getByRole('region', { name: 'Monthly Profit and Loss account rows' })).toBeVisible();
@@ -39,11 +42,14 @@ test('Practice Profit and Loss stays usable at phone, tablet, and desktop widths
 
 test('Practice access recovery stays readable and contained on narrow screens', async ({ page }) => {
   await page.route('**/api/v1/identity/config', route => route.fulfill({ json: { provider: 'development' } }));
-  await page.route('**/api/v1/engagements/*/practice/reports/profit-loss**', route => route.fulfill({
+  await page.route('**/api/v1/firm/practice/reports/profit-loss**', route => route.fulfill({
     status: 403,
     json: { error: { code: 'FORBIDDEN', status: 403, message: 'Firm-wide Practice reporting access is missing.', correlationId: 'e2e-support-403' } },
   }));
   await page.goto('/?module=Practice&view=profit-loss');
+  await page.getByLabel('Local development access token').fill(process.env.DEV_AUTH_TOKEN!);
+  await page.getByRole('button', { name: 'Connect', exact: true }).click();
+  await expect(page.locator('p.notice[role="status"]')).toContainText('Connected');
   await page.getByRole('button', { name: 'Load report' }).click();
 
   const alert = page.getByRole('alert');

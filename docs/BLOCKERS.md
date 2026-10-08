@@ -1,6 +1,6 @@
 # Blockers and pending work — index
 
-**Status rechecked 2026-10-08.** Ledger counts remain 171 tasks — 53 DONE, 4 NOT_APPLICABLE, 37 IN_REVIEW, 1 IN_PROGRESS (T108), 76 NOT_STARTED. Remaining work: 114 tasks. B02 rows T140/SPK-01/SPK-03/DoD and the B05 planning map have been addressed in this pass; B07 engineering follow-ups are fixed and reverified. B01, B03 implementation, B04, most B05 persistence, parts of B06 and SPK-05/SPK-06 remain gated below.
+**Status rechecked 2026-10-09.** Ledger counts remain 171 tasks — 53 DONE, 4 NOT_APPLICABLE, 37 IN_REVIEW, 1 IN_PROGRESS (T108), 76 NOT_STARTED. Remaining work: 114 tasks. B02 rows T140/SPK-01/SPK-03/DoD and the B05 planning map have been addressed in this pass; B07 engineering follow-ups and the fresh-upload mapping regression are locally verified, with hosted CI pending. B01, B03 implementation, B04, most B05 persistence, parts of B06 and SPK-05/SPK-06 remain gated below.
 
 This index lists every item that is blocked, and what each block needs before work can continue. Each linked file gives the evidence, the owner, and the steps to unblock. Nothing here changes a ledger status. A task becomes DONE only after independent review, recorded in its handoff, and the owner updates the ledger.
 

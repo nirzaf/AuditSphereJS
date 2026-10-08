@@ -24,6 +24,43 @@ async function main() {
     const existing = await db.roleGrant.findFirst({ where: { userId: fixtureUser, capability, firmId, clientId: null, engagementId: null, revokedAt: null } });
     if (!existing) await db.roleGrant.create({ data: { userId: fixtureUser, capability, firmId, grantedBy: fixtureUser, reason: 'Development-only practice fixture' } });
   }
+  // A development-only approved taxonomy makes Trial Balance mapping demonstrable without
+  // weakening the production role ceiling: the fixture actor remains a PREPARER and cannot
+  // finalize. Production business taxonomies must be created and approved through the service.
+  const developmentLines = [
+    { code: 'Cash and equivalents', label: 'Cash and cash equivalents', statementSection: 'ASSETS', sortOrder: 1 },
+    { code: 'Equity', label: 'Equity', statementSection: 'EQUITY', sortOrder: 2 },
+  ];
+  const approvedDevelopmentTaxonomies = await db.taxonomyVersion.findMany({
+    where: { firmId, name: 'DEVELOPMENT-STATUTORY', status: 'APPROVED' },
+    include: { lines: true },
+    orderBy: { version: 'desc' },
+  });
+  const completeDevelopmentTaxonomy = approvedDevelopmentTaxonomies.find((taxonomy) =>
+    developmentLines.every((required) => taxonomy.lines.some((line) => line.code === required.code)),
+  );
+  if (!completeDevelopmentTaxonomy) {
+    const latestVersion = await db.taxonomyVersion.aggregate({
+      where: { firmId, name: 'DEVELOPMENT-STATUTORY' },
+      _max: { version: true },
+    });
+    const developmentTaxonomy = await db.taxonomyVersion.create({
+      data: {
+        firmId,
+        name: 'DEVELOPMENT-STATUTORY',
+        version: (latestVersion._max.version ?? 0) + 1,
+        status: 'DRAFT',
+        createdBy: fixtureUser,
+      },
+    });
+    for (const line of developmentLines) {
+      await db.taxonomyLine.create({ data: { taxonomyVersionId: developmentTaxonomy.id, ...line } });
+    }
+    await db.taxonomyVersion.update({
+      where: { id: developmentTaxonomy.id },
+      data: { status: 'APPROVED', approvedBy: fixtureUser, approvedAt: new Date() },
+    });
+  }
   await db.firmPostingPolicy.upsert({ where: { firmId }, create: { firmId, policyVersion: 'DEVELOPMENT-D07-1', approvedBy: fixtureUser, revenueTreatment: 'DEFERRED_UNTIL_RELEASE', taxTreatment: 'NO_TAX' }, update: {} });
   const accounts = [
     ['100','Bank','ASSET'], ['110','Cash','ASSET'], ['120','Client receivables','ASSET'],

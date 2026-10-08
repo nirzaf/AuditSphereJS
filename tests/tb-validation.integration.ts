@@ -74,8 +74,7 @@ test('T079 Trial Balance validation blocks unbalanced finalization and reconcile
       const unbalancedCsv = 'code,name,current,prior\n100,Cash,10.00,0.00\n200,Equity,-9.99,0.00\n';
       const unbalanced = await stageAndProcess('unbalanced.csv', unbalancedCsv);
       const unbalancedVersion = await mapEverything(unbalanced);
-      const unmappedBefore = await statementSummary(engagementId, unbalanced);
-      assert.equal(unmappedBefore.unmapped, null, 'every row is mapped before finalization is attempted');
+      assert.equal(await db.tbRow.count({ where: { importId: unbalanced, fsli: null } }), 0, 'every row has a mapping before finalization is attempted');
       await assert.rejects(finalize(engagementId, unbalanced, reviewerId, { expectedVersion: unbalancedVersion }), (reason: unknown) => statusOf(reason) === 400 && /balance to zero/.test(String((reason as Error).message)));
       assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: unbalanced } })).status, 'MAPPING_REQUIRED', 'a rejected finalization leaves the batch editable');
 
