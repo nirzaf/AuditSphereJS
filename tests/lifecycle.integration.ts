@@ -17,7 +17,8 @@ const actorId = '78787878-7878-4787-8787-787878787878';
 const reviewerId = '89898989-8989-4898-8898-898989898989';
 const key = (suffix: string) => `00000000-0000-4000-8000-0000000000${suffix}`;
 
-test('guarded lifecycle commands reject invalid paths, enforce evidence and stay idempotent', { timeout: 120_000 }, async () => {
+// The workflow suite runs many guarded commands on one container; 120 s was within 20 s of the limit on an idle machine.
+test('guarded lifecycle commands reject invalid paths, enforce evidence and stay idempotent', { timeout: 240_000 }, async () => {
   const container = await new PostgreSqlContainer('postgres:18.6').withDatabase('auditsphere_lifecycle').withUsername('test_owner').withPassword(randomBytes(24).toString('hex')).start();
   try {
     const uri = container.getConnectionUri();
