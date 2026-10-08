@@ -3696,15 +3696,8 @@
             },
             "fsli": {
               "type": "string",
-              "enum": [
-                "Cash and equivalents",
-                "Trade receivables",
-                "Property and equipment",
-                "Trade payables",
-                "Equity",
-                "Revenue",
-                "Operating expenses"
-              ]
+              "minLength": 1,
+              "maxLength": 120
             }
           },
           "required": [

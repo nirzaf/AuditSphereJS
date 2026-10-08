@@ -1,6 +1,6 @@
 # Module UI coverage
 
-Verified 2026-10-04. 38 workspaces across five modules; 11 connected views and 27 preparation-only views. Preparation forms keep memory-only drafts and cannot approve, bill, send, sign, release or archive records.
+Verified 2026-10-04; recounted 2026-10-08 from the table below: 39 workspaces across five modules; 14 connected views and 25 preparation-only views (the earlier summary said 38, 11 and 27, which did not match the table). Preparation forms keep memory-only drafts and cannot approve, bill, send, sign, release or archive records.
 
 | Module | Workspace | Current UI boundary |
 | --- | --- | --- |

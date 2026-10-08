@@ -85,7 +85,7 @@ export const documentUploadFinalizedSchema = z.object({
   sessionId: z.uuid(), documentId: z.uuid(), documentVersionId: z.uuid(), sha256: z.string().regex(/^[a-f0-9]{64}$/), sizeBytes: z.number().int().positive(),
 });
 export const documentUploadReceivedSchema = z.object({ sessionId: z.uuid(), status: z.literal('STORED'), sha256: z.string().regex(/^[a-f0-9]{64}$/), sizeBytes: z.number().int().positive() });
-export const mappingSchema = z.object({ idempotencyKey: z.uuid(), changes: z.array(z.object({ rowId: z.uuid(), expectedVersion: z.number().int().positive(), fsli: z.enum(fslis) })).min(1).max(500) }).refine(v => new Set(v.changes.map(c => c.rowId)).size === v.changes.length, 'Duplicate row IDs');
+export const mappingSchema = z.object({ idempotencyKey: z.uuid(), changes: z.array(z.object({ rowId: z.uuid(), expectedVersion: z.number().int().positive(), fsli: z.string().trim().min(1).max(120) })).min(1).max(500) }).refine(v => new Set(v.changes.map(c => c.rowId)).size === v.changes.length, 'Duplicate row IDs');
 export const finalizeSchema = z.object({ expectedVersion: z.number().int().positive() });
 /** Supersession names the reviewed active version and a reason; it never runs without both (D18). */
 export const supersedeSchema = z.object({ expectedVersion: z.number().int().positive(), reason: z.string().trim().min(10).max(500) });

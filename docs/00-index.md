@@ -1,6 +1,6 @@
 # AuditSphereJS — Remaining-work agent pack (index)
 
-**Status: CURRENT** · verified against `main` at `9b65b2b` (2026-10-08) for the STE Audit Management Tool specification v2.1 (`docs/requirements/CURRENT.md`).
+**Status: CURRENT** · verified against `main` at `9b65b2b` (2026-10-08); sections 2 and 3 updated on 2026-10-08 for the STE Audit Management Tool specification v2.1 (`docs/requirements/CURRENT.md`).
 
 **Purpose:** the inputs an AI coding agent needs to finish AuditSphereJS, scoped to work that is **not done**. Completed tasks are listed once in section 4 so agents skip them; nothing else in `docs/plan/` describes them.
 
@@ -25,28 +25,37 @@ The repository already has most layers. This pack adds only what is missing or w
 | 13 | Task prompt | none | Superseded: `AGENTS.md` and `CLAUDE.md` are the session entry point (pack file removed) |
 | + | Removal guideline | none | [09-removal-guideline.md](09-removal-guideline.md) |
 
-## 2. Status at `9b65b2b`
+## 2. Status
 
-| Ledger status | Tasks | After verification |
-| --- | --- | --- |
-| DONE | 53 | Excluded (section 4). |
-| NOT_APPLICABLE | 4 | Excluded (T152–T155, optional Microsoft 365). |
-| IN_REVIEW | 33 | Remaining. Most are waiting for independent review plus a short list of open items. |
-| IN_PROGRESS | 1 | Remaining (T108). |
-| NOT_STARTED | 80 | Remaining. Three of them (T045, T049, T079) were implemented on 2026-10-08 and belong in IN_REVIEW; T062 is partly implemented. |
+Status at `9b65b2b` (the baseline this index was written against) and as updated on 2026-10-08 (the current ledger, read from `docs/guides/13-execution-ledger.md`):
 
-**Remaining: 114 tasks**, plus six corrections found by verification ([stories/00-corrections.md](stories/00-corrections.md)) that must land inside tasks already marked IN_REVIEW.
+| Ledger status | Tasks at `9b65b2b` | Tasks on 2026-10-08 | Note |
+| --- | --- | --- | --- |
+| DONE | 53 | 53 | Unchanged. Excluded (section 4). |
+| NOT_APPLICABLE | 4 | 4 | T152–T155, optional Microsoft 365. |
+| IN_REVIEW | 33 | 37 | +4: T045, T049 and T079 (moved from NOT_STARTED, as the baseline already noted) and T140 (implemented on 2026-10-08). |
+| IN_PROGRESS | 1 | 1 | T108 (its review-notes module moved to fieldwork under D21). |
+| NOT_STARTED | 80 | 76 | T140 left this group. |
 
-## 3. What the verification found (confirmed by reading code)
+**Remaining: 114 tasks** (every status except DONE and NOT_APPLICABLE). Under the cards' own rule that every dependency must be DONE, only T140 could start on 2026-10-08. The other 76 NOT_STARTED tasks wait on IN_REVIEW dependencies, which need independent review. The owner decided on 2026-10-08 to hold dependent tasks until their dependencies close.
 
-1. **The review queue blocks everything.** Cards require DONE dependencies. With 33 tasks IN_REVIEW, only **T036** and **T043** have all dependencies DONE. T043 alone sits upstream of 123 tasks. Closing reviews in critical-path order (roadmap M0) unblocks more work than any new feature.
-2. **Two FSLI vocabularies contradict each other** — hard-coded `fslis` (seven labels, no COGS or Inventory) versus approved taxonomy codes (STE-JS-01).
-3. **Materiality ranges in code differ from CURRENT and D05** (PBT 3–10 %, total assets 0.5–2 %, net assets 1–5 %, SAD 1–5 %), two extra benchmarks are offered, and the manager ±5 % adjustment does not exist (STE-JS-02).
-4. **Risk colours come from likelihood × magnitude**, not from balance versus TE/PM as D05 specifies (STE-JS-03).
-5. **Staff can record client acceptance** of a proposal, contrary to T062 AC3 — and Key 1 reads that record (STE-JS-04).
-6. **The ledger lags the code** by one day of merges (STE-JS-05).
-7. **25 UI workspaces are session-only preparation forms** (`docs/evidence/UI-MODULES.md` table; its summary line still says 27 of 38). They include Lead pipeline, Entities & contacts and Billing & receivables, whose server side already exists. The removal guideline maps each one to the task that replaces it.
-8. **The engagement lifecycle has nine unconditional `fail(...)` placeholders** in `packages/server/src/modules/governance/lifecycle.ts` (lines 226, 234, 235, 236, 246, 247, 250, 251, 255). Each is removed by the task that supplies its evidence (removal guideline §2).
+Work done on 2026-10-08, recorded here so that agents skip it:
+
+- Owner decisions DN-01 to DN-13 are all resolved, recorded as D13 to D25 in `docs/decisions/register.json`. DN-08 to DN-12 were implemented: review notes moved to fieldwork, the statement split follows the approved taxonomy, systematic sampling is in place, firm-level Practice reads are on `/api/v1/firm/practice`, and the contract-contribution label is attached.
+- Verification recipes were added for the IN_REVIEW tasks that lacked one (T046, T051, T060, T080, T087, T088, T098–T101, T103, T104, T108), and T085, T086, T089 and T140 have recipes.
+- Spikes SPK-01 to SPK-06 have recorded outputs in `docs/evidence/SPK-0x/`. SPK-06 is recorded as not run.
+- The UI summary in `docs/evidence/UI-MODULES.md` was recounted from its table: 39 workspaces, 14 connected and 25 session-only.
+
+## 3. What the verification found, and where each finding stands
+
+1. **The review queue blocks everything.** Open. Thirty-seven tasks are IN_REVIEW and need an independent reviewer. An agent cannot close this, and the ledger must not be marked DONE by the implementer.
+2. **Two FSLI vocabularies contradicted each other.** Partly corrected. The mapping contract no longer restricts codes to the seven labels; the approved taxonomy decides validity (`approveImportMapping` refuses codes outside it), and the statement split follows the taxonomy's `statementSection` (D22). Still open: the mapping screen in `apps/web/src/workspace.ts` still offers the seven labels; it should load the approved taxonomy's codes.
+3. **Materiality ranges in code differed from CURRENT and D05.** Resolved by DN-07 / D19 (commit `d3e399b`): the four CURRENT benchmarks and ranges, profit before tax normalized only through recorded adjustments, and manager rounding limited to ±5 %.
+4. **Risk colours came from likelihood times magnitude, not from balance against TE and PM.** Open (STE-JS-03). The colour rule in `packages/server/src/modules/governance/materiality.ts` is unchanged; T087 remains IN_REVIEW with this finding outstanding.
+5. **Staff can record client acceptance of a proposal, contrary to T062 AC3.** Open (STE-JS-04). `acceptProposal` still accepts a `COMMERCIAL_MANAGE` actor, and Key 1 reads that record. The correction needs the portal acceptance path designed in SPK-03, which is not built. Removing the staff path without it would make Key 1 unreachable, so it was not removed in this pass.
+6. **The ledger lags the code.** Resolved for the cited tasks: T045, T049 and T079 are IN_REVIEW in the ledger, and T140 was added on 2026-10-08.
+7. **Session-only workspaces.** Open. 25 of 39 workspaces are session-only preparation forms (`docs/evidence/UI-MODULES.md`). Their server sides are the work of the tasks named in the removal guideline, which is not in the repository.
+8. **Placeholder gates in the lifecycle.** Open. Unconditional `fail(...)` calls remain in `packages/server/src/modules/governance/lifecycle.ts` for workprogram completion (T106), the SRM (T110), critical confirmations (T117) and the report opinion (T118). Each is removed by the task that supplies its evidence; those tasks are not done.
 
 ## 4. Completed — do not re-implement
 
