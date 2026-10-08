@@ -57,3 +57,7 @@ Review result: pending
 Open blockers: the supersession rule (decision); planning and assigned-user guards (T088 dependency).
 Next eligible task by dependency order: T080 (mapping memory and corrections, IN_REVIEW).
 Stop after this task; do not implement the next one without assignment.
+
+## Addendum — DN-04 / D16: statutory period at finalization (2026-10-08)
+
+Finalization now refuses a missing statutory period and refuses an import staged for a different period (see the T079 addendum and `tests/tb-statutory-period.integration.ts`). Supersession (DN-06) is still open, so AC1 and the supersession item remain open.

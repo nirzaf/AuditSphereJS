@@ -1043,6 +1043,20 @@ export const recordAcceptanceAnswerSchema = z.object({
 });
 export const clearAcceptanceCaseSchema = z.object({ idempotencyKey: z.uuid(), reason: z.string().trim().min(10).max(1000) });
 
+/** Response views for the commercial acceptance and identity routes (T055-T059). */
+export const acceptanceCaseCreatedSchema = z.object({ id: z.uuid(), track: acceptanceTrackSchema, templateVersion: z.string().max(20), status: z.string().max(40) });
+export const acceptanceReviewStateSchema = z.object({ id: z.uuid(), status: z.string().max(40), reviewVersion: z.number().int().nonnegative() });
+export const acceptanceClearanceSchema = acceptanceReviewStateSchema.extend({ clearanceId: z.uuid() });
+export const engagementIdentitySchema = z.object({
+  engagement: z.object({ id: z.uuid(), name: z.string().max(200), state: z.string().max(40), version: z.number().int().positive(), service: z.string().max(200).nullable() }),
+  client: z.object({ id: z.uuid(), name: z.string().max(200), legalName: z.string().max(200).nullable(), status: z.string().max(40) }),
+  readiness: z.object({
+    commercial: z.object({ ready: z.boolean(), letterIssued: z.boolean(), key1: z.string().max(40), key2: z.string().max(40), advanceInvoiced: z.boolean() }),
+    planning: z.object({ ready: z.boolean(), finalizedImports: z.number().int().nonnegative(), published: z.boolean(), approvedMateriality: z.boolean(), staleMateriality: z.boolean() }),
+    fieldwork: z.object({ ready: z.boolean() }),
+  }),
+});
+
 /** T055: engagement identity and duplicate-period policy. */
 export const createEngagementSchema = z.object({
   idempotencyKey: z.uuid(),

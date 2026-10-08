@@ -214,5 +214,19 @@
     "approvalEvidence": "Owner answer to DN-03: \"A: prefix text cells with an apostrophe (Recommended)\".",
     "implementationDefault": "On export, prefix a text cell that begins with =, +, -, @, tab or carriage return with an apostrophe. Never alter amount or count cells. Each exporter names its amount columns explicitly.",
     "decisionRecord": "docs/02-decisions-needed.md#dn-03--formula-like-text-in-exported-csvxlsx"
+  },
+  {
+    "id": "D16",
+    "title": "Trial Balance validation policies (DN-04)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "docs/02-decisions-needed.md DN-04; T079; T081",
+    "ambiguity": "No required-account list existed. The statutory period was accepted on engagement creation but never stored, and duplicate engagements were judged by name alone. The owner also had to say which findings block finalization.",
+    "approvedBy": "Repository owner, in the chat decision for DN-04 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answers to DN-04: no required-account list; period from engagement, mismatch blocks; duplicates refused; only balance and mapping failures block.",
+    "implementationDefault": "No required-account list. The statutory period is stored on the engagement and snapshotted on each Trial Balance import when it is staged; finalization refuses a missing period and any period that differs from the snapshot. A duplicate engagement is one with the same client, name and period. Duplicate account codes in a file are refused. Only unbalanced periods and unmapped accounts block finalization.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-04--trial-balance-validation-policies"
   }
 ]

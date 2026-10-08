@@ -3,9 +3,9 @@ export { CommercialController } from './modules/commercial/commercial-controller
 export { createProposal, presentProposal, acceptProposal, recordRiskClearance, dualKeyStatus, listProposals } from './modules/commercial/proposals.js';
 export { createClient, updateClientProfile, setClientParent, listClientDirectory } from './modules/commercial/directory.js';
 export { addContact, listContacts, resolveRecipient } from './modules/commercial/contacts.js';
+export { createEngagement, engagementIdentity } from './modules/commercial/engagements.js';
 export { createLead, listLeads, profileLead, advanceLeadToProposal } from './modules/commercial/leads.js';
 export { createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase } from './modules/commercial/acceptance.js';
-export { createEngagement, engagementIdentity } from './modules/commercial/engagements.js';
 export { issueInvoice, recordInvoicePayment, issueInvoiceReceipt, voidInvoice, listInvoices } from './modules/practice/invoices.js';
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
 export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';

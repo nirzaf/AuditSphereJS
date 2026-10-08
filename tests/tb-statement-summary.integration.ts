@@ -42,7 +42,7 @@ test('T050 Trial Balance summary is statement-ordered, database-aggregated, vari
     try {
       await db.firm.create({ data: { id: firmId, name: 'Summary firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Summary client' } });
-      await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Summary engagement', state: 'FIELDWORK_EXECUTION' } });
+      await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Summary engagement', state: 'FIELDWORK_EXECUTION', period: 'FY2026' } });
       for (const [userId, email] of [[preparerId, 'summary-preparer@example.test'], [finalizerId, 'summary-finalizer@example.test'], [viewerId, 'summary-viewer@example.test']] as const) {
         await db.user.create({ data: { id: userId, email, role: 'PREPARER' } });
         await db.membership.create({ data: { userId, firmId, clientId, engagementId, role: 'PREPARER' } });

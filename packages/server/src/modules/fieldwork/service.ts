@@ -91,7 +91,7 @@ export async function upload(engagementId: string, actorId: string, input: unkno
       } });
       const batch = await tx.tbImport.create({ data: {
         firmId: engagement.firmId, clientId: engagement.clientId, engagementId, sha256,
-        documentId, documentVersionId: documentVersion.id,
+        documentId, documentVersionId: documentVersion.id, engagementPeriod: engagement.period,
       } });
       await tx.storedObject.update({ where: { key }, data: { status: 'REFERENCED', documentId, resolvedAt: new Date() } });
       await createTrialBalanceImportOutbox(tx, { ...scopeOf(engagement), importId: batch.id });
@@ -134,7 +134,7 @@ export async function importFromDocument(engagementId: string, actorId: string, 
     }
     const batch = await tx.tbImport.create({ data: {
       firmId: engagement.firmId, clientId: engagement.clientId, engagementId, sha256: version.sha256,
-      documentId: version.documentId, documentVersionId: version.id,
+      documentId: version.documentId, documentVersionId: version.id, engagementPeriod: engagement.period,
     } });
     await createTrialBalanceImportOutbox(tx, { ...scopeOf(engagement), importId: batch.id });
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_UPLOADED', payload: { importId: batch.id, documentId: version.documentId, documentVersionId: version.id, sequence: version.sequence, sha256: version.sha256, source: 'DOCUMENT_VERSION' } } });
@@ -205,6 +205,9 @@ export async function finalize(engagementId: string, importId: string, actorId: 
     // Authorize and resolve the scoped import before any counts or aggregates are read.
     const batch = await tx.tbImport.findFirst({ where: { id: importId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId } });
     if (!batch) throw new NotFoundException('Import not found');
+    // DN-04 (D16): the statutory period is recorded on the engagement, and the import must still belong to it.
+    if (!engagement.period) throw new ConflictException('The statutory period is not recorded for this engagement');
+    if (batch.engagementPeriod !== engagement.period) throw new ConflictException('The statutory period changed after this import was staged; restage the Trial Balance for the current period');
     if (await tx.tbRow.count({ where: { importId: batch.id, fsli: null } })) throw new BadRequestException('Map every account before finalizing');
     const totals = await tx.tbRow.aggregate({ where: { importId: batch.id }, _sum: { current: true, prior: true }, _count: true });
     if (!totals._count || !totals._sum.current?.equals(0) || !totals._sum.prior?.equals(0)) throw new BadRequestException('Both periods must balance to zero');

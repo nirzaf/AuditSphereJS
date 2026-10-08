@@ -59,3 +59,9 @@ Review result: pending
 Open blockers: the four policy decisions listed above.
 Next eligible task by dependency order: T081 (finalize as an immutable version), then T078 and T080.
 Stop after this task; do not implement the next one without assignment.
+
+## Addendum — DN-04 / D16: statutory period and validation policies (2026-10-08)
+
+The owner decided all four DN-04 questions as recommended. No required-account list. The statutory period is stored on the engagement (`Engagement.period`, migration `202610080004_engagement_period`) and snapshotted on each Trial Balance import when it is staged (`TbImport.engagementPeriod`). Finalization refuses an engagement with no recorded period and refuses an import whose snapshot differs from the current period. The duplicate-engagement check now compares name and period, as its message always said; before this change it compared the name alone and the period was never stored. Duplicate account codes stay refused. Only unbalanced periods and unmapped accounts block finalization.
+
+Verified: `tests/tb-statutory-period.integration.ts` (PostgreSQL 18.6, 1 of 1): no-period refusal, restaged import, changed-period refusal, restored-period finalization, and the name-and-period duplicate policy. The existing finalization tests (`tb-validation`, `tb-finalize-versions`, `tb-statement-summary`) record `FY2026` on their engagements and pass (3 of 3).

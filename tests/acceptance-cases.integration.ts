@@ -30,7 +30,7 @@ test('the acceptance questionnaire feeds Key 2 with versioned, segregated, stale
       await db.client.create({ data: { id: clientId, firmId, name: 'Acceptance client' } });
       const makeEngagement = async (name: string) => {
         const engagementId = randomUUID();
-        await db.engagement.create({ data: { id: engagementId, firmId, clientId, name } });
+        await db.engagement.create({ data: { id: engagementId, firmId, clientId, name, period: 'FY2025' } });
         await db.membership.createMany({ data: [
           { userId, firmId, clientId, engagementId, role: 'APPROVER' },
           { userId: partnerId, firmId, clientId, engagementId, role: 'APPROVER' },

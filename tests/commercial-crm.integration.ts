@@ -24,7 +24,7 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, createClient, listClientDirectory, updateClientProfile, setClientParent, addContact, listContacts, resolveRecipient, createLead, listLeads, profileLead, advanceLeadToProposal, createProposal, presentProposal, acceptProposal, recordRiskClearance, applyLifecycleCommand } = await import('@auditsphere/server');
+    const { db, createClient, listClientDirectory, updateClientProfile, setClientParent, addContact, listContacts, resolveRecipient, createLead, listLeads, profileLead, advanceLeadToProposal, createProposal, presentProposal, acceptProposal, recordRiskClearance, applyLifecycleCommand, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), userId = randomUUID(), partnerId = randomUUID();
       await db.user.createMany({ data: [
@@ -86,7 +86,23 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
       await lifecycle('OPEN_PROPOSAL');
       await presentProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1 });
       await lifecycle('DISPATCH_PROPOSAL');
-      await recordRiskClearance(partnerId, engagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance complete; independence confirmed.' });
+      // T056/T059: Key 2 is recorded only through a completed acceptance review, cleared by a second partner.
+      const partner2Id = randomUUID();
+      await db.user.create({ data: { id: partner2Id, email: 'crm-partner-2@test.local', role: 'APPROVER' } });
+      await db.membership.create({ data: { userId: partner2Id, firmId, clientId, engagementId, role: 'APPROVER' } });
+      await db.roleGrant.createMany({ data: [
+        { userId: partner2Id, capability: 'RISK_PARTNER_CLEAR', firmId, grantedBy: userId },
+        { userId: partner2Id, capability: 'LIFECYCLE_COMMAND', firmId, grantedBy: userId },
+        { userId: partnerId, capability: 'COMMERCIAL_MANAGE', firmId, grantedBy: userId },
+      ] });
+      await createAcceptanceCase(userId, engagementId, { idempotencyKey: key(), track: 'NEW_CLIENT' });
+      await recordAcceptanceAnswer(partnerId, engagementId, { idempotencyKey: key(), questionId: 'ubo', answer: 'Holding family office', evidenceRef: 'ubo-register.pdf' });
+      await recordAcceptanceAnswer(partnerId, engagementId, { idempotencyKey: key(), questionId: 'aml', answer: 'Cleared', evidenceRef: 'aml-check.pdf' });
+      await recordAcceptanceAnswer(partnerId, engagementId, { idempotencyKey: key(), questionId: 'integrity', answer: 'No adverse findings' });
+      await recordAcceptanceAnswer(partnerId, engagementId, { idempotencyKey: key(), questionId: 'independence', answer: 'Confirmed', evidenceRef: 'independence.pdf' });
+      await completeAcceptanceReview(partnerId, engagementId);
+      // The cleared acceptance case is the Key 2 record; a clearance written outside the review would be stale.
+      await clearAcceptanceCase(partner2Id, engagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance reviewed on NC-1 with evidence.' });
       await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
       await lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId);
       const letterBefore = (await db.engagementLetterRecord.findUniqueOrThrow({ where: { engagementId } })).letterText;

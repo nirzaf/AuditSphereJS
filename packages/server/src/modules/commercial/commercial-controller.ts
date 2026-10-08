@@ -12,6 +12,7 @@ import {
   createAcceptanceCaseSchema, recordAcceptanceAnswerSchema, clearAcceptanceCaseSchema, createEngagementSchema,
 } from '@auditsphere/contracts';
 import type { PaginationQuery } from '@auditsphere/contracts';
+import { acceptanceCaseCreatedSchema, acceptanceClearanceSchema, acceptanceReviewStateSchema, engagementIdentitySchema } from '@auditsphere/contracts';
 import { createClient as createClientRecord, listClientDirectory, setClientParent, updateClientProfile } from './directory.js';
 import { addContact as addContactRecord, listContacts, resolveRecipient } from './contacts.js';
 import { advanceLeadToProposal as advanceLeadRecord, createLead as createLeadRecord, listLeads, profileLead as profileLeadRecord } from './leads.js';
@@ -101,17 +102,26 @@ export class CommercialController {
   @SerializeOptions({ schema: commercialLeadAdvanceResultSchema })
   advanceLead(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string) { return advanceLeadRecord(actorId, engagementId, id); }
   @Get('identity')
+  @ApiOkResponse({ standardSchema: engagementIdentitySchema })
+  @SerializeOptions({ schema: engagementIdentitySchema })
   identity(@Param('engagementId') engagementId: string) { return engagementIdentity(engagementId); }
   @Post('engagements')
   @ApiCreatedResponse({ standardSchema: createEngagementSchema })
   createEngagement(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: createEngagementSchema }) body: unknown) { return createEngagement(actorId, engagementId, body); }
   @Post('acceptance-case')
-  @ApiCreatedResponse({ standardSchema: createAcceptanceCaseSchema })
+  @ApiCreatedResponse({ standardSchema: acceptanceCaseCreatedSchema })
+  @SerializeOptions({ schema: acceptanceCaseCreatedSchema })
   createCase(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: createAcceptanceCaseSchema }) body: unknown) { return createAcceptanceCase(actorId, engagementId, body); }
   @Post('acceptance-case/answers')
+  @ApiCreatedResponse({ standardSchema: acceptanceReviewStateSchema })
+  @SerializeOptions({ schema: acceptanceReviewStateSchema })
   answer(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: recordAcceptanceAnswerSchema }) body: unknown) { return recordAcceptanceAnswer(actorId, engagementId, body); }
   @Post('acceptance-case/complete')
+  @ApiCreatedResponse({ standardSchema: acceptanceReviewStateSchema })
+  @SerializeOptions({ schema: acceptanceReviewStateSchema })
   complete(@ReqActor() actorId: string, @Param('engagementId') engagementId: string) { return completeAcceptanceReview(actorId, engagementId); }
   @Post('acceptance-case/clear')
+  @ApiCreatedResponse({ standardSchema: acceptanceClearanceSchema })
+  @SerializeOptions({ schema: acceptanceClearanceSchema })
   clear(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Body({ schema: clearAcceptanceCaseSchema }) body: unknown) { return clearAcceptanceCase(actorId, engagementId, body); }
 }

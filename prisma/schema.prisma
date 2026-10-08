@@ -90,6 +90,7 @@ model Engagement {
   id                     String                  @id @default(uuid()) @db.Uuid
   firmId                 String                  @db.Uuid
   clientId               String                  @db.Uuid
+  period                 String?                 @db.VarChar(40)
   name                   String
   currency               String                  @default("QAR")
   state                  String                  @default("LEAD_INGESTION")
@@ -670,6 +671,7 @@ model TbImport {
   document          Document            @relation(fields: [engagementId, documentId], references: [engagementId, id], onDelete: Restrict, map: "TbImport_document_scope_fkey")
   documentVersionId String?             @db.Uuid
   documentVersion   DocumentVersion?    @relation(fields: [engagementId, documentId, documentVersionId], references: [engagementId, documentId, id], onDelete: Restrict, map: "TbImport_document_version_scope_fkey")
+  engagementPeriod  String?  @db.VarChar(40)
   sha256            String
   status            String              @default("QUEUED")
   error             String?

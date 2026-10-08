@@ -46,6 +46,8 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 **Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
 
+**Applicable decisions:** D16 (DN-04): finalization refuses a missing or changed statutory period. Supersession (DN-06) is still open.
+
 ## Implementation checklist
 
 - [ ] Replace proof-only wiring with operational planning and assigned-user guards.

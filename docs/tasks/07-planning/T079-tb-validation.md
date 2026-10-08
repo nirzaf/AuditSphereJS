@@ -42,6 +42,8 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 **Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
 
+**Applicable decisions:** D16 (DN-04): no required-account list; the statutory period is stored on the engagement and snapshotted on import; duplicate codes are refused; only balance and mapping failures block finalization.
+
 ## Implementation checklist
 
 - [ ] Validate exact debit/credit balance, required accounts, duplicate-code policy and numeric bounds.

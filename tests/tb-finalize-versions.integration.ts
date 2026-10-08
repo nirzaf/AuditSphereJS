@@ -27,7 +27,7 @@ test('T081 finalization is single-winner under concurrency and leaves earlier fi
     try {
       await db.firm.create({ data: { id: firmId, name: 'Versions firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Versions client' } });
-      await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Versions engagement', state: 'FIELDWORK_EXECUTION' } });
+      await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Versions engagement', state: 'FIELDWORK_EXECUTION', period: 'FY2026' } });
       for (const [userId, email, role] of [[preparerId, 'versions-preparer@example.test', 'PREPARER'], [reviewerId, 'versions-reviewer@example.test', 'REVIEWER']] as const) {
         await db.user.create({ data: { id: userId, email, role: 'PREPARER' } });
         await db.membership.create({ data: { userId, firmId, clientId, engagementId, role } });

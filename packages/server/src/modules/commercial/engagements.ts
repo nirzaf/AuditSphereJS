@@ -29,11 +29,11 @@ export async function createEngagement(actorId: string, actingEngagementId: stri
     // Explicit duplicate policy (T055 AC2): one active engagement per client, service and
     // period. A second one must be a deliberate, separately justified record.
     const duplicate = await tx.engagement.findFirst({
-      where: { firmId: acting.firmId, clientId: body.clientId, name: body.name },
+      where: { firmId: acting.firmId, clientId: body.clientId, name: body.name, period: body.period },
       select: { id: true },
     });
     if (duplicate) throw new ConflictException(`An engagement already exists for this client with the same name and period (engagement ${duplicate.id}); extend or reopen it instead of creating a duplicate`);
-    const created = await tx.engagement.create({ data: { firmId: acting.firmId, clientId: body.clientId, name: body.name, currency: 'QAR' } });
+    const created = await tx.engagement.create({ data: { firmId: acting.firmId, clientId: body.clientId, name: body.name, period: body.period, currency: 'QAR' } });
     await tx.auditEvent.create({ data: { engagementId: actingEngagementId, actorId, action: 'ENGAGEMENT_CREATED', payload: { engagementId: created.id, clientId: body.clientId, service: body.service, period: body.period } } });
     return { id: created.id, name: created.name, state: created.state, service: body.service, period: body.period };
   });

@@ -25313,7 +25313,172 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "engagement": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "state": {
+                          "type": "string",
+                          "maxLength": 40
+                        },
+                        "version": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        },
+                        "service": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "state",
+                        "version",
+                        "service"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "client": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid",
+                          "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "legalName": {
+                          "nullable": true,
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "status": {
+                          "type": "string",
+                          "maxLength": 40
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "legalName",
+                        "status"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "readiness": {
+                      "type": "object",
+                      "properties": {
+                        "commercial": {
+                          "type": "object",
+                          "properties": {
+                            "ready": {
+                              "type": "boolean"
+                            },
+                            "letterIssued": {
+                              "type": "boolean"
+                            },
+                            "key1": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "key2": {
+                              "type": "string",
+                              "maxLength": 40
+                            },
+                            "advanceInvoiced": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "ready",
+                            "letterIssued",
+                            "key1",
+                            "key2",
+                            "advanceInvoiced"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "planning": {
+                          "type": "object",
+                          "properties": {
+                            "ready": {
+                              "type": "boolean"
+                            },
+                            "finalizedImports": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "published": {
+                              "type": "boolean"
+                            },
+                            "approvedMateriality": {
+                              "type": "boolean"
+                            },
+                            "staleMateriality": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "ready",
+                            "finalizedImports",
+                            "published",
+                            "approvedMateriality",
+                            "staleMateriality"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "fieldwork": {
+                          "type": "object",
+                          "properties": {
+                            "ready": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "ready"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "commercial",
+                        "planning",
+                        "fieldwork"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "engagement",
+                    "client",
+                    "readiness"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "default": {
             "description": "",
@@ -25639,7 +25804,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "idempotencyKey": {
+                    "id": {
                       "type": "string",
                       "format": "uuid",
                       "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
@@ -25650,11 +25815,21 @@
                         "NEW_CLIENT",
                         "CONTINUANCE"
                       ]
+                    },
+                    "templateVersion": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 40
                     }
                   },
                   "required": [
-                    "idempotencyKey",
-                    "track"
+                    "id",
+                    "track",
+                    "templateVersion",
+                    "status"
                   ],
                   "additionalProperties": false
                 }
@@ -25798,7 +25973,36 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "reviewVersion": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "reviewVersion"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "default": {
             "description": "",
@@ -25901,7 +26105,36 @@
         ],
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "reviewVersion": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "reviewVersion"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "default": {
             "description": "",
@@ -26030,7 +26263,42 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 40
+                    },
+                    "reviewVersion": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "clearanceId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "status",
+                    "reviewVersion",
+                    "clearanceId"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
           },
           "default": {
             "description": "",

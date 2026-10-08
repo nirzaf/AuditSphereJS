@@ -27,7 +27,7 @@ test('T079 Trial Balance validation blocks unbalanced finalization and reconcile
     try {
       await db.firm.create({ data: { id: firmId, name: 'Rules firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Rules client' } });
-      await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Rules engagement', state: 'FIELDWORK_EXECUTION' } });
+      await db.engagement.create({ data: { id: engagementId, firmId, clientId, name: 'Rules engagement', state: 'FIELDWORK_EXECUTION', period: 'FY2026' } });
       for (const [userId, email, role] of [[preparerId, 'rules-preparer@example.test', 'PREPARER'], [reviewerId, 'rules-reviewer@example.test', 'REVIEWER']] as const) {
         await db.user.create({ data: { id: userId, email, role: 'PREPARER' } });
         await db.membership.create({ data: { userId, firmId, clientId, engagementId, role } });

@@ -44,6 +44,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-04 — Trial Balance validation policies
 
+**Resolved 2026-10-08 by the owner, all four answers recommended.** Recorded as D16 in `docs/decisions/register.json`. No required-account list; the statutory period is stored on the engagement and snapshotted on each import, and a mismatch blocks finalization; duplicate codes are refused; only balance and mapping failures block finalization.
+
 **Context.** T079 proves balance and isolation rules but leaves four policies open.
 
 **Questions.** (1) Which accounts must be present (for example retained earnings)? (2) How is the statutory period identified and checked against the engagement period? (3) When two rows share an account code, confirm-and-group or refuse? (4) Which findings are warnings and which block finalization?
