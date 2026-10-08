@@ -1,11 +1,25 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { Title } from '@angular/platform-browser';
-import { Workspace } from './workspace';
+import { Workspace, approvedMappingCodes } from './workspace';
 import { IDENTITY_ADAPTER } from './identity';
 import { afterEach, it, expect, vi } from 'vitest';
 import { of } from 'rxjs';
+import type { TaxonomyView } from '@auditsphere/contracts';
 afterEach(() => { vi.unstubAllGlobals(); TestBed.resetTestingModule(); });
+
+it('offers only the lines of the newest approved taxonomy, never the retired seven labels', () => {
+  const line = (code: string, sortOrder: number) => ({ id: '00000000-0000-4000-8000-000000000001', code, label: code, statementSection: 'ASSETS' as const, sortOrder });
+  const version = (value: number, status: 'DRAFT' | 'APPROVED', lines: ReturnType<typeof line>[]) => ({ id: '00000000-0000-4000-8000-00000000000' + value, name: 'STE-STATUTORY', version: value, status, createdAt: '2026-10-08T00:00:00.000Z', approvedAt: status === 'APPROVED' ? '2026-10-08T00:00:00.000Z' : null, lines });
+  const versions = [
+    version(1, 'APPROVED', [line('Legacy code', 1)]),
+    version(3, 'DRAFT', [line('Draft only', 1)]),
+    version(2, 'APPROVED', [line('Inventory', 2), line('Cash', 1)]),
+  ] as TaxonomyView[];
+  expect(approvedMappingCodes(versions)).toEqual(['Cash', 'Inventory']);
+  expect(approvedMappingCodes(versions.filter(item => item.status === 'DRAFT'))).toEqual([]);
+  expect(approvedMappingCodes([])).toEqual([]);
+});
 it('exposes only the five real business workspaces without demo messaging', async () => {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ provider: 'development' }))));
   const fixture = TestBed.createComponent(Workspace);

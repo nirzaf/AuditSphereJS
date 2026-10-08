@@ -7,10 +7,20 @@ import { ModuleWorkspace } from './module-workspace';
 import { modules, screensFor } from './module-catalog';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import {
-  editLeaseResultSchema, fslis, finalizeSchema, mappingSchema, mappingsSavedSchema, trialBalanceFinalizedSchema, trialBalanceImportSchema,
+  editLeaseResultSchema, finalizeSchema, mappingSchema, mappingsSavedSchema, taxonomyViewsSchema, trialBalanceFinalizedSchema, trialBalanceImportSchema,
   trialBalanceImportsSchema, trialBalanceRowsPageSchema, trialBalanceSummarySchema, uploadSchema,
 } from '@auditsphere/contracts';
-import type { TrialBalanceImport, TrialBalanceRow, TrialBalanceSummaryLine } from '@auditsphere/contracts';
+import type { TaxonomyView, TrialBalanceImport, TrialBalanceRow, TrialBalanceSummaryLine } from '@auditsphere/contracts';
+
+/**
+ * The FSLI codes a mapping may use: the lines of the newest approved taxonomy version. The server
+ * checks a mapping approval against that same version when none is named, so the choices and the
+ * check agree. Lines keep their taxonomy order.
+ */
+export function approvedMappingCodes(versions: readonly TaxonomyView[]): string[] {
+  const newest = versions.filter(version => version.status === 'APPROVED').sort((a, b) => b.version - a.version)[0];
+  return newest ? [...newest.lines].sort((a, b) => a.sortOrder - b.sortOrder).map(line => line.code) : [];
+}
 import type { z } from 'zod';
 import { parseContractValue, requestAuthenticatedContractJson, requestContractJson } from './api-client';
 import { IDENTITY_ADAPTER, type InternalIdentity, type ReadableEngagement } from './identity';
@@ -105,7 +115,7 @@ export class Workspace implements OnDestroy {
   readonly screenId = signal('trial-balance');
   readonly screenList = computed(() => screensFor(this.active()));
   readonly summaryTypes = ['Balance sheet','Profit & loss'];
-  readonly fslis = fslis; readonly rows = signal<TrialBalanceRow[]>([]); readonly imports = signal<TrialBalanceImport[]>([]); readonly summary = signal<TrialBalanceSummaryLine[]>([]);
+  readonly mappingCodes = signal<string[]>([]); readonly rows = signal<TrialBalanceRow[]>([]); readonly imports = signal<TrialBalanceImport[]>([]); readonly summary = signal<TrialBalanceSummaryLine[]>([]);
   readonly message = signal(''); readonly busy = signal(false); readonly batch = signal<TrialBalanceImport | null>(null);
   readonly changes = signal<Record<string, { rowId: string; expectedVersion: number; fsli: string }>>({});
   readonly rowLeases = signal<Record<string, z.output<typeof editLeaseResultSchema>>>({});
@@ -169,7 +179,7 @@ export class Workspace implements OnDestroy {
     if (selected === this.engagementId()) return;
     void this.releaseEditLeases();
     this.engagementId.set(selected);
-    this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({});
+    this.imports.set([]); this.rows.set([]); this.summary.set([]); this.total.set(0); this.batch.set(null); this.changes.set({}); this.mappingCodes.set([]);
     this.realtimeConnection?.close(); this.realtimeConnection = undefined; this.realtimeStatus.set('offline');
     this.message.set('');
     if (selected && (this.identityProvider() === 'development' || this.signedIn())) this.openRealtimeEngagement(selected);
@@ -237,11 +247,18 @@ export class Workspace implements OnDestroy {
             ? 'Signed out with Microsoft, but the server could not confirm session revocation. Local engagement data and unsaved drafts were cleared.'
             : 'Local access and engagement data were cleared, but neither server session revocation nor Microsoft sign-out could be confirmed.');
   }); }
+  /** Loads the FSLI choices for mapping. The list is capped at the server maximum of 200 versions per request. */
+  private async loadMappingCodes() {
+    const versions = await this.apiUrl(`/api/v1/engagements/${encodeURIComponent(this.engagementId())}/taxonomies?limit=200`, taxonomyViewsSchema);
+    const codes = approvedMappingCodes(versions);
+    this.mappingCodes.set(codes);
+    if (!codes.length) this.message.set('No approved taxonomy is configured for this engagement. Approve one before choosing account mappings.');
+  }
   async load(id: string) { const batch = await this.api('/' + id, trialBalanceImportSchema); this.batch.set(batch); if (batch.status === 'FAILED') { this.message.set(batch.error ?? 'The import failed.'); return; } if (['MAPPING_REQUIRED','FINALIZED'].includes(batch.status)) { const page = await this.api(`/${id}/rows?offset=${this.offset}&search=${encodeURIComponent(this.search)}`, trialBalanceRowsPageSchema); this.rows.set(page.rows); this.total.set(page.total); this.summary.set(await this.api('/' + id + '/summary', trialBalanceSummarySchema)); } }
   open(id: string) {
     if (this.batch() && this.batch()!.id !== id) void this.releaseEditLeases();
     this.changes.set({}); this.rowLeases.set({}); this.rowLeaseTokens.set({}); this.pendingLeaseRows.set({}); this.offset = 0; this.batch.set(null);
-    this.realtimeConnection?.join({ engagementId: this.engagementId(), resource: { type: 'trial-balance-import', id } }); void this.run(() => this.load(id));
+    this.realtimeConnection?.join({ engagementId: this.engagementId(), resource: { type: 'trial-balance-import', id } }); void this.run(async () => { await this.loadMappingCodes(); await this.load(id); });
   }
   upload(event: Event) { const file = (event.target as HTMLInputElement).files?.[0]; if (!file) return; if (file.size > 15_000_000) { this.message.set('CSV must be smaller than 15 MB.'); return; } void this.run(async () => { const body = parseContractValue(uploadSchema, { filename: file.name, csv: await file.text() }, 400); const batch = await this.api('', trialBalanceImportSchema, 'POST', body); this.imports.set(await this.api('', trialBalanceImportsSchema)); await this.load(batch.id); this.message.set('Import queued. Worker validation runs in the background.'); }); }
   private rowLeaseUrl(engagementId: string, importId: string, rowId: string) {
