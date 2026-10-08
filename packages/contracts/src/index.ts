@@ -715,6 +715,16 @@ export const trialBalanceRowSchema = z.object({
 export const trialBalanceRowsPageSchema = z.object({ total: z.number().int().nonnegative(), rows: z.array(trialBalanceRowSchema).max(200) });
 export const trialBalanceSummaryLineSchema = z.object({ fsli: z.string().max(120), current: moneySchema, prior: moneySchema, count: z.number().int().positive() });
 export const trialBalanceSummarySchema = z.array(trialBalanceSummaryLineSchema).max(2_000);
+/** Statement-ordered Trial Balance summary (T050): P&L first, balance sheet second, CY/PY variance and explicit route placeholders. */
+export const trialBalanceStatementLineSchema = z.object({
+  fsli: z.string().max(120), current: moneySchema, prior: moneySchema, change: moneySchema,
+  percent: moneySchema.nullable(), direction: z.enum(['NO_BASE', 'NO_CHANGE', 'INCREASE', 'DECREASE']), count: z.number().int().positive(),
+});
+export const trialBalanceStatementSummarySchema = z.object({
+  profitAndLoss: z.array(trialBalanceStatementLineSchema).max(20), balanceSheet: z.array(trialBalanceStatementLineSchema).max(20),
+  unmapped: trialBalanceStatementLineSchema.nullable(),
+  placeholders: z.object({ accountsReceivable: z.literal('ROUTE_PENDING'), workprograms: z.literal('ROUTE_PENDING') }),
+});
 export const mappingsSavedSchema = z.object({ saved: z.number().int().positive() });
 export const trialBalanceFinalizedSchema = z.object({ status: z.literal('FINALIZED') });
 export const editLeaseHolderSchema = z.object({
@@ -835,6 +845,7 @@ export const contractSchemas = {
   trialBalanceRowsQuery: trialBalanceRowsQuerySchema,
   trialBalanceImport: trialBalanceImportSchema, trialBalanceRow: trialBalanceRowSchema,
   trialBalanceRowsPage: trialBalanceRowsPageSchema, trialBalanceSummary: trialBalanceSummarySchema,
+  trialBalanceStatementSummary: trialBalanceStatementSummarySchema,
   mappingsSaved: mappingsSavedSchema, trialBalanceFinalized: trialBalanceFinalizedSchema,
   editLeaseResult: editLeaseResultSchema,
   portalLoginRequest: portalLoginRequestSchema, portalInvitationRedeemRequest: portalInvitationRedeemRequestSchema,
@@ -865,6 +876,7 @@ export type TrialBalanceImport = z.infer<typeof trialBalanceImportSchema>;
 export type TrialBalanceRow = z.infer<typeof trialBalanceRowSchema>;
 export type TrialBalanceRowsPage = z.infer<typeof trialBalanceRowsPageSchema>;
 export type TrialBalanceSummaryLine = z.infer<typeof trialBalanceSummaryLineSchema>;
+export type TrialBalanceStatementSummary = z.infer<typeof trialBalanceStatementSummarySchema>;
 export type MaterialityAssessment = z.infer<typeof materialityAssessmentSchema>;
 export type MaterialityCalculationResult = z.infer<typeof materialityCalculationResultSchema>;
 export type MaterialityApprovalResult = z.infer<typeof materialityApprovalResultSchema>;

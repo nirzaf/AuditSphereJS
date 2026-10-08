@@ -7145,6 +7145,317 @@
         ]
       }
     },
+    "/api/v1/engagements/{engagementId}/imports/{id}/statement-summary": {
+      "get": {
+        "operationId": "FieldworkController_statementSummary",
+        "parameters": [
+          {
+            "name": "engagementId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "profitAndLoss": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fsli": {
+                            "type": "string",
+                            "maxLength": 120
+                          },
+                          "current": {
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "prior": {
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "change": {
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "percent": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "direction": {
+                            "type": "string",
+                            "enum": [
+                              "NO_BASE",
+                              "NO_CHANGE",
+                              "INCREASE",
+                              "DECREASE"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "exclusiveMinimum": true,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "fsli",
+                          "current",
+                          "prior",
+                          "change",
+                          "percent",
+                          "direction",
+                          "count"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "balanceSheet": {
+                      "maxItems": 20,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fsli": {
+                            "type": "string",
+                            "maxLength": 120
+                          },
+                          "current": {
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "prior": {
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "change": {
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "percent": {
+                            "nullable": true,
+                            "type": "string",
+                            "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                          },
+                          "direction": {
+                            "type": "string",
+                            "enum": [
+                              "NO_BASE",
+                              "NO_CHANGE",
+                              "INCREASE",
+                              "DECREASE"
+                            ]
+                          },
+                          "count": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "exclusiveMinimum": true,
+                            "maximum": 9007199254740991
+                          }
+                        },
+                        "required": [
+                          "fsli",
+                          "current",
+                          "prior",
+                          "change",
+                          "percent",
+                          "direction",
+                          "count"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "unmapped": {
+                      "nullable": true,
+                      "type": "object",
+                      "properties": {
+                        "fsli": {
+                          "type": "string",
+                          "maxLength": 120
+                        },
+                        "current": {
+                          "type": "string",
+                          "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                        },
+                        "prior": {
+                          "type": "string",
+                          "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                        },
+                        "change": {
+                          "type": "string",
+                          "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                        },
+                        "percent": {
+                          "nullable": true,
+                          "type": "string",
+                          "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                        },
+                        "direction": {
+                          "type": "string",
+                          "enum": [
+                            "NO_BASE",
+                            "NO_CHANGE",
+                            "INCREASE",
+                            "DECREASE"
+                          ]
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "exclusiveMinimum": true,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "fsli",
+                        "current",
+                        "prior",
+                        "change",
+                        "percent",
+                        "direction",
+                        "count"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "placeholders": {
+                      "type": "object",
+                      "properties": {
+                        "accountsReceivable": {
+                          "type": "string",
+                          "enum": [
+                            "ROUTE_PENDING"
+                          ]
+                        },
+                        "workprograms": {
+                          "type": "string",
+                          "enum": [
+                            "ROUTE_PENDING"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "accountsReceivable",
+                        "workprograms"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "profitAndLoss",
+                    "balanceSheet",
+                    "unmapped",
+                    "placeholders"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BAD_REQUEST",
+                            "UNAUTHENTICATED",
+                            "FORBIDDEN",
+                            "NOT_FOUND",
+                            "METHOD_NOT_ALLOWED",
+                            "NOT_ACCEPTABLE",
+                            "REQUEST_TIMEOUT",
+                            "CONFLICT",
+                            "GONE",
+                            "PAYLOAD_TOO_LARGE",
+                            "UNSUPPORTED_MEDIA_TYPE",
+                            "UNPROCESSABLE_ENTITY",
+                            "TOO_MANY_REQUESTS",
+                            "BAD_GATEWAY",
+                            "SERVICE_UNAVAILABLE",
+                            "GATEWAY_TIMEOUT",
+                            "HTTP_ERROR",
+                            "INTERNAL_SERVER_ERROR"
+                          ]
+                        },
+                        "status": {
+                          "type": "integer",
+                          "minimum": 400,
+                          "maximum": 599
+                        },
+                        "message": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "array",
+                              "items": {}
+                            },
+                            {
+                              "type": "object",
+                              "additionalProperties": {}
+                            }
+                          ]
+                        },
+                        "correlationId": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 64
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "status",
+                        "message"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Fieldwork"
+        ]
+      }
+    },
     "/api/v1/engagements/{engagementId}/imports/{id}/rows/{rowId}/lease": {
       "get": {
         "operationId": "FieldworkController_leaseStatus",

@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, A
 import {
   apiProblemSchema, editLeaseResultSchema, editLeaseSchema, finalizeSchema, mappingSchema, mappingsSavedSchema,
   paginationQuerySchema, trialBalanceFinalizedSchema, trialBalanceImportSchema,
-  trialBalanceRowsPageSchema, trialBalanceRowsQuerySchema, trialBalanceSummaryLineSchema, uploadSchema,
+  trialBalanceRowsPageSchema, trialBalanceRowsQuerySchema, trialBalanceStatementSummarySchema, trialBalanceSummaryLineSchema, uploadSchema,
 } from '@auditsphere/contracts';
 import type { PaginationQuery, TrialBalanceRowsQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
@@ -62,6 +62,11 @@ export class FieldworkController {
   @ApiOkResponse({ standardSchema: trialBalanceSummaryLineSchema, isArray: true })
   @SerializeOptions({ schema: trialBalanceSummaryLineSchema })
   summary(@Param('engagementId') e: string, @Param('id') id: string) { return service.aggregate(e, id); }
+
+  @Get(':id/statement-summary')
+  @ApiOkResponse({ standardSchema: trialBalanceStatementSummarySchema })
+  @SerializeOptions({ schema: trialBalanceStatementSummarySchema })
+  statementSummary(@Param('engagementId') e: string, @Param('id') id: string) { return service.statementSummary(e, id); }
 
   @Get(':id/rows/:rowId/lease')
   @ApiOkResponse({ standardSchema: editLeaseResultSchema })

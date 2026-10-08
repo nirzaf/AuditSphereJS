@@ -9,7 +9,8 @@ import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { runUnitOfWork, withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { createTrialBalanceImportOutbox } from '../../platform/outbox.js';
 import { publishRealtimeInvalidation } from '../../platform/realtime/invalidation.js';
-import { mappingSchema, uploadSchema, finalizeSchema } from '@auditsphere/contracts';
+import { mappingSchema, uploadSchema, finalizeSchema, fslis } from '@auditsphere/contracts';
+import { Decimal6 } from '../../platform/decimal6.js';
 import { z } from 'zod';
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 export function validate<T>(schema: z.ZodType<T>, body: unknown): T { const parsed = schema.safeParse(body); if (!parsed.success) throw new BadRequestException(parsed.error.issues); return parsed.data; }
@@ -184,6 +185,50 @@ export async function finalize(engagementId: string, importId: string, actorId: 
     return { status: 'FINALIZED' };
   });
 }
+/** Presentation split only; the statement a balance belongs to never changes its stored value. */
+const PROFIT_AND_LOSS_FSLIS: ReadonlySet<string> = new Set(['Revenue', 'Operating expenses']);
+
+/**
+ * Statement-ordered summary (T050). Totals are summed by the database and converted once to
+ * `Decimal6`, so no browser or JavaScript float sum is involved. Variance uses the shared rule: a
+ * zero prior base is reported as NO_BASE with a null percentage rather than 0%.
+ */
+export async function statementSummary(engagementId: string, importId: string) {
+  await getBatch(engagementId, importId);
+  const grouped = await db.tbRow.groupBy({ by: ['fsli'], where: { importId }, _sum: { current: true, prior: true }, _count: true });
+  const totals = new Map<string | null, { current: Decimal6; prior: Decimal6; count: number }>();
+  for (const row of grouped) {
+    totals.set(row.fsli, {
+      current: Decimal6.from((row._sum.current || new Prisma.Decimal(0)).toFixed(6)),
+      prior: Decimal6.from((row._sum.prior || new Prisma.Decimal(0)).toFixed(6)),
+      count: row._count,
+    });
+  }
+  const line = (fsli: string, value: { current: Decimal6; prior: Decimal6; count: number }) => {
+    const variance = Decimal6.variance(value.current, value.prior);
+    return {
+      fsli,
+      current: value.current.toFixed(6),
+      prior: value.prior.toFixed(6),
+      change: variance.change.toFixed(6),
+      percent: variance.percent ? variance.percent.toFixed(6) : null,
+      direction: variance.direction,
+      count: value.count,
+    };
+  };
+  const ordered = (statement: (fsli: string) => boolean) => fslis
+    .filter(fsli => statement(fsli) && totals.has(fsli))
+    .map(fsli => line(fsli, totals.get(fsli)!));
+  const unmapped = totals.get(null);
+  return {
+    profitAndLoss: ordered(fsli => PROFIT_AND_LOSS_FSLIS.has(fsli)),
+    balanceSheet: ordered(fsli => !PROFIT_AND_LOSS_FSLIS.has(fsli)),
+    unmapped: unmapped ? line('Unmapped', unmapped) : null,
+    // Route targets for later workstreams. They are explicit placeholders, not links to live data.
+    placeholders: { accountsReceivable: 'ROUTE_PENDING' as const, workprograms: 'ROUTE_PENDING' as const },
+  };
+}
+
 export async function aggregate(engagementId: string, importId: string) {
   await getBatch(engagementId, importId);
   const grouped = await db.tbRow.groupBy({ by: ['fsli'], where: { importId }, _sum: { current: true, prior: true }, _count: true });

@@ -8976,6 +8976,220 @@
       "additionalProperties": false
     }
   },
+  "trialBalanceStatementSummary": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "profitAndLoss": {
+        "maxItems": 20,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "fsli": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "current": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "prior": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "change": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "percent": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "NO_BASE",
+                "NO_CHANGE",
+                "INCREASE",
+                "DECREASE"
+              ]
+            },
+            "count": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "fsli",
+            "current",
+            "prior",
+            "change",
+            "percent",
+            "direction",
+            "count"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "balanceSheet": {
+        "maxItems": 20,
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "fsli": {
+              "type": "string",
+              "maxLength": 120
+            },
+            "current": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "prior": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "change": {
+              "type": "string",
+              "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+            },
+            "percent": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "direction": {
+              "type": "string",
+              "enum": [
+                "NO_BASE",
+                "NO_CHANGE",
+                "INCREASE",
+                "DECREASE"
+              ]
+            },
+            "count": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "required": [
+            "fsli",
+            "current",
+            "prior",
+            "change",
+            "percent",
+            "direction",
+            "count"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "unmapped": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "fsli": {
+                "type": "string",
+                "maxLength": 120
+              },
+              "current": {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              },
+              "prior": {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              },
+              "change": {
+                "type": "string",
+                "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+              },
+              "percent": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "direction": {
+                "type": "string",
+                "enum": [
+                  "NO_BASE",
+                  "NO_CHANGE",
+                  "INCREASE",
+                  "DECREASE"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991
+              }
+            },
+            "required": [
+              "fsli",
+              "current",
+              "prior",
+              "change",
+              "percent",
+              "direction",
+              "count"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "null"
+          }
+        ]
+      },
+      "placeholders": {
+        "type": "object",
+        "properties": {
+          "accountsReceivable": {
+            "type": "string",
+            "const": "ROUTE_PENDING"
+          },
+          "workprograms": {
+            "type": "string",
+            "const": "ROUTE_PENDING"
+          }
+        },
+        "required": [
+          "accountsReceivable",
+          "workprograms"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "required": [
+      "profitAndLoss",
+      "balanceSheet",
+      "unmapped",
+      "placeholders"
+    ],
+    "additionalProperties": false
+  },
   "mappingsSaved": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
