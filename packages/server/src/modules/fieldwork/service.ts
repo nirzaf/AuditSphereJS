@@ -9,7 +9,7 @@ import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { runUnitOfWork, withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { createTrialBalanceImportOutbox } from '../../platform/outbox.js';
 import { publishRealtimeInvalidation } from '../../platform/realtime/invalidation.js';
-import { mappingSchema, uploadSchema, finalizeSchema, fslis } from '@auditsphere/contracts';
+import { mappingSchema, uploadSchema, finalizeSchema, fslis, importFromDocumentSchema } from '@auditsphere/contracts';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { z } from 'zod';
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -110,6 +110,36 @@ export async function upload(engagementId: string, actorId: string, input: unkno
     }
     throw error;
   }
+}
+/**
+ * D13: a stored, screened Trial Balance document version (a workbook or a CSV) becomes an import
+ * through the same durable pipeline as an uploaded CSV. The bytes are read from the pinned version
+ * by the worker, so the request carries an identifier and never the file contents.
+ */
+export async function importFromDocument(engagementId: string, actorId: string, input: unknown) {
+  const body = validate(importFromDocumentSchema, input);
+  return runUnitOfWork(async ({ client: tx }) => {
+    await lockForUpdate(tx, 'Engagement', engagementId);
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'FIELDWORK_WRITE', scopeOf(engagement));
+    assertEditable(engagement.state);
+    const version = await tx.documentVersion.findFirst({ where: { id: body.documentVersionId, engagementId }, include: { document: true } });
+    if (!version) throw new NotFoundException('Document version not found');
+    if (version.document.category !== '02_Trial Balance & Schedules') throw new ConflictException('Only Trial Balance documents can be imported');
+    const existing = await tx.tbImport.findUnique({ where: { engagementId_sha256: { engagementId, sha256: version.sha256 } } });
+    if (existing) {
+      if (existing.documentVersionId !== version.id) throw new ConflictException('This content is already imported under another document');
+      return existing;
+    }
+    const batch = await tx.tbImport.create({ data: {
+      firmId: engagement.firmId, clientId: engagement.clientId, engagementId, sha256: version.sha256,
+      documentId: version.documentId, documentVersionId: version.id,
+    } });
+    await createTrialBalanceImportOutbox(tx, { ...scopeOf(engagement), importId: batch.id });
+    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_UPLOADED', payload: { importId: batch.id, documentId: version.documentId, documentVersionId: version.id, sequence: version.sequence, sha256: version.sha256, source: 'DOCUMENT_VERSION' } } });
+    return batch;
+  });
 }
 export async function getBatch(engagementId: string, id: string) { const batch = await db.tbImport.findFirst({ where: { id, engagementId } }); if (!batch) throw new NotFoundException('Import not found'); return batch; }
 /** Resolve and authorize a row-level collaboration lease against the authoritative engagement. */

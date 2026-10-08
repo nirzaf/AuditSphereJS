@@ -3,7 +3,7 @@ import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, A
 import {
   apiProblemSchema, editLeaseResultSchema, editLeaseSchema, finalizeSchema, mappingSchema, mappingsSavedSchema,
   paginationQuerySchema, trialBalanceFinalizedSchema, trialBalanceImportSchema,
-  trialBalanceRowsPageSchema, trialBalanceRowsQuerySchema, trialBalanceStatementSummarySchema, trialBalanceSummaryLineSchema, uploadSchema,
+  importFromDocumentSchema, trialBalanceRowsPageSchema, trialBalanceRowsQuerySchema, trialBalanceStatementSummarySchema, trialBalanceSummaryLineSchema, uploadSchema,
 } from '@auditsphere/contracts';
 import type { PaginationQuery, TrialBalanceRowsQuery } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
@@ -24,6 +24,11 @@ export class FieldworkController {
   @ApiOkResponse({ standardSchema: trialBalanceImportSchema, isArray: true })
   @SerializeOptions({ schema: trialBalanceImportSchema })
   async list(@Param('engagementId') e: string, @Query({ schema: paginationQuerySchema }) query: PaginationQuery) { return (await db.tbImport.findMany({where:{engagementId:e},orderBy:{createdAt:'desc'},skip:query.offset,take:query.limit})).map(importDto); }
+
+  @Post('from-document')
+  @ApiCreatedResponse({ standardSchema: trialBalanceImportSchema })
+  @SerializeOptions({ schema: trialBalanceImportSchema })
+  async fromDocument(@Param('engagementId') e: string, @Req() req: any, @Body({ schema: importFromDocumentSchema }) body: unknown) { return importDto(await service.importFromDocument(e, req.actorId, body)); }
 
   @Post()
   @ApiCreatedResponse({ standardSchema: trialBalanceImportSchema })

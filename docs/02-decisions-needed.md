@@ -8,6 +8,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-01 — How `.xlsx` files reach the import
 
+**Resolved 2026-10-08 by the owner: option A.** Recorded as D13 in `docs/decisions/register.json`; implemented in the T033 screened pipeline (`document-uploads.ts`, migration `202610080003_document_upload_workbook_type`) and the import from a stored version (`importFromDocument`). Option B was not chosen.
+
 **Context.** The workbook reader exists (T045, `fieldwork/workbook.ts`), but no upload route accepts `.xlsx`. Staff uploads go through the ClamAV-screened session pipeline (T033), which accepts PDF and CSV only.
 
 **Options.** A: extend the T033 pipeline to `.xlsx` with the same ZIP preflight before storage. B: a separate JSON/multipart workbook route without the screening pipeline.

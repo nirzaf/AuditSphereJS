@@ -172,5 +172,19 @@
     "approvalEvidence": "User: ignore it, you approve it. Professional certification and live provider acceptance remain separate.",
     "implementationDefault": "Store PREPARER/REVIEWER/APPROVER/BILLING/ADMIN per engagement Membership. Effective authority requires an active internal User, exact membership tuple, membership-role capability ceiling, current scoped RoleGrant and owning command state/version guards. Keep CLIENT on the separate PortalUser boundary. ADMIN cannot be promoted to business authority; BILLING alone receives Practice capabilities; partner approvals require APPROVER plus an explicit scoped grant. RoleGrant records grantor, expiry, reason and revocation. Engagement team assignment/revocation requires an APPROVER membership plus a current engagement-scoped TEAM_ASSIGNMENT_MANAGE grant, an active target identity, role-ceiling-checked capabilities, a future expiry and a reason; self-change is denied and writes are audited/idempotent. Fine-grained workprogram assignment and final bundle release await T091/T106 and T129/T130 domain models.",
     "decisionRecord": "docs/decisions/T002-business-defaults.md"
+  },
+  {
+    "id": "D13",
+    "title": "How .xlsx workbooks reach the Trial Balance import (DN-01)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "R041 (487-489); docs/02-decisions-needed.md DN-01",
+    "ambiguity": "Staff uploads are ClamAV-screened (T033) and accept PDF and CSV only, so a workbook had no screened route into the import.",
+    "approvedBy": "Repository owner, in the chat decision for DN-01 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-01: \"A: extend the screened upload (Recommended)\".",
+    "implementationDefault": "Accept .xlsx only through the ClamAV-screened staff upload session (T033) in the Trial Balance category. Run the same ZIP preflight (encryption, macro parts, unsafe names, bounded inflation) before storage. Import a stored workbook version through the same durable import pipeline as CSV. Never accept workbooks through an unscreened JSON or multipart route.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-01--how-xlsx-files-reach-the-import"
   }
 ]

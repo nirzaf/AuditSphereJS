@@ -61,7 +61,7 @@ export type { QuotationPricingInput, QuotationPricingResult, QuotationLineInput,
 export type { MappedBenchmarkLine, MaterialityFigures, RiskBand, MaterialityBenchmark } from './modules/governance/materiality.js';
 export type { Capability, Scope } from './platform/authorization.js';
 export { parseTrialBalance, parseTrialBalanceStream, TrialBalanceValidationError, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
-export { upload, mapBatch, finalize, statementSummary } from './modules/fieldwork/service.js';
+export { upload, importFromDocument, mapBatch, finalize, statementSummary } from './modules/fieldwork/service.js';
 export { AdjustmentController } from './modules/fieldwork/adjustments-controller.js';
 export { createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, listAdjustmentJournals, adjustmentJournalDetail, adjustedBalances } from './modules/fieldwork/adjustments.js';
 export { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';

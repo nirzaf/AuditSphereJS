@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { documentUploadInitSchema } from '@auditsphere/contracts';
+import { documentUploadInitSchema, workbookContentType } from '@auditsphere/contracts';
 import { db } from './db.js';
 import { requireCapability, type Scope } from './authorization.js';
 import { resolveClientRepository } from './repository.js';
@@ -14,6 +14,7 @@ import { storageProvider, storeFile } from './storage.js';
 import { decodeGraphReference } from './graph-storage.js';
 import { MalwareDetectedError, MalwareScannerUnavailableError, scanFileWithClamAv } from './clamav.js';
 import { inspectPdfFile, PdfPolicyRejectedError } from './pdf-inspection.js';
+import { preflightWorkbookFile, WorkbookArchiveRejectedError } from './workbook-archive.js';
 import { lockForUpdate, runUnitOfWork } from './unit-of-work.js';
 
 const MAX_UPLOAD_BYTES = 15_000_000;
@@ -23,11 +24,13 @@ const safeFilename = (value: string) => value.trim().replace(/[\u0000-\u001f\u00
 
 export type UploadFilePart = { filename: string; mimetype: string; file: AsyncIterable<Uint8Array> & { truncated?: boolean } };
 
-function identifyContent(prefix: Buffer, filename: string, declaredType: string, hasNul: boolean, validUtf8: boolean): 'application/pdf' | 'text/csv' {
+function identifyContent(prefix: Buffer, filename: string, declaredType: string, hasNul: boolean, validUtf8: boolean): 'application/pdf' | 'text/csv' | typeof workbookContentType {
   const extension = filename.split('.').pop()?.toLowerCase();
   if (prefix.subarray(0, 5).toString('ascii') === '%PDF-' && extension === 'pdf' && declaredType === 'application/pdf') return 'application/pdf';
   if (extension === 'csv' && declaredType === 'text/csv' && !hasNul && validUtf8) return 'text/csv';
-  throw new BadRequestException('Uploaded file content does not match the permitted PDF or CSV type.');
+  // A workbook is an OOXML package: a ZIP container, so it begins with the local-file signature.
+  if (prefix.subarray(0, 4).equals(Buffer.from([0x50, 0x4b, 0x03, 0x04])) && extension === 'xlsx' && declaredType === workbookContentType) return workbookContentType;
+  throw new BadRequestException('Uploaded file content does not match the permitted PDF, CSV or XLSX type.');
 }
 
 export async function initiateDocumentUpload(actorId: string, input: unknown, now = new Date()) {
@@ -35,6 +38,8 @@ export async function initiateDocumentUpload(actorId: string, input: unknown, no
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
   if (!['02_Trial Balance & Schedules', '03_Fieldwork & Testing'].includes(body.category)) throw new ConflictException('This fieldwork upload endpoint does not accept planning or deliverable archive documents');
+  // D13: workbooks feed the Trial Balance import only, so they are refused for any other fieldwork category.
+  if (body.contentType === workbookContentType && body.category !== '02_Trial Balance & Schedules') throw new BadRequestException('Workbooks are accepted only in the Trial Balance category');
   const engagement = await db.engagement.findUnique({ where: { id: body.engagementId } });
   if (!engagement) throw new NotFoundException('Engagement not found');
   await requireCapability(db, actorId, 'FIELDWORK_WRITE', scopeOf(engagement));
@@ -106,6 +111,16 @@ export async function receiveDocumentUpload(actorId: string, sessionId: string, 
       if (error instanceof MalwareDetectedError) throw new BadRequestException('Uploaded file was rejected by security scanning.');
       if (error instanceof MalwareScannerUnavailableError) throw new ServiceUnavailableException('Security scanning is unavailable; the file was not stored.');
       throw error;
+    }
+    if (contentType === workbookContentType) {
+      // D13: the container is checked before any object is stored or any provider is written.
+      try {
+        await preflightWorkbookFile(temporaryFile);
+      } catch (error) {
+        await db.documentUploadSession.updateMany({ where: { id: session.id, actorId, status: 'INITIATED' }, data: { status: 'FAILED', version: { increment: 1 } } });
+        if (error instanceof WorkbookArchiveRejectedError) throw new BadRequestException('Workbook is encrypted, contains macros, or could not be safely inspected.');
+        throw new ServiceUnavailableException('Workbook security inspection is unavailable; the file was not stored.');
+      }
     }
     if (contentType === 'application/pdf') {
       try {

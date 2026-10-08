@@ -91,3 +91,23 @@ Open blockers:
 5. Time bound and isolated worker process, per the open checklist items.
 
 Next eligible task by dependency order: T046 (mapping suggestions, IN_REVIEW). Stop after this task; do not implement the next one without assignment.
+
+## Addendum — DN-01 / D13: screened workbook route (2026-10-08)
+
+The owner decided DN-01 as option A. The T033 screened staff upload now accepts `.xlsx` (content type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`) in the Trial Balance category only, and the workbook is handed to the ZIP preflight after the ClamAV scan and before any object is stored. The preflight moved from `fieldwork/workbook.ts` to `platform/workbook-archive.ts` so the platform does not depend on a business module; the reader converts its rejections back into file-level validation errors.
+
+A stored Trial Balance document version is imported with `POST /engagements/:engagementId/imports/from-document` (`importFromDocument`). It pins the exact version, is idempotent on content, and uses the same outbox and worker as CSV. The worker dispatches by content, so a stored workbook and a stored CSV stage through one path.
+
+Migration `202610080003_document_upload_workbook_type` allows the content type and enforces in PostgreSQL that a workbook is declared only in the Trial Balance category.
+
+### Verification (addendum)
+
+| Command / test | Result |
+| :--- | :--- |
+| `pnpm verify:task -- T045` (now includes `xlsx-document-upload`) | exit 0 |
+| `pnpm verify:task -- T033` (includes `document-upload` and `xlsx-document-upload`) | exit 0 |
+| `tests/xlsx-document-upload.integration.ts` (PostgreSQL 18.6, ClamAV stub) | 1 of 1: screened upload → finalize → pinned import equals CSV twin row for row (5,000 rows, source lines and balances); idempotent re-import; macro, infected and legacy-container uploads refused with the session FAILED and no stored object or document; fieldwork documents refused for import; reader denied |
+| `pnpm verify:affected` | exit 0; 32 files, 160 of 160 tests |
+| `pnpm lint`, `pnpm contracts:check` | exit 0 |
+
+The formula policy (DN-02) remains open, so formula cells are still rejected.

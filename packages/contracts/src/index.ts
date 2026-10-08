@@ -65,18 +65,20 @@ export const documentLinkSchema = z.object({
 export const documentLinksSchema = z.array(documentLinkSchema).max(1000);
 export const documentLinkResultSchema = z.object({ id: z.uuid(), version: z.number().int().positive(), created: z.boolean() });
 export const documentLinkRevokedSchema = z.object({ id: z.uuid(), version: z.number().int().positive(), revoked: z.literal(true) });
+/** Workbook evidence (D13): accepted only through the screened upload in the Trial Balance category. */
+export const workbookContentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 export const documentUploadCategories = ['01_Administration & Planning', '02_Trial Balance & Schedules', '03_Fieldwork & Testing', '04_Drafts & Deliverables', '05_Final Signed Archive'] as const;
 export const documentUploadInitSchema = z.object({
   engagementId: z.uuid(),
   category: z.enum(documentUploadCategories),
   filename: z.string().trim().min(1).max(200).regex(/^[^/\\\u0000-\u001f\u007f]+$/),
-  contentType: z.enum(['application/pdf', 'text/csv']),
+  contentType: z.enum(['application/pdf', 'text/csv', workbookContentType]),
   sizeBytes: z.number().int().positive().max(15_000_000),
   expectedSha256: z.string().regex(/^[a-f0-9]{64}$/).optional(),
 });
 export const documentUploadSessionSchema = z.object({
   id: z.uuid(), engagementId: z.uuid(), category: z.enum(documentUploadCategories),
-  filename: z.string().max(200), contentType: z.enum(['application/pdf', 'text/csv']),
+  filename: z.string().max(200), contentType: z.enum(['application/pdf', 'text/csv', workbookContentType]),
   maxSizeBytes: z.number().int().positive(), expiresAt: z.iso.datetime(), status: z.enum(['INITIATED', 'STORED', 'FINALIZED', 'EXPIRED', 'FAILED']),
 });
 export const documentUploadFinalizedSchema = z.object({
@@ -708,6 +710,8 @@ export const trialBalanceImportSchema = z.object({
   version: z.number().int().positive(), createdAt: z.iso.datetime(),
 });
 export const trialBalanceImportsSchema = z.array(trialBalanceImportSchema).max(200);
+/** Start a Trial Balance import from an already screened, stored document version (D13). */
+export const importFromDocumentSchema = z.object({ documentVersionId: z.uuid() });
 export const trialBalanceRowSchema = z.object({
   id: z.uuid(), code: z.string().max(1000), name: z.string().max(4000),
   current: moneySchema, prior: moneySchema, fsli: z.string().max(120).nullable(), version: z.number().int().positive(),
@@ -844,6 +848,7 @@ export const contractSchemas = {
   apiProblem: apiProblemSchema, paginationQuery: paginationQuerySchema,
   trialBalanceRowsQuery: trialBalanceRowsQuerySchema,
   trialBalanceImport: trialBalanceImportSchema, trialBalanceRow: trialBalanceRowSchema,
+  importFromDocument: importFromDocumentSchema,
   trialBalanceRowsPage: trialBalanceRowsPageSchema, trialBalanceSummary: trialBalanceSummarySchema,
   trialBalanceStatementSummary: trialBalanceStatementSummarySchema,
   mappingsSaved: mappingsSavedSchema, trialBalanceFinalized: trialBalanceFinalizedSchema,
@@ -877,6 +882,7 @@ export type TrialBalanceRow = z.infer<typeof trialBalanceRowSchema>;
 export type TrialBalanceRowsPage = z.infer<typeof trialBalanceRowsPageSchema>;
 export type TrialBalanceSummaryLine = z.infer<typeof trialBalanceSummaryLineSchema>;
 export type TrialBalanceStatementSummary = z.infer<typeof trialBalanceStatementSummarySchema>;
+export type ImportFromDocument = z.infer<typeof importFromDocumentSchema>;
 export type MaterialityAssessment = z.infer<typeof materialityAssessmentSchema>;
 export type MaterialityCalculationResult = z.infer<typeof materialityCalculationResultSchema>;
 export type MaterialityApprovalResult = z.infer<typeof materialityApprovalResultSchema>;
