@@ -93,6 +93,17 @@ jobs:
             tests/outbox.integration.ts
             tests/scheduler.integration.ts
             tests/tb-fixtures.integration.ts
+            tests/tb-staging.integration.ts
+            tests/tb-validation-progress.integration.ts
+            tests/xlsx-import.integration.ts
+            tests/xlsx-document-upload.integration.ts
+            tests/tb-statutory-period.integration.ts
+            tests/tb-supersession.integration.ts
+            tests/tb-batch-mapping.integration.ts
+            tests/tb-statement-summary.integration.ts
+            tests/tb-validation.integration.ts
+            tests/tb-finalize-versions.integration.ts
+            tests/practice-time-entries.integration.ts
         - files: |
             apps/api/tests/multipart-plugin.integration.ts
             tests/local-services.integration.ts
