@@ -58,7 +58,7 @@ export { calculateQuotation, validateQuotation, quotationInputHash, requiredAppr
 export type { QuotationPricingInput, QuotationPricingResult, QuotationLineInput, QuotationLineResult, CommercialApprovalRule, RequiredApproval } from './modules/commercial/quotation.js';
 export type { MappedBenchmarkLine, MaterialityFigures, RiskBand, MaterialityBenchmark } from './modules/governance/materiality.js';
 export type { Capability, Scope } from './platform/authorization.js';
-export { parseTrialBalance, parseTrialBalanceStream, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
+export { parseTrialBalance, parseTrialBalanceStream, TrialBalanceValidationError, writeTrialBalanceChunks } from './modules/fieldwork/parser.js';
 export { upload, mapBatch, finalize } from './modules/fieldwork/service.js';
 export { AdjustmentController } from './modules/fieldwork/adjustments-controller.js';
 export { createAdjustmentJournal, postAdjustmentJournal, reverseAdjustmentJournal, listAdjustmentJournals, adjustmentJournalDetail, adjustedBalances } from './modules/fieldwork/adjustments.js';
@@ -72,7 +72,7 @@ export { createTaxonomyVersion, approveTaxonomyVersion, listTaxonomies, approveI
 export type { SamplingPlan, SamplingOutcome, SampledItem, SamplingPopulationItem } from './modules/fieldwork/sampling.js';
 export { publishBalances, latestPublication, publicationDetail, rowDigest } from './modules/fieldwork/publication.js';
 export { runWorker } from './worker.js';
-export { ensureBucket, store, retrieve, retrieveToFile, removeObject, storageProvider } from './platform/storage.js';
+export { ensureBucket, store, storeBytes, retrieve, retrieveBytes, retrieveToFile, removeObject, storageProvider } from './platform/storage.js';
 export { resolveClientRepository } from './platform/repository.js';
 export { resolveFirmPracticeRepository } from './platform/repository.js';
 export { attachPracticeExpenseReceipt, listPracticeExpenseReceipts, sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';

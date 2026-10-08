@@ -4,7 +4,7 @@ import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Queue, Worker } from 'bullmq';
 import { db } from './platform/db.js';
-import { ensureBucket, retrieve } from './platform/storage.js';
+import { ensureBucket, retrieveBytes } from './platform/storage.js';
 import { resolveClientRepository } from './platform/repository.js';
 import { sweepUnreferencedUploads } from './modules/fieldwork/uploads.js';
 import { sweepPracticeExpenseReceiptUploads } from './modules/practice/expense-receipts.js';
@@ -60,7 +60,7 @@ export async function runWorker() {
     const repository = document.key.startsWith('graph:')
       ? await resolveClientRepository(db, batch.firmId, batch.clientId, 'evidence')
       : undefined;
-    return retrieve(document.key, repository);
+    return retrieveBytes(document.key, repository);
   });
   const processImport = (job: Parameters<typeof processImportCore>[0], token?: string, signal?: AbortSignal) =>
     runWithCorrelationId(job.data.correlationId ?? job.data.outboxEventId, () => processImportCore(job, token, signal));

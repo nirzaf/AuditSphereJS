@@ -28,6 +28,7 @@
     "bullmq": "6.3.11",
     "csv-parse": "7.0.3",
     "dotenv": "17.2.3",
+    "exceljs": "4.4.0",
     "ioredis": "5.8.2",
     "jose": "6.2.12",
     "pdfjs-dist": "6.4.299",

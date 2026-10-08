@@ -99,6 +99,22 @@ export async function retrieve(key: string, repository?: GraphRepository) {
   });
 }
 
+/**
+ * Byte-preserving read for binary evidence such as workbooks. `retrieve` decodes UTF-8 and would
+ * corrupt a binary file, so binary imports must use this function.
+ */
+export async function retrieveBytes(key: string, repository?: GraphRepository): Promise<Buffer> {
+  if (key.startsWith('graph:')) {
+    if (!repository) throw new Error('Graph references require the owning client repository binding');
+    return graph().get(repository, key);
+  }
+  if (process.env.NODE_ENV === 'production' || storageProvider() !== 'local-s3') throw new Error('Local storage references are disabled');
+  return trackLocalS3('download', async () => {
+    const result = await client.send(new GetObjectCommand({ Bucket, Key: key }));
+    return Buffer.from(await result.Body!.transformToByteArray());
+  });
+}
+
 /** Verify provider bytes into a private file before the API begins streaming them to a caller. */
 export async function retrieveToFile(key: string, destination: string, expected: { sha256: string; sizeBytes: number }, repository?: GraphRepository): Promise<void> {
   if (!/^[a-f0-9]{64}$/.test(expected.sha256) || !Number.isSafeInteger(expected.sizeBytes) || expected.sizeBytes < 0) throw new Error('Invalid immutable document metadata');

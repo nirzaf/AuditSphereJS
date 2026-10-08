@@ -8769,11 +8769,15 @@
       "status": {
         "type": "string",
         "enum": [
+          "UPLOADED",
           "QUEUED",
           "PARSING",
+          "VALIDATING",
           "MAPPING_REQUIRED",
-          "FAILED",
-          "FINALIZED"
+          "READY_TO_FINALIZE",
+          "FINALIZING",
+          "FINALIZED",
+          "FAILED"
         ]
       },
       "error": {

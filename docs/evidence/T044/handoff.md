@@ -55,3 +55,33 @@ Reviewer: pending
 Review result: pending  
 Open blockers: T043, T031, T017; PostgreSQL worker integration; cancellation/progress and durable error detail; browser flow; formula/export policy.  
 Next eligible task by dependency order: close outstanding T043/T031/T017 prerequisites, then complete T044 acceptance review.
+
+## Increment 2 — row-error records, progress checkpoints and terminal validation (2026-10-08)
+
+Implemented the two open checklist items that do not depend on a policy decision:
+
+- **Durable, source-line row errors.** `parseTrialBalanceStream` and `parseTrialBalance` now collect every row-level defect with its source line instead of stopping at the first one. Collection is capped at 100 errors (`MAX_ROW_ERRORS`), so a hostile file cannot grow the list without bound. Each rejection is a `TrialBalanceValidationError` carrying `rowErrors`. Migration `202610080002_tb_import_row_errors_and_progress` adds the append-only `TbImportRowError` table, bound to its import by a composite foreign key, unique per `(importId, sourceLine)`, with a trigger that blocks UPDATE and DELETE. The worker writes these rows in the same transaction as the FAILED status.
+- **Validation is terminal.** A permanent input defect is no longer retried three times. The operation fails with the stable code `TB_IMPORT_INVALID`, and redelivery of the same job changes nothing. Transient failures (hash mismatch, database errors, cancellation) keep their previous retry behaviour.
+- **Progress checkpoints.** After each committed 1,000-row chunk, the worker records the number of rows staged on `background_operations.progressRows`. The write uses its own connection, so the value survives the rollback of the staging transaction. Progress is advisory: a failed checkpoint does not fail the import. Cancellation was already cooperative (T031) and is now exercised together with the checkpoint.
+- **Grants.** `scripts/provision-local-roles.ts` grants the worker role `INSERT` on `TbImportRowError` and nothing wider.
+
+Not implemented, by design: the formula-like export hazard item stays open. The decision register has no approved export or formula policy, and this parser does not write spreadsheet files, so no default was invented.
+
+### Verification (this increment)
+
+| Command / test | Result | Evidence |
+| :--- | :--- | :--- |
+| `pnpm build:server` (`prisma generate && tsc -b`) | exit 0 | local run |
+| `pnpm verify:task -- T044` (build, parser unit, staging integration, validation integration) | exit 0; parser 8 of 8 (`packages/server/tests/parser.test.ts`), `tests/tb-staging.integration.ts` 1 of 1, `tests/tb-validation-progress.integration.ts` 1 of 1 on PostgreSQL 18.6 | local run |
+| `pnpm verify:affected` | exit 0; 31 files, 147 of 147 Vitest tests; boundaries and typechecks pass | local run |
+| `pnpm lint` | exit 0; import boundaries pass | local run |
+| `git diff --check` | exit 0 | local run |
+
+New PostgreSQL assertions cover: three distinct defects recorded at lines 3, 4 and 5 with the first message as the summary; zero staged rows after rejection; one attempt and terminal `TB_IMPORT_INVALID`; no duplicate evidence on redelivery; 150 defects capped at 100 records; cancellation at the boundary after the first chunk leaving `progressRows` = 1,000 while the staging rolls back to zero rows.
+
+### Remaining T044 items and blockers
+
+- Formula-like export hazard policy: open, awaiting an approved decision.
+- The worker role's grants are verified by inspection of the provisioner, not by running the worker as that role; the tests run as the migration owner.
+- Row errors are stored but not yet exposed through an API or UI.
+- T043 remains IN_REVIEW, so T044's dependency on it is not yet DONE. T044 stays IN_REVIEW.

@@ -703,7 +703,7 @@ export const trialBalanceRowsQuerySchema = z.object({
 });
 /** Allowlisted transport views for the Trial Balance workspace; internal firm/client/storage keys stay server-side. */
 export const trialBalanceImportSchema = z.object({
-  id: z.uuid(), status: z.enum(['QUEUED', 'PARSING', 'MAPPING_REQUIRED', 'FAILED', 'FINALIZED']),
+  id: z.uuid(), status: z.enum(['UPLOADED', 'QUEUED', 'PARSING', 'VALIDATING', 'MAPPING_REQUIRED', 'READY_TO_FINALIZE', 'FINALIZING', 'FINALIZED', 'FAILED']),
   error: z.string().max(500).nullable(), rowCount: z.number().int().nonnegative(),
   version: z.number().int().positive(), createdAt: z.iso.datetime(),
 });

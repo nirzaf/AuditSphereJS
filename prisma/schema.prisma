@@ -679,6 +679,7 @@ model TbImport {
   publication       BalancePublication?
   outboxEvents      OutboxEvent[]
   documentLinks     DocumentLink[]
+  rowErrors         TbImportRowError[]
   createdAt         DateTime            @default(now())
 
   @@unique([engagementId, sha256])
@@ -713,17 +714,34 @@ model DocumentLink {
   @@index([engagementId, documentId])
 }
 
+/// Durable, append-only validation defects for a rejected Trial Balance import, addressed by source file line.
+model TbImportRowError {
+  id           String   @id @default(uuid()) @db.Uuid
+  firmId       String   @db.Uuid
+  clientId     String   @db.Uuid
+  engagementId String   @db.Uuid
+  importId     String   @db.Uuid
+  sourceLine   Int
+  message      String   @db.VarChar(500)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  batch        TbImport @relation(fields: [firmId, clientId, engagementId, importId], references: [firmId, clientId, engagementId, id])
+
+  @@unique([importId, sourceLine])
+}
+
 model TbRow {
-  id       String   @id @default(uuid()) @db.Uuid
-  importId String   @db.Uuid
-  batch    TbImport @relation(fields: [importId], references: [id])
-  position Int
-  code     String
-  name     String
-  current  Decimal  @db.Decimal(28, 6)
-  prior    Decimal  @db.Decimal(28, 6)
-  fsli     String?
-  version  Int      @default(1)
+  id         String   @id @default(uuid()) @db.Uuid
+  importId   String   @db.Uuid
+  batch      TbImport @relation(fields: [importId], references: [id])
+  position   Int
+  code       String
+  name       String
+  current    Decimal  @db.Decimal(28, 6)
+  prior      Decimal  @db.Decimal(28, 6)
+  fsli       String?
+  version    Int      @default(1)
+  sourceLine Int?
+  rawValues  Json?    @db.JsonB
 
   @@unique([importId, code])
   @@index([importId, position])
@@ -1548,6 +1566,7 @@ model BackgroundOperation {
   completedAt  DateTime?    @db.Timestamptz(6)
   failedAt     DateTime?    @db.Timestamptz(6)
   cancelledAt  DateTime?    @db.Timestamptz(6)
+  progressRows Int?
   engagement   Engagement   @relation(fields: [firmId, clientId, engagementId], references: [firmId, clientId, id], onDelete: Restrict)
   outboxEvent  OutboxEvent?
 

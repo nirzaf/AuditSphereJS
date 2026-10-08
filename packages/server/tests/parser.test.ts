@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseTrialBalance, parseTrialBalanceStream, writeTrialBalanceChunks } from '../src/modules/fieldwork/parser.js';
+import { parseTrialBalance, parseTrialBalanceStream, TrialBalanceValidationError, writeTrialBalanceChunks } from '../src/modules/fieldwork/parser.js';
 
 async function collect(source: string | Buffer) {
   const rows = [];
@@ -11,7 +11,15 @@ describe('bounded Trial Balance CSV parsing', () => {
   it('handles BOM, CRLF, quoted commas and leading-zero account codes', async () => {
     const csv = Buffer.from('\uFEFFCode,Name,Current,Prior\r\n0012,"Cash, bank",10.00,-0.25\r\n');
     await expect(collect(csv)).resolves.toEqual([
-      { position: 0, code: '0012', name: 'Cash, bank', current: '10.00', prior: '-0.25' },
+      {
+        position: 0,
+        sourceLine: 2,
+        rawValues: { code: '0012', name: 'Cash, bank', current: '10.00', prior: '-0.25' },
+        code: '0012',
+        name: 'Cash, bank',
+        current: '10.00',
+        prior: '-0.25',
+      },
     ]);
   });
 
@@ -50,7 +58,7 @@ describe('bounded Trial Balance CSV parsing', () => {
   it('persists rows in bounded chunks and flushes the final partial chunk', async () => {
     async function* rows() {
       for (let position = 0; position < 2_505; position += 1) {
-        yield { position, code: String(position), name: 'Account', current: '1', prior: '-1' };
+        yield { position, sourceLine: position + 2, rawValues: { code: String(position), name: 'Account', current: '1', prior: '-1' }, code: String(position), name: 'Account', current: '1', prior: '-1' };
       }
     }
     const sizes: number[] = [];
@@ -62,7 +70,7 @@ describe('bounded Trial Balance CSV parsing', () => {
   it('checks cooperative cancellation between bounded row batches', async () => {
     async function* rows() {
       for (let position = 0; position < 2_500; position += 1) {
-        yield { position, code: String(position), name: 'Account', current: '1', prior: '-1' };
+        yield { position, sourceLine: position + 2, rawValues: { code: String(position), name: 'Account', current: '1', prior: '-1' }, code: String(position), name: 'Account', current: '1', prior: '-1' };
       }
     }
     const controller = new AbortController();
@@ -72,5 +80,30 @@ describe('bounded Trial Balance CSV parsing', () => {
       controller.abort();
     }, 1_000, controller.signal)).rejects.toMatchObject({ name: 'AbortError' });
     expect(persistedChunkSizes).toEqual([1_000]);
+  });
+
+  it('classifies every rejected import as a validation error and keeps each defect with its source line', async () => {
+    const csv = 'code,name,current,prior\n1,Cash,NaN,0\n2,Receivable,1,0\n2,Duplicate,1,0\n3,Payable,1,abc';
+    const streamed = await collect(csv).catch((error: unknown) => error);
+    expect(streamed).toBeInstanceOf(TrialBalanceValidationError);
+    expect((streamed as TrialBalanceValidationError).rowErrors).toEqual([
+      { sourceLine: 2, message: 'Invalid current balance at source line 2' },
+      { sourceLine: 4, message: 'Invalid or duplicate account at source line 4' },
+      { sourceLine: 5, message: 'Invalid prior balance at source line 5' },
+    ]);
+    expect((streamed as Error).message).toBe('3 invalid rows; first: Invalid current balance at source line 2');
+
+    const synchronous = (() => { try { parseTrialBalance(csv); } catch (error) { return error; } })();
+    expect(synchronous).toBeInstanceOf(TrialBalanceValidationError);
+    expect((synchronous as TrialBalanceValidationError).rowErrors.map(row => row.sourceLine)).toEqual([2, 4, 5]);
+    expect(() => parseTrialBalance('code,name,current,prior\n1,Cash,1,0')).not.toThrow();
+  });
+
+  it('stops collecting at the 100-row error cap instead of growing without bound', async () => {
+    const csv = 'code,name,current,prior\n' + Array.from({ length: 150 }, (_, index) => `${index},Account,NaN,0`).join('\n');
+    const error = await collect(csv).catch((failure: unknown) => failure) as TrialBalanceValidationError;
+    expect(error).toBeInstanceOf(TrialBalanceValidationError);
+    expect(error.rowErrors).toHaveLength(100);
+    expect(error.message).toBe('100 or more invalid rows; first: Invalid current balance at source line 2');
   });
 });

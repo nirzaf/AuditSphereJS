@@ -92,6 +92,7 @@ try {
   await client.query('GRANT SELECT ON "Firm", "Client", "Document", "TbImport", "TbRow" TO auditsphere_worker');
   await client.query('GRANT UPDATE ON "TbImport" TO auditsphere_worker');
   await client.query('GRANT INSERT, UPDATE, DELETE ON "TbRow" TO auditsphere_worker');
+  await client.query('GRANT INSERT ON "TbImportRowError" TO auditsphere_worker');
   await client.query('GRANT SELECT ON "Firm", "Client", "Engagement", "TbImport", "TbRow" TO auditsphere_report');
   let environment = readFileSync('.env', 'utf8');
   for (const [key, value] of Object.entries(settings)) {
