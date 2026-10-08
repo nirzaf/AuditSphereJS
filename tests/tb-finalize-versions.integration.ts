@@ -21,7 +21,7 @@ test('T081 finalization is single-winner under concurrency and leaves earlier fi
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, STORAGE_PROVIDER: 'local-s3', S3_BUCKET: 'evidence-tb-finalize-versions' });
-    const { db, upload, mapBatch, finalize, statementSummary, retrieveBytes } = await import('@auditsphere/server');
+    const { db, upload, mapBatch, finalize, supersede, statementSummary, retrieveBytes } = await import('@auditsphere/server');
     const { createTrialBalanceImportProcessor } = await import('../packages/server/src/modules/fieldwork/import-worker.js');
     const processImport = createTrialBalanceImportProcessor(async document => retrieveBytes(document.key));
     try {
@@ -67,17 +67,21 @@ test('T081 finalization is single-winner under concurrency and leaves earlier fi
       const finalizedAudits = await db.auditEvent.count({ where: { engagementId, action: 'TB_FINALIZED', payload: { path: ['importId'], equals: first } } });
       assert.equal(finalizedAudits, 1, 'one finalization is recorded in the audit trail');
 
-      // AC2: a later finalized batch does not change the earlier one. The earlier version stays queryable and identical.
+      // AC2 (D18): a later batch cannot be finalized while the earlier one is active. Supersession is explicit;
+      // afterwards the earlier version stays queryable and identical.
       const earlierSummary = await statementSummary(engagementId, first);
       const earlierRows = await db.tbRow.findMany({ where: { importId: first }, orderBy: { position: 'asc' }, select: { code: true, current: true, prior: true, fsli: true, sourceLine: true } });
+      await assert.rejects(finalize(engagementId, second, reviewerId, { expectedVersion: await versionOf(second) }), /supersede it explicitly/);
+      await supersede(engagementId, first, reviewerId, { expectedVersion: await versionOf(first), reason: 'Replaced by the second batch in the concurrency test' });
       await finalize(engagementId, second, reviewerId, { expectedVersion: await versionOf(second) });
-      assert.deepEqual(await statementSummary(engagementId, first), earlierSummary, 'the earlier finalized version is queryable and unchanged');
+      assert.deepEqual(await statementSummary(engagementId, first), earlierSummary, 'the superseded version is queryable and unchanged');
       assert.deepEqual(await db.tbRow.findMany({ where: { importId: first }, orderBy: { position: 'asc' }, select: { code: true, current: true, prior: true, fsli: true, sourceLine: true } }), earlierRows);
-      assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: first } })).status, 'FINALIZED');
+      assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: first } })).status, 'SUPERSEDED');
 
-      // A stale finalize of an already finalized batch is refused and changes nothing.
+      // A stale finalize of a superseded batch is refused and changes nothing.
+      const supersededVersion = await versionOf(first);
       await assert.rejects(finalize(engagementId, first, reviewerId, { expectedVersion: firstVersion }), (reason: unknown) => statusOf(reason) === 409);
-      assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: first } })).version, firstVersion + 1, 'the refused finalization does not move the version');
+      assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: first } })).version, supersededVersion, 'the refused finalization does not move the version');
 
       console.log('T081 finalization: single winner under concurrency and earlier batches unchanged on later finalization verified on PostgreSQL 18.6');
     } finally {

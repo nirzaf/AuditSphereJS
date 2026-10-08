@@ -23,7 +23,7 @@ test('DN-04/D16: finalization requires the recorded statutory period, refuses a 
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, STORAGE_PROVIDER: 'local-s3', S3_BUCKET: 'evidence-tb-period' });
-    const { db, upload, mapBatch, finalize, createEngagement, retrieveBytes } = await import('@auditsphere/server');
+    const { db, upload, mapBatch, finalize, supersede, createEngagement, retrieveBytes } = await import('@auditsphere/server');
     const { createTrialBalanceImportProcessor } = await import('../packages/server/src/modules/fieldwork/import-worker.js');
     const processImport = createTrialBalanceImportProcessor(async document => retrieveBytes(document.key));
     try {
@@ -73,6 +73,8 @@ test('DN-04/D16: finalization requires the recorded statutory period, refuses a 
       await assert.rejects(finalizeNow(waiting), (reason: unknown) => statusOf(reason) === 409);
       assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: waiting } })).status, 'MAPPING_REQUIRED', 'a refused finalization leaves the batch editable');
       await db.engagement.update({ where: { id: engagementId }, data: { period: 'FY2026' } });
+      // D18: the active finalized version is superseded explicitly before the waiting version is finalized.
+      await supersede(engagementId, fy2026, reviewerId, { expectedVersion: (await db.tbImport.findUniqueOrThrow({ where: { id: fy2026 } })).version, reason: 'Superseded before the waiting period is finalized (DN-06)' });
       // Restoring the period it was staged for makes the same import finalizable again.
       assert.deepEqual(await finalizeNow(waiting), { status: 'FINALIZED' });
 

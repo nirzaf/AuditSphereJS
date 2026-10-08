@@ -20,7 +20,7 @@ test('materiality assessments bind a published version, enforce segregation of d
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri });
-    const { db, createTaxonomyVersion, approveTaxonomyVersion, approveImportMapping, publishBalances, calculateMaterialityAssessment, approveMaterialityAssessment, latestMaterialityAssessment } = await import('@auditsphere/server');
+    const { db, createTaxonomyVersion, approveTaxonomyVersion, approveImportMapping, publishBalances, supersede, calculateMaterialityAssessment, approveMaterialityAssessment, latestMaterialityAssessment } = await import('@auditsphere/server');
     try {
       await db.firm.create({ data: { id: firmId, name: 'Materiality firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Materiality client' } });
@@ -47,8 +47,9 @@ test('materiality assessments bind a published version, enforce segregation of d
       ] }) as { id: string; version: number };
       await approveTaxonomyVersion(preparerId, engagementId, taxonomy.id, { expectedVersion: taxonomy.version });
 
+      const importIdFor = (sequence: number) => `20000000-0000-4000-8000-0000000000${String(sequence).padStart(2, '0')}`;
       const makePublished = async (sequence: number, revenue: string, expenses: string, cash: string, payables: string) => {
-        const importId = `20000000-0000-4000-8000-0000000000${String(sequence).padStart(2, '0')}`;
+        const importId = importIdFor(sequence);
         await db.tbImport.create({ data: { id: importId, firmId, clientId, engagementId, documentId, sha256: String(sequence + 4).repeat(64).slice(0, 64), status: 'MAPPING_REQUIRED' } });
         await db.tbRow.createMany({ data: [
           { importId, position: 0, code: '4000', name: 'Revenue', fsli: 'Revenue', current: revenue, prior: '0.000000' },
@@ -59,6 +60,8 @@ test('materiality assessments bind a published version, enforce segregation of d
         ] });
         const batch = await db.tbImport.findUniqueOrThrow({ where: { id: importId } });
         await approveImportMapping(preparerId, engagementId, importId, { expectedVersion: batch.version, idempotencyKey: randomUUID() });
+        // D18: one active finalized version; the earlier version is superseded explicitly before the next one is finalized.
+        if (sequence > 1) await supersede(engagementId, importIdFor(sequence - 1), preparerId, { expectedVersion: 2, reason: 'Superseded by the next accepted trial balance (DN-06)' });
         await db.tbImport.update({ where: { id: importId }, data: { status: 'FINALIZED', version: 2 } });
         const publication = await publishBalances(engagementId, preparerId, { importId, expectedVersion: 2, idempotencyKey: randomUUID() }) as { publicationId: string; sequence: number };
         return publication;

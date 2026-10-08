@@ -64,7 +64,7 @@ test('guarded lifecycle commands reject invalid paths, enforce evidence and stay
 
       await db.document.create({ data: { id: documentId, engagementId, key: 'lifecycle/dataset.csv', sha256: 'a'.repeat(64), filename: 'dataset.csv' } });
       await db.tbImport.createMany({ data: [
-        { id: importId, firmId, clientId, engagementId, documentId, sha256: 'a'.repeat(64), status: 'FINALIZED', rowCount: 2 },
+        { id: importId, firmId, clientId, engagementId, documentId, sha256: 'a'.repeat(64), status: 'SUPERSEDED', rowCount: 2 }, // D18: the older version is superseded
         { id: secondImportId, firmId, clientId, engagementId, documentId, sha256: 'b'.repeat(64), status: 'FINALIZED', rowCount: 2 },
       ] });
 

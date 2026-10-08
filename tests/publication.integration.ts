@@ -21,7 +21,7 @@ test('publishing creates immutable accepted balance versions bound to one finali
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri });
-    const { db, publishBalances, latestPublication, publicationDetail, createTaxonomyVersion, approveTaxonomyVersion, approveImportMapping } = await import('@auditsphere/server');
+    const { db, publishBalances, supersede, latestPublication, publicationDetail, createTaxonomyVersion, approveTaxonomyVersion, approveImportMapping } = await import('@auditsphere/server');
     try {
       await db.firm.create({ data: { id: firmId, name: 'Publication firm' } });
       await db.client.create({ data: { id: clientId, firmId, name: 'Publication client' } });
@@ -57,22 +57,11 @@ test('publishing creates immutable accepted balance versions bound to one finali
       };
 
       const balanced = await makeImport([['100', 'Cash', 'Cash and equivalents', '1000.000001', '900.000001'], ['200', 'Equity', 'Equity', '-1000.000001', '-900.000001']], 'FINALIZED', 2);
-      const unbalanced = await makeImport([['100', 'Cash', 'Cash and equivalents', '1000.000000', '0.000000'], ['200', 'Equity', 'Equity', '-999.000000', '0.000000']], 'FINALIZED', 2);
       const staging = await makeImport([['100', 'Cash', 'Cash and equivalents', '1.000000', '0.000000'], ['200', 'Equity', 'Equity', '-1.000000', '0.000000']], 'MAPPING_REQUIRED', 1);
-      const version2 = await makeImport([['100', 'Cash', 'Cash and equivalents', '2000.000001', '1000.000001'], ['200', 'Equity', 'Equity', '-2000.000001', '-1000.000001']], 'FINALIZED', 2);
 
       await assert.rejects(publishBalances(engagementId, auditorId, { importId: balanced, expectedVersion: 2, idempotencyKey: key('01') }), /not granted/i);
       await assert.rejects(publishBalances(engagementId, actorId, { importId: staging, expectedVersion: 1, idempotencyKey: key('02') }), /Only a finalized trial balance/);
       await assert.rejects(publishBalances(engagementId, actorId, { importId: balanced, expectedVersion: 1, idempotencyKey: key('03') }), /Import changed/);
-      await assert.rejects(publishBalances(engagementId, actorId, { importId: unbalanced, expectedVersion: 2, idempotencyKey: key('04') }), /balance to zero/);
-
-      // An import whose mapping was changed after approval cannot be published.
-      const tampered = await makeImport([['100', 'Cash', 'Cash and equivalents', '5.000000', '0.000000'], ['200', 'Equity', 'Equity', '-5.000000', '0.000000']], 'MAPPING_REQUIRED', 1);
-      const tamperedBatch = await db.tbImport.findUniqueOrThrow({ where: { id: tampered } });
-      await approveImportMapping(actorId, engagementId, tampered, { expectedVersion: tamperedBatch.version, idempotencyKey: randomUUID() });
-      await db.tbRow.updateMany({ where: { importId: tampered, code: '100' }, data: { fsli: 'Equity' } });
-      await db.tbImport.update({ where: { id: tampered }, data: { status: 'FINALIZED', version: 2 } });
-      await assert.rejects(publishBalances(engagementId, actorId, { importId: tampered, expectedVersion: 2, idempotencyKey: key('08') }), /mapping changed after approval/);
 
       const otherEngagementId = randomUUID();
       const otherDocumentId = randomUUID();
@@ -107,6 +96,25 @@ test('publishing creates immutable accepted balance versions bound to one finali
       assert.equal(detail.rows[0].current, '1000.000001');
       assert.equal(detail.rows[1].prior, '-900.000001');
       assert.equal((await latestPublication(engagementId)).sequence, 1);
+
+      await supersede(engagementId, balanced, actorId, { expectedVersion: 2, reason: 'Superseded before the next accepted trial balance (DN-06)' });
+
+      const unbalanced = await makeImport([['100', 'Cash', 'Cash and equivalents', '1000.000000', '0.000000'], ['200', 'Equity', 'Equity', '-999.000000', '0.000000']], 'FINALIZED', 2);
+      await assert.rejects(publishBalances(engagementId, actorId, { importId: unbalanced, expectedVersion: 2, idempotencyKey: key('04') }), /balance to zero/);
+
+      await supersede(engagementId, unbalanced, actorId, { expectedVersion: 2, reason: 'Superseded after its negative publication check (DN-06)' });
+
+      // An import whose mapping was changed after approval cannot be published.
+      const tampered = await makeImport([['100', 'Cash', 'Cash and equivalents', '5.000000', '0.000000'], ['200', 'Equity', 'Equity', '-5.000000', '0.000000']], 'MAPPING_REQUIRED', 1);
+      const tamperedBatch = await db.tbImport.findUniqueOrThrow({ where: { id: tampered } });
+      await approveImportMapping(actorId, engagementId, tampered, { expectedVersion: tamperedBatch.version, idempotencyKey: randomUUID() });
+      await db.tbRow.updateMany({ where: { importId: tampered, code: '100' }, data: { fsli: 'Equity' } });
+      await db.tbImport.update({ where: { id: tampered }, data: { status: 'FINALIZED', version: 2 } });
+      await assert.rejects(publishBalances(engagementId, actorId, { importId: tampered, expectedVersion: 2, idempotencyKey: key('08') }), /mapping changed after approval/);
+
+      await supersede(engagementId, tampered, actorId, { expectedVersion: 2, reason: 'Superseded after its negative publication check (DN-06)' });
+
+      const version2 = await makeImport([['100', 'Cash', 'Cash and equivalents', '2000.000001', '1000.000001'], ['200', 'Equity', 'Equity', '-2000.000001', '-1000.000001']], 'FINALIZED', 2);
 
       await assert.rejects(db.$executeRaw`UPDATE "PublishedBalanceRow" SET current = 0 WHERE "publicationId" = ${first.publicationId}::uuid`, /immutable/);
       await assert.rejects(db.$executeRaw`DELETE FROM "BalancePublication" WHERE id = ${first.publicationId}::uuid`, /immutable/);

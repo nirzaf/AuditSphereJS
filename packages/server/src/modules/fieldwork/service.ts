@@ -9,7 +9,7 @@ import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { runUnitOfWork, withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { createTrialBalanceImportOutbox } from '../../platform/outbox.js';
 import { publishRealtimeInvalidation } from '../../platform/realtime/invalidation.js';
-import { mappingSchema, uploadSchema, finalizeSchema, fslis, importFromDocumentSchema } from '@auditsphere/contracts';
+import { mappingSchema, uploadSchema, finalizeSchema, supersedeSchema, fslis, importFromDocumentSchema } from '@auditsphere/contracts';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { z } from 'zod';
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -211,6 +211,9 @@ export async function finalize(engagementId: string, importId: string, actorId: 
     if (await tx.tbRow.count({ where: { importId: batch.id, fsli: null } })) throw new BadRequestException('Map every account before finalizing');
     const totals = await tx.tbRow.aggregate({ where: { importId: batch.id }, _sum: { current: true, prior: true }, _count: true });
     if (!totals._count || !totals._sum.current?.equals(0) || !totals._sum.prior?.equals(0)) throw new BadRequestException('Both periods must balance to zero');
+    // D18: one active finalized version per engagement; a new one follows an explicit supersession.
+    const active = await tx.tbImport.findFirst({ where: { engagementId, status: 'FINALIZED', NOT: { id: batch.id } }, select: { id: true } });
+    if (active) throw new ConflictException('Another finalized trial balance is active; supersede it explicitly before finalizing this version');
     const changed = await tx.tbImport.updateMany({ where: { id: batch.id, engagementId, status: 'MAPPING_REQUIRED', version: body.expectedVersion }, data: { status: 'FINALIZED', version: { increment: 1 } } });
     if (changed.count !== 1) throw new ConflictException('Import changed');
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_FINALIZED', payload: { importId: batch.id } } });
@@ -218,6 +221,33 @@ export async function finalize(engagementId: string, importId: string, actorId: 
     return { status: 'FINALIZED' };
   });
 }
+/**
+ * Supersedes the active finalized version (D18). The approvals that cite its publication are
+ * invalidated by append-only records, and the superseded version becomes immutable.
+ */
+export async function supersede(engagementId: string, importId: string, actorId: string, input: unknown, unitOfWork?: UnitOfWork) {
+  const body = validate(supersedeSchema, input);
+  return withUnitOfWork(unitOfWork, async (scope) => {
+    const tx = scope.client;
+    await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
+    const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
+    if (!engagement) throw new NotFoundException('Engagement not found');
+    await requireCapability(tx, actorId, 'FIELDWORK_FINALIZE', scopeOf(engagement));
+    assertEditable(engagement.state);
+    const batch = await tx.tbImport.findFirst({ where: { id: importId, engagementId, firmId: engagement.firmId, clientId: engagement.clientId } });
+    if (!batch) throw new NotFoundException('Import not found');
+    if (batch.status !== 'FINALIZED') throw new ConflictException('Only the active finalized trial balance can be superseded');
+    const changed = await tx.tbImport.updateMany({ where: { id: batch.id, engagementId, status: 'FINALIZED', version: body.expectedVersion }, data: { status: 'SUPERSEDED', version: { increment: 1 } } });
+    if (changed.count !== 1) throw new ConflictException('Import changed; reload before superseding');
+    const publication = await tx.balancePublication.findUnique({ where: { importId: batch.id }, select: { id: true } });
+    const cited = publication ? await tx.materialityAssessment.findMany({ where: { publicationId: publication.id, status: 'APPROVED', invalidation: { is: null } }, select: { id: true } }) : [];
+    if (cited.length) await tx.materialityInvalidation.createMany({ data: cited.map((assessment) => ({ firmId: engagement.firmId, clientId: engagement.clientId, engagementId, assessmentId: assessment.id, supersededImportId: batch.id, reason: body.reason, invalidatedBy: actorId })) });
+    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'TB_SUPERSEDED', payload: { importId: batch.id, reason: body.reason, invalidatedAssessmentIds: cited.map((assessment) => assessment.id) } } });
+    scope.afterCommit(() => publishRealtimeInvalidation({ schemaVersion: 1, engagementId, resourceType: 'trial-balance-import', resourceId: importId, version: batch.version + 1 }));
+    return { status: 'SUPERSEDED' as const, invalidatedAssessments: cited.length };
+  });
+}
+
 /** Presentation split only; the statement a balance belongs to never changes its stored value. */
 const PROFIT_AND_LOSS_FSLIS: ReadonlySet<string> = new Set(['Revenue', 'Operating expenses']);
 

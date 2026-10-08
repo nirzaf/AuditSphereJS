@@ -61,3 +61,13 @@ Stop after this task; do not implement the next one without assignment.
 ## Addendum — DN-04 / D16: statutory period at finalization (2026-10-08)
 
 Finalization now refuses a missing statutory period and refuses an import staged for a different period (see the T079 addendum and `tests/tb-statutory-period.integration.ts`). Supersession (DN-06) is still open, so AC1 and the supersession item remain open.
+
+## Addendum — DN-06 / D18: supersession of finalized versions (2026-10-08)
+
+At most one finalized Trial Balance version is active per engagement. Finalization refuses a second version while one is active, in the service and in PostgreSQL (partial unique index `TbImport_one_active_finalized_key`). A new `supersede` command (`packages/server/src/modules/fieldwork/service.ts`, route `POST …/:id/supersede` in `controller.ts`) requires `FIELDWORK_FINALIZE`, the engagement state, the expected version and a reason of at least ten characters. It moves the active version to `SUPERSEDED`, records each approved materiality assessment that cites it as an append-only `MaterialityInvalidation`, and writes a `TB_SUPERSEDED` audit event.
+
+A superseded version stays immutable: the `protect_finalized_rows` trigger now covers `SUPERSEDED` as well as `FINALIZED`. It cannot be published, and it cannot carry a new materiality calculation or approval. Its statement summary stays readable and unchanged.
+
+Evidence: `pnpm verify:task -- T081` exit 0 (`tests/tb-finalize-versions.integration.ts` 1 of 1, rewritten so a later batch is finalized only after the earlier one is superseded; `tests/tb-supersession.integration.ts` 1 of 1 on PostgreSQL 18.6). The other finalization tests were updated the same way: `tests/publication.integration.ts`, `tests/lifecycle.integration.ts`, `tests/tb-statutory-period.integration.ts`, `tests/xlsx-import.integration.ts` and `tests/materiality-persistence.integration.ts`; all passed in the ten-file integration run, and `tests/publication.integration.ts` was re-run on its own after a test-only import fix.
+
+AC1 (single-winner finalization under concurrency) is still proven by the concurrency section of `tests/tb-finalize-versions.integration.ts`. The supersession item is now implemented. Remaining open: the planning and assigned-user guards (T088 dependency).

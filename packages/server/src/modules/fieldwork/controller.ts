@@ -1,8 +1,8 @@
 import { Controller, Get, Post, Patch, Body, Param, Query, Req, SerializeOptions, StandardSchemaSerializerInterceptor, StandardSchemaValidationPipe, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
-  apiProblemSchema, editLeaseResultSchema, editLeaseSchema, finalizeSchema, mappingSchema, mappingsSavedSchema,
-  paginationQuerySchema, trialBalanceFinalizedSchema, trialBalanceImportSchema,
+  apiProblemSchema, editLeaseResultSchema, editLeaseSchema, finalizeSchema, supersedeSchema, mappingSchema, mappingsSavedSchema,
+  paginationQuerySchema, trialBalanceFinalizedSchema, trialBalanceSupersededSchema, trialBalanceImportSchema,
   importFromDocumentSchema, trialBalanceRowsPageSchema, trialBalanceRowsQuerySchema, trialBalanceStatementSummarySchema, trialBalanceSummaryLineSchema, uploadSchema,
 } from '@auditsphere/contracts';
 import type { PaginationQuery, TrialBalanceRowsQuery } from '@auditsphere/contracts';
@@ -62,6 +62,11 @@ export class FieldworkController {
   @ApiCreatedResponse({ standardSchema: trialBalanceFinalizedSchema })
   @SerializeOptions({ schema: trialBalanceFinalizedSchema })
   finalize(@Param('engagementId') e: string, @Param('id') id: string, @Req() req: any, @Body({ schema: finalizeSchema }) body: unknown) { return service.finalize(e, id, req.actorId, body); }
+
+  @Post(':id/supersede')
+  @ApiCreatedResponse({ standardSchema: trialBalanceSupersededSchema })
+  @SerializeOptions({ schema: trialBalanceSupersededSchema })
+  supersede(@Param('engagementId') e: string, @Param('id') id: string, @Req() req: any, @Body({ schema: supersedeSchema }) body: unknown) { return service.supersede(e, id, req.actorId, body); }
 
   @Get(':id/summary')
   @ApiOkResponse({ standardSchema: trialBalanceSummaryLineSchema, isArray: true })

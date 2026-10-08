@@ -63,10 +63,10 @@ class ContractFixtureController {
     return {
       assessmentId: '11111111-1111-4111-8111-111111111111', publicationId: '22222222-2222-4222-8222-222222222222',
       taxonomyVersionId: '33333333-3333-4333-8333-333333333333', benchmarkKind: 'REVENUE', destinationCode: null,
-      sourceLineCount: 5, currency: 'QAR', benchmarkAmount: '1000.000000', planningMateriality: '50.000000',
+      sourceLineCount: 5, currency: 'QAR', benchmarkAmount: '1000.000000', planningMateriality: '50.000000', rawPlanningMateriality: '50.000000',
       tolerableError: '25.000000', sadThreshold: '2.500000', ratePercent: '5.000000', performancePercent: '50.000000',
       trivialPercent: '5.000000', policyVersion: 'PM-2026.1', inputHash: 'a'.repeat(64), status: 'DRAFT',
-      calculatedAt: '2026-10-03T00:00:00.000Z', approvedAt: null, stale: false, currentPublicationId: '22222222-2222-4222-8222-222222222222',
+      calculatedAt: '2026-10-03T00:00:00.000Z', approvedAt: null, stale: false, invalidated: false, normalizationAdjustments: null, currentPublicationId: '22222222-2222-4222-8222-222222222222',
       firmId: 'must-stay-server-side', clientId: 'must-stay-server-side', engagementId: 'must-stay-server-side',
       calculatedBy: 'must-stay-server-side', approvedBy: 'must-stay-server-side',
     };
@@ -347,10 +347,10 @@ test('Nest API contracts reject invalid input, strip sensitive output and genera
     assert.deepEqual(materialityResponse.json(), {
       assessmentId: '11111111-1111-4111-8111-111111111111', publicationId: '22222222-2222-4222-8222-222222222222',
       taxonomyVersionId: '33333333-3333-4333-8333-333333333333', benchmarkKind: 'REVENUE', destinationCode: null,
-      sourceLineCount: 5, currency: 'QAR', benchmarkAmount: '1000.000000', planningMateriality: '50.000000',
+      sourceLineCount: 5, currency: 'QAR', benchmarkAmount: '1000.000000', planningMateriality: '50.000000', rawPlanningMateriality: '50.000000',
       tolerableError: '25.000000', sadThreshold: '2.500000', ratePercent: '5.000000', performancePercent: '50.000000',
       trivialPercent: '5.000000', policyVersion: 'PM-2026.1', inputHash: 'a'.repeat(64), status: 'DRAFT',
-      calculatedAt: '2026-10-03T00:00:00.000Z', approvedAt: null, stale: false, currentPublicationId: '22222222-2222-4222-8222-222222222222',
+      calculatedAt: '2026-10-03T00:00:00.000Z', approvedAt: null, stale: false, invalidated: false, normalizationAdjustments: null, currentPublicationId: '22222222-2222-4222-8222-222222222222',
     }, 'materiality response allowlist omits ownership and calculator/approver columns');
     const reviewNoteResponse = await server.inject({ method: 'GET', url: '/api/v1/contract-fixture/review-note' });
     assert.equal(reviewNoteResponse.statusCode, 200);

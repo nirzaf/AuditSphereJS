@@ -69,3 +69,7 @@ Review result: pending
 Open blockers: none for the recorded checks. The benchmark-selection screen (checklist item 54) remains open.
 Next eligible task by dependency order: not assigned. The next NOT_STARTED ledger row is T090; this handoff does not check its dependencies.
 Stop after this task; do not implement the next one without assignment.
+
+## Addendum — API contract suite repaired (2026-10-08)
+
+The DN-07 change made the materiality response require `rawPlanningMateriality`, `normalizationAdjustments` and (added with DN-06) `invalidated`. The API contract fixture `apps/api/tests/contracts.integration.ts` still returned the old shape, so `GET …/materiality-view` answered 500. Neither `verify:task -- T085` nor the affected suite runs that file, so the failure reached `main` in commit `d3e399b` unnoticed. The fixture and the schema are corrected in the DN-06 commit; `node --import tsx --test apps/api/tests/contracts.integration.ts` passes 1 of 1.

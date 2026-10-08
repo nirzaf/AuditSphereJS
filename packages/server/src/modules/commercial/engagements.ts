@@ -46,18 +46,19 @@ export async function engagementIdentity(engagementId: string) {
     db.engagementLetterRecord.findUnique({ where: { engagementId } }),
     db.engagementInvoice.findFirst({ where: { engagementId, status: { in: ['ISSUED', 'PAID'] } } }),
     db.tbImport.count({ where: { engagementId, status: 'FINALIZED' } }),
-    db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } }),
-    db.materialityAssessment.findFirst({ where: { engagementId, status: 'APPROVED' }, orderBy: { calculatedAt: 'desc' } }),
+    db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' }, include: { sourceImport: { select: { status: true } } } }),
+    db.materialityAssessment.findFirst({ where: { engagementId, status: 'APPROVED', invalidation: { is: null } }, orderBy: { calculatedAt: 'desc' } }),
   ]);
   const dualKey = await dualKeyStatus(engagementId);
   const commercialReady = dualKey.key1Status === 'RECORDED' && dualKey.key2Status === 'RECORDED' && dualKey.letterIssued;
-  const planningReady = finalized > 0 && !!publication && !!assessment && assessment.publicationId === publication.id;
+  const activePublication = publication && publication.sourceImport.status !== 'SUPERSEDED' ? publication : null;
+  const planningReady = finalized > 0 && !!activePublication && !!assessment && assessment.publicationId === activePublication.id;
   return {
     engagement: { id: engagement.id, name: engagement.name, state: engagement.state, version: engagement.version, service: (engagement as unknown as { service?: string }).service ?? null },
     client: { id: engagement.clientId, name: engagement.client.name, legalName: engagement.client.legalName, status: engagement.client.status },
     readiness: {
       commercial: { ready: commercialReady, letterIssued: dualKey.letterIssued, key1: dualKey.key1Status, key2: dualKey.key2Status, advanceInvoiced: Boolean(invoices) },
-      planning: { ready: planningReady, finalizedImports: finalized, published: Boolean(publication), approvedMateriality: Boolean(assessment), staleMateriality: Boolean(assessment && publication && assessment.publicationId !== publication.id) },
+      planning: { ready: planningReady, finalizedImports: finalized, published: Boolean(activePublication), approvedMateriality: Boolean(assessment), staleMateriality: Boolean(assessment && activePublication && assessment.publicationId !== activePublication.id) },
       fieldwork: { ready: engagement.state === 'FIELDWORK_EXECUTION' || ['MANAGERIAL_REVIEW', 'PARTNER_APPROVAL', 'DELIVERABLE_RELEASE'].includes(engagement.state) },
     },
   };

@@ -44,9 +44,7 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
 
-**Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
-
-**Applicable decisions:** D16 (DN-04): finalization refuses a missing or changed statutory period. Supersession (DN-06) is still open.
+**Applicable decisions:** D16 (DN-04): finalization refuses a missing or changed statutory period. D18 (DN-06): at most one active finalized version per engagement; a new version is finalized only after an explicit, audited supersede command invalidates the approvals that cite the old version.
 
 ## Implementation checklist
 

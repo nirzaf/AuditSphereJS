@@ -50,6 +50,9 @@ export async function calculateMaterialityAssessment(actorId: string, engagement
     }
     const publication = await tx.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
     if (!publication) throw new ConflictException('Publish an accepted balance version before calculating materiality');
+    // D18: a superseded version cannot carry a new assessment.
+    const source = await tx.tbImport.findUnique({ where: { id: publication.importId }, select: { status: true } });
+    if (source?.status === 'SUPERSEDED') throw new ConflictException('The latest balance version was superseded; publish the active trial balance before calculating materiality');
     const { approval, lines } = await publishedBenchmarkLines(tx, publication.id, publication.mappingApprovalId);
     const ratePercent = Decimal6.from(body.ratePercent);
     const performancePercent = Decimal6.from(body.performancePercent);
@@ -127,6 +130,8 @@ export async function approveMaterialityAssessment(actorId: string, engagementId
     if (assessment.calculatedBy === actorId) throw new ForbiddenException('The calculator cannot approve their own materiality assessment');
     const latest = await tx.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
     if (!latest || latest.id !== assessment.publicationId) throw new ConflictException('A newer accepted balance version exists; recalculate materiality before approving');
+    const cited = await tx.tbImport.findUnique({ where: { id: latest.importId }, select: { status: true } });
+    if (cited?.status === 'SUPERSEDED') throw new ConflictException('The balance version this assessment cites was superseded; recalculate on the active version');
     const changed = await tx.materialityAssessment.updateMany({ where: { id: assessmentId, status: 'DRAFT' }, data: { status: 'APPROVED', approvedBy: actorId, approvedAt: new Date() } });
     if (changed.count !== 1) throw new ConflictException('Materiality assessment changed; reload before approving');
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'MATERIALITY_APPROVED', payload: { assessmentId, publicationId: assessment.publicationId, inputHash: assessment.inputHash } } });
@@ -137,7 +142,7 @@ export async function approveMaterialityAssessment(actorId: string, engagementId
 }
 
 export async function latestMaterialityAssessment(engagementId: string) {
-  const assessment = await db.materialityAssessment.findFirst({ where: { engagementId }, orderBy: { calculatedAt: 'desc' } });
+  const assessment = await db.materialityAssessment.findFirst({ where: { engagementId }, orderBy: { calculatedAt: 'desc' }, include: { invalidation: { select: { id: true } } } });
   if (!assessment) throw new NotFoundException('No materiality assessment has been calculated for this engagement');
   const latest = await db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
   const decimal = (value: { toFixed: (n: number) => string }) => value.toFixed(6);
@@ -146,12 +151,13 @@ export async function latestMaterialityAssessment(engagementId: string) {
     benchmarkAmount: decimal(assessment.benchmarkAmount), planningMateriality: decimal(assessment.planningMateriality),
     tolerableError: decimal(assessment.tolerableError), sadThreshold: decimal(assessment.sadThreshold),
     stale: !latest || latest.id !== assessment.publicationId,
+    invalidated: assessment.invalidation !== null,
     currentPublicationId: latest?.id ?? null,
   };
 }
 
 export async function listMaterialityAssessments(engagementId: string, page: PaginationQuery = { offset: 0, limit: 50 }) {
-  const assessments = await db.materialityAssessment.findMany({ where: { engagementId }, orderBy: { calculatedAt: 'desc' }, skip: page.offset, take: page.limit });
+  const assessments = await db.materialityAssessment.findMany({ where: { engagementId }, orderBy: { calculatedAt: 'desc' }, skip: page.offset, take: page.limit, include: { invalidation: { select: { id: true } } } });
   const latest = await db.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
-  return assessments.map((assessment) => ({ ...assessment, stale: !latest || latest.id !== assessment.publicationId }));
+  return assessments.map((assessment) => ({ ...assessment, stale: !latest || latest.id !== assessment.publicationId, invalidated: assessment.invalidation !== null }));
 }

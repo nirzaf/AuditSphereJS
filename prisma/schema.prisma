@@ -683,6 +683,7 @@ model TbImport {
   outboxEvents      OutboxEvent[]
   documentLinks     DocumentLink[]
   rowErrors         TbImportRowError[]
+  materialityInvalidations MaterialityInvalidation[]
   createdAt         DateTime            @default(now())
 
   @@unique([engagementId, sha256])
@@ -906,8 +907,28 @@ model MaterialityAssessment {
   calculatedAt        DateTime           @default(now())
   approvedBy          String?            @db.Uuid
   approvedAt          DateTime?
+  invalidation        MaterialityInvalidation?
 
   @@index([engagementId, calculatedAt])
+}
+
+/// Append-only record that a supersession invalidated one approved materiality assessment (D18).
+/// The approved assessment is never rewritten; the guard trigger accepts a record only for an
+/// approved assessment of a superseded Trial Balance version.
+model MaterialityInvalidation {
+  id                 String                @id @default(uuid()) @db.Uuid
+  firmId             String                @db.Uuid
+  clientId           String                @db.Uuid
+  engagementId       String                @db.Uuid
+  assessmentId       String                @unique @db.Uuid
+  assessment         MaterialityAssessment @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  supersededImportId String                @db.Uuid
+  supersededImport   TbImport              @relation(fields: [firmId, clientId, engagementId, supersededImportId], references: [firmId, clientId, engagementId, id], onDelete: Restrict, map: "MaterialityInvalidation_import_scope_fkey")
+  reason             String                @db.VarChar(500)
+  invalidatedBy      String                @db.Uuid
+  invalidatedAt      DateTime              @default(now()) @db.Timestamptz(6)
+
+  @@index([engagementId, supersededImportId])
 }
 
 /// One engagement risk. Its band is an append-only assessment series; the newest is current.

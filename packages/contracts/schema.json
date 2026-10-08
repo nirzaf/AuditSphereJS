@@ -3737,6 +3737,27 @@
     ],
     "additionalProperties": false
   },
+  "supersede": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "expectedVersion": {
+        "type": "integer",
+        "exclusiveMinimum": 0,
+        "maximum": 9007199254740991
+      },
+      "reason": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 500
+      }
+    },
+    "required": [
+      "expectedVersion",
+      "reason"
+    ],
+    "additionalProperties": false
+  },
   "documentLinkCreate": {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
@@ -6316,6 +6337,9 @@
       "stale": {
         "type": "boolean"
       },
+      "invalidated": {
+        "type": "boolean"
+      },
       "currentPublicationId": {
         "anyOf": [
           {
@@ -6351,7 +6375,8 @@
       "status",
       "calculatedAt",
       "approvedAt",
-      "stale"
+      "stale",
+      "invalidated"
     ],
     "additionalProperties": false
   },
@@ -9317,6 +9342,26 @@
     },
     "required": [
       "status"
+    ],
+    "additionalProperties": false
+  },
+  "trialBalanceSuperseded": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+      "status": {
+        "type": "string",
+        "const": "SUPERSEDED"
+      },
+      "invalidatedAssessments": {
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+      }
+    },
+    "required": [
+      "status",
+      "invalidatedAssessments"
     ],
     "additionalProperties": false
   },

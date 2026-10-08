@@ -31,6 +31,7 @@ The unchanged [original architecture](../sources/architecture-original-reference
 | T033 must provision/bind all category folders as part of generic upload transport. | T033 validates and persists the selected category and uses the scoped evidence repository boundary. T064 owns provisioning and binding the five engagement folders; its absence is not a T033 upload-session acceptance blocker. |
 | A bounded PDF parser can be described as proving that uploaded PDFs are safe. | T033 implements a defined screening boundary: ClamAV signature screening plus resource-limited PDF.js checks for the explicitly tested active-content classes, malformed/encrypted files and resource caps. Startup and file-inspection timeouts are separate. Evidence must state that this does not prove complete PDF grammar or viewer safety. |
 | Firm-global mapping rules can be offered alongside client memory once they are approved separately. | Mapping memory is client-scoped only (D17). No firm-global suggestion is offered until a separate firm approval exists, and every suggestion names its source approval and never exposes another client's details. |
+| Several finalized Trial Balance versions can be active in one engagement. | At most one active finalized version per engagement (D18). A new version is finalized only after an explicit, audited supersede command invalidates the approvals that cite the superseded version. |
 
 ## Change management
 

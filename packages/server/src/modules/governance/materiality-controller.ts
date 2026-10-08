@@ -17,7 +17,7 @@ type MaterialityRecordViewSource = {
   sadThreshold: FixedMoney; ratePercent: FixedMoney;
   performancePercent: FixedMoney; trivialPercent: FixedMoney;
   policyVersion: string; inputHash: string; status: string; calculatedAt: Date; approvedAt: Date | null;
-  stale: boolean; currentPublicationId?: string | null;
+  stale: boolean; invalidated?: boolean; currentPublicationId?: string | null;
 };
 const fixedMoney = (value: FixedMoney) => typeof value === 'string' ? value : value.toFixed(6);
 
@@ -42,7 +42,7 @@ function materialityView(assessment: MaterialityRecordViewSource) {
     performancePercent: fixedMoney(assessment.performancePercent), trivialPercent: fixedMoney(assessment.trivialPercent),
     policyVersion: assessment.policyVersion, inputHash: assessment.inputHash, status: assessment.status,
     calculatedAt: assessment.calculatedAt.toISOString(), approvedAt: assessment.approvedAt?.toISOString() ?? null,
-    stale: assessment.stale, ...(assessment.currentPublicationId === undefined ? {} : { currentPublicationId: assessment.currentPublicationId }),
+    stale: assessment.stale, invalidated: assessment.invalidated === true, ...(assessment.currentPublicationId === undefined ? {} : { currentPublicationId: assessment.currentPublicationId }),
   };
 }
 

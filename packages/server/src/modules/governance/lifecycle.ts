@@ -214,7 +214,7 @@ async function evaluateEvidence(client: LifecycleClient, engagement: { id: strin
     else values.finalizedImports = finalized;
     if (command === 'START_FIELDWORK') {
       const latestPublication = await client.balancePublication.findFirst({ where: { engagementId: engagement.id }, orderBy: { sequence: 'desc' } });
-      const approved = await client.materialityAssessment.findFirst({ where: { engagementId: engagement.id, status: 'APPROVED' }, orderBy: { calculatedAt: 'desc' } });
+      const approved = await client.materialityAssessment.findFirst({ where: { engagementId: engagement.id, status: 'APPROVED', invalidation: { is: null } }, orderBy: { calculatedAt: 'desc' } });
       if (!approved) fail('APPROVED_MATERIALITY_MISSING', 'An approved materiality assessment is required before fieldwork can start');
       else if (!latestPublication || approved.publicationId !== latestPublication.id) fail('MATERIALITY_STALE', 'The approved materiality assessment is stale; recalculate and approve it before fieldwork can start');
       else {

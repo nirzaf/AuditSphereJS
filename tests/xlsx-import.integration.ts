@@ -76,6 +76,8 @@ test('T045 workbook imports match their CSV twins, fail within limits and never 
       assert.deepEqual(await snapshot(xlsxImport), finalizedRows, 'a finalized batch keeps its rows through a workbook retry');
       assert.equal((await db.tbImport.findUniqueOrThrow({ where: { id: xlsxImport } })).status, 'FINALIZED');
 
+      // D18: the earlier finalized batch is superseded before another batch of the engagement is finalized.
+      await db.tbImport.update({ where: { id: xlsxImport }, data: { status: 'SUPERSEDED' } });
       // AC3 (status guard): even a fresh, queued job for a finalized batch completes without restaging,
       // whatever evidence it is handed.
       // Never parsed: a finalized batch returns before its evidence is read.

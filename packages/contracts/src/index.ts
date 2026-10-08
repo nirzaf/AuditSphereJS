@@ -87,6 +87,8 @@ export const documentUploadFinalizedSchema = z.object({
 export const documentUploadReceivedSchema = z.object({ sessionId: z.uuid(), status: z.literal('STORED'), sha256: z.string().regex(/^[a-f0-9]{64}$/), sizeBytes: z.number().int().positive() });
 export const mappingSchema = z.object({ idempotencyKey: z.uuid(), changes: z.array(z.object({ rowId: z.uuid(), expectedVersion: z.number().int().positive(), fsli: z.enum(fslis) })).min(1).max(500) }).refine(v => new Set(v.changes.map(c => c.rowId)).size === v.changes.length, 'Duplicate row IDs');
 export const finalizeSchema = z.object({ expectedVersion: z.number().int().positive() });
+/** Supersession names the reviewed active version and a reason; it never runs without both (D18). */
+export const supersedeSchema = z.object({ expectedVersion: z.number().int().positive(), reason: z.string().trim().min(10).max(500) });
 export const moneySchema = z.string().regex(/^-?\d{1,22}(\.\d{1,6})?$/);
 /** Capability vocabulary evaluated against a firm/client/engagement scope. Local grants are
  *  never Microsoft directory authority and never infer one from the other. */
@@ -290,7 +292,7 @@ export const materialityAssessmentSchema = z.object({
   ratePercent: moneySchema, performancePercent: moneySchema, trivialPercent: moneySchema,
   policyVersion: z.string().trim().min(1).max(80), inputHash: z.string().regex(/^[a-f0-9]{64}$/),
   status: z.enum(['DRAFT', 'APPROVED']), calculatedAt: z.iso.datetime(), approvedAt: z.iso.datetime().nullable(),
-  stale: z.boolean(), currentPublicationId: z.uuid().nullable().optional(),
+  stale: z.boolean(), invalidated: z.boolean(), currentPublicationId: z.uuid().nullable().optional(),
 });
 export const materialityAssessmentsSchema = z.array(materialityAssessmentSchema).max(200);
 export const materialityCalculationResultSchema = z.object({
@@ -743,6 +745,7 @@ export const trialBalanceStatementSummarySchema = z.object({
 });
 export const mappingsSavedSchema = z.object({ saved: z.number().int().positive() });
 export const trialBalanceFinalizedSchema = z.object({ status: z.literal('FINALIZED') });
+export const trialBalanceSupersededSchema = z.object({ status: z.literal('SUPERSEDED'), invalidatedAssessments: z.number().int().nonnegative() });
 export const editLeaseHolderSchema = z.object({
   userId: z.uuid(),
   displayName: z.string().trim().min(1).max(320),
@@ -816,7 +819,7 @@ export const contractSchemas = {
   practiceReverseJournal: practiceReverseJournalSchema, invoiceReceipt: invoiceReceiptSchema, invoiceVoid: voidInvoiceSchema,
   invoice: invoiceViewSchema, invoices: invoicesSchema, invoiceIssuedResult: invoiceIssuedResultSchema,
   invoicePaymentResult: invoicePaymentResultSchema, invoiceReceiptResult: invoiceReceiptResultSchema, invoiceVoidResult: invoiceVoidResultSchema,
-  editLease: editLeaseSchema, upload: uploadSchema, mappings: mappingSchema, finalize: finalizeSchema,
+  editLease: editLeaseSchema, upload: uploadSchema, mappings: mappingSchema, finalize: finalizeSchema, supersede: supersedeSchema,
   documentLinkCreate: documentLinkCreateSchema, documentLinkRevoke: documentLinkRevokeSchema,
   documentLinksQuery: documentLinksQuerySchema,
   documentLink: documentLinkSchema, documentLinks: documentLinksSchema, documentLinkResult: documentLinkResultSchema,
@@ -863,7 +866,7 @@ export const contractSchemas = {
   importFromDocument: importFromDocumentSchema,
   trialBalanceRowsPage: trialBalanceRowsPageSchema, trialBalanceSummary: trialBalanceSummarySchema,
   trialBalanceStatementSummary: trialBalanceStatementSummarySchema,
-  mappingsSaved: mappingsSavedSchema, trialBalanceFinalized: trialBalanceFinalizedSchema,
+  mappingsSaved: mappingsSavedSchema, trialBalanceFinalized: trialBalanceFinalizedSchema, trialBalanceSuperseded: trialBalanceSupersededSchema,
   editLeaseResult: editLeaseResultSchema,
   portalLoginRequest: portalLoginRequestSchema, portalInvitationRedeemRequest: portalInvitationRedeemRequestSchema,
   portalFirstPasswordRequest: portalFirstPasswordRequestSchema, portalPasswordResetRequest: portalPasswordResetRequestSchema,
