@@ -410,5 +410,20 @@
     "approvalEvidence": "User request: resolve all blockers and complete the task.",
     "implementationDefault": "Use a 60-second worker kill timeout as the provisional ceiling for one import. It is approximately 3.6 times the measured 16.616-second worst in-limit fixture on the development machine. Before T045 is accepted as final, append a same-fixture measurement from the target deployment image; a timeout is not an expected successful parse duration.",
     "decisionRecord": "docs/evidence/SPK-01/spike.md"
+  },
+  {
+    "id": "D30",
+    "title": "Minimum retention for Saudi statutory audit files (SPK-02)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner, records owner and audit-methodology owner",
+    "namedOwner": "Codex, under user delegation for implementation defaults",
+    "sourceLines": "docs/evidence/SPK-02/spike.md; docs/decisions/T004-records-defaults.md; Saudi Law of the Accounting and Auditing Profession, Article 7(5)",
+    "ambiguity": "The 60-day application archive lock is distinct from statutory record retention; the product lacked a default retention duration and could not assume Microsoft Purview record behavior without tenant evidence.",
+    "approvedBy": "User delegated blocker decisions and asked Codex to choose and approve a better implementation default on 2026-10-09.",
+    "approvedAt": "2026-10-09",
+    "approvalEvidence": "User request to approve the blockers and choose the better decision; official Saudi professional law sets a ten-year minimum from report issue for work documents, reports and financial statements.",
+    "implementationDefault": "For Saudi-licensed statutory audit engagements, retain the report and audit file for at least ten years from report issue. Apply any longer applicable rule, contract, dispute, investigation or legal hold. Require recorded authorized disposition review after the minimum; never auto-delete. Use the designated firm SharePoint archive and OneDrive for working files. Do not claim provider-enforced immutability until the configured Purview control is verified against the tested principals. Other jurisdictions and engagement types require their own approved schedule.",
+    "professionalAcceptance": "PENDING: records and audit-methodology owners must confirm applicability; tenant label behavior and licensing remain unverified.",
+    "decisionRecord": "docs/decisions/D30-saudi-audit-record-retention.md"
   }
 ]

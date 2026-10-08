@@ -33,19 +33,21 @@ Any option that needs the application to create a site, change site permissions,
 
 These sources disagree on whether members can edit a labelled file. The disagreement appears to depend on the label's default unlock setting and on whether users may unlock records. That is unverified for this tenant.
 
-## Recommendation
+## Decision recorded in D30
 
-1. Use option C as the independent control and proof. The sealed manifest and bytes are copied to object storage with object lock, and every read verifies digests against the manifest. This works within the existing storage boundary and does not depend on any Microsoft 365 administration.
-2. Use option A as the in-place control for the retention period, applied by the administrator procedure in `docs/microsoft365/`. Its effect on member edits is unverified, so the application must not describe it as immutability until a test tenant shows the behaviour.
-3. Do not adopt option B unless the owner amends the permission matrix to allow administrative site changes. It is the weakest of the three because a permission change reverses it silently.
+For Saudi-licensed statutory audit engagements, retain the report and audit file for at least ten years from report issue, apply longer applicable requirements and legal holds, and require authorized disposition review rather than automatic deletion. Working files remain in OneDrive for Business; the accepted archive remains in the designated firm SharePoint repository, respecting the approved provider choice.
 
-## Draft decision (for owner approval)
+The application does not rely on a second object store or mutable site permissions as its retention control. A Microsoft Purview record control is the selected tenant-side mechanism, subject to exact-tenant verification of license, label settings and edit/delete behavior for tested principals. Until verified, provider immutability is unproven and production archive acceptance stays blocked. The application continues to verify archived hashes and preserve immutable metadata, but a hash detects changes; it does not prevent them.
 
-Archived evidence is immutable through two independent controls: an object-locked sealed copy checked against the manifest (application-verified), and a retention label configured as a record on the archive library (administrator-configured, verified in a test tenant before use). Site-level read-only permissions are not used as the immutability control.
+See [D30](../../decisions/D30-saudi-audit-record-retention.md). This is an implementation default, not qualified records/legal acceptance.
+
+The earlier option-C object-lock recommendation is superseded by D30. A second RustFS object-lock copy was rejected for this acceptance architecture because the selected customer object and blob storage is SharePoint/OneDrive. D30 keeps production archive acceptance fail-closed pending an adequate, tested Microsoft 365 record control.
 
 ## Not verified here
 
 - Whether the application can read record status through Graph under the current grant.
-- The label's behaviour for members with edit rights, in the owner's tenant.
-- The retention period and the licence tier.
+- The label's behavior for members with edit rights, in the owner's tenant.
+- The Purview label's license tier and exact configuration.
 - Any production behaviour: nothing in this spike was run against a tenant.
+
+The retention duration now has an implementation default in D30. Test-tenant behavior, licensing, records-owner confirmation and professional acceptance remain open.

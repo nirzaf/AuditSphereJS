@@ -1,6 +1,6 @@
 # AuditSphereJS — Remaining-work agent pack (index)
 
-**Status: CURRENT** · verified against `main` at `9b65b2b` (2026-10-08); sections 2 and 3 updated on 2026-10-08 for the STE Audit Management Tool specification v2.1 (`docs/requirements/CURRENT.md`).
+**Status: CURRENT** · task counts verified against the execution ledger on 2026-10-09; sections 2 and 3 were updated on 2026-10-08 for the STE Audit Management Tool specification v2.1 (`docs/requirements/CURRENT.md`).
 
 **Purpose:** the inputs an AI coding agent needs to finish AuditSphereJS, scoped to work that is **not done**. Completed tasks are listed once in section 4 so agents skip them; nothing else in `docs/plan/` describes them.
 
@@ -46,6 +46,7 @@ Work done on 2026-10-08, recorded here so that agents skip it:
 - Spikes SPK-01 to SPK-06 have recorded outputs in `docs/evidence/SPK-0x/`. SPK-06 is recorded as not run.
 - The UI summary in `docs/evidence/UI-MODULES.md` was recounted from its table: 39 workspaces, 14 connected and 25 session-only.
 - Blockers B01–B07 were rechecked on 2026-10-08: D26–D29 record delegated implementation defaults; `docs/09-removal-guideline.md` maps all 25 session-only workspaces; B07's test and differential evidence follow-ups were fixed; nonproduction SharePoint/OneDrive acceptance passed 2/2. No task status was changed.
+- On 2026-10-09, D30 records a ten-year minimum from report issue for Saudi-licensed statutory audit files, with longer obligations and holds taking precedence and disposition requiring an authorized review. This implementation default does not close the SPK-02 tenant-behavior or qualified records/methodology acceptance gates. No tenant setting or task status changed.
 
 ## 3. What the verification found, and where each finding stands
 
