@@ -18,7 +18,7 @@ test('the commercial onboarding spine enforces the dual-key and advance gates en
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, createProposal, presentProposal, acceptProposal, recordRiskClearance, dualKeyStatus, approveFirmPostingPolicy, issueInvoice, voidInvoice, listInvoices, recordInvoicePayment, issueInvoiceReceipt, applyLifecycleCommand } = await import('@auditsphere/server');
+    const { db, createProposal, presentProposal, acceptProposal, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase, recordRiskClearance, dualKeyStatus, approveFirmPostingPolicy, issueInvoice, voidInvoice, listInvoices, recordInvoicePayment, issueInvoiceReceipt, applyLifecycleCommand } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), userId = randomUUID(), partnerId = randomUUID(), billingId = randomUUID();
       await db.user.createMany({ data: [
@@ -68,7 +68,13 @@ test('the commercial onboarding spine enforces the dual-key and advance gates en
       await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
       await assert.rejects(lifecycle('ISSUE_ENGAGEMENT_LETTER', userId), /Key 2 is missing/);
       await assert.rejects(recordRiskClearance(userId, engagementId, { idempotencyKey: key(), reason: 'Partner clearance attempted without the authority.' }), /not granted/);
-      await recordRiskClearance(partnerId, engagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance complete; independence confirmed.' });
+      await createAcceptanceCase(userId, engagementId, { idempotencyKey: key(), track: 'NEW_CLIENT' });
+      await recordAcceptanceAnswer(userId, engagementId, { idempotencyKey: key(), questionId: 'ubo', answer: 'Holding family office', evidenceRef: 'ubo-register.pdf' });
+      await recordAcceptanceAnswer(userId, engagementId, { idempotencyKey: key(), questionId: 'aml', answer: 'Cleared', evidenceRef: 'aml-check.pdf' });
+      await recordAcceptanceAnswer(userId, engagementId, { idempotencyKey: key(), questionId: 'integrity', answer: 'No adverse findings' });
+      await recordAcceptanceAnswer(userId, engagementId, { idempotencyKey: key(), questionId: 'independence', answer: 'Confirmed', evidenceRef: 'independence.pdf' });
+      await completeAcceptanceReview(userId, engagementId);
+      await clearAcceptanceCase(partnerId, engagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance complete; independence confirmed.' });
       const status = await dualKeyStatus(engagementId);
       assert.equal(status.key1Status, 'RECORDED'); assert.equal(status.key2Status, 'RECORDED'); assert.equal(status.letterIssued, false);
       await lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId);
