@@ -9,6 +9,8 @@ export { createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview,
 export { issueInvoice, recordInvoicePayment, issueInvoiceReceipt, voidInvoice, listInvoices } from './modules/practice/invoices.js';
 export { PracticeLedgerController } from './modules/practice/ledger-controller.js';
 export { PracticeFirmController } from './modules/practice/firm-controller.js';
+export { PracticeTimeEntryController } from './modules/practice/time-entry-controller.js';
+export { recordPracticeTimeEntry, correctPracticeTimeEntry, listPracticeTimeEntries, minutesFrom } from './modules/practice/time-entries.js';
 export { approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, createPracticeExpenseDraft, settlePracticeExpense, postPracticeJournal, reversePracticeJournal, closePracticePeriod, reopenPracticePeriod, practiceLedger } from './modules/practice/ledger.js';
 export { firmTrialBalance, firmTrialBalanceAccount, firmTrialBalanceForActor, firmTrialBalanceAccountForActor } from './modules/practice/trial-balance.js';
 export { firmProfitLoss, firmProfitLossAccount, firmProfitLossForActor, firmProfitLossAccountForActor } from './modules/practice/profit-loss.js';

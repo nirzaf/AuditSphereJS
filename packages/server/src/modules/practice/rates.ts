@@ -184,6 +184,10 @@ export type PracticeTimeSnapshotInput = {
   staffUserId: string;
   workDate: string;
   minutes: number;
+  /** T140: the phase, FSLI and description are written with the entry; the entry is immutable afterwards. */
+  phase?: string | null;
+  fsli?: string | null;
+  description?: string | null;
 };
 
 function decimalFromMinor(minor: bigint) {
@@ -231,5 +235,6 @@ export async function recordAuthorizedPracticeTimeEntrySnapshot(tx: TransactionC
     firmId: input.firmId, clientId: input.clientId, engagementId: input.engagementId, staffUserId: input.staffUserId,
     gradeAssignmentId: assignment.id, rateCardId: rateCard.id, workDate, minutes: input.minutes, grade: assignment.grade,
     currency: 'QAR', hourlyRateSnapshot: hourlyRate.toString(), chargeOutValueSnapshot: chargeOutValue,
+    phase: input.phase ?? null, fsli: input.fsli ?? null, description: input.description ?? null,
   } });
 }

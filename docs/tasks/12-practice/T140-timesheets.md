@@ -43,20 +43,20 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
 
-**Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
+**Applicable decisions:** D22 (DN-09): the FSLI must be a line of the approved taxonomy. D24 (DN-11): time entries are attributed to an engagement and stay on the engagement path. The phase set (PLANNING, FIELDWORK, REVIEW, REPORTING) is an implementation choice awaiting owner confirmation.
 
 ## Implementation checklist
 
-- [ ] Capture work date, exact duration/minutes or approved decimal hours, engagement, phase, FSLI and description.
-- [ ] Validate assignment and permitted periods; protect against accidental duplicate saves.
-- [ ] Snapshot applied charge-out rate/value and show daily/weekly totals.
-- [ ] Define correction history for approved time without silently editing financial source records.
+- [x] Capture work date, exact duration/minutes or approved decimal hours, engagement, phase, FSLI and description.
+- [x] Validate assignment and permitted periods; protect against accidental duplicate saves.
+- [x] Snapshot applied charge-out rate/value and show daily/weekly totals.
+- [x] Define correction history for approved time without silently editing financial source records.
 
 ## Acceptance criteria and required tests
 
-- [ ] **AC1:** Unassigned engagement time entry fails.
-- [ ] **AC2:** Decimal/hour conversion matches approved rounding fixtures.
-- [ ] **AC3:** Changing the current rate card does not change prior time value.
+- [x] **AC1:** Unassigned engagement time entry fails.
+- [x] **AC2:** Decimal/hour conversion matches approved rounding fixtures.
+- [x] **AC3:** Changing the current rate card does not change prior time value.
 
 Run real-PostgreSQL decimal, posting, reversal, allocation and reconciliation tests relevant to this change.
 

@@ -1081,3 +1081,31 @@ export const createEngagementSchema = z.object({
   service: z.string().trim().min(3).max(200),
   period: z.string().trim().min(4).max(40),
 });
+
+/** T140 / R074: daily hours by engagement, phase and FSLI. Minutes are exact; hours convert once to whole minutes, half-even. */
+export const timePhases = ['PLANNING', 'FIELDWORK', 'REVIEW', 'REPORTING'] as const;
+const timeHoursSchema = z.string().regex(/^\d{1,2}(\.\d{1,3})?$/, 'Hours take up to three decimal places, for example 1.25');
+export const recordPracticeTimeEntrySchema = z.object({
+  idempotencyKey: z.uuid(), workDate: z.iso.date(),
+  minutes: z.number().int().min(1).max(1440).optional(), hours: timeHoursSchema.optional(),
+  phase: z.enum(timePhases), fsli: z.string().trim().min(1).max(120), description: z.string().trim().min(3).max(500),
+}).refine(value => (value.minutes === undefined) !== (value.hours === undefined), { message: 'Provide exactly one of minutes or hours' });
+export const correctPracticeTimeEntrySchema = z.object({
+  idempotencyKey: z.uuid(), reason: z.string().trim().min(10).max(500),
+  workDate: z.iso.date().optional(), minutes: z.number().int().min(1).max(1440).optional(), hours: timeHoursSchema.optional(),
+  phase: z.enum(timePhases).optional(), fsli: z.string().trim().min(1).max(120).optional(), description: z.string().trim().min(3).max(500).optional(),
+}).refine(value => !(value.minutes !== undefined && value.hours !== undefined), { message: 'Provide minutes or hours, not both' });
+export const practiceTimeEntryViewSchema = z.object({
+  id: z.uuid(), workDate: z.iso.date(), minutes: z.number().int(), phase: z.enum(timePhases).nullable(),
+  fsli: z.string().nullable(), description: z.string().nullable(), currency: z.string().regex(/^[A-Z]{3}$/),
+  hourlyRate: moneySchema, chargeOutValue: moneySchema, createdAt: z.iso.datetime(),
+  correctsEntryId: z.uuid().nullable(), supersededByEntryId: z.uuid().nullable(),
+});
+export const practiceTimeEntriesQuerySchema = z.object({ from: z.iso.date().optional(), to: z.iso.date().optional() });
+export const practiceTimeEntriesSchema = z.object({
+  entries: z.array(practiceTimeEntryViewSchema).max(500),
+  days: z.array(z.object({ workDate: z.iso.date(), minutes: z.number().int(), chargeOutValue: moneySchema })).max(400),
+  weeks: z.array(z.object({ weekStart: z.iso.date(), minutes: z.number().int(), chargeOutValue: moneySchema })).max(120),
+  totals: z.object({ minutes: z.number().int(), chargeOutValue: moneySchema }),
+});
+export const practiceTimeCorrectionResultSchema = z.object({ original: practiceTimeEntryViewSchema, replacement: practiceTimeEntryViewSchema });

@@ -141,6 +141,7 @@ model User {
   sessionRevocations                IdentitySessionRevocation[]
   operationRequests                 OperationRequest[]
   practicePeriodTransitions         PracticePeriod[]                      @relation("PracticePeriodTransitionActor")
+  practiceTimeCorrections PracticeTimeEntryCorrection[]
   practiceRateCardsCreated          PracticeRateCard[]                    @relation("PracticeRateCardCreator")
   practiceGradeAssignments          PracticeStaffGradeAssignment[]        @relation("PracticeGradeStaff")
   practiceGradeAssignmentsMade      PracticeStaffGradeAssignment[]        @relation("PracticeGradeAssigner")
@@ -931,6 +932,26 @@ model MaterialityInvalidation {
   @@index([engagementId, supersededImportId])
 }
 
+/// T140: an original time entry is replaced by an appended entry; the original stays immutable (T139 guard).
+model PracticeTimeEntryCorrection {
+  id                 String            @id @default(uuid()) @db.Uuid
+  firmId             String            @db.Uuid
+  engagementId       String            @db.Uuid
+  staffUserId        String            @db.Uuid
+  originalEntryId    String            @db.Uuid
+  original           PracticeTimeEntry @relation("TimeEntryOriginal", fields: [firmId, originalEntryId], references: [firmId, id], onDelete: Restrict, map: "PracticeTimeEntryCorrection_original_fkey")
+  replacementEntryId String            @db.Uuid
+  replacement        PracticeTimeEntry @relation("TimeEntryReplacement", fields: [firmId, replacementEntryId], references: [firmId, id], onDelete: Restrict, map: "PracticeTimeEntryCorrection_replacement_fkey")
+  reason             String            @db.VarChar(500)
+  correctedBy        String            @db.Uuid
+  corrector          User              @relation(fields: [correctedBy], references: [id], onDelete: Restrict, map: "PracticeTimeEntryCorrection_correctedBy_fkey")
+  correctedAt        DateTime          @default(now()) @db.Timestamptz(6)
+
+  @@unique([firmId, originalEntryId])
+  @@unique([firmId, replacementEntryId])
+  @@index([firmId, engagementId])
+}
+
 /// One engagement risk. Its band is an append-only assessment series; the newest is current.
 model RiskItem {
   id           String                @id @default(uuid()) @db.Uuid
@@ -1376,6 +1397,12 @@ model PracticeTimeEntry {
 
   @@unique([firmId, id])
   @@index([firmId, staffUserId, workDate])
+  phase                  String?                      @db.VarChar(32)
+  fsli                   String?                      @db.VarChar(120)
+  description            String?                      @db.VarChar(500)
+  correctionOriginal     PracticeTimeEntryCorrection? @relation("TimeEntryOriginal")
+  correctionReplacement  PracticeTimeEntryCorrection? @relation("TimeEntryReplacement")
+
   @@index([firmId, engagementId, workDate])
 }
 
