@@ -1,0 +1,44 @@
+{
+  "machine": "Windows 11, Node v24.19.0",
+  "exceljs": "4.4.0",
+  "inProcess": [
+    {
+      "file": "balance-5000.xlsx",
+      "bytes": 111108,
+      "rows": 5001,
+      "inProcessLoadMs": 816
+    },
+    {
+      "file": "balance-25000.xlsx",
+      "bytes": 552761,
+      "rows": 25001,
+      "inProcessLoadMs": 2386
+    },
+    {
+      "file": "balance-50000.xlsx",
+      "bytes": 1107557,
+      "rows": 50001,
+      "inProcessLoadMs": 4808
+    }
+  ],
+  "hostile": {
+    "file": "generated: 50,000 rows, names of 1,000 characters",
+    "bytes": 33272584,
+    "inProcessLoadMs": 12384,
+    "inProcessRows": 50001,
+    "streamingMs": 7577,
+    "streamingRows": 50001,
+    "workerCompletes": {
+      "outcome": "completed",
+      "rows": 50001,
+      "elapsedMs": 16616
+    },
+    "workerKilledAt1s": {
+      "outcome": "killed",
+      "timeoutMs": 1000,
+      "killLatencyMs": 10,
+      "elapsedMs": 1068
+    }
+  },
+  "heapAfterMB": 13
+}
