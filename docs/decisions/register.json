@@ -186,5 +186,19 @@
     "approvalEvidence": "Owner answer to DN-01: \"A: extend the screened upload (Recommended)\".",
     "implementationDefault": "Accept .xlsx only through the ClamAV-screened staff upload session (T033) in the Trial Balance category. Run the same ZIP preflight (encryption, macro parts, unsafe names, bounded inflation) before storage. Import a stored workbook version through the same durable import pipeline as CSV. Never accept workbooks through an unscreened JSON or multipart route.",
     "decisionRecord": "docs/02-decisions-needed.md#dn-01--how-xlsx-files-reach-the-import"
+  },
+  {
+    "id": "D14",
+    "title": "Cached formula values in workbooks (DN-02)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner",
+    "namedOwner": "M.F.M Fazrin (repository owner)",
+    "sourceLines": "R041 (487-489); docs/02-decisions-needed.md DN-02",
+    "ambiguity": "Accounting exports often contain formula totals. Rejecting every formula cell refused them outright.",
+    "approvedBy": "Repository owner, in the chat decision for DN-02 (2026-10-08)",
+    "approvedAt": "2026-10-08",
+    "approvalEvidence": "Owner answer to DN-02: \"B: accept cached value, record formula (Recommended)\".",
+    "implementationDefault": "Accept the cached result of a workbook formula cell and keep its formula text in the row raw values. Never evaluate a formula. Refuse a formula cell that has no usable cached result, with its source line. Errors and non-numeric cached results are refused.",
+    "decisionRecord": "docs/02-decisions-needed.md#dn-02--cached-formula-values-in-workbooks"
   }
 ]

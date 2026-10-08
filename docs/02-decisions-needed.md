@@ -20,6 +20,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-02 — Cached formula values in workbooks
 
+**Resolved 2026-10-08 by the owner: option B.** Recorded as D14 in `docs/decisions/register.json`. The cached result is accepted, the formula text is kept in the row raw values, and nothing is evaluated. A formula with no usable cached result is refused with its source line. Options A and C were not chosen.
+
 **Context.** The reader rejects every formula cell. Accounting exports often contain formula totals.
 
 **Options.** A: keep rejecting formulas. B: accept the cached value of a formula cell, record that it was a formula, never evaluate. C: accept only in non-amount columns.

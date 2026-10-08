@@ -163,16 +163,28 @@ describe('Trial Balance workbook import (T045)', () => {
     await expect(collect(parseTrialBalanceWorkbook(truncated))).rejects.toThrow('not a valid spreadsheet archive');
   });
 
-  it('rejects formula cells rather than trusting or executing them, with the source line', async () => {
+  it('DN-02: accepts a formula cell with a cached value, keeps the formula text and never evaluates it', async () => {
     const formulaWorkbook = await workbookWith(book => {
       const sheet = book.addWorksheet('Trial Balance');
       sheet.addRow(['code', 'name', 'current', 'prior']);
       sheet.addRow(['100', 'Cash', { formula: '1+1', result: 2 }, 0]);
       sheet.addRow(['200', 'Equity', -2, 0]);
     });
-    const failure = await collect(parseTrialBalanceWorkbook(formulaWorkbook)).catch((error: unknown) => error) as TrialBalanceValidationError;
+    const rows = await collect(parseTrialBalanceWorkbook(formulaWorkbook));
+    expect(rows.map(row => row.current)).toEqual(['2', '-2']);
+    expect(rows[0].rawValues.formulas).toEqual({ current: '=1+1' });
+    expect(rows[1].rawValues.formulas).toBeUndefined();
+  });
+
+  it('DN-02: refuses a formula cell that has no usable cached value, with its source line', async () => {
+    const uncached = await workbookWith(book => {
+      const sheet = book.addWorksheet('Trial Balance');
+      sheet.addRow(['code', 'name', 'current', 'prior']);
+      sheet.addRow(['100', 'Cash', { formula: 'A9+1' }, 0]);
+    });
+    const failure = await collect(parseTrialBalanceWorkbook(uncached)).catch((error: unknown) => error) as TrialBalanceValidationError;
     expect(failure).toBeInstanceOf(TrialBalanceValidationError);
-    expect(failure.rowErrors).toEqual([{ sourceLine: 2, message: 'Formula cells are not supported at source line 2' }]);
+    expect(failure.rowErrors).toEqual([{ sourceLine: 2, message: 'Formula at source line 2 has no usable cached value' }]);
   });
 
   it('keeps the same validation rules as the CSV path and reports every defect with its worksheet row', async () => {

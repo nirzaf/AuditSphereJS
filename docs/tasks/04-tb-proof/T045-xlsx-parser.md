@@ -39,7 +39,7 @@ Use existing owned records/contracts first. Add a migration or public endpoint o
 
 Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
 
-**Applicable decisions:** D13 (DN-01): workbooks reach the import only through the screened upload pipeline (T033). The cached-formula policy (DN-02) is still open; formula cells stay rejected until it is decided.
+**Applicable decisions:** D13 (DN-01): workbooks reach the import only through the screened upload pipeline (T033). D14 (DN-02): a formula cell contributes its cached result and keeps its formula text; nothing is evaluated, and a formula without a usable cached result is refused.
 
 ## Implementation checklist
 

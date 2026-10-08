@@ -111,3 +111,11 @@ Migration `202610080003_document_upload_workbook_type` allows the content type a
 | `pnpm lint`, `pnpm contracts:check` | exit 0 |
 
 The formula policy (DN-02) remains open, so formula cells are still rejected.
+
+## Addendum — DN-02 / D14: cached formula values (2026-10-08)
+
+The owner decided DN-02 as option B. A workbook formula cell now contributes its cached result, and its formula text is kept in the row raw values under `formulas`. Nothing is evaluated. A formula with no usable cached result (or an error value) is refused with its source line. The reader and the parser share the same record rules, so the decision applies identically to every row.
+
+Verified by `packages/server/tests/workbook.test.ts` (22 of 22 with the parser suite): a cached formula is accepted with its text kept, an uncached formula is refused with its source line, and the golden fixtures are unchanged. The fixtures contain no formulas.
+
+Limitation: a row warning for formula cells is represented by the stored formula text in provenance. The product has no warning channel yet (the warnings-versus-blockers decision is still open under T079), so the formula is recorded, not surfaced.

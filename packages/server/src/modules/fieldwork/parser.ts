@@ -14,7 +14,8 @@ type RawRow = Record<(typeof EXPECTED_COLUMNS)[number], string>;
 export type TrialBalanceRow = {
   position: number;
   sourceLine: number;
-  rawValues: RawRow;
+  /** Untrimmed cell text. For a workbook formula cell (DN-02), the formula text is kept beside the cached value. */
+  rawValues: RawRow & { formulas?: Partial<Record<(typeof EXPECTED_COLUMNS)[number], string>> };
   code: string;
   name: string;
   current: string;

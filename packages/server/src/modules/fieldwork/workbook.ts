@@ -19,21 +19,31 @@ type ExpectedColumn = (typeof EXPECTED_COLUMNS)[number];
 const invalid = (message: string) => new TrialBalanceValidationError(message);
 const unsupported = (message: string) => new TrialBalanceValidationError(message);
 
-/** Formula cells are never evaluated or trusted. Their cached results are rejected until the cached-formula policy is approved. */
-function cellText(cell: Cell, line: number): string {
+/**
+ * A formula cell (DN-02, option B) contributes its cached result and keeps its formula text. The
+ * formula is never evaluated. A formula without a usable cached result is refused, because its
+ * value cannot be known from the file.
+ */
+function readCell(cell: Cell, line: number): { text: string; formula?: string } {
   const value = cell.value;
-  if (value === null || value === undefined) return '';
-  if (cell.type === ExcelJS.ValueType.Formula) throw new Error(`Formula cells are not supported at source line ${line}`);
-  if (typeof value === 'string') return value;
+  if (value === null || value === undefined) return { text: '' };
+  if (cell.type === ExcelJS.ValueType.Formula) {
+    const cached = value as { formula?: unknown; result?: unknown };
+    const formula = typeof cached.formula === 'string' ? `=${cached.formula}` : '=';
+    if (typeof cached.result === 'number' && Number.isFinite(cached.result)) return { text: String(cached.result), formula };
+    if (typeof cached.result === 'string') return { text: cached.result, formula };
+    throw new Error(`Formula at source line ${line} has no usable cached value`);
+  }
+  if (typeof value === 'string') return { text: value };
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) throw new Error(`Invalid numeric cell at source line ${line}`);
-    return String(value);
+    return { text: String(value) };
   }
   if (value instanceof Date) throw new Error(`Date cells are not supported at source line ${line}`);
   if (typeof value === 'object' && 'richText' in value && Array.isArray(value.richText)) {
-    return value.richText.map(part => part.text).join('');
+    return { text: value.richText.map(part => part.text).join('') };
   }
-  if (typeof value === 'object' && 'text' in value && typeof value.text === 'string') return value.text;
+  if (typeof value === 'object' && 'text' in value && typeof value.text === 'string') return { text: value.text };
   throw new Error(`Unsupported cell value at source line ${line}`);
 }
 
@@ -69,7 +79,7 @@ export async function* parseTrialBalanceWorkbook(bytes: Buffer): AsyncGenerator<
   for (let column = 1; column <= columnCount; column += 1) {
     let heading: string;
     try {
-      heading = cellText(headerRow.getCell(column), 1).trim().toLowerCase();
+      heading = readCell(headerRow.getCell(column), 1).text.trim().toLowerCase();
     } catch {
       throw invalid('Workbook headers must contain exactly code, name, current, prior');
     }
@@ -87,12 +97,16 @@ export async function* parseTrialBalanceWorkbook(bytes: Buffer): AsyncGenerator<
     const row = sheet.getRow(line);
     try {
       const record = { code: '', name: '', current: '', prior: '' };
+      const formulas: Partial<Record<ExpectedColumn, string>> = {};
       for (const name of EXPECTED_COLUMNS) {
         const column = columnFor.get(name);
-        record[name] = column === undefined ? '' : cellText(row.getCell(column), line);
+        if (column === undefined) continue;
+        const read = readCell(row.getCell(column), line);
+        record[name] = read.text;
+        if (read.formula) formulas[name] = read.formula;
       }
       for (let column = 1; column <= columnCount; column += 1) {
-        if (!Array.from(columnFor.values()).includes(column) && cellText(row.getCell(column), line).trim() !== '') {
+        if (!Array.from(columnFor.values()).includes(column) && readCell(row.getCell(column), line).text.trim() !== '') {
           throw new Error(`Unexpected value in column ${column} at source line ${line}`);
         }
       }
@@ -100,6 +114,7 @@ export async function* parseTrialBalanceWorkbook(bytes: Buffer): AsyncGenerator<
       if (count >= MAX_ROWS) throw invalid('Import must contain 1-50,000 rows');
       // Same record rules as the CSV path, so the two formats cannot disagree on any value.
       const parsed = rowFromRecord(record, count, line, seenCodes);
+      if (Object.keys(formulas).length) parsed.rawValues = { ...parsed.rawValues, formulas };
       count += 1;
       yield parsed;
     } catch (error) {
