@@ -94,7 +94,7 @@ T149–T156 are optional Microsoft 365 capabilities. If Microsoft is chosen for 
 
 | ID | Task | Class | Direct prerequisites |
 | :--- | :--- | :--- | :--- |
-| T052 | [Implement client legal profiles and organizational hierarchy](../tasks/05-commercial/T052-client-directory.md) | CORE | T018, T051 |
+| T052 | [Implement client legal profiles and organizational hierarchy](../tasks/05-commercial/T052-client-directory.md) | CORE | T018 |
 | T053 | [Implement contact roles and routing preferences](../tasks/05-commercial/T053-contacts.md) | CORE | T052, T037 |
 | T054 | [Implement lead stages and proposal-entry workflow](../tasks/05-commercial/T054-lead-pipeline.md) | CORE | T052, T028 |
 | T055 | [Create engagement identity and reusable lifecycle queries](../tasks/05-commercial/T055-engagement-record.md) | CORE | T053, T054, T028 |
@@ -130,7 +130,7 @@ T149–T156 are optional Microsoft 365 capabilities. If Microsoft is chosen for 
 
 | ID | Task | Class | Direct prerequisites |
 | :--- | :--- | :--- | :--- |
-| T078 | [Promote import proof into a configurable production column-mapping flow](../tasks/07-planning/T078-tb-column-mapping.md) | CORE | T051, T077 |
+| T078 | [Promote import proof into a configurable production column-mapping flow](../tasks/07-planning/T078-tb-column-mapping.md) | CORE | T051 |
 | T079 | [Validate TB balance, account identity and period controls](../tasks/07-planning/T079-tb-validation.md) | CORE | T078, T023 |
 | T080 | [Implement approved mapping memory and corrections](../tasks/07-planning/T080-mapping-memory.md) | CORE | T079, T046 |
 | T081 | [Finalize an immutable TB version through real business gates](../tasks/07-planning/T081-tb-finalize.md) | CORE | T080, T049, T028 |
@@ -217,7 +217,7 @@ T149–T156 are optional Microsoft 365 capabilities. If Microsoft is chosen for 
 | ID | Task | Class | Direct prerequisites |
 | :--- | :--- | :--- | :--- |
 | T139 | [Implement effective-dated staff charge-out rates](../tasks/12-practice/T139-rate-cards.md) | CORE | T066, T021, T023 |
-| T140 | [Record daily hours by engagement, phase and FSLI](../tasks/12-practice/T140-timesheets.md) | CORE | T139, T088 |
+| T140 | [Record daily hours by engagement, phase and FSLI](../tasks/12-practice/T140-timesheets.md) | CORE | T139 |
 | T141 | [Approve time corrections and period submission](../tasks/12-practice/T141-time-approval.md) | CORE | T140 |
 | T142 | [Implement engagement phase budgets and actual-hour comparisons](../tasks/12-practice/T142-budgets.md) | CORE | T084, T141 |
 | T143 | [Implement source profitability and realization views with correct labels](../tasks/12-practice/T143-realization.md) | CORE | T142, T069 |

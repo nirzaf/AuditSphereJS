@@ -138,7 +138,7 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-13 — Parallel lanes instead of one serial dependency chain
 
-**Resolved 2026-10-08 by the owner: option B.** Recorded as D20.
+**Resolved 2026-10-08 by the owner: option B.** Recorded as D20. **Applied:** the three named sequencing edges are removed from their cards (T052←T051, T078←T077, T140←T088) and from `01-execution-order.md`. The edge-by-edge SPK-05 review of the remaining cards is not done.
 
 **Context.** The longest card dependency chain holds 78 of the 114 remaining tasks (`05-roadmap.md` §1). Some edges are sequencing choices rather than data needs: T052 (client directory) ← T051 (TB proof gate); T078 (TB column mapping) ← T077 (portal isolation); T140 (time entry) ← T088 (planning approval). Work already lands out of order.
 

@@ -17,7 +17,8 @@ Capture work date, exact duration/minutes or approved decimal hours, engagement,
 Read [root agent rules](../../AGENTS.md), this task, the owning module README when it exists, and the exact relevant source ranges in [the preserved CURRENT requirements](../../sources/requirements-current.md). Do not load every task into the agent context.
 
 - [T139 — Implement effective-dated staff charge-out rates](T139-rate-cards.md)
-- [T088 — Approve version-bound planning and unlock fieldwork](../07-planning/T088-planning-approval.md)
+
+**Removed sequencing edge (D20, DN-13): T088, planning approval.** Recording daily hours does not read an approved plan; the data it needs is the rate-card snapshot from T139. The task enters lane D by its entry criterion in [the roadmap](../../05-roadmap.md) §3.
 
 A dependency must be `DONE`, or an optional/conditional dependency must have an explicitly approved `NOT_APPLICABLE` disposition. All domain implementation also requires [the executable compatibility gate](../01-foundation/T017-compatibility-smoke.md) to pass. Policy-dependent behavior stays blocked until its applicable decisions are approved.
 

@@ -17,7 +17,8 @@ Create scoped client profiles with legal name, Tax ID, legal form and relationsh
 Read [root agent rules](../../AGENTS.md), this task, the owning module README when it exists, and the exact relevant source ranges in [the preserved CURRENT requirements](../../sources/requirements-current.md). Do not load every task into the agent context.
 
 - [T018 — Implement firm, client and engagement ownership constraints](../02-security/T018-scope-model.md)
-- [T051 — Measure the TB slice and freeze its interaction contract](../04-tb-proof/T051-tb-proof-gate.md)
+
+**Removed sequencing edge (D20, DN-13): T051, the TB proof gate.** Client legal profiles hold no trial-balance data, so the edge orders work without a data need. The directory enters lane B by its entry criterion in [the roadmap](../../05-roadmap.md) §3, not by T051. T051 keeps its own dependencies.
 
 A dependency must be `DONE`, or an optional/conditional dependency must have an explicitly approved `NOT_APPLICABLE` disposition. All domain implementation also requires [the executable compatibility gate](../01-foundation/T017-compatibility-smoke.md) to pass. Policy-dependent behavior stays blocked until its applicable decisions are approved.
 
