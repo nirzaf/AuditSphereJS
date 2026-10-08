@@ -4,12 +4,13 @@ NestJS 12 + Fastify 5 modular monolith, Angular 22 standalone SPA, one PostgreSQ
 
 ## Read in this order
 
-1. [docs/IMPLEMENTATION-STATUS.md](docs/IMPLEMENTATION-STATUS.md) — what is built, what is presentation-only, what is still unverified.
+1. [docs/00-index.md](docs/00-index.md) — what is done (skip it), what remains, open decisions, and the remaining-work entry for your task. `docs/IMPLEMENTATION-STATUS.md` is history; read it only for a specific dated entry.
 2. The target task `docs/tasks/<phase>/T###-*.md` — outcome, allowed areas, non-goals, acceptance criteria and the exact `CURRENT.md` line ranges it must satisfy.
-3. The owning module README `packages/server/src/modules/<module>/README.md` — purpose, owned records, exported facades, invariants, tests.
-4. [docs/guides/04-architecture-contract.md](docs/guides/04-architecture-contract.md) — ownership table, mutation transaction, concurrency, financial and archive rules.
-5. [docs/decisions/register.json](docs/decisions/register.json) — applicable decisions; recorded user decisions outrank earlier pending defaults.
-6. [docs/guides/13-execution-ledger.md](docs/guides/13-execution-ledger.md) — task-by-task status, updated only after review.
+3. The task's verified delta in `docs/00-index.md` §3 and §4 (the `docs/plan/stories/` files it names are not in the repository yet).
+4. The owning module README `packages/server/src/modules/<module>/README.md` — purpose, owned records, exported facades, invariants, tests.
+5. [docs/guides/04-architecture-contract.md](docs/guides/04-architecture-contract.md) — ownership table, mutation transaction, concurrency, financial and archive rules.
+6. [docs/decisions/register.json](docs/decisions/register.json) — applicable decisions; recorded user decisions outrank earlier pending defaults.
+7. [docs/guides/13-execution-ledger.md](docs/guides/13-execution-ledger.md) — task-by-task status, updated only after review.
 
 Token budget: quote the `CURRENT.md` line ranges the task cites instead of loading the whole 41 KB file. Never edit `docs/requirements/CURRENT.md`; `pnpm verify:task -- T001` byte-compares it with `docs/sources/requirements-current.md`.
 
@@ -71,6 +72,7 @@ Domain and data:
 - Read docs/requirements/CURRENT.md and the target module README before business changes.
 - Keep business rules in domain services, never controllers or Angular components.
 - Do not mutate another module's owned tables. Do not hand-edit generated code.
+- Where a ported legacy calculator and docs/requirements/CURRENT.md or an approved decision disagree, CURRENT and the decision win. A differential "match" against the source is not acceptance (see docs/00-index.md §3 items 2–4).
 
 Money and time:
 - Use decimal strings and Prisma Decimal for money. Never JavaScript monetary arithmetic.
@@ -85,17 +87,20 @@ Process and evidence:
 - Heavy parsing and rendering belong in workers. Use explicit reviewed migrations.
 - Run pnpm verify:affected. Add meaningful invariant tests and record evidence honestly.
 - Do not deploy, publish or claim functional acceptance from scaffold tests alone.
+- Do not fabricate external acceptance evidence. Update docs/evidence/T156 with actual verification, without overwriting prior evidence.
 - Keep docs/microsoft365/*.md current in the same change when modifying tenant configuration, Entra/Graph integrations, permissions, repository bindings, credentials or their acceptance tests. Record verification dates and limitations; never document secret values.
 - For Angular work, use the workspace-pinned Angular CLI MCP server: call list_projects and get_best_practices before changes, search_documentation for version-specific APIs, and run affected Angular build/tests. If native MCP tools are unavailable, use scripts/angular-mcp.mjs. Follow Angular 22 guidance, including default standalone/OnPush, signal inputs/state, native control flow, typed boundaries and accessible templates. Record remaining deviations honestly; MCP guidance is not functional acceptance.
 
 ## Traps
 
 - `pnpm verify:task` has no fallback. An ID absent from the recipe map in `scripts/verify-task.mjs` throws `Task T### has no recorded verification recipe. It cannot be verified.` Implementing a task means adding its recipe in the same change, and it must run through pnpm.
-- Cross-module access is permitted only through `../<module>/public.js` (`scripts/check-boundaries.mjs`). No `public.ts` facade exists yet, so reaching a sibling module requires creating that facade in the same change. Browser code may import nothing matching `@auditsphere/server`, `@prisma/` or `packages/server`.
+- Cross-module access is permitted only through `../<module>/public.js` (`scripts/check-boundaries.mjs`). `commercial` and `practice` already have a `public.ts`; add exports there rather than importing implementation files. `fieldwork`, `governance` and `reporting` have none yet — create it in the same change that first needs it. Browser code may import nothing matching `@auditsphere/server`, `@prisma/` or `packages/server`.
 - Health routes are excluded from the `api/v1` global prefix: `/health`, `/health/live`, `/health/ready`. Everything else is `/api/v1/...`, `/api/docs` exists only outside production, and Angular emits to `dist/web/browser` (what CI packages). `dev:web` proxies `/api`, so browser code uses relative paths.
 - `docs/evidence/<T###>/` and `docs/benchmarks-local.json` are measured history. Append; never overwrite a prior result or reuse an older pass on a new build.
 - Node `>=24.15.0 <25` and `pnpm@12.8.1` are pinned by `engines`, `packageManager` and `.node-version`. No new package without `docs/guides/02-compatibility-matrix.md` and `docs/guides/03-library-register.md` review.
 - Docker socket and `host.docker.internal` failures on Windows: `docs/runbooks/docker-windows-sockets.md`.
+
+- The execution ledger can lag the code. Before trusting a status, check `git log -- docs/evidence/<T###>` and the task's remaining-work entry. T045, T049 and T079 were implemented on 2026-10-08 while still listed NOT_STARTED.
 
 ## When I need
 

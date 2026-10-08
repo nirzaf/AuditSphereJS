@@ -1,8 +1,9 @@
 # Architecture
-Three applications: Nest/Fastify API, Angular web, Nest application-context BullMQ worker.
-PostgreSQL holds engagement, document metadata, staged balances, audit events and transactional outbox.
-RustFS holds immutable CSV bytes. Redis holds retryable job coordination.
-Five module boundaries are reserved. Fieldwork is the first executable vertical slice.
-Development bearer authentication is explicitly opt-in, loopback-only, and disabled in production.
-Production identity, business lifecycle guards, portal, leases and realtime remain backlog items.
-Dependencies follow the supplied compatibility lines. TypeScript 6.0 is verified against the installed Angular compiler peer range.
+
+Authoritative contract: [guide 04](../guides/04-architecture-contract.md). Module ownership and facades: `packages/server/src/modules/*/README.md`.
+
+- Processes: Nest 12 + Fastify 5 API, Angular 22 SPA (staff workspace and isolated client portal), Nest application-context BullMQ worker.
+- PostgreSQL 18 (Prisma 7) holds all business truth: scope, lifecycle, documents' metadata and versions, TB data, audit chain, outbox and deadlines.
+- Evidence and generated documents: SharePoint (durable) and OneDrive (working files) through Microsoft Graph behind `platform/storage.ts`. RustFS is the S3-compatible fixture for local development and CI only.
+- Redis 8 (AOF, noeviction): queues and advisory leases; never authoritative.
+- Identity: Entra ID for staff (MSAL), separate portal principals with single-use credentials and forced first reset.

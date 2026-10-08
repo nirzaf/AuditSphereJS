@@ -1,3 +1,5 @@
+> **Historical plan.** Not implementation authority. Current architecture: docs/guides/04-architecture-contract.md. Preserved original: docs/sources/architecture-original-reference.md.
+
 # AuditSphere / STE Audit Management Tool
 ## Production Architecture & AI-Agent-Friendly Implementation Plan
 ### NestJS + Fastify + Angular + PostgreSQL
