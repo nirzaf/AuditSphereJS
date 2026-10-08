@@ -129,19 +129,31 @@ export function materialityInputHash(input: {
   ].join('|')).digest('hex');
 }
 
-export const riskBandRuleVersion = 'STE-RISK-BAND-2026.1';
+export const riskBandRuleVersion = 'STE-RISK-BAND-2026.2';
+/** The likelihood-by-impact rule that CURRENT does not define. Rows written under it stay valid under it. */
+export const supersededRiskBandRuleVersion = 'STE-RISK-BAND-2026.1';
+
+export interface RiskColourInputs {
+  /** The account balance. Its sign is ignored, so a credit balance is stratified like a debit of equal size. */
+  balance: Decimal6;
+  tolerableError: Decimal6;
+  planningMateriality: Decimal6;
+}
 
 /**
- * Pure green/amber/red routing rule. A significant or fraud risk is always red; otherwise
- * likelihood × magnitude of 6+ is red, 3–4 amber and 1–2 green. This routes work; it is not a
- * professional judgment.
+ * CURRENT section 4 stratification on the absolute balance, with the boundaries of D05: GREEN iff
+ * |balance| < TE, AMBER iff TE <= |balance| < PM, RED iff |balance| >= PM. A significant estimate or
+ * high inherent risk (the fraud flag) forces RED regardless of amount. This routes review; it is not
+ * a professional judgment.
  */
-export function riskBand(likelihood: number, magnitude: number, significant: boolean, fraudRisk: boolean): RiskBand {
-  if (!Number.isInteger(likelihood) || likelihood < 1 || likelihood > 3 || !Number.isInteger(magnitude) || magnitude < 1 || magnitude > 3)
-    throw new Error('Likelihood and magnitude must be integers from 1 to 3');
+export function riskBand(inputs: RiskColourInputs, significant: boolean, fraudRisk: boolean): RiskBand {
+  const { balance, tolerableError, planningMateriality } = inputs;
+  if (!tolerableError.isPositive() || planningMateriality.compare(tolerableError) < 0)
+    throw new Error('Tolerable error must be positive and must not exceed planning materiality');
   if (significant || fraudRisk) return 'RED';
-  const score = likelihood * magnitude;
-  return score >= 6 ? 'RED' : score >= 3 ? 'AMBER' : 'GREEN';
+  const size = balance.abs();
+  if (size.compare(planningMateriality) >= 0) return 'RED';
+  return size.compare(tolerableError) >= 0 ? 'AMBER' : 'GREEN';
 }
 
 /** Minimum staffing rank that may own the response: green any (1), amber senior (2), red manager (3). */

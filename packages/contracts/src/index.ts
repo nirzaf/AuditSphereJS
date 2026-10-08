@@ -301,12 +301,11 @@ export const materialityCalculationResultSchema = z.object({
   inputHash: z.string().regex(/^[a-f0-9]{64}$/), publicationId: z.uuid(), publicationSequence: z.number().int().positive(),
 });
 export const materialityApprovalResultSchema = z.object({ assessmentId: z.uuid(), status: z.literal('APPROVED'), publicationId: z.uuid(), inputHash: z.string().regex(/^[a-f0-9]{64}$/) });
-/** Risk scores are integers 1–3; the band is always derived, never supplied by the caller. */
+/** The band is always derived, never supplied by the caller: from the published balance of the named account against the approved TE and PM. */
 export const createRiskSchema = z.object({ title: z.string().trim().min(1).max(300), description: z.string().trim().max(2_000).optional() });
 export const riskBands = ['GREEN', 'AMBER', 'RED'] as const;
 export const assessRiskSchema = z.object({
-  likelihood: z.number().int().min(1).max(3),
-  magnitude: z.number().int().min(1).max(3),
+  accountCode: z.string().trim().min(1).max(120),
   significant: z.boolean(),
   fraudRisk: z.boolean(),
 });
@@ -323,7 +322,8 @@ export const riskViewSchema = z.object({
 export const riskViewsSchema = z.array(riskViewSchema).max(200);
 export const riskCreatedResultSchema = z.object({ riskId: z.uuid(), title: z.string().trim().min(1).max(300), currentBand: z.null(), requiresPartnerClearance: z.literal(false) });
 export const riskAssessmentResultSchema = z.object({
-  assessmentId: z.uuid(), riskId: z.uuid(), band: z.enum(riskBands), likelihood: z.number().int().min(1).max(3), magnitude: z.number().int().min(1).max(3),
+  assessmentId: z.uuid(), riskId: z.uuid(), band: z.enum(riskBands), accountCode: z.string().trim().min(1).max(120),
+  absoluteBalance: moneySchema, tolerableError: moneySchema, planningMateriality: moneySchema,
   significant: z.boolean(), fraudRisk: z.boolean(), requiresPartnerClearance: z.boolean(), cleared: z.boolean(), ruleVersion: z.string().trim().min(1).max(80),
 });
 export const riskClearanceResultSchema = z.object({ clearanceId: z.uuid(), assessmentId: z.uuid(), riskId: z.uuid(), band: z.enum(riskBands) });

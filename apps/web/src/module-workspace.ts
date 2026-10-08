@@ -168,7 +168,7 @@ export class ModuleWorkspace {
     this.suggestionSummary.set({}); this.suggestionRows.set([]); this.suggestionsLoaded.set(false);
     this.commandKey=crypto.randomUUID();
     const fields: ScreenField[] = action === 'mappingApprove' || action === 'suggestions' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'acceptProposal' ? [{key:'evidenceRef',label:'Client acceptance evidence reference',required:true}] : action === 'invoicePayment' ? [{key:'amount',label:'Payment amount · QAR',type:'decimal',required:true},{key:'reference',label:'Payment reference',required:true}] : action === 'invoiceVoid' ? [{key:'reason',label:'Reason for voiding this unpaid invoice',type:'textarea',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
-      {key:'likelihood',label:'Likelihood',type:'select',options:['1','2','3'],required:true}, {key:'magnitude',label:'Magnitude',type:'select',options:['1','2','3'],required:true},
+      {key:'accountCode',label:'Account code (published trial balance)',required:true},
       {key:'significant',label:'Significant risk',type:'select',options:['No','Yes'],required:true}, {key:'fraudRisk',label:'Fraud risk',type:'select',options:['No','Yes'],required:true},
     ] : [];
     this.actionFields.set(fields); this.actionForm = this.controls(fields);
@@ -224,7 +224,7 @@ export class ModuleWorkspace {
     else if (action === 'resolve') path = `/review-notes/${encodeURIComponent(id)}/resolve`;
     else if (action === 'approve') { path = `/materiality/${encodeURIComponent(id)}/approve`; body = {idempotencyKey:this.commandKey}; }
     else if (action === 'clear') { path = `/risks/${encodeURIComponent(id)}/assessments/${encodeURIComponent(String(row['currentAssessmentId']))}/clearance`; }
-    else { path = `/risks/${encodeURIComponent(id)}/assessments`; body = {...values,likelihood:Number(values['likelihood']),magnitude:Number(values['magnitude']),significant:values['significant']==='Yes',fraudRisk:values['fraudRisk']==='Yes'}; }
+    else { path = `/risks/${encodeURIComponent(id)}/assessments`; body = {accountCode:values['accountCode'],significant:values['significant']==='Yes',fraudRisk:values['fraudRisk']==='Yes'}; }
     void this.run(async generation => { await this.request(path,'POST',body); if (generation !== this.generation) return; this.action.set(null); this.selected.set(null); this.message.set('Decision recorded on the engagement.'); await this.read(generation); });
   }
 }

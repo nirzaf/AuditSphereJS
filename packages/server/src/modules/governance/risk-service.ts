@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
 import { db } from '../../platform/db.js';
+import { Decimal6 } from '../../platform/decimal6.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { assessRiskSchema, assignRiskOwnerSchema, clearRiskSchema, createRiskSchema } from '@auditsphere/contracts';
@@ -45,8 +46,6 @@ export async function assessRiskBand(actorId: string, engagementId: string, risk
   const parsed = assessRiskSchema.safeParse(input);
   if (!parsed.success) throw new BadRequestException(parsed.error.issues);
   const body = parsed.data;
-  // The pure rule is the only source of the colour; an invalid score throws before persistence.
-  const band = riskBand(body.likelihood, body.magnitude, body.significant, body.fraudRisk);
   return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
     await lockForUpdate(tx, 'Engagement', engagementId);
     const engagement = await tx.engagement.findUnique({ where: { id: engagementId } });
@@ -54,9 +53,22 @@ export async function assessRiskBand(actorId: string, engagementId: string, risk
     await requireCapability(tx, actorId, 'RISK_MANAGE', firmScope(engagement));
     const risk = await tx.riskItem.findFirst({ where: { id: riskId, engagementId } });
     if (!risk) throw new NotFoundException('Risk not found');
-    const assessment = await tx.riskBandAssessment.create({ data: { riskId, likelihood: body.likelihood, magnitude: body.magnitude, significant: body.significant, fraudRisk: body.fraudRisk, band, ruleVersion: riskBandRuleVersion, assessedBy: actorId } });
-    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'RISK_BAND_ASSESSED', payload: { riskId, assessmentId: assessment.id, band, ruleVersion: riskBandRuleVersion } } });
-    return { assessmentId: assessment.id, riskId, band, likelihood: body.likelihood, magnitude: body.magnitude, significant: body.significant, fraudRisk: body.fraudRisk, requiresPartnerClearance: band === 'RED', cleared: false, ruleVersion: riskBandRuleVersion };
+    // The colour is taken from the approved materiality and the published balance it was calculated from. A stale or invalidated materiality is refused, never reused.
+    const materiality = await tx.materialityAssessment.findFirst({ where: { engagementId, status: 'APPROVED' }, orderBy: { calculatedAt: 'desc' }, include: { invalidation: true } });
+    if (!materiality) throw new ConflictException('Approve materiality before assessing risk colours');
+    if (materiality.invalidation) throw new ConflictException('The approved materiality is invalidated; recalculate and approve it first');
+    const latestPublication = await tx.balancePublication.findFirst({ where: { engagementId }, orderBy: { sequence: 'desc' } });
+    if (!latestPublication || latestPublication.id !== materiality.publicationId) throw new ConflictException('The approved materiality is stale; recalculate and approve it against the current balances');
+    const row = await tx.tbRow.findUnique({ where: { importId_code: { importId: latestPublication.importId, code: body.accountCode } } });
+    if (!row) throw new NotFoundException('Account is not in the published trial balance');
+    const balance = Decimal6.from(row.current.toFixed(6));
+    const tolerableError = Decimal6.from(materiality.tolerableError.toFixed(6));
+    const planningMateriality = Decimal6.from(materiality.planningMateriality.toFixed(6));
+    const band = riskBand({ balance, tolerableError, planningMateriality }, body.significant, body.fraudRisk);
+    const figures = { absoluteBalance: balance.abs().toFixed(6), tolerableError: tolerableError.toFixed(6), planningMateriality: planningMateriality.toFixed(6) };
+    const assessment = await tx.riskBandAssessment.create({ data: { riskId, accountCode: body.accountCode, ...figures, materialityAssessmentId: materiality.id, significant: body.significant, fraudRisk: body.fraudRisk, band, ruleVersion: riskBandRuleVersion, assessedBy: actorId } });
+    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'RISK_BAND_ASSESSED', payload: { riskId, assessmentId: assessment.id, band, ruleVersion: riskBandRuleVersion, accountCode: body.accountCode, materialityAssessmentId: materiality.id, publicationId: latestPublication.id } } });
+    return { assessmentId: assessment.id, riskId, band, accountCode: body.accountCode, ...figures, significant: body.significant, fraudRisk: body.fraudRisk, requiresPartnerClearance: band === 'RED', cleared: false, ruleVersion: riskBandRuleVersion };
   });
 }
 

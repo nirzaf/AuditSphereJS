@@ -909,6 +909,7 @@ model MaterialityAssessment {
   approvedBy          String?            @db.Uuid
   approvedAt          DateTime?
   invalidation        MaterialityInvalidation?
+  riskBandAssessments RiskBandAssessment[]
 
   @@index([engagementId, calculatedAt])
 }
@@ -974,12 +975,18 @@ model RiskBandAssessment {
   id          String                 @id @default(uuid()) @db.Uuid
   riskId      String                 @db.Uuid
   risk        RiskItem               @relation(fields: [riskId], references: [id])
-  likelihood  Int
-  magnitude   Int
+  likelihood  Int?
+  magnitude   Int?
   significant Boolean
   fraudRisk   Boolean
   band        String
   ruleVersion String
+  accountCode String?
+  absoluteBalance     Decimal?               @db.Decimal(28, 6)
+  tolerableError      Decimal?               @db.Decimal(28, 6)
+  planningMateriality Decimal?               @db.Decimal(28, 6)
+  materialityAssessmentId String?            @db.Uuid
+  materialityAssessment   MaterialityAssessment? @relation(fields: [materialityAssessmentId], references: [id])
   assessedBy  String                 @db.Uuid
   assessedAt  DateTime               @default(now())
   clearances  RiskPartnerClearance[]

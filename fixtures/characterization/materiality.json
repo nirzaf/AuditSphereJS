@@ -140,6 +140,7 @@
       "id": "risk-band-matrix",
       "sourceLine": 167,
       "intent": "risk bands derive from assessed likelihood, impact and flags",
+      "supersededBy": "STE-RISK-BAND-2026.2 (STE-JS-03, T087): CURRENT section 4 stratifies the absolute balance against TE and PM, with significant or fraud-risk forced red. This likelihood-by-impact expectation is kept as the legacy record and is no longer asserted.",
       "input": {
         "cases": [
           {

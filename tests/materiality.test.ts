@@ -79,16 +79,38 @@ describe('materiality calculator ported from the pinned source', () => {
     expect(() => calculateMateriality(derived.amount, derived.lineCount, Decimal6.from(item.input.ratePercent), Decimal6.from(item.input.performancePercent), Decimal6.from(item.input.sadPercent))).toThrow(/positive/);
   });
 
-  it('routes risk bands exactly as the quoted matrix', () => {
-    const item = byId('risk-band-matrix');
-    const actual = item.input.cases.map((entry: { likelihood: number; impact: number; fraud: boolean; significant: boolean }) =>
-      riskBand(entry.likelihood, entry.impact, entry.significant, entry.fraud).toLowerCase().replace(/^./, (c: string) => c.toUpperCase()));
-    expect(actual).toEqual(item.expected.bands);
+  it('stratifies on the absolute balance against TE and PM, with the D05 boundaries', () => {
+    const tolerableError = Decimal6.from('75000.000000');
+    const planningMateriality = Decimal6.from('100000.000000');
+    const band = (balance: string, significant = false, fraudRisk = false) => riskBand({ balance: Decimal6.from(balance), tolerableError, planningMateriality }, significant, fraudRisk);
+    expect(band('0.000000')).toBe('GREEN');
+    expect(band('74999.999999')).toBe('GREEN');
+    // Equality at TE is amber and equality at PM is red (D05); a credit balance is stratified by its magnitude.
+    expect(band('75000.000000')).toBe('AMBER');
+    expect(band('99999.999999')).toBe('AMBER');
+    expect(band('100000.000000')).toBe('RED');
+    expect(band('-74999.999999')).toBe('GREEN');
+    expect(band('-75000.000000')).toBe('AMBER');
+    expect(band('-100000.000000')).toBe('RED');
+  });
+
+  it('forces red for a significant estimate or high inherent risk below the numerical threshold', () => {
+    const tolerableError = Decimal6.from('75000.000000');
+    const planningMateriality = Decimal6.from('100000.000000');
+    const tiny = { balance: Decimal6.from('1.000000'), tolerableError, planningMateriality };
+    expect(riskBand(tiny, false, false)).toBe('GREEN');
+    expect(riskBand(tiny, true, false)).toBe('RED');
+    expect(riskBand(tiny, false, true)).toBe('RED');
+  });
+
+  it('refuses inputs that cannot stratify, and keeps the owner rank and route rules', () => {
+    const balance = Decimal6.from('1.000000');
+    expect(() => riskBand({ balance, tolerableError: Decimal6.zero(), planningMateriality: Decimal6.from('100000.000000') }, false, false)).toThrow(/Tolerable error must be positive/);
+    expect(() => riskBand({ balance, tolerableError: Decimal6.from('100001.000000'), planningMateriality: Decimal6.from('100000.000000') }, false, false)).toThrow(/must not exceed planning materiality/);
     expect(minimumRiskOwnerRank('RED')).toBe(3);
     expect(minimumRiskOwnerRank('AMBER')).toBe(2);
     expect(minimumRiskOwnerRank('GREEN')).toBe(1);
     expect(riskRoute('RED')).toMatch(/Engagement Partner review is mandatory/);
-    expect(() => riskBand(0, 2, false, false)).toThrow(/1 to 3/);
   });
 });
 

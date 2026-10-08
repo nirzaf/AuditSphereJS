@@ -6653,15 +6653,22 @@
           "RED"
         ]
       },
-      "likelihood": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 3
+      "accountCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
       },
-      "magnitude": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 3
+      "absoluteBalance": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "tolerableError": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
+      },
+      "planningMateriality": {
+        "type": "string",
+        "pattern": "^-?\\d{1,22}(\\.\\d{1,6})?$"
       },
       "significant": {
         "type": "boolean"
@@ -6685,8 +6692,10 @@
       "assessmentId",
       "riskId",
       "band",
-      "likelihood",
-      "magnitude",
+      "accountCode",
+      "absoluteBalance",
+      "tolerableError",
+      "planningMateriality",
       "significant",
       "fraudRisk",
       "requiresPartnerClearance",
@@ -6787,15 +6796,10 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
     "properties": {
-      "likelihood": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 3
-      },
-      "magnitude": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 3
+      "accountCode": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
       },
       "significant": {
         "type": "boolean"
@@ -6805,8 +6809,7 @@
       }
     },
     "required": [
-      "likelihood",
-      "magnitude",
+      "accountCode",
       "significant",
       "fraudRisk"
     ],
