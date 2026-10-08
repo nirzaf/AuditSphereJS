@@ -46,7 +46,7 @@ Work done on 2026-10-08, recorded here so that agents skip it:
 - Spikes SPK-01 to SPK-06 have recorded outputs in `docs/evidence/SPK-0x/`. SPK-06 is recorded as not run.
 - The UI summary in `docs/evidence/UI-MODULES.md` was recounted from its table: 39 workspaces, 14 connected and 25 session-only.
 - Blockers B01–B07 were rechecked on 2026-10-08: D26–D29 record delegated implementation defaults; `docs/09-removal-guideline.md` maps all 25 session-only workspaces; B07's test and differential evidence follow-ups were fixed; nonproduction SharePoint/OneDrive acceptance passed 2/2. No task status was changed.
-- On 2026-10-09, D30 records a ten-year minimum from report issue for Saudi-licensed statutory audit files, with longer obligations and holds taking precedence and disposition requiring an authorized review. This implementation default does not close the SPK-02 tenant-behavior or qualified records/methodology acceptance gates. No tenant setting or task status changed.
+- On 2026-10-09, the user corrected the retention jurisdiction to Qatar. D31 supersedes the mistaken Saudi D30: it selects a conservative ten-year product default from the end of the last audited financial year, distinguishes Qatar's five-year general audit-file statutory floor from separate AML/CFT ten-year record categories and their date anchors, and preserves longer obligations and holds. Purview behavior and qualified records/methodology acceptance remain open; no tenant setting or task status changed.
 
 ## 3. What the verification found, and where each finding stands
 

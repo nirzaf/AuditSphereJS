@@ -35,11 +35,11 @@ These are coverage identifiers added by this pack; they do not alter the source 
 
 Use existing owned records/contracts first. Add a migration or public endpoint only when the task steps require it; record the exact files in the handoff.
 
-**Dependency focus:** S3 Object Lock-capable provider and SDK; not arbitrary S3 API equivalence
+**Dependency focus:** Microsoft Graph-selected SharePoint archive repository and administrator-configured Microsoft Purview record control; verify the actual tenant configuration and tested principal behavior. The approved storage architecture does not require an S3 Object Lock provider.
 
 Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
 
-**Applicable decisions:** D09
+**Applicable decisions:** D09, D11, D31
 
 ## Implementation checklist
 

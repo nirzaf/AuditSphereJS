@@ -1,6 +1,6 @@
 # B02 — Owner decisions and professional acceptance
 
-**Status:** Partly resolved, rechecked 2026-10-09. The repository owner previously delegated implementation-default decisions to Codex; the user's current request asks to resolve the listed blockers. Decisions D26–D30 are recorded in `docs/decisions/register.json`. Professional records/methodology acceptance remains separate.
+**Status:** Partly resolved, rechecked 2026-10-09. The repository owner delegated implementation-default decisions to Codex; the user's current request asks to resolve the listed blockers and corrected the governing jurisdiction to Qatar. Decisions D26–D31 are recorded in `docs/decisions/register.json`. D30 is superseded by D31. Professional records/methodology acceptance remains separate.
 
 ## What is blocked
 
@@ -9,7 +9,7 @@
 | 1 | T140 phase set | **Resolved D27:** `PLANNING`, `FIELDWORK`, `REVIEW`, `REPORTING`, matching the migration/service contract already implemented. | T140 remains IN_REVIEW for independent review and its UI remains unbuilt. |
 | 2 | SPK-03 proposal acceptance-token expiry and reissue | **Resolved D28:** seven calendar days; a new audited, single-use token may be issued only for the same still-presented revision. Revision/terms changes require a new presentation. | T062 is still blocked by T061 (NOT_STARTED) and T053 (IN_REVIEW). See [B03](BLOCKER-03-proposal-acceptance.md). |
 | 3 | SPK-01 workbook parse worker kill timeout | **Resolved provisionally D29:** 60 seconds, about 3.6 times the measured 16.616-second worst in-limit workbook on the development machine. | Run the same fixtures on the target deployment image and append evidence before final T045 acceptance. |
-| 4 | SPK-02 archive immutability and retention period | **Implementation default approved D30:** at least 10 years from report issue for Saudi-licensed statutory audit files, longer applicable period/hold wins, and disposition requires an authorized review. | Records/methodology owners must confirm applicability; the exact Purview label, license and tested principal behavior are still unverified. No tenant setting changed. |
+| 4 | SPK-02 archive immutability and retention period | **Implementation default approved D31 (Qatar):** ten-year product default for statutory audit files from the end of the last audited financial year; Qatar Law No. 8 of 2020 sets a five-year floor, while applicable AML/CFT record categories have their own ten-year anchors under Law No. 20 of 2019. | Qatar records/methodology owners must confirm category applicability; the exact Purview label, license and tested principal behavior are still unverified. No tenant setting changed. |
 | 5 | SPK-05 classification of 142 dependency edges | **Open.** 142 `review` edges remain; DN-13 removed only three named sequencing edges. | Classify each edge against its task's data and contract requirements; no bulk removal. |
 | 6 | SPK-06 renderer block model | **Open.** Spike not run. | Wait for T036 independent acceptance under [B01](BLOCKER-01-independent-review.md). |
 | 7 | Definition-of-Done recipe rule | **Resolved D26.** Each remaining task needs a non-empty task-specific `pnpm verify:task -- T###` recipe. | Existing tasks without recipes cannot close until recipes are added. |
@@ -22,11 +22,11 @@ Implementation defaults in `docs/decisions/register.json` do not establish profe
 
 1. Run the workbook fixtures on the eventual deployment image and append the exact measurement to `docs/evidence/SPK-01/`.
 2. Assign an independent reviewer under B01 before changing any IN_REVIEW task status.
-3. Have records and methodology owners confirm D30's KSA scope and test the intended tenant label behavior before configuring retention controls; D30 is not professional acceptance.
+3. Have Qatar records and methodology owners confirm D31's category/date-anchor mapping and test the intended tenant label behavior before configuring retention controls; D31 is not professional acceptance.
 4. Complete the SPK-05 card-by-card dependency classification and regenerate its inventory.
 5. Independently accept T036 before running SPK-06.
 
 ## Done when
 
 - Rows 1–3 and 7 have recorded implementation-default decisions (D26–D29).
-- Row 4 now has an implementation default in D30. Tenant behavior, licensing and professional acceptance remain open; rows 5–6 and the professional sign-offs still need evidence, not inference.
+- Row 4 has a Qatar implementation default in D31; D30 is superseded. Tenant behavior, licensing and professional acceptance remain open; rows 5–6 and the professional sign-offs still need evidence, not inference.

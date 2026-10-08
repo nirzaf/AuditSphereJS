@@ -43,7 +43,7 @@ Use existing owned records/contracts first. Add a migration or public endpoint o
 
 Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the complete library register](../../guides/03-library-register.md). Newly introduced or updated packages need published engine/peer/license/advisory review and an executable smoke check before use. Exact lockfile versions, not this task's prose, control installation.
 
-**Applicable decisions:** Check the decision register for any applicable unresolved policy; do not invent a default.
+**Applicable decisions:** D31; also check the decision register for any other applicable unresolved policy; do not invent a default.
 
 ## Implementation checklist
 

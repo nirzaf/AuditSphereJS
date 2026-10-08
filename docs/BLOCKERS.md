@@ -1,6 +1,6 @@
 # Blockers and pending work — index
 
-**Status rechecked 2026-10-09.** Ledger counts remain 171 tasks — 53 DONE, 4 NOT_APPLICABLE, 37 IN_REVIEW, 1 IN_PROGRESS (T108), 76 NOT_STARTED. Remaining work: 114 tasks. B02 implementation defaults D26–D30 are recorded, including the ten-year KSA statutory-audit retention baseline; SPK-02 tenant behavior/professional acceptance and SPK-05/06 remain open. B07 engineering follow-ups and the fresh-upload mapping regression passed local verification and GitHub Actions run [37847347420](https://github.com/nirzaf/AuditSphereJS/actions/runs/37847347420), which published the public build asset. B01, B03 implementation, B04, most B05 persistence, parts of B06 and SPK-05/SPK-06 remain gated below.
+**Status rechecked 2026-10-09.** Ledger counts remain 171 tasks — 53 DONE, 4 NOT_APPLICABLE, 37 IN_REVIEW, 1 IN_PROGRESS (T108), 76 NOT_STARTED. Remaining work: 114 tasks. B02 implementation defaults D26–D31 are recorded; D31 corrects the retention jurisdiction to Qatar and supersedes D30. SPK-02 tenant behavior/professional acceptance and SPK-05/06 remain open. B07 engineering follow-ups and the fresh-upload mapping regression passed local verification and GitHub Actions run [37847347420](https://github.com/nirzaf/AuditSphereJS/actions/runs/37847347420), which published the public build asset. B01, B03 implementation, B04, most B05 persistence, parts of B06 and SPK-05/SPK-06 remain gated below.
 
 This index lists every item that is blocked, and what each block needs before work can continue. Each linked file gives the evidence, the owner, and the steps to unblock. Nothing here changes a ledger status. A task becomes DONE only after independent review, recorded in its handoff, and the owner updates the ledger.
 
@@ -24,7 +24,7 @@ This index lists every item that is blocked, and what each block needs before wo
 ## How the blocks relate
 
 - B01 gates most of the remaining work: 76 NOT_STARTED tasks wait on IN_REVIEW tasks. Closing B01 is the largest single unblock.
-- B02 recommendations D26–D29 are recorded under the user's existing delegation for implementation defaults. Professional acceptance, target-environment proof, 142 dependency-edge review and archive retention period remain open.
+- B02 implementation defaults D26–D31 are recorded under the user's delegation. D31 is the current Qatar retention default; professional acceptance, Purview target-environment proof and 142 dependency-edge review remain open.
 - B03's expiry choice is settled by D28, but T062 remains gated by T061 (NOT_STARTED) and T053 (IN_REVIEW); do not build around those dependencies.
 - B04 cannot be closed by removing the `fail(...)` calls. Each one comes out only when its owning task supplies the real check and its test.
 - B05's workspace/task guideline is now present at `docs/09-removal-guideline.md`; the 25 views remain preparation-only until their tasks deliver and pass.

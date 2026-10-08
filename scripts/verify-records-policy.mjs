@@ -12,6 +12,18 @@ for (const id of ['D03', 'D08', 'D09', 'D10']) {
   assert.equal(decision?.decisionRecord, 'docs/decisions/T004-records-defaults.md', `${id} decision record link`);
 }
 
+const supersededRetention = decisions.find((entry) => entry.id === 'D30');
+const qatarRetention = decisions.find((entry) => entry.id === 'D31');
+assert.equal(supersededRetention?.status, 'SUPERSEDED', 'the incorrect Saudi retention decision must stay superseded');
+assert.equal(supersededRetention?.supersededBy, 'D31', 'D30 must point to its Qatar correction');
+assert.equal(qatarRetention?.status, 'APPROVED_IMPLEMENTATION_DEFAULT', 'D31 Qatar implementation default');
+assert.equal(qatarRetention?.decisionRecord, 'docs/decisions/D31-qatar-audit-record-retention.md', 'D31 decision record');
+assert.match(qatarRetention?.implementationDefault ?? '', /Qatar-licensed statutory audit engagements/i);
+assert.match(qatarRetention?.implementationDefault ?? '', /five years from that date/i);
+assert.match(qatarRetention?.implementationDefault ?? '', /ten years from transaction\/operation completion/i);
+assert.match(qatarRetention?.implementationDefault ?? '', /business-relationship expiry/i);
+assert.match(qatarRetention?.professionalAcceptance ?? '', /PENDING/i, 'D31 must not imply professional acceptance');
+
 const deadline = fixture.archiveDeadline;
 const anchor = new Date(deadline.anchorUtc);
 assert.equal(anchor.toISOString(), deadline.anchorUtc, 'anchor must be a valid explicit UTC instant');

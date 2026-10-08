@@ -414,7 +414,7 @@
   {
     "id": "D30",
     "title": "Minimum retention for Saudi statutory audit files (SPK-02)",
-    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "status": "SUPERSEDED",
     "ownerRole": "Repository owner, records owner and audit-methodology owner",
     "namedOwner": "Codex, under user delegation for implementation defaults",
     "sourceLines": "docs/evidence/SPK-02/spike.md; docs/decisions/T004-records-defaults.md; Saudi Law of the Accounting and Auditing Profession, Article 7(5)",
@@ -424,6 +424,23 @@
     "approvalEvidence": "User request to approve the blockers and choose the better decision; official Saudi professional law sets a ten-year minimum from report issue for work documents, reports and financial statements.",
     "implementationDefault": "For Saudi-licensed statutory audit engagements, retain the report and audit file for at least ten years from report issue. Apply any longer applicable rule, contract, dispute, investigation or legal hold. Require recorded authorized disposition review after the minimum; never auto-delete. Use the designated firm SharePoint archive and OneDrive for working files. Do not claim provider-enforced immutability until the configured Purview control is verified against the tested principals. Other jurisdictions and engagement types require their own approved schedule.",
     "professionalAcceptance": "PENDING: records and audit-methodology owners must confirm applicability; tenant label behavior and licensing remain unverified.",
-    "decisionRecord": "docs/decisions/D30-saudi-audit-record-retention.md"
+    "decisionRecord": "docs/decisions/D30-saudi-audit-record-retention.md",
+    "supersededBy": "D31"
+  },
+  {
+    "id": "D31",
+    "title": "Qatar audit-file and AML/CFT retention implementation default (SPK-02)",
+    "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+    "ownerRole": "Repository owner, records owner and audit-methodology owner",
+    "namedOwner": "Codex, under user delegation for implementation defaults",
+    "sourceLines": "docs/evidence/SPK-02/spike.md; Qatar Law No. 8 of 2020, Article 37; Qatar Law No. 20 of 2019, Article 20; Qatar Ministry of Commerce and Industry Auditing Profession Guide (2025)",
+    "ambiguity": "The archive must use the corrected Qatar jurisdiction. Qatar's auditing-profession law sets a five-year minimum from the end of the last audited financial year unless a longer applicable period applies; AML/CFT records have separate ten-year anchors and apply to auditors only within the statutory DNFBP scope. The 60-day application archive lock is separate, and Microsoft Purview behavior remains unverified.",
+    "approvedBy": "User delegated blocker decisions and chose Qatar as the governing jurisdiction on 2026-10-09; Codex selected this implementation default under that delegation.",
+    "approvedAt": "2026-10-09",
+    "approvalEvidence": "User correction: \"not Saudi but QATAR\". Qatar Law No. 8 of 2020 Article 37 and current MOCI guidance set the five-year audit-record minimum; Qatar Law No. 20 of 2019 Article 20 and MOCI guidance require ten-year retention for covered AML/CFT record categories.",
+    "implementationDefault": "For Qatar-licensed statutory audit engagements, use a conservative product default of ten years from the end of the last audited financial year for the engagement audit file; do not describe ten years as the general statutory minimum. The statutory floor under Law No. 8 of 2020 Article 37 is five years from that date unless a longer applicable law or regulation applies. For records subject to AML/CFT retention under Law No. 20 of 2019 Article 20 and applicable MOCI rules, enforce at least ten years from transaction/operation completion, or from business-relationship expiry for due-diligence, account, correspondence and analysis records; preserve the later applicable deadline. Longer law, contract, dispute, investigation or legal hold wins. Require an authorized, recorded disposition review; never auto-delete. Use the designated firm SharePoint archive and OneDrive for working files. Do not claim provider-enforced immutability until the configured Purview control is verified against tested principals. Other jurisdictions and engagement types require their own approved schedule.",
+    "professionalAcceptance": "PENDING: Qatar records and audit-methodology owners must confirm applicability and category mapping; tenant label behavior and licensing remain unverified.",
+    "decisionRecord": "docs/decisions/D31-qatar-audit-record-retention.md",
+    "supersedes": "D30"
   }
 ]

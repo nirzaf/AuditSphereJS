@@ -33,15 +33,15 @@ Any option that needs the application to create a site, change site permissions,
 
 These sources disagree on whether members can edit a labelled file. The disagreement appears to depend on the label's default unlock setting and on whether users may unlock records. That is unverified for this tenant.
 
-## Decision recorded in D30
+## Decision recorded in D31
 
-For Saudi-licensed statutory audit engagements, retain the report and audit file for at least ten years from report issue, apply longer applicable requirements and legal holds, and require authorized disposition review rather than automatic deletion. Working files remain in OneDrive for Business; the accepted archive remains in the designated firm SharePoint repository, respecting the approved provider choice.
+For Qatar-licensed statutory audit engagements, the product uses a conservative ten-year default for the engagement audit file from the end of the last audited financial year. This is not the general statutory minimum: Qatar Law No. 8 of 2020 Article 37 sets a five-year minimum from that date, subject to longer applicable laws and regulations. Qatar Law No. 20 of 2019 Article 20 and applicable MOCI rules impose separate ten-year periods and date anchors for covered AML/CFT transaction, due-diligence, account, correspondence and analysis records; auditors are within that scope only for the activities specified by law. Retain an overlapping record until the latest applicable deadline. Require authorized disposition review rather than automatic deletion. Working files remain in OneDrive for Business; the accepted archive remains in the designated firm SharePoint repository, respecting the approved provider choice.
 
 The application does not rely on a second object store or mutable site permissions as its retention control. A Microsoft Purview record control is the selected tenant-side mechanism, subject to exact-tenant verification of license, label settings and edit/delete behavior for tested principals. Until verified, provider immutability is unproven and production archive acceptance stays blocked. The application continues to verify archived hashes and preserve immutable metadata, but a hash detects changes; it does not prevent them.
 
-See [D30](../../decisions/D30-saudi-audit-record-retention.md). This is an implementation default, not qualified records/legal acceptance.
+See [D31](../../decisions/D31-qatar-audit-record-retention.md). This is an implementation default, not qualified records/legal acceptance. D30 is superseded because it used the wrong jurisdiction.
 
-The earlier option-C object-lock recommendation is superseded by D30. A second RustFS object-lock copy was rejected for this acceptance architecture because the selected customer object and blob storage is SharePoint/OneDrive. D30 keeps production archive acceptance fail-closed pending an adequate, tested Microsoft 365 record control.
+The earlier option-C object-lock recommendation is superseded by D31. A second RustFS object-lock copy was rejected for this acceptance architecture because the selected customer object and blob storage is SharePoint/OneDrive. D31 keeps production archive acceptance fail-closed pending an adequate, tested Microsoft 365 record control.
 
 ## Not verified here
 
@@ -50,4 +50,4 @@ The earlier option-C object-lock recommendation is superseded by D30. A second R
 - The Purview label's license tier and exact configuration.
 - Any production behaviour: nothing in this spike was run against a tenant.
 
-The retention duration now has an implementation default in D30. Test-tenant behavior, licensing, records-owner confirmation and professional acceptance remain open.
+The Qatar retention implementation default is recorded in D31. Test-tenant behavior, licensing, records-owner confirmation and professional acceptance remain open.

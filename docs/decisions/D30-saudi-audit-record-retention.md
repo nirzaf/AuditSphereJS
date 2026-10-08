@@ -1,4 +1,6 @@
-# D30 — Saudi audit-file retention baseline
+# D30 — Saudi audit-file retention baseline (superseded)
+
+> **Superseded by D31 on 2026-10-09.** The repository owner corrected the jurisdiction to Qatar. This record is retained as decision history only and is not an applicable retention default.
 
 **Decision state:** Approved implementation default under the repository owner's delegation to Codex. **Decision date:** 2026-10-09. **Professional status:** Not an audit-methodology, legal, privacy, records-owner or production approval.
 
