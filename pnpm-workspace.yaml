@@ -41,5 +41,7 @@ minimumReleaseAgeExclude:
 overrides:
   '@prisma/config@7.10.0>deepmerge-ts': 8.0.2
   'prisma@7.10.0>mysql2': 3.24.5
+  # CI audit 2026-10-08: concurrently@10.0.5 allows shell-quote 1.9.0, which is affected by GHSA-pqg4-j6r4-53mv.
+  'concurrently>shell-quote': 1.12.0
   # T045: exceljs@4.4.0 pins uuid@^8; 11.1.1 is the first release without the buffer bounds advisory GHSA-w5hq-g745-h8pq.
   'exceljs>uuid': 11.1.1

@@ -28,6 +28,10 @@ The repository-owner delegation and this task's request authorize the implementa
 
 The T045 handoff and this blocker record both the exact isolated result and the sandbox DNS failure/retry for live provider work. A successful retry does not erase the recorded restricted-environment failures.
 
+### 7. CI verification coverage and dependency audit
+
+The pushed run exposed two CI issues that local affected tests did not cover: the matrix omitted ten existing integration files, and the full audit found `shell-quote@1.9.0` under `concurrently@10.0.5`. All ten suites are now listed in the integration matrix, and the CI workflow policy checker passes. A scoped `concurrently>shell-quote` override selects 1.12.0; the lockfile passed supply-chain policy, the full moderate audit found no known vulnerabilities, and the affected suite passed again. Exact dependency evidence is appended to `docs/evidence/T005/security-remediation.md`.
+
 ## Verification
 
 | Command | Result |
@@ -38,9 +42,11 @@ The T045 handoff and this blocker record both the exact isolated result and the 
 | `pnpm verify:task -- T087` | Passed; exit 0, including the risk integration recipe, 2026-10-08 |
 | `pnpm migration:differential` | Passed; 53 checks, 50 matched, 0 differences, 3 explicitly superseded, 2026-10-08 |
 | `pnpm verify:affected` | First restricted run hit Windows loopback `EACCES` in 3 tests; elevated rerun passed 33 files / 176 tests, 2026-10-08 |
+| `node scripts/verify-ci-workflow.mjs`, `pnpm exec node scripts/verify-pnpm-install-policy.mjs` | Both passed after the integration matrix and lockfile correction, 2026-10-08 |
+| `pnpm audit --audit-level=moderate` | Passed after scoped parser override; no known vulnerabilities, 2026-10-08 |
 
 ## Remaining acceptance
 
-T087 remains IN_REVIEW until an independent reviewer checks its card and handoff. B07's engineering follow-ups are resolved and reverified on the final tree. Independent acceptance remains B01 and is not represented as complete.
+T087 remains IN_REVIEW until an independent reviewer checks its card and handoff. B07's engineering follow-ups are resolved and reverified on the final tree. The latest GitHub Actions run is still the final external check; independent acceptance remains B01 and is not represented as complete.
 
 The initial restricted `pnpm verify:affected` attempt failed three loopback tests with Windows `EACCES`; the authorized elevated retry completed successfully. This environment failure is retained rather than erased by the passing retry.

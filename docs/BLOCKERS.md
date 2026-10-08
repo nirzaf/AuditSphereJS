@@ -14,7 +14,7 @@ This index lists every item that is blocked, and what each block needs before wo
 | B04 | Eight unconditional lifecycle evidence gates in `lifecycle.ts` | Engineering, tied to owning evidence tasks | Task owners after prerequisite review | [BLOCKER-04-lifecycle-gates.md](BLOCKER-04-lifecycle-gates.md) |
 | B05 | 25 session-only UI workspaces | Planning map exists; persistence remains in owning tasks | Engineering by task; keep preparation labels | [BLOCKER-05-session-only-workspaces.md](BLOCKER-05-session-only-workspaces.md) |
 | B06 | Production hosting/region/recovery; archive retention assurance; T036 asset-folder Graph acceptance | Nonproduction provider check reverified; production not requested | User/records owner only if production or retention proof is requested | [BLOCKER-06-external-tenant-and-hosting.md](BLOCKER-06-external-tenant-and-hosting.md) |
-| B07 | Verification evidence precision and flake follow-ups | Engineering items resolved and rerun; independent review still required for T087 | Engineering; independent reviewer under B01 | [BLOCKER-07-verification-follow-ups.md](BLOCKER-07-verification-follow-ups.md) |
+| B07 | Verification evidence precision, CI suite coverage and audit follow-ups | Engineering fixes and local reruns complete; hosted run is the final check; independent review still required for T087 | Engineering; independent reviewer under B01 | [BLOCKER-07-verification-follow-ups.md](BLOCKER-07-verification-follow-ups.md) |
 
 ## Pending but not blocked
 
