@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { Decimal6, calculateContractContribution, type ContractTimeValue } from '@auditsphere/server';
+import { Decimal6, calculateContractContribution, contractContributionLabel, type ContractTimeValue } from '@auditsphere/server';
 
 const fixture = JSON.parse(readFileSync('fixtures/characterization/practice-analytics.json', 'utf8'));
 const byId = (id: string) => fixture.cases.find((item: { id: string }) => item.id === id)!;
@@ -64,5 +64,14 @@ describe('contract contribution calculator ported from the pinned source', () =>
     expect(result).not.toBeNull();
     expect(result!.lifetimeStandardValue.toFixed(6)).toBe('0.000000');
     expect(result!.feeLessStandardValue.toFixed(6)).toBe('10000.000000');
+  });
+});
+
+describe('D25 (DN-12): the contribution figure carries its approved label, not an accounting-profit label', () => {
+  it('labels every computed contribution with the approved wording', () => {
+    const result = calculateContractContribution(Decimal6.from('10000'), 'QAR', []);
+    expect(result?.label).toBe('Contract contribution (fee minus charge-out value of approved time) — not accounting profit');
+    expect(contractContributionLabel).toBe('Contract contribution (fee minus charge-out value of approved time) — not accounting profit');
+    expect(result?.label).toMatch(/not accounting profit$/);
   });
 });

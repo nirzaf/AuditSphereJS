@@ -11,8 +11,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 
 | Status | Capabilities |
 | --- | ---: |
-| NOT_STARTED | 23 |
-| PARTIAL | 15 |
+| NOT_STARTED | 21 |
+| PARTIAL | 17 |
 
 ## Destination status by capability
 
@@ -21,6 +21,8 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C01 | Local identity, role grants and access workspace | `src/AuditSphereOps.Application/Security/RoleAssignmentService.cs`<br>`src/AuditSphereOps.Application/Security/RoleGrantExpiry.cs`<br>`src/AuditSphereOps.Application/Security/UserAccessWorkspaceQuery.cs` | 3 | Platform authorization / governance administration | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-004 |
 | C03 | Client SharePoint site provisioning | `src/AuditSphereOps.Application/Documents/ClientPortalService.cs`<br>`src/AuditSphereOps.Application/Documents/ClientSharePointSites.cs`<br>`src/AuditSphereOps.Application/Documents/DocumentSnapshotService.cs`<br>`src/AuditSphereOps.Application/Documents/EngagementWorkspaceProvisioning.cs`<br>… 6 more | 10 | Platform site-provisioning workers / site status UI | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-012 |
 | C05 | Quotation calculation and tender documents | `src/AuditSphereOps.Application/Practice/CommercialApprovalMatrix.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`<br>`src/AuditSphereOps.Application/Practice/QuotationCalculator.cs`<br>… 1 more | 5 | Commercial quotations / tenders | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-006 |
+| C06 | Acceptance, continuance and activation | `src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs`<br>`src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs` | 2 | Governance acceptance and lifecycle | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-006 |
+| C07 | Fee agreements and automatic fee invoices | `src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`<br>`src/AuditSphereOps.Application/Practice/FeeAgreementService.cs` | 4 | Commercial fee agreement / practice invoicing | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-006 |
 | C11 | Trial balance import and multi-period intake | `src/AuditSphereOps.Application/Accounting/Intake/MultiPeriodTrialBalanceService.cs`<br>`src/AuditSphereOps.Application/Accounting/TrialBalanceImportService.cs` | 2 | Fieldwork intake wizard | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-008 |
 | C13 | Mapping memory and approved mappings | `src/AuditSphereOps.Application/Accounting/Intake/MappedTrialBalanceSource.cs`<br>`src/AuditSphereOps.Application/Accounting/Intake/MappingMemoryService.cs` | 2 | Fieldwork mapping workbench / reporting mapping approval | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-009 |
 | C15 | Adjustment journals, plans and eligibility | `src/AuditSphereOps.Application/Accounting/AdjustmentEligibilityQuery.cs`<br>`src/AuditSphereOps.Application/Accounting/AdjustmentJournalService.cs`<br>`src/AuditSphereOps.Application/Accounting/AdjustmentPlanService.cs` | 3 | Fieldwork adjustments | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-008 |
@@ -35,8 +37,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 | C38 | Migrations, database checks, triggers and indexes | `src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Accounting.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AdjustmentBridge.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.Audit.cs`<br>`src/AuditSphereOps.Infrastructure/Persistence/AuditSphereDbContext.AuditDeliverables.cs`<br>… 147 more | 151 | Prisma migrations plus reviewed PostgreSQL SQL | PARTIAL | PARTIAL | NOT_VERIFIED | MIG-001, MIG-002, MIG-017 |
 | C02 | Microsoft tenant consent and capability verification | `src/AuditSphereOps.Application/Microsoft365/TenantConsentService.cs` | 1 | Platform Microsoft adapters / governance administration | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-012 |
 | C04 | Practice CRM, leads and client portfolio | `src/AuditSphereOps.Application/Practice/PracticeCrmService.cs`<br>`src/AuditSphereOps.Application/Practice/PracticeLeadQuery.cs` | 2 | Commercial CRM / portfolio | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
-| C06 | Acceptance, continuance and activation | `src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs`<br>`src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs` | 2 | Governance acceptance and lifecycle | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-006 |
-| C07 | Fee agreements and automatic fee invoices | `src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`<br>`src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`<br>`src/AuditSphereOps.Application/Practice/FeeAgreementService.cs` | 4 | Commercial fee agreement / practice invoicing | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-006 |
 | C08 | Client portal, first sign-in and delegation | `src/AuditSphereOps.Application/Documents/ClientPortalService.cs` | 1 | Governance client access / Angular portal | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C09 | PBC requests, upload intents and communications | `src/AuditSphereOps.Application/Documents/PbcService.cs` | 1 | Platform document pipeline / fieldwork PBC | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | - |
 | C10 | Client accounting profiles, periods, books and restatements | `src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Authorization.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Books.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Capabilities.cs`<br>`src/AuditSphereOps.Application/Accounting/ClientAccounting/ClientAccountingService.Charts.cs`<br>… 6 more | 10 | Fieldwork accounting setup | NOT_STARTED | NOT_IMPLEMENTED | NOT_VERIFIED | MIG-007 |
@@ -88,6 +88,26 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Practice/CommercialApprovalMatrix.cs`, `src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`, `src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`, `src/AuditSphereOps.Application/Practice/QuotationCalculator.cs`, `src/AuditSphereOps.Application/Practice/QuotationService.cs`
 - Destination files: `packages/server/src/modules/commercial/quotation.ts`, `tests/quotation.test.ts`
 - Evidence / gap: Pure fee model ported from the source: sum(hours × rate) → complexity → risk premium → discount with every stage rounded to two decimals half-to-even so the breakdown reconciles to the fee, plus input validation that fails closed and a canonical input hash. The configurable approval matrix is ported with its fail-safe Partner default. docs/migration/03-differential-report.md reports 46/46 checks matched. Not implemented: persisted quotation versions, tender/proposal documents, dispatch and client acceptance of an exact version.
+
+### C06 — Acceptance, continuance and activation
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Governance acceptance and lifecycle
+- Existing task anchor: T056-T059, T063, T073; migration epic: MIG-006
+- Source symbols resolved: `AcceptanceRules`, `EngagementLifecycleService`
+- Source files: `src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs`, `src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs`
+- Destination files: `packages/server/src/modules/commercial/proposals.ts`, `packages/server/src/modules/governance/lifecycle.ts`, `prisma/migrations/202610020022_commercial_onboarding/migration.sql`
+- Evidence / gap: Real dual-key gate: Key 1 (accepted proposal with client evidence) and Key 2 (RISK_PARTNER_CLEAR clearance with reason) are persisted records; ISSUE_ENGAGEMENT_LETTER refuses either missing key and issues an immutable ISA 210 letter pinning the exact revision and fee. Not implemented: the full ISA 220 questionnaire tracks, continuance path and acceptance cases.
+
+### C07 — Fee agreements and automatic fee invoices
+
+- Destination status: **PARTIAL** (UI journey: PARTIAL; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
+- Destination owner: Commercial fee agreement / practice invoicing
+- Existing task anchor: T065, T069-T072, T125; MIG-006; migration epic: MIG-006
+- Source symbols resolved: `FeeAgreementService`, `AutomaticFeeInvoiceHandler`, `AutomaticFeeInvoicePolicy`, `CommercialDocumentService`
+- Source files: `src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs`, `src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`, `src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`, `src/AuditSphereOps.Application/Practice/FeeAgreementService.cs`
+- Destination files: `packages/server/src/modules/practice/invoices.ts`, `packages/server/src/modules/practice/ledger-controller.ts`
+- Evidence / gap: Canonical firm-numbered engagement invoices (ADVANCE_50/FINAL_50) with immutable payments and one receipt per settled invoice; the advance chain gates portal activation (INV-002). Not implemented: ledger posting of invoices, credit notes, AR aging, and fee agreement documents.
 
 ### C11 — Trial balance import and multi-period intake
 
@@ -146,7 +166,7 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Existing task anchor: T107-T117; migration epic: MIG-005
 - Source symbols resolved: `ReviewNotesService`
 - Source files: `src/AuditSphereOps.Application/Audit/ReviewNotesService.cs`
-- Destination files: `packages/server/src/modules/reporting/review-notes.ts`, `prisma/migrations/202610010018_review_notes/migration.sql`, `tests/review-notes.integration.ts`
+- Destination files: `packages/server/src/modules/fieldwork/review-notes.ts`, `prisma/migrations/202610010018_review_notes/migration.sql`, `tests/review-notes.integration.ts`
 - Evidence / gap: Anchored review notes with grant-based authority: REVIEW_RAISE to raise, REVIEW_RESOLVE to resolve, the raiser can never resolve their own note, one OPEN→RESOLVED transition, and a resolved note is frozen by trigger while notes are never deleted; the database independently rejects a self-resolved or inconsistently shaped row. Not implemented: reviewer inbox, rework loop, revision-aware anchoring, SRM compilation and manager/Partner clearances.
 
 ### C30 — Records archive, checkpoints and release evidence
@@ -228,26 +248,6 @@ preservation criterion is unmet), **NOT_STARTED**, **NOT_APPLICABLE** (named app
 - Source files: `src/AuditSphereOps.Application/Practice/PracticeCrmService.cs`, `src/AuditSphereOps.Application/Practice/PracticeLeadQuery.cs`
 - Destination files: —
 - Evidence / gap: No CRM module implementation; packages/server/src/modules/commercial/README.md only.
-
-### C06 — Acceptance, continuance and activation
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Governance acceptance and lifecycle
-- Existing task anchor: T056-T059, T063, T073; migration epic: MIG-006
-- Source symbols resolved: `AcceptanceRules`, `EngagementLifecycleService`
-- Source files: `src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs`, `src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs`
-- Destination files: —
-- Evidence / gap: No acceptance/continuance rules or guarded engagement lifecycle.
-
-### C07 — Fee agreements and automatic fee invoices
-
-- Destination status: **NOT_STARTED** (UI journey: NOT_IMPLEMENTED; data migration readiness: NOT_ASSESSED; provider acceptance: NOT_VERIFIED)
-- Destination owner: Commercial fee agreement / practice invoicing
-- Existing task anchor: T065, T069-T072, T125; MIG-006; migration epic: MIG-006
-- Source symbols resolved: `FeeAgreementService`, `AutomaticFeeInvoiceHandler`, `AutomaticFeeInvoicePolicy`, `CommercialDocumentService`
-- Source files: `src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs`, `src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs`, `src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs`, `src/AuditSphereOps.Application/Practice/FeeAgreementService.cs`
-- Destination files: —
-- Evidence / gap: No fee agreement or invoice automation.
 
 ### C08 — Client portal, first sign-in and delegation
 

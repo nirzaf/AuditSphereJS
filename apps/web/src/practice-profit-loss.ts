@@ -61,7 +61,8 @@ export class PracticeProfitLoss {
   readonly compareMonth = signal('');
   readonly message = signal('Choose an accounting month to load the firm Profit and Loss statement.');
 
-  private path(suffix = '') { return `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice/reports/profit-loss${suffix}`; }
+  /** D24 (DN-11): the firm profit-and-loss reads name no engagement. */
+  private path(suffix = '') { return `/api/v1/firm/practice/reports/profit-loss${suffix}`; }
 
   private async request<TSchema extends z.ZodType>(path: string, schema: TSchema) {
     const init: RequestInit = { headers: this.entra() ? {} : { Authorization: `Bearer ${this.token()}` } };

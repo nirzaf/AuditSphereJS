@@ -9,7 +9,7 @@ import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { runUnitOfWork, withUnitOfWork, lockForUpdate, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { createTrialBalanceImportOutbox } from '../../platform/outbox.js';
 import { publishRealtimeInvalidation } from '../../platform/realtime/invalidation.js';
-import { mappingSchema, uploadSchema, finalizeSchema, supersedeSchema, fslis, importFromDocumentSchema } from '@auditsphere/contracts';
+import { mappingSchema, uploadSchema, finalizeSchema, supersedeSchema, importFromDocumentSchema } from '@auditsphere/contracts';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { z } from 'zod';
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
@@ -248,8 +248,24 @@ export async function supersede(engagementId: string, importId: string, actorId:
   });
 }
 
-/** Presentation split only; the statement a balance belongs to never changes its stored value. */
-const PROFIT_AND_LOSS_FSLIS: ReadonlySet<string> = new Set(['Revenue', 'Operating expenses']);
+/**
+ * D22 (DN-09): the approved taxonomy version's statementSection is the only authority for the split. Income and
+ * expense sections form the profit-and-loss statement; every other section is balance sheet. Presentation only:
+ * the statement a balance belongs to never changes its stored value.
+ */
+const PROFIT_AND_LOSS_SECTIONS: ReadonlySet<string> = new Set(['INCOME', 'EXPENSE', 'EXPENSES']);
+
+/**
+ * The taxonomy that classifies an import: the version its approved mapping cites, otherwise the firm's latest approved
+ * version. Null when no approved taxonomy exists, in which case every balance is reported as unmapped.
+ */
+async function governingTaxonomy(batch: { id: string; firmId: string }) {
+  const approval = await db.mappingApproval.findFirst({ where: { importId: batch.id }, orderBy: { approvedAt: 'desc' }, select: { taxonomyVersionId: true } });
+  const include = { lines: { orderBy: { sortOrder: 'asc' as const } } };
+  return approval
+    ? db.taxonomyVersion.findUnique({ where: { id: approval.taxonomyVersionId }, include })
+    : db.taxonomyVersion.findFirst({ where: { firmId: batch.firmId, status: 'APPROVED' }, orderBy: { version: 'desc' }, include });
+}
 
 /**
  * Statement-ordered summary (T050). Totals are summed by the database and converted once to
@@ -257,7 +273,8 @@ const PROFIT_AND_LOSS_FSLIS: ReadonlySet<string> = new Set(['Revenue', 'Operatin
  * zero prior base is reported as NO_BASE with a null percentage rather than 0%.
  */
 export async function statementSummary(engagementId: string, importId: string) {
-  await getBatch(engagementId, importId);
+  const batch = await getBatch(engagementId, importId);
+  const taxonomy = await governingTaxonomy(batch);
   const grouped = await db.tbRow.groupBy({ by: ['fsli'], where: { importId }, _sum: { current: true, prior: true }, _count: true });
   const totals = new Map<string | null, { current: Decimal6; prior: Decimal6; count: number }>();
   for (const row of grouped) {
@@ -279,14 +296,24 @@ export async function statementSummary(engagementId: string, importId: string) {
       count: value.count,
     };
   };
-  const ordered = (statement: (fsli: string) => boolean) => fslis
-    .filter(fsli => statement(fsli) && totals.has(fsli))
-    .map(fsli => line(fsli, totals.get(fsli)!));
-  const unmapped = totals.get(null);
+  // Statement order is the taxonomy's own order. A line the governing taxonomy does not classify is unmapped, never dropped.
+  const lines = taxonomy?.lines ?? [];
+  const classified = new Set(lines.map(item => item.code));
+  const ordered = (profitAndLoss: boolean) => lines
+    .filter(item => totals.has(item.code) && PROFIT_AND_LOSS_SECTIONS.has(item.statementSection) === profitAndLoss)
+    .map(item => line(item.code, totals.get(item.code)!));
+  let unmapped: { current: Decimal6; prior: Decimal6; count: number } | undefined;
+  for (const [fsli, value] of totals) {
+    if (fsli !== null && classified.has(fsli)) continue;
+    unmapped = unmapped
+      ? { current: unmapped.current.add(value.current), prior: unmapped.prior.add(value.prior), count: unmapped.count + value.count }
+      : value;
+  }
   return {
-    profitAndLoss: ordered(fsli => PROFIT_AND_LOSS_FSLIS.has(fsli)),
-    balanceSheet: ordered(fsli => !PROFIT_AND_LOSS_FSLIS.has(fsli)),
+    profitAndLoss: ordered(true),
+    balanceSheet: ordered(false),
     unmapped: unmapped ? line('Unmapped', unmapped) : null,
+    taxonomy: taxonomy ? { id: taxonomy.id, version: taxonomy.version } : null,
     // Route targets for later workstreams. They are explicit placeholders, not links to live data.
     placeholders: { accountsReceivable: 'ROUTE_PENDING' as const, workprograms: 'ROUTE_PENDING' as const },
   };

@@ -15,7 +15,7 @@ test('monthly firm Profit and Loss reconciles to the Trial Balance and preserves
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, Decimal6, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, firmTrialBalance, firmProfitLoss, firmProfitLossAccount } = await import('@auditsphere/server');
+    const { db, Decimal6, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, firmTrialBalance, firmProfitLoss, firmProfitLossAccount, firmProfitLossForActor } = await import('@auditsphere/server');
     const { practiceFirmProfitLossQuerySchema } = await import('@auditsphere/contracts');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID(), unassignedId = randomUUID();
@@ -75,6 +75,9 @@ test('monthly firm Profit and Loss reconciles to the Trial Balance and preserves
       await assert.rejects(firmProfitLoss(unassignedId, engagementId, query), /Engagement assignment is required/);
 
       const report = await firmProfitLoss(actorId, engagementId, query);
+      // asOf is stamped per call; the figures, snapshot and rows must match exactly.
+      const withoutClock = (view: object) => { const copy: Record<string, unknown> = { ...view }; delete copy.asOf; return copy; };
+      assert.deepEqual(withoutClock(await firmProfitLossForActor(actorId, query)), withoutClock(report), 'the firm profit-and-loss route serves the same report without an engagement (D24)');
       const repeated = await firmProfitLoss(actorId, engagementId, query);
       assert.equal(report.snapshotHash, repeated.snapshotHash, 'same posted chart data and parameters produce a stable report hash');
       assert.equal(report.parameters.month, '2026-04');

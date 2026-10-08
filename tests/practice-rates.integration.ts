@@ -44,6 +44,7 @@ test('practice rates seed exact tiers, reject overlapping history and preserve s
       assert.equal(rateByGrade['AUDIT_JUNIOR'], '200.000000');
 
       const beforeSchedule = await listPracticeRateAdministration(actorId, engagementId);
+      assert.deepEqual(await (await import('@auditsphere/server')).listPracticeRateAdministrationForActor(actorId), beforeSchedule, 'the firm rate route serves the same administration view (D24)');
       assert.equal(beforeSchedule.rateCards.length, 6);
       const defaultPartner = defaults.find(rate => rate.grade === 'ENGAGEMENT_PARTNER')!;
       const initialAssignment = await assignPracticeStaffGrade(actorId, engagementId, {

@@ -5,6 +5,7 @@ import { db } from '../../platform/db.js';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { runUnitOfWork, type TransactionClient } from '../../platform/unit-of-work.js';
 import { practiceFirmScope } from './ledger.js';
+import { firmForActor } from './firm-authority.js';
 
 type Period = { id: string; startsOn: Date; endsOn: Date; closed: boolean; version: number; lastTransitionReason: string };
 type RawBalance = { accountId: string; code: string; name: string; kind: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'INCOME' | 'EXPENSE'; openingBalance: string; periodDebit: string; periodCredit: string };
@@ -81,45 +82,57 @@ async function readReport(tx: TransactionClient, firmId: string, requestedPeriod
 
 /** Firm-wide posted-journal trial balance from one repeatable PostgreSQL snapshot. */
 export async function firmTrialBalance(actorId: string, engagementId: string, query: PracticeFirmTrialBalanceQuery): Promise<PracticeFirmTrialBalance> {
-  return runUnitOfWork(async ({ client: tx }) => {
-    const firmId = await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ');
-    return readReport(tx, firmId, query.periodId);
-  }, { isolationLevel: 'RepeatableRead' });
+  return runUnitOfWork(async ({ client: tx }) => firmTrialBalanceIn(tx, await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ'), query), { isolationLevel: 'RepeatableRead' });
+}
+
+async function firmTrialBalanceIn(tx: TransactionClient, firmId: string, query: PracticeFirmTrialBalanceQuery): Promise<PracticeFirmTrialBalance> {
+  return readReport(tx, firmId, query.periodId);
+}
+
+/** D24 (DN-11): the same report on the firm route. The firm comes from the actor's firm-wide grant, and no engagement is named. */
+export async function firmTrialBalanceForActor(actorId: string, query: PracticeFirmTrialBalanceQuery): Promise<PracticeFirmTrialBalance> {
+  return runUnitOfWork(async ({ client: tx }) => firmTrialBalanceIn(tx, await firmForActor(tx, actorId, 'PRACTICE_READ'), query), { isolationLevel: 'RepeatableRead' });
 }
 
 /** Paged posted journal-line drill-down with the same complete account totals as the report row. */
 export async function firmTrialBalanceAccount(actorId: string, engagementId: string, accountId: string, query: PracticeFirmTrialBalanceDetailQuery): Promise<PracticeFirmTrialBalanceDetail> {
-  return runUnitOfWork(async ({ client: tx }) => {
-    const firmId = await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ');
-    const report = await readReport(tx, firmId, query.periodId);
-    const account = report.rows.find(item => item.accountId === accountId);
-    if (!account) throw new NotFoundException('Account not found in this firm');
-    const period = await tx.practicePeriod.findFirst({ where: { id: report.periodId, firmId }, select: { startsOn: true, endsOn: true } });
-    if (!period) throw new NotFoundException('Accounting period not found in this firm');
-    const where = {
-      firmId, accountId,
-      journal: { is: { firmId, status: 'POSTED', accountingDate: { lte: period.endsOn } } },
-    } as const;
-    const [totalCount, lines] = await Promise.all([
-      tx.practiceJournalLine.count({ where }),
-      tx.practiceJournalLine.findMany({
-        where, orderBy: [{ journal: { accountingDate: 'asc' } }, { journalId: 'asc' }, { position: 'asc' }],
-        skip: (query.page - 1) * query.pageSize, take: query.pageSize,
-        select: {
-          id: true, journalId: true, position: true, debit: true, credit: true,
-          journal: { select: { accountingDate: true, reference: true, memo: true, reversalOf: true, reversedJournals: { select: { id: true }, take: 1 } } },
-        },
-      }),
-    ]);
-    return {
-      periodId: report.periodId, account, page: query.page, pageSize: query.pageSize, totalCount,
-      entries: lines.map(line => ({
-        id: line.id, journalId: line.journalId, accountingDate: dateOnly(line.journal.accountingDate),
-        reference: line.journal.reference, memo: line.journal.memo, position: line.position,
-        debit: line.debit.toFixed(6), credit: line.credit.toFixed(6), isOpeningBalance: line.journal.accountingDate < period.startsOn,
-        reversalOf: line.journal.reversalOf,
-        reversedBy: line.journal.reversedJournals.length > 0,
-      })),
-    };
-  }, { isolationLevel: 'RepeatableRead' });
+  return runUnitOfWork(async ({ client: tx }) => firmTrialBalanceAccountIn(tx, await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ'), accountId, query), { isolationLevel: 'RepeatableRead' });
+}
+
+async function firmTrialBalanceAccountIn(tx: TransactionClient, firmId: string, accountId: string, query: PracticeFirmTrialBalanceDetailQuery): Promise<PracticeFirmTrialBalanceDetail> {
+  const report = await readReport(tx, firmId, query.periodId);
+  const account = report.rows.find(item => item.accountId === accountId);
+  if (!account) throw new NotFoundException('Account not found in this firm');
+  const period = await tx.practicePeriod.findFirst({ where: { id: report.periodId, firmId }, select: { startsOn: true, endsOn: true } });
+  if (!period) throw new NotFoundException('Accounting period not found in this firm');
+  const where = {
+    firmId, accountId,
+    journal: { is: { firmId, status: 'POSTED', accountingDate: { lte: period.endsOn } } },
+  } as const;
+  const [totalCount, lines] = await Promise.all([
+    tx.practiceJournalLine.count({ where }),
+    tx.practiceJournalLine.findMany({
+      where, orderBy: [{ journal: { accountingDate: 'asc' } }, { journalId: 'asc' }, { position: 'asc' }],
+      skip: (query.page - 1) * query.pageSize, take: query.pageSize,
+      select: {
+        id: true, journalId: true, position: true, debit: true, credit: true,
+        journal: { select: { accountingDate: true, reference: true, memo: true, reversalOf: true, reversedJournals: { select: { id: true }, take: 1 } } },
+      },
+    }),
+  ]);
+  return {
+    periodId: report.periodId, account, page: query.page, pageSize: query.pageSize, totalCount,
+    entries: lines.map(line => ({
+      id: line.id, journalId: line.journalId, accountingDate: dateOnly(line.journal.accountingDate),
+      reference: line.journal.reference, memo: line.journal.memo, position: line.position,
+      debit: line.debit.toFixed(6), credit: line.credit.toFixed(6), isOpeningBalance: line.journal.accountingDate < period.startsOn,
+      reversalOf: line.journal.reversalOf,
+      reversedBy: line.journal.reversedJournals.length > 0,
+    })),
+  };
+}
+
+/** D24 (DN-11): the same report on the firm route. The firm comes from the actor's firm-wide grant, and no engagement is named. */
+export async function firmTrialBalanceAccountForActor(actorId: string, accountId: string, query: PracticeFirmTrialBalanceDetailQuery): Promise<PracticeFirmTrialBalanceDetail> {
+  return runUnitOfWork(async ({ client: tx }) => firmTrialBalanceAccountIn(tx, await firmForActor(tx, actorId, 'PRACTICE_READ'), accountId, query), { isolationLevel: 'RepeatableRead' });
 }

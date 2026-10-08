@@ -5,6 +5,7 @@ import { db } from '../../platform/db.js';
 import { Decimal6 } from '../../platform/decimal6.js';
 import { runUnitOfWork, type TransactionClient } from '../../platform/unit-of-work.js';
 import { practiceFirmScope } from './ledger.js';
+import { firmForActor } from './firm-authority.js';
 
 type RawMovement = {
   accountId: string; code: string; name: string; kind: 'INCOME' | 'EXPENSE';
@@ -79,40 +80,52 @@ async function readReport(tx: TransactionClient, firmId: string, query: Practice
 
 /** Posted firm income and expense movement by accounting month; chart kind is the approved statement mapping. */
 export async function firmProfitLoss(actorId: string, engagementId: string, query: PracticeFirmProfitLossQuery): Promise<PracticeFirmProfitLoss> {
-  return runUnitOfWork(async ({ client: tx }) => {
-    const firmId = await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ');
-    return readReport(tx, firmId, query);
-  }, { isolationLevel: 'RepeatableRead' });
+  return runUnitOfWork(async ({ client: tx }) => firmProfitLossIn(tx, await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ'), query), { isolationLevel: 'RepeatableRead' });
+}
+
+async function firmProfitLossIn(tx: TransactionClient, firmId: string, query: PracticeFirmProfitLossQuery): Promise<PracticeFirmProfitLoss> {
+  return readReport(tx, firmId, query);
+}
+
+/** D24 (DN-11): the same report on the firm route. The firm comes from the actor's firm-wide grant, and no engagement is named. */
+export async function firmProfitLossForActor(actorId: string, query: PracticeFirmProfitLossQuery): Promise<PracticeFirmProfitLoss> {
+  return runUnitOfWork(async ({ client: tx }) => firmProfitLossIn(tx, await firmForActor(tx, actorId, 'PRACTICE_READ'), query), { isolationLevel: 'RepeatableRead' });
 }
 
 /** Page through posted journal sources only when the report's mapped-account snapshot still matches. */
 export async function firmProfitLossAccount(actorId: string, engagementId: string, accountId: string, query: PracticeFirmProfitLossDetailQuery): Promise<PracticeFirmProfitLossDetail> {
-  return runUnitOfWork(async ({ client: tx }) => {
-    const firmId = await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ');
-    const report = await readReport(tx, firmId, query);
-    if (report.snapshotHash !== query.snapshotHash) throw new ConflictException('Posted Profit and Loss sources changed since this report was loaded. Reload the report before opening journal detail.');
-    const account = report.rows.find(row => row.accountId === accountId);
-    if (!account) throw new NotFoundException('Mapped income or expense account not found in this firm');
-    const month = query.period === 'CURRENT' ? query.month : query.compareMonth;
-    if (!month) throw new BadRequestException('A comparison month is required to open comparison detail.');
-    const bounds = monthBounds(month);
-    const count = await tx.$queryRaw<Array<{ totalCount: bigint }>>`
-      SELECT COUNT(*) AS "totalCount"
-      FROM "PracticeJournalLine" l JOIN "PracticeJournal" j ON j."firmId" = l."firmId" AND j.id = l."journalId"
-      WHERE l."firmId" = ${firmId}::uuid AND l."accountId" = ${accountId}::uuid AND j.status = 'POSTED'
-        AND j."accountingDate" >= ${bounds.start}::date AND j."accountingDate" < ${bounds.start}::date + INTERVAL '1 month'`;
-    const entries = await tx.$queryRaw<RawEntry[]>`
-      SELECT l.id, l."journalId", j."accountingDate", j.reference, j.memo, l.position,
-        l.debit::text AS debit, l.credit::text AS credit, j."reversalOf",
-        EXISTS (SELECT 1 FROM "PracticeJournal" r WHERE r."firmId" = j."firmId" AND r."reversalOf" = j.id) AS "reversedBy"
-      FROM "PracticeJournalLine" l JOIN "PracticeJournal" j ON j."firmId" = l."firmId" AND j.id = l."journalId"
-      WHERE l."firmId" = ${firmId}::uuid AND l."accountId" = ${accountId}::uuid AND j.status = 'POSTED'
-        AND j."accountingDate" >= ${bounds.start}::date AND j."accountingDate" < ${bounds.start}::date + INTERVAL '1 month'
-      ORDER BY j."accountingDate", j.id, l.position OFFSET ${(query.page - 1) * query.pageSize} LIMIT ${query.pageSize}`;
-    return {
-      parameters: report.parameters, period: query.period, asOf: report.asOf, snapshotHash: report.snapshotHash, account,
-      page: query.page, pageSize: query.pageSize, totalCount: Number(count[0]!.totalCount),
-      entries: entries.map(entry => ({ ...entry, accountingDate: dateOnly(entry.accountingDate), debit: Decimal6.from(entry.debit).toFixed(6), credit: Decimal6.from(entry.credit).toFixed(6) })),
-    };
-  }, { isolationLevel: 'RepeatableRead' });
+  return runUnitOfWork(async ({ client: tx }) => firmProfitLossAccountIn(tx, await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ'), accountId, query), { isolationLevel: 'RepeatableRead' });
+}
+
+async function firmProfitLossAccountIn(tx: TransactionClient, firmId: string, accountId: string, query: PracticeFirmProfitLossDetailQuery): Promise<PracticeFirmProfitLossDetail> {
+  const report = await readReport(tx, firmId, query);
+  if (report.snapshotHash !== query.snapshotHash) throw new ConflictException('Posted Profit and Loss sources changed since this report was loaded. Reload the report before opening journal detail.');
+  const account = report.rows.find(row => row.accountId === accountId);
+  if (!account) throw new NotFoundException('Mapped income or expense account not found in this firm');
+  const month = query.period === 'CURRENT' ? query.month : query.compareMonth;
+  if (!month) throw new BadRequestException('A comparison month is required to open comparison detail.');
+  const bounds = monthBounds(month);
+  const count = await tx.$queryRaw<Array<{ totalCount: bigint }>>`
+    SELECT COUNT(*) AS "totalCount"
+    FROM "PracticeJournalLine" l JOIN "PracticeJournal" j ON j."firmId" = l."firmId" AND j.id = l."journalId"
+    WHERE l."firmId" = ${firmId}::uuid AND l."accountId" = ${accountId}::uuid AND j.status = 'POSTED'
+      AND j."accountingDate" >= ${bounds.start}::date AND j."accountingDate" < ${bounds.start}::date + INTERVAL '1 month'`;
+  const entries = await tx.$queryRaw<RawEntry[]>`
+    SELECT l.id, l."journalId", j."accountingDate", j.reference, j.memo, l.position,
+      l.debit::text AS debit, l.credit::text AS credit, j."reversalOf",
+      EXISTS (SELECT 1 FROM "PracticeJournal" r WHERE r."firmId" = j."firmId" AND r."reversalOf" = j.id) AS "reversedBy"
+    FROM "PracticeJournalLine" l JOIN "PracticeJournal" j ON j."firmId" = l."firmId" AND j.id = l."journalId"
+    WHERE l."firmId" = ${firmId}::uuid AND l."accountId" = ${accountId}::uuid AND j.status = 'POSTED'
+      AND j."accountingDate" >= ${bounds.start}::date AND j."accountingDate" < ${bounds.start}::date + INTERVAL '1 month'
+    ORDER BY j."accountingDate", j.id, l.position OFFSET ${(query.page - 1) * query.pageSize} LIMIT ${query.pageSize}`;
+  return {
+    parameters: report.parameters, period: query.period, asOf: report.asOf, snapshotHash: report.snapshotHash, account,
+    page: query.page, pageSize: query.pageSize, totalCount: Number(count[0]!.totalCount),
+    entries: entries.map(entry => ({ ...entry, accountingDate: dateOnly(entry.accountingDate), debit: Decimal6.from(entry.debit).toFixed(6), credit: Decimal6.from(entry.credit).toFixed(6) })),
+  };
+}
+
+/** D24 (DN-11): the same report on the firm route. The firm comes from the actor's firm-wide grant, and no engagement is named. */
+export async function firmProfitLossAccountForActor(actorId: string, accountId: string, query: PracticeFirmProfitLossDetailQuery): Promise<PracticeFirmProfitLossDetail> {
+  return runUnitOfWork(async ({ client: tx }) => firmProfitLossAccountIn(tx, await firmForActor(tx, actorId, 'PRACTICE_READ'), accountId, query), { isolationLevel: 'RepeatableRead' });
 }

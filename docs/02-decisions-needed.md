@@ -92,6 +92,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-08 — Which module owns review notes
 
+**Resolved 2026-10-08 by the owner: A: move to fieldwork (Recommended).** Recorded as D21 in `docs/decisions/register.json`. **Applied:** the three review-notes files moved to `packages/server/src/modules/fieldwork/`, with their tests and module README updated.
+
 **Context.** Card T108 names owner area `fieldwork`; the code lives in `packages/server/src/modules/reporting/review-notes.ts` with the `reporting` README.
 
 **Options.** A: move to `fieldwork` (matches the ownership table in guide 04: "Fieldwork … notes"). B: keep in `reporting` and amend the card and guide 04.
@@ -102,6 +104,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-09 — Statement classification authority
 
+**Resolved 2026-10-08 by the owner: A: approved taxonomy statementSection (Recommended).** Recorded as D22 in `docs/decisions/register.json`. **Applied:** the split follows the `statementSection` of the governing taxonomy (the mapping approval's version, else the firm's latest approved version); the hard-coded list is removed.
+
 **Context.** The P&L / balance-sheet split is hard-coded (`PROFIT_AND_LOSS_FSLIS` in `fieldwork/service.ts`); the T050 handoff says this is an implementation choice, not policy.
 
 **Recommendation.** The approved taxonomy version's `statementSection` is the only authority (STE-JS-01).
@@ -109,6 +113,8 @@ Format: context → options → recommendation (engineering view only) → block
 **Blocks.** T050, T082.
 
 ## DN-10 — "Systematic random sampling" algorithm
+
+**Resolved 2026-10-08 by the owner: A: systematic selection (Recommended).** Recorded as D23 in `docs/decisions/register.json`. **Applied:** T100 selects with the new `SYSTEMATIC` method (interval N/n, random start recorded with the seed). The seeded draw stays as the `RANDOM` method.
 
 **Context.** T100's port is a seeded random draw without replacement (matching the source), while the specification and card name systematic random sampling (random start, fixed interval).
 
@@ -120,6 +126,8 @@ Format: context → options → recommendation (engineering view only) → block
 
 ## DN-11 — Firm-level Practice routes under an engagement path
 
+**Resolved 2026-10-08 by the owner: A: /api/v1/firm/practice/... (Recommended).** Recorded as D24 in `docs/decisions/register.json`. **Applied for reads:** `/api/v1/firm/practice/...` serves the trial balance, profit and loss and rate administration, and the engagement-prefixed read routes are deprecated. Firm-level writes remain on the engagement path (receipts and audit events are engagement-anchored).
+
 **Context.** Firm ledger, rates, expenses and firm reports are mounted at `/api/v1/engagements/:engagementId/practice/...` although they are firm-wide and authorized by firm-wide grants.
 
 **Options.** A: add `/api/v1/firm/practice/...` and deprecate the engagement-prefixed routes. B: keep and document why.
@@ -129,6 +137,8 @@ Format: context → options → recommendation (engineering view only) → block
 **Blocks.** none directly; affects T140–T148 design.
 
 ## DN-12 — Wording for the contract-contribution metric
+
+**Resolved 2026-10-08 by the owner: Recommended label (Recommended).** Recorded as D25 in `docs/decisions/register.json`. **Applied:** `contractContributionLabel` is attached to every contribution result.
 
 **Context.** The D07 calculator exists (`practice/analytics.ts`) but is unlabelled pending presentation wording (`docs/IMPLEMENTATION-STATUS.md`). T143 AC3 requires labels that distinguish it from ledger P&L.
 

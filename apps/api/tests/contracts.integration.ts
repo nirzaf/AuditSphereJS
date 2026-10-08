@@ -22,7 +22,7 @@ import { toAdjustmentJournalDetailView } from '../../../packages/server/src/modu
 import { toPublicationDetailView } from '../../../packages/server/src/modules/fieldwork/publication-response.js';
 import { toMappingSuggestionsView, toTaxonomyView } from '../../../packages/server/src/modules/fieldwork/taxonomy-response.js';
 import { toLifecycleHistoryView } from '../../../packages/server/src/modules/governance/lifecycle-response.js';
-import { toReviewNoteView } from '../../../packages/server/src/modules/reporting/review-note-response.js';
+import { toReviewNoteView } from '../../../packages/server/src/modules/fieldwork/review-note-response.js';
 import { toCommercialDualKeyStatus, toCommercialProposalView } from '../../../packages/server/src/modules/commercial/commercial-response.js';
 import { toPracticeInvoiceView, toPracticeLedgerView } from '../../../packages/server/src/modules/practice/practice-response.js';
 import { toAuditEventView } from '../../../packages/server/src/platform/audit-response.js';

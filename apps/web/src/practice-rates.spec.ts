@@ -47,7 +47,7 @@ it('loads rate history and active staff while keeping access roles separate from
   fixture.detectChanges();
 
   expect(request).toHaveBeenCalledTimes(1);
-  expect(request.mock.calls[0][0]).toBe(`/api/v1/engagements/${engagementId}/practice/rate-cards`);
+  expect(request.mock.calls[0][0]).toBe('/api/v1/firm/practice/rate-cards');
   expect(view.activeStaff().map(person => person.email)).toEqual(['preparer@example.test']);
   expect(fixture.nativeElement.textContent).toContain('Rate-card administration');
   expect(fixture.nativeElement.textContent).toContain('Job grade controls charge-out pricing; it does not change application permissions.');

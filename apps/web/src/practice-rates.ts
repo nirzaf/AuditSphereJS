@@ -141,8 +141,9 @@ export class PracticeRates {
     return ({ ENGAGEMENT_PARTNER: 'Engagement Partner', AUDIT_MANAGER: 'Audit Manager', AUDIT_SUPERVISOR: 'Audit Supervisor', AUDIT_SENIOR: 'Audit Senior', AUDIT_ASSOCIATE: 'Audit Associate', AUDIT_JUNIOR: 'Audit Junior' } as Record<string, string>)[grade] ?? grade;
   }
 
-  private async request<TSchema extends Parameters<typeof requestContractJson>[1]>(path: string, schema: TSchema, method = 'GET', body?: unknown) {
-    const url = `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice/${path}`;
+  private async request<TSchema extends Parameters<typeof requestContractJson>[1]>(path: string, schema: TSchema, method = 'GET', body?: unknown, firm = false) {
+    // D24 (DN-11): firm-level reads name no engagement; writes stay on the engagement path until their receipts are firm-anchored.
+    const url = firm ? `/api/v1/firm/practice/${path}` : `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice/${path}`;
     const init: RequestInit = { method, headers: { Authorization: `Bearer ${this.token()}`, 'Content-Type': 'application/json' }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) };
     return this.entra()
       ? requestAuthenticatedContractJson(url, schema, init, currentAccessToken)
@@ -161,7 +162,7 @@ export class PracticeRates {
   private async load(generation = this.generation) {
     this.busy.set(true); this.error.set(''); this.message.set('Loading firm rate cards and staff assignments…');
     try {
-      const data = await this.request('rate-cards', practiceRateAdministrationSchema);
+      const data = await this.request('rate-cards', practiceRateAdministrationSchema, 'GET', undefined, true);
       if (generation !== this.generation) return;
       this.data.set(data); this.loaded.set(true); this.message.set('Rate cards and staff grades are current.');
     } catch (error) {

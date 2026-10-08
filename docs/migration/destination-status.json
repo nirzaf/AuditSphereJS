@@ -203,7 +203,7 @@
     "C26": {
       "status": "PARTIAL",
       "targetFiles": [
-        "packages/server/src/modules/reporting/review-notes.ts",
+        "packages/server/src/modules/fieldwork/review-notes.ts",
         "prisma/migrations/202610010018_review_notes/migration.sql",
         "tests/review-notes.integration.ts"
       ],

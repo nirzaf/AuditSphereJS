@@ -9,7 +9,7 @@ import { Decimal6 } from '../../platform/decimal6.js';
  * generator the source uses. Zero-exposure rows are never selected but their signed amount is
  * preserved for the auditor's test sheet.
  */
-export const samplingMethods = ['MUS', 'KEY_ITEM', 'RANDOM', 'STRATIFIED'] as const;
+export const samplingMethods = ['MUS', 'KEY_ITEM', 'RANDOM', 'STRATIFIED', 'SYSTEMATIC'] as const;
 export type SamplingMethod = (typeof samplingMethods)[number];
 
 export type SamplingPopulationItem = { stableRowId: string; signedAmount: Decimal6 };
@@ -18,7 +18,9 @@ export type SampledItem = { stableRowId: string; signedAmount: Decimal6; absolut
 export type SamplingOutcome = {
   method: string; populationCount: number; populationSignedTotal: Decimal6; populationAbsoluteTotal: Decimal6;
   selectedCount: number; selectedAbsoluteTotal: Decimal6; coveragePercent: Decimal6;
-  seed: number | null; interval: Decimal6 | null; keyItemThreshold: Decimal6 | null; items: SampledItem[];
+  seed: number | null; interval: Decimal6 | null; keyItemThreshold: Decimal6 | null;
+  /** D23 (DN-10): the recorded random start and the exact interval N/n, for systematic samples only. */
+  randomStart: number | null; systematicStep: string | null; items: SampledItem[];
 };
 
 const MASK = (1n << 64n) - 1n;
@@ -96,6 +98,25 @@ function selectKeyItems(ordered: SamplingPopulationItem[], threshold: Decimal6):
   return selected;
 }
 
+/**
+ * T100 / D23 (DN-10): systematic random sampling over the ordered population. The interval is N / n. The random start r is
+ * an integer drawn from the recorded seed in [0, N), and the selected positions are floor((r + i·N) / n) for i = 0..n-1.
+ * Every start is equally likely, the positions stay evenly spaced when N / n is fractional, and they are always distinct.
+ * n = N selects every item. An empty population is refused, because there is nothing to sample.
+ */
+function selectSystematic(ordered: SamplingPopulationItem[], sampleSize: number, seed: number): { items: SampledItem[]; randomStart: number } {
+  const count = ordered.length;
+  if (count === 0) throw new Error('A systematic sample needs a population with at least one non-zero exposure.');
+  if (sampleSize > count) throw new Error('The systematic sample size cannot exceed the population.');
+  const cumulative = cumulativeIndex(ordered);
+  const [randomStart] = drawIndexesFrom(ordered.map((_item, index) => index), 1, seed);
+  const items = Array.from({ length: sampleSize }, (_unused, step) => Math.floor((randomStart + step * count) / sampleSize)).map((index) => ({
+    stableRowId: ordered[index].stableRowId, signedAmount: ordered[index].signedAmount, absoluteAmount: ordered[index].signedAmount.abs(),
+    inclusionReason: `Systematic: interval ${count}/${sampleSize} from random start ${randomStart} (seed ${seed}).`, cumulativeAbsoluteAmount: cumulative[index],
+  }));
+  return { items, randomStart };
+}
+
 function selectRandom(ordered: SamplingPopulationItem[], sampleSize: number, seed: number): SampledItem[] {
   const cumulative = cumulativeIndex(ordered);
   return drawIndexesFrom(ordered.map((_item, index) => index), sampleSize, seed).map((index) => ({
@@ -134,7 +155,8 @@ export function selectSample(population: readonly SamplingPopulationItem[], plan
   const signedTotal = Decimal6.sum(population.map((item) => item.signedAmount));
   const absoluteTotal = Decimal6.sum(ordered.map((item) => item.signedAmount.abs()));
 
-  const selected = plan.method === 'MUS' ? selectMonetaryUnit(ordered, requirePositiveDecimal(plan.interval, 'interval', plan.method))
+  const systematic = plan.method === 'SYSTEMATIC' ? selectSystematic(ordered, requireSize(plan.sampleSize, plan.method), requireSeed(plan.seed, plan.method)) : null;
+  const selected = systematic ? systematic.items : plan.method === 'MUS' ? selectMonetaryUnit(ordered, requirePositiveDecimal(plan.interval, 'interval', plan.method))
     : plan.method === 'KEY_ITEM' ? selectKeyItems(ordered, requirePositiveDecimal(plan.keyItemThreshold, 'key-item threshold', plan.method))
     : plan.method === 'RANDOM' ? selectRandom(ordered, requireSize(plan.sampleSize, plan.method), requireSeed(plan.seed, plan.method))
     : selectStratified(ordered, requirePositiveDecimal(plan.keyItemThreshold, 'key-item threshold', plan.method), requireSize(plan.sampleSize, plan.method), requireSeed(plan.seed, plan.method));
@@ -151,6 +173,8 @@ export function selectSample(population: readonly SamplingPopulationItem[], plan
     seed: plan.seed ?? null,
     interval: plan.interval ?? null,
     keyItemThreshold: plan.keyItemThreshold ?? null,
+    randomStart: systematic ? systematic.randomStart : null,
+    systematicStep: systematic ? `${ordered.length}/${plan.sampleSize}` : null,
     items: selected,
   };
 }

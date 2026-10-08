@@ -15,7 +15,7 @@ test('firm trial balance reconciles prior/current periods, excludes drafts and d
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, Decimal6, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, firmTrialBalance, firmTrialBalanceAccount } = await import('@auditsphere/server');
+    const { db, Decimal6, approveFirmPostingPolicy, createPracticeAccount, createPracticePeriod, createPracticeJournal, postPracticeJournal, reversePracticeJournal, firmTrialBalance, firmTrialBalanceAccount, firmTrialBalanceForActor, firmTrialBalanceAccountForActor } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), actorId = randomUUID(), unassignedId = randomUUID();
       await db.firm.create({ data: { id: firmId, name: 'Trial balance firm' } });
@@ -59,6 +59,9 @@ test('firm trial balance reconciles prior/current periods, excludes drafts and d
 
       await assert.rejects(firmTrialBalance(unassignedId, engagementId, { periodId: current.id }), /Engagement assignment is required/);
       const report = await firmTrialBalance(actorId, engagementId, { periodId: current.id });
+      // D24 (DN-11): the firm route serves the same ledger snapshot without naming an engagement, and refuses an actor with no firm-wide grant.
+      assert.deepEqual(await firmTrialBalanceForActor(actorId, { periodId: current.id }), report, 'the firm route serves the same ledger snapshot');
+      await assert.rejects(firmTrialBalanceForActor(unassignedId, { periodId: current.id }), /requires an active firm-wide grant/);
       assert.equal(report.startsOn, '2026-01-01');
       assert.equal(report.snapshotHash, (await firmTrialBalance(actorId, engagementId, { periodId: current.id })).snapshotHash, 'same ledger snapshot must hash deterministically');
       assert.equal(report.totals.openingDebit, '100.000000');
@@ -73,6 +76,7 @@ test('firm trial balance reconciles prior/current periods, excludes drafts and d
       assert.deepEqual(expenseRow && [expenseRow.periodDebit, expenseRow.periodCredit, expenseRow.closingBalance], ['7.500000', '7.500000', '0.000000'], 'a posted reversal remains visible and nets to zero');
 
       const firstPage = await firmTrialBalanceAccount(actorId, engagementId, cash.id, { periodId: current.id, page: 1, pageSize: 2 });
+      assert.deepEqual(await firmTrialBalanceAccountForActor(actorId, cash.id, { periodId: current.id, page: 1, pageSize: 2 }), firstPage, 'the firm drill-down matches the engagement drill-down');
       assert.equal(firstPage.totalCount, 4, 'the detail includes posted opening history through period end and excludes the draft');
       assert.equal(firstPage.account.closingBalance, cashRow?.closingBalance);
       const secondPage = await firmTrialBalanceAccount(actorId, engagementId, cash.id, { periodId: current.id, page: 2, pageSize: 2 });

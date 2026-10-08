@@ -741,6 +741,7 @@ export const trialBalanceStatementLineSchema = z.object({
 export const trialBalanceStatementSummarySchema = z.object({
   profitAndLoss: z.array(trialBalanceStatementLineSchema).max(20), balanceSheet: z.array(trialBalanceStatementLineSchema).max(20),
   unmapped: trialBalanceStatementLineSchema.nullable(),
+  taxonomy: z.object({ id: z.uuid(), version: z.number().int().positive() }).nullable(),
   placeholders: z.object({ accountsReceivable: z.literal('ROUTE_PENDING'), workprograms: z.literal('ROUTE_PENDING') }),
 });
 export const mappingsSavedSchema = z.object({ saved: z.number().int().positive() });

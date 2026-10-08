@@ -11,6 +11,7 @@ import { Decimal6, roundHalfEvenDiv } from '../../platform/decimal6.js';
 import { db } from '../../platform/db.js';
 import { lockForUpdate, runUnitOfWork, withUnitOfWork, type TransactionClient, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { practiceFirmScope } from './ledger.js';
+import { firmForActor } from './firm-authority.js';
 
 const RATE_DEFAULTS = [
   { grade: 'ENGAGEMENT_PARTNER', hourlyRate: '1000.000000' },
@@ -74,21 +75,27 @@ export async function ensurePracticeRateDefaultsForFirm(firmId: string, unitOfWo
 }
 
 export async function listPracticeRateAdministration(actorId: string, engagementId: string) {
-  return runUnitOfWork(async ({ client: tx }) => {
-    const firmId = await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ');
-    const [rateCards, assignments, memberships] = await Promise.all([
-      tx.practiceRateCard.findMany({ where: { firmId }, orderBy: [{ grade: 'asc' }, { effectiveFrom: 'desc' }] }),
-      tx.practiceStaffGradeAssignment.findMany({ where: { firmId }, include: { user: { select: { email: true, role: true } } }, orderBy: [{ userId: 'asc' }, { effectiveFrom: 'desc' }] }),
-      tx.membership.findMany({ where: { firmId }, distinct: ['userId'], select: { user: { select: { id: true, email: true, role: true, active: true } } }, orderBy: { userId: 'asc' } }),
-    ]);
-    return {
-      currency: 'QAR' as const,
-      jobGrades: practiceJobGrades,
-      rateCards: rateCards.map(rate => ({ ...rate, hourlyRate: rate.hourlyRate.toFixed(6) })),
-      assignments: assignments.map(assignment => ({ ...assignment, email: assignment.user.email, accessRole: assignment.user.role, user: undefined })),
-      staff: memberships.map(({ user }) => ({ id: user.id, email: user.email, accessRole: user.role, active: user.active })),
-    };
-  }, { isolationLevel: 'RepeatableRead' });
+  return runUnitOfWork(async ({ client: tx }) => listPracticeRateAdministrationIn(tx, await practiceFirmScope(tx, actorId, engagementId, 'PRACTICE_READ'), ), { isolationLevel: 'RepeatableRead' });
+}
+
+async function listPracticeRateAdministrationIn(tx: TransactionClient, firmId: string) {
+  const [rateCards, assignments, memberships] = await Promise.all([
+    tx.practiceRateCard.findMany({ where: { firmId }, orderBy: [{ grade: 'asc' }, { effectiveFrom: 'desc' }] }),
+    tx.practiceStaffGradeAssignment.findMany({ where: { firmId }, include: { user: { select: { email: true, role: true } } }, orderBy: [{ userId: 'asc' }, { effectiveFrom: 'desc' }] }),
+    tx.membership.findMany({ where: { firmId }, distinct: ['userId'], select: { user: { select: { id: true, email: true, role: true, active: true } } }, orderBy: { userId: 'asc' } }),
+  ]);
+  return {
+    currency: 'QAR' as const,
+    jobGrades: practiceJobGrades,
+    rateCards: rateCards.map(rate => ({ ...rate, hourlyRate: rate.hourlyRate.toFixed(6) })),
+    assignments: assignments.map(assignment => ({ ...assignment, email: assignment.user.email, accessRole: assignment.user.role, user: undefined })),
+    staff: memberships.map(({ user }) => ({ id: user.id, email: user.email, accessRole: user.role, active: user.active })),
+  };
+}
+
+/** D24 (DN-11): the same report on the firm route. The firm comes from the actor's firm-wide grant, and no engagement is named. */
+export async function listPracticeRateAdministrationForActor(actorId: string) {
+  return runUnitOfWork(async ({ client: tx }) => listPracticeRateAdministrationIn(tx, await firmForActor(tx, actorId, 'PRACTICE_READ'), ), { isolationLevel: 'RepeatableRead' });
 }
 
 export async function schedulePracticeRateCard(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {

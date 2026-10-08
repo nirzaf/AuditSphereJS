@@ -37,7 +37,7 @@ it('loads comparison months, drills to posted sources, and exports the exact rep
   view.month.set('2026-04'); view.compareMonth.set('2025-04'); view.refresh();
   await vi.waitFor(() => expect(view.report()?.snapshotHash).toBe(snapshotHash));
   fixture.detectChanges();
-  expect(fetcher.mock.calls[0]?.[0]).toBe(`/api/v1/engagements/${engagementId}/practice/reports/profit-loss?month=2026-04&compareMonth=2025-04`);
+  expect(fetcher.mock.calls[0]?.[0]).toBe('/api/v1/firm/practice/reports/profit-loss?month=2026-04&compareMonth=2025-04');
   expect(fixture.nativeElement.querySelector('#profit-loss-month')?.getAttribute('aria-describedby')).toBe('profit-loss-month-help');
   expect(fixture.nativeElement.querySelector('#profit-loss-comparison')?.getAttribute('aria-describedby')).toBe('profit-loss-comparison-help');
   expect(fixture.nativeElement.querySelector('[role="status"]')?.textContent).toContain('loaded for 2026-04');

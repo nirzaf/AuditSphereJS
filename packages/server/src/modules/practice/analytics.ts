@@ -15,12 +15,16 @@ import { Decimal6, roundHalfEvenDiv } from '../../platform/decimal6.js';
  */
 const UNIT = 10n ** 6n;
 
+/** D25 (DN-12): the only approved wording for the contract-contribution figure. It is not accounting profit. */
+export const contractContributionLabel = 'Contract contribution (fee minus charge-out value of approved time) — not accounting profit';
+
 export type ContractTimeValue = {
   minutes: number;
   capturedRate: Decimal6 | null;
   currency: string | null;
 };
 export type ContractContribution = {
+  label: typeof contractContributionLabel;
   lifetimeStandardValue: Decimal6;
   feeLessStandardValue: Decimal6;
 };
@@ -57,5 +61,5 @@ export function calculateContractContribution(fee: Decimal6, currency: string, a
   let numerator = 0n;
   for (const entry of approvedTime) numerator += BigInt(entry.minutes) * (entry.capturedRate as Decimal6).minor;
   const lifetimeStandardValue = fromMinor(roundHalfEvenDiv(numerator, 60n));
-  return { lifetimeStandardValue, feeLessStandardValue: fee.subtract(lifetimeStandardValue) };
+  return { label: contractContributionLabel, lifetimeStandardValue, feeLessStandardValue: fee.subtract(lifetimeStandardValue) };
 }

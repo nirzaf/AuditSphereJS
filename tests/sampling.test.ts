@@ -89,3 +89,39 @@ describe('audit sampling engine ported from the pinned source', () => {
     expect(outcome.populationAbsoluteTotal.equals(Decimal6.from(item.expected.populationAbsoluteTotal))).toBe(true);
   });
 });
+
+describe('D23 (DN-10): systematic random sampling with a recorded random start', () => {
+  const population = Array.from({ length: 10 }, (_value, index) => ({ stableRowId: `r${index + 1}`, signedAmount: Decimal6.from(String((index + 1) * 100)) }));
+
+  it('selects evenly spaced positions from the recorded start and records the start and the interval', () => {
+    const outcome = selectSample(population, { method: 'SYSTEMATIC', sampleSize: 3, seed: 7 });
+    const start = drawIndexesFrom(population.map((_item, index) => index), 1, 7)[0];
+    const expected = [0, 1, 2].map((step) => population[Math.floor((start + step * 10) / 3)].stableRowId);
+    expect(outcome.items.map((item) => item.stableRowId)).toEqual(expected);
+    expect(outcome.randomStart).toBe(start);
+    expect(outcome.systematicStep).toBe('10/3');
+    expect(outcome.selectedCount).toBe(3);
+  });
+
+  it('is reproducible from the seed and always selects distinct rows', () => {
+    for (let seed = 0; seed < 50; seed += 1) {
+      const first = selectSample(population, { method: 'SYSTEMATIC', sampleSize: 4, seed }).items.map((item) => item.stableRowId);
+      const again = selectSample(population, { method: 'SYSTEMATIC', sampleSize: 4, seed }).items.map((item) => item.stableRowId);
+      expect(again).toEqual(first);
+      expect(new Set(first).size).toBe(4);
+    }
+  });
+
+  it('selects everything when the sample size equals the population, and refuses empty or oversized samples', () => {
+    const everything = selectSample(population, { method: 'SYSTEMATIC', sampleSize: 10, seed: 3 });
+    expect(everything.items.map((item) => item.stableRowId).sort()).toEqual(population.map((item) => item.stableRowId).sort());
+    expect(() => selectSample(population, { method: 'SYSTEMATIC', sampleSize: 11, seed: 3 })).toThrow(/cannot exceed/);
+    expect(() => selectSample([], { method: 'SYSTEMATIC', sampleSize: 1, seed: 3 })).toThrow(/at least one non-zero exposure/);
+  });
+
+  it('leaves the random-start fields empty for the other methods', () => {
+    const outcome = selectSample(population, { method: 'RANDOM', sampleSize: 2, seed: 5 });
+    expect(outcome.randomStart).toBeNull();
+    expect(outcome.systematicStep).toBeNull();
+  });
+});

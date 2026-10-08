@@ -36,7 +36,8 @@ export class PracticeTrialBalance {
   readonly accountId = signal('');
   readonly message = signal('Load posted Practice journals to review the firm trial balance.');
 
-  private path(suffix = '') { return `/api/v1/engagements/${encodeURIComponent(this.engagementId())}/practice/reports/trial-balance${suffix}`; }
+  /** D24 (DN-11): the firm trial balance reads name no engagement. */
+  private path(suffix = '') { return `/api/v1/firm/practice/reports/trial-balance${suffix}`; }
 
   private async request<TSchema extends z.ZodType>(path: string, schema: TSchema) {
     const init: RequestInit = { headers: this.entra() ? {} : { Authorization: `Bearer ${this.token()}` } };

@@ -33,7 +33,7 @@ it('loads the real posted-only report, opens account detail and exposes an acces
   view.refresh();
   await vi.waitFor(() => expect(view.report()?.snapshotHash).toBe(snapshotHash));
   fixture.detectChanges();
-  expect(fetcher.mock.calls[0][0]).toBe(`/api/v1/engagements/${engagementId}/practice/reports/trial-balance`);
+  expect(fetcher.mock.calls[0][0]).toBe('/api/v1/firm/practice/reports/trial-balance');
   expect(fixture.nativeElement.textContent).toContain('Posted firm journals only');
   expect(fixture.nativeElement.textContent).toContain('125.000000');
   expect(fixture.nativeElement.querySelector('#trial-balance-period')).not.toBeNull();

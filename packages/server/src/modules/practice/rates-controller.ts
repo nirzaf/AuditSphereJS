@@ -1,5 +1,5 @@
-import { ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
-import { Body, Controller, Get, Param, Post, SerializeOptions, StandardSchemaSerializerInterceptor, StandardSchemaValidationPipe, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
+import { ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import { Body, Controller, Get, Header, Param, Post, SerializeOptions, StandardSchemaSerializerInterceptor, StandardSchemaValidationPipe, UseGuards, UseInterceptors, UsePipes } from '@nestjs/common';
 import { apiProblemSchema, createPracticeRateCardSchema, createPracticeStaffGradeAssignmentSchema, practiceRateAdministrationSchema, practiceRateCardViewSchema, practiceStaffGradeAssignmentViewSchema } from '@auditsphere/contracts';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
@@ -15,6 +15,9 @@ import { toPracticeRateAdministrationView, toPracticeRateCardView, toPracticeSta
 @Controller('engagements/:engagementId/practice')
 export class PracticeRatesController {
   @Get('rate-cards')
+  @Header('Deprecation', 'true')
+  @Header('Link', '</api/v1/firm/practice/rate-cards>; rel="successor-version"')
+  @ApiOperation({ deprecated: true, summary: 'Deprecated (D24): use the firm route' })
   @ApiOkResponse({ standardSchema: practiceRateAdministrationSchema })
   @SerializeOptions({ schema: practiceRateAdministrationSchema })
   async read(@ReqActor() actorId: string, @Param('engagementId') engagementId: string) {

@@ -3,7 +3,7 @@
 Status: DONE (notes, authority and no-self-review); rework, SRM, clearances and the UI remain
 Intent: Record reviewer points against a workpackage with explicit, grant-based review authority, refuse self-review, and freeze a resolved note so review history cannot be rewritten.
 Source commit and files: `nirzaf/AuditSphere@64713e808d165b4ef91ea4be4979e0f98fb2def3`; `Application/Reviews/ReviewNotesService.cs` and the review/completion services in `Application/Reviews` and `Application/Completion`.
-Destination commit and files: `packages/server/src/modules/reporting/review-notes.ts`, `packages/server/src/modules/reporting/review-notes-controller.ts`, `prisma/migrations/202610010018_review_notes/migration.sql`, `tests/review-notes.integration.ts`.
+Destination commit and files: `packages/server/src/modules/fieldwork/review-notes.ts`, `packages/server/src/modules/fieldwork/review-notes-controller.ts`, `prisma/migrations/202610010018_review_notes/migration.sql`, `tests/review-notes.integration.ts`.
 Existing T-task links: T107–T110; C26.
 Dependencies: WP6 capabilities and the WP4 scope model.
 Scope: `ReviewNote` anchored to a workpackage reference; `REVIEW_RAISE` to raise and `REVIEW_RESOLVE` to resolve; the raiser can never resolve; one OPEN→RESOLVED transition; a resolved note is frozen and notes are never deleted; open/resolved listing and a summary.

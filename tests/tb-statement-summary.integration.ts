@@ -36,7 +36,7 @@ test('T050 Trial Balance summary is statement-ordered, database-aggregated, vari
     const uri = container.getConnectionUri();
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env: { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri }, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, { NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri, STORAGE_PROVIDER: 'local-s3', S3_BUCKET: 'evidence-tb-summary' });
-    const { db, upload, mapBatch, finalize, statementSummary, retrieveBytes } = await import('@auditsphere/server');
+    const { db, upload, mapBatch, finalize, statementSummary, retrieveBytes, createTaxonomyVersion, approveTaxonomyVersion } = await import('@auditsphere/server');
     const { createTrialBalanceImportProcessor } = await import('../packages/server/src/modules/fieldwork/import-worker.js');
     const processImport = createTrialBalanceImportProcessor(async document => retrieveBytes(document.key));
     try {
@@ -53,6 +53,16 @@ test('T050 Trial Balance summary is statement-ordered, database-aggregated, vari
       await db.membership.updateMany({ where: { userId: finalizerId, engagementId }, data: { role: 'REVIEWER' } });
       await db.roleGrant.create({ data: { userId: finalizerId, capability: 'FIELDWORK_FINALIZE', firmId, clientId, engagementId, grantedBy: preparerId } });
 
+      // D22 (DN-09): the approved taxonomy's statementSection decides the split. Income and expense sections are profit and loss.
+      await db.roleGrant.create({ data: { userId: finalizerId, capability: 'TAXONOMY_MANAGE', firmId, clientId, engagementId, grantedBy: preparerId } });
+      const taxonomy = await createTaxonomyVersion(finalizerId, engagementId, { name: 'STE-STATUTORY', lines: [
+        { code: 'Revenue', label: 'Revenue', statementSection: 'INCOME', sortOrder: 1 },
+        { code: 'Operating expenses', label: 'Operating expenses', statementSection: 'EXPENSE', sortOrder: 2 },
+        { code: 'Cash and equivalents', label: 'Cash and equivalents', statementSection: 'ASSETS', sortOrder: 3 },
+        { code: 'Trade receivables', label: 'Trade receivables', statementSection: 'ASSETS', sortOrder: 4 },
+        { code: 'Trade payables', label: 'Trade payables', statementSection: 'LIABILITIES', sortOrder: 5 },
+      ] }) as { id: string; version: number };
+      await approveTaxonomyVersion(finalizerId, engagementId, taxonomy.id, { expectedVersion: taxonomy.version });
       const batch = await upload(engagementId, preparerId, { filename: 'summary.csv', csv }) as { id: string };
       const event = await db.outboxEvent.findFirstOrThrow({ where: { type: 'tb.import', importId: batch.id } });
       await processImport({ id: event.operationId, data: { outboxEventId: event.id, operationId: event.operationId, payloadVersion: 1 }, attemptsMade: 0, opts: { attempts: 3 } } as never);
@@ -89,6 +99,7 @@ test('T050 Trial Balance summary is statement-ordered, database-aggregated, vari
         { fsli: 'Trade payables', current: '0.000000', prior: '20.000000', change: '-20.000000', percent: '-100.000000', direction: 'DECREASE', count: 1 },
       ], 'balance sheet lines follow the balance sheet, with NO_BASE for the zero prior base');
       assert.equal(summary.unmapped, null);
+      assert.deepEqual(summary.taxonomy, { id: taxonomy.id, version: 1 }, 'the summary names the taxonomy version that classified it');
       assert.deepEqual(summary.placeholders, { accountsReceivable: 'ROUTE_PENDING', workprograms: 'ROUTE_PENDING' });
 
       // Both statements together balance to zero in each period, as the finalized source does.
@@ -101,6 +112,22 @@ test('T050 Trial Balance summary is statement-ordered, database-aggregated, vari
       assert.doesNotMatch(serialized, /"code"|"rowId"|"name":/);
       for (const code of Object.keys(mapping)) assert.doesNotMatch(serialized, new RegExp(`"${code}"`));
       assert.ok(summary.profitAndLoss.length + summary.balanceSheet.length <= 5, 'at most one line per FSLI');
+
+      // D22 (DN-09): a newer approved version that classifies Operating expenses as an asset moves that line to the
+      // balance sheet, without any code change, and the summary names the version that classified it.
+      const reclassified = await createTaxonomyVersion(finalizerId, engagementId, { name: 'STE-STATUTORY', lines: [
+        { code: 'Revenue', label: 'Revenue', statementSection: 'INCOME', sortOrder: 1 },
+        { code: 'Operating expenses', label: 'Operating expenses', statementSection: 'ASSETS', sortOrder: 2 },
+        { code: 'Cash and equivalents', label: 'Cash and equivalents', statementSection: 'ASSETS', sortOrder: 3 },
+        { code: 'Trade receivables', label: 'Trade receivables', statementSection: 'ASSETS', sortOrder: 4 },
+        { code: 'Trade payables', label: 'Trade payables', statementSection: 'LIABILITIES', sortOrder: 5 },
+      ] }) as { id: string; version: number };
+      await approveTaxonomyVersion(finalizerId, engagementId, reclassified.id, { expectedVersion: reclassified.version });
+      const afterReclassification = await statementSummary(engagementId, batch.id);
+      assert.deepEqual(afterReclassification.taxonomy, { id: reclassified.id, version: 2 });
+      assert.deepEqual(afterReclassification.profitAndLoss.map(line => line.fsli), ['Revenue']);
+      assert.ok(afterReclassification.balanceSheet.some(line => line.fsli === 'Operating expenses' && line.current === '50.000000'), 'the reclassified line sits on the balance sheet');
+      assert.equal(sum([...afterReclassification.profitAndLoss, ...afterReclassification.balanceSheet], 'current'), 0);
 
       console.log('T050 summary: database aggregation, statement order, zero-base variance, aggregates-only output and finalization gates verified on PostgreSQL 18.6');
     } finally {

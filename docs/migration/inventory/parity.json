@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-10-02T20:08:39.185Z",
+  "generatedAt": "2026-10-08T17:26:03.500Z",
   "sourceCommit": null,
   "counts": {
-    "PARTIAL": 15,
-    "NOT_STARTED": 23
+    "PARTIAL": 17,
+    "NOT_STARTED": 21
   },
   "rows": [
     {
@@ -97,6 +97,61 @@
         "tests/quotation.test.ts"
       ],
       "evidence": "Pure fee model ported from the source: sum(hours × rate) → complexity → risk premium → discount with every stage rounded to two decimals half-to-even so the breakdown reconciles to the fee, plus input validation that fails closed and a canonical input hash. The configurable approval matrix is ported with its fail-safe Partner default. docs/migration/03-differential-report.md reports 46/46 checks matched. Not implemented: persisted quotation versions, tender/proposal documents, dispatch and client acceptance of an exact version."
+    },
+    {
+      "id": "C06",
+      "capability": "Acceptance, continuance and activation",
+      "destinationOwner": "Governance acceptance and lifecycle",
+      "taskAnchor": "T056-T059, T063, T073",
+      "migEpic": "MIG-006",
+      "symbols": [
+        "AcceptanceRules",
+        "EngagementLifecycleService"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs",
+        "src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs"
+      ],
+      "sourceFileCount": 2,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/modules/commercial/proposals.ts",
+        "packages/server/src/modules/governance/lifecycle.ts",
+        "prisma/migrations/202610020022_commercial_onboarding/migration.sql"
+      ],
+      "evidence": "Real dual-key gate: Key 1 (accepted proposal with client evidence) and Key 2 (RISK_PARTNER_CLEAR clearance with reason) are persisted records; ISSUE_ENGAGEMENT_LETTER refuses either missing key and issues an immutable ISA 210 letter pinning the exact revision and fee. Not implemented: the full ISA 220 questionnaire tracks, continuance path and acceptance cases."
+    },
+    {
+      "id": "C07",
+      "capability": "Fee agreements and automatic fee invoices",
+      "destinationOwner": "Commercial fee agreement / practice invoicing",
+      "taskAnchor": "T065, T069-T072, T125; MIG-006",
+      "migEpic": "MIG-006",
+      "symbols": [
+        "FeeAgreementService",
+        "AutomaticFeeInvoiceHandler",
+        "AutomaticFeeInvoicePolicy",
+        "CommercialDocumentService"
+      ],
+      "sourceFiles": [
+        "src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs",
+        "src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs",
+        "src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs",
+        "src/AuditSphereOps.Application/Practice/FeeAgreementService.cs"
+      ],
+      "sourceFileCount": 4,
+      "domainApi": "PARTIAL",
+      "dataReadiness": "NOT_ASSESSED",
+      "uiJourney": "PARTIAL",
+      "providerAcceptance": "NOT_VERIFIED",
+      "targetFiles": [
+        "packages/server/src/modules/practice/invoices.ts",
+        "packages/server/src/modules/practice/ledger-controller.ts"
+      ],
+      "evidence": "Canonical firm-numbered engagement invoices (ADVANCE_50/FINAL_50) with immutable payments and one receipt per settled invoice; the advance chain gates portal activation (INV-002). Not implemented: ledger posting of invoices, credit notes, AR aging, and fee agreement documents."
     },
     {
       "id": "C11",
@@ -265,7 +320,7 @@
       "uiJourney": "PARTIAL",
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [
-        "packages/server/src/modules/reporting/review-notes.ts",
+        "packages/server/src/modules/fieldwork/review-notes.ts",
         "prisma/migrations/202610010018_review_notes/migration.sql",
         "tests/review-notes.integration.ts"
       ],
@@ -622,54 +677,6 @@
       "providerAcceptance": "NOT_VERIFIED",
       "targetFiles": [],
       "evidence": "No CRM module implementation; packages/server/src/modules/commercial/README.md only."
-    },
-    {
-      "id": "C06",
-      "capability": "Acceptance, continuance and activation",
-      "destinationOwner": "Governance acceptance and lifecycle",
-      "taskAnchor": "T056-T059, T063, T073",
-      "migEpic": "MIG-006",
-      "symbols": [
-        "AcceptanceRules",
-        "EngagementLifecycleService"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Acceptance/AcceptanceRules.cs",
-        "src/AuditSphereOps.Application/Acceptance/EngagementLifecycleService.cs"
-      ],
-      "sourceFileCount": 2,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No acceptance/continuance rules or guarded engagement lifecycle."
-    },
-    {
-      "id": "C07",
-      "capability": "Fee agreements and automatic fee invoices",
-      "destinationOwner": "Commercial fee agreement / practice invoicing",
-      "taskAnchor": "T065, T069-T072, T125; MIG-006",
-      "migEpic": "MIG-006",
-      "symbols": [
-        "FeeAgreementService",
-        "AutomaticFeeInvoiceHandler",
-        "AutomaticFeeInvoicePolicy",
-        "CommercialDocumentService"
-      ],
-      "sourceFiles": [
-        "src/AuditSphereOps.Application/Practice/AutomaticFeeInvoices.cs",
-        "src/AuditSphereOps.Application/Practice/CommercialDocumentService.Tender.cs",
-        "src/AuditSphereOps.Application/Practice/CommercialDocumentService.cs",
-        "src/AuditSphereOps.Application/Practice/FeeAgreementService.cs"
-      ],
-      "sourceFileCount": 4,
-      "domainApi": "NOT_STARTED",
-      "dataReadiness": "NOT_ASSESSED",
-      "uiJourney": "NOT_IMPLEMENTED",
-      "providerAcceptance": "NOT_VERIFIED",
-      "targetFiles": [],
-      "evidence": "No fee agreement or invoice automation."
     },
     {
       "id": "C08",

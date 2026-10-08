@@ -1,5 +1,5 @@
-import { BadRequestException, Body, Controller, Get, Headers, Param, Post, Put, Query, Req, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Body, Controller, Get, Header, Headers, Param, Post, Put, Query, Req, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   apiProblemSchema, invoiceReceiptSchema, invoiceIssuedResultSchema, invoicePaymentResultSchema,
   invoiceReceiptResultSchema, invoiceViewSchema, invoicesSchema, issueInvoiceSchema, invoiceVoidResultSchema, voidInvoiceSchema, practiceAccountSchema,
@@ -29,6 +29,9 @@ type MultipartRequest = { file: (options?: { limits?: { fileSize?: number; files
 @Controller('engagements/:engagementId/practice')
 export class PracticeLedgerController {
   @Get('reports/trial-balance')
+  @Header('Deprecation', 'true')
+  @Header('Link', '</api/v1/firm/practice/reports/trial-balance>; rel="successor-version"')
+  @ApiOperation({ deprecated: true, summary: 'Deprecated (D24): use the firm route' })
   @ApiOkResponse({ standardSchema: practiceFirmTrialBalanceSchema })
   @SerializeOptions({ schema: practiceFirmTrialBalanceSchema })
   trialBalance(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Query({ schema: practiceFirmTrialBalanceQuerySchema }) query: PracticeFirmTrialBalanceQuery) {
@@ -36,6 +39,9 @@ export class PracticeLedgerController {
   }
 
   @Get('reports/trial-balance/accounts/:accountId')
+  @Header('Deprecation', 'true')
+  @Header('Link', '</api/v1/firm/practice/reports/trial-balance/accounts/{accountId}>; rel="successor-version"')
+  @ApiOperation({ deprecated: true, summary: 'Deprecated (D24): use the firm route' })
   @ApiOkResponse({ standardSchema: practiceFirmTrialBalanceDetailSchema })
   @SerializeOptions({ schema: practiceFirmTrialBalanceDetailSchema })
   trialBalanceAccount(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('accountId') accountId: string, @Query({ schema: practiceFirmTrialBalanceDetailQuerySchema }) query: PracticeFirmTrialBalanceDetailQuery) {
@@ -43,6 +49,9 @@ export class PracticeLedgerController {
   }
 
   @Get('reports/profit-loss')
+  @Header('Deprecation', 'true')
+  @Header('Link', '</api/v1/firm/practice/reports/profit-loss>; rel="successor-version"')
+  @ApiOperation({ deprecated: true, summary: 'Deprecated (D24): use the firm route' })
   @ApiOkResponse({ standardSchema: practiceFirmProfitLossSchema })
   @SerializeOptions({ schema: practiceFirmProfitLossSchema })
   profitLoss(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Query({ schema: practiceFirmProfitLossQuerySchema }) query: PracticeFirmProfitLossQuery) {
@@ -50,6 +59,9 @@ export class PracticeLedgerController {
   }
 
   @Get('reports/profit-loss/accounts/:accountId')
+  @Header('Deprecation', 'true')
+  @Header('Link', '</api/v1/firm/practice/reports/profit-loss/accounts/{accountId}>; rel="successor-version"')
+  @ApiOperation({ deprecated: true, summary: 'Deprecated (D24): use the firm route' })
   @ApiOkResponse({ standardSchema: practiceFirmProfitLossDetailSchema })
   @SerializeOptions({ schema: practiceFirmProfitLossDetailSchema })
   profitLossAccount(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('accountId') accountId: string, @Query({ schema: practiceFirmProfitLossDetailQuerySchema }) query: PracticeFirmProfitLossDetailQuery) {
