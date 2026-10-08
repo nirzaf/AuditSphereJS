@@ -12,17 +12,17 @@ The repository already has most layers. This pack adds only what is missing or w
 | --- | --- | --- | --- |
 | 1 | Product brief / requirements | `docs/requirements/CURRENT.md` (byte-locked v2.1), coverage IDs in `docs/guides/06-requirements-traceability.md` | — (do not edit CURRENT) |
 | 2 | Glossary | none existed | [01-glossary.md](01-glossary.md) |
-| 3 | Architecture | `docs/guides/04-architecture-contract.md`, module READMEs `packages/server/src/modules/*/README.md` | Corrections in [04-agent-manual-corrections.md](04-agent-manual-corrections.md) (`docs/architecture/ARCHITECTURE.md` is stale) |
+| 3 | Architecture | `docs/guides/04-architecture-contract.md`, module READMEs `packages/server/src/modules/*/README.md` | Corrections applied in `653fdcb` (pack file removed) (`docs/architecture/ARCHITECTURE.md` is stale) |
 | 4 | Decisions | `docs/decisions/register.json` (D01–D12, all approved defaults), `docs/adr/0001-rustfs.md` | New open decisions DN-01…DN-13 in [02-decisions-needed.md](02-decisions-needed.md) |
 | 5 | Data model | `prisma/schema.prisma`, `prisma/migrations/` | — (executable; read the model you change) |
 | 6 | API contract | `packages/contracts/src/index.ts`, `packages/contracts/openapi.json`, `pnpm contracts:check` | — |
 | 7 | Non-functional requirements | `docs/guides/12-performance-and-recovery-targets.md` (targets "approval pending") | Proposed numbers to approve in [03-nfr-targets.md](03-nfr-targets.md) |
-| 8 | Agent manual | `AGENTS.md` (root), `docs/AGENTS.md` | Exact corrections in [04-agent-manual-corrections.md](04-agent-manual-corrections.md) |
+| 8 | Agent manual | `AGENTS.md` (root), `docs/AGENTS.md` | Exact corrections applied in `653fdcb` (pack file removed) |
 | 9 | Test strategy / Definition of Done | `docs/guides/07-testing-and-invariants.md`, DoD in `AGENTS.md` | Additions for remaining work in [07-definition-of-done-additions.md](07-definition-of-done-additions.md) |
 | 10 | Roadmap | `docs/guides/01-execution-order.md` (numeric order) | Dependency- and review-ordered plan in [05-roadmap.md](05-roadmap.md) |
 | 11 | Stories | task cards `docs/tasks/<phase>/T###-*.md` | Verified deltas per remaining task in [stories/](stories/) |
 | 12 | Spikes | none | [06-spikes.md](06-spikes.md) |
-| 13 | Task prompt | none | [08-task-prompt.md](08-task-prompt.md) |
+| 13 | Task prompt | none | Superseded: `AGENTS.md` and `CLAUDE.md` are the session entry point (pack file removed) |
 | + | Removal guideline | none | [09-removal-guideline.md](09-removal-guideline.md) |
 
 ## 2. Status at `9b65b2b`

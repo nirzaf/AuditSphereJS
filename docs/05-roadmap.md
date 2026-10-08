@@ -21,7 +21,7 @@ Two consequences:
 | Item | Source |
 | --- | --- |
 | Update the ledger and status headers | STE-JS-05 |
-| Apply the agent-manual corrections | `04-agent-manual-corrections.md` |
+| Apply the agent-manual corrections | applied in `653fdcb` |
 | Owner decisions DN-01 … DN-07 and DN-13 | `02-decisions-needed.md` |
 
 **Exit:** ledger matches code; decisions recorded in `register.json`.
