@@ -75,6 +75,7 @@ const tasks = {
   T046: ['build:server', 'contracts:check', 'taxonomy', 'tb-batch-mapping'],
   T051: ['build:server', 'contracts:check', 'tb-fixtures', 'trial-balance-staging', 'tb-batch-mapping'],
   T060: ['build:server', 'contracts:check', 'quotation'],
+  T062: ['build:server', 'contracts:check', 'proposal-acceptance', 'portal-auth', 'commercial-onboarding', 'billing-gates', 'commercial-crm', 'acceptance-cases', 'test:web:proposal-acceptance', 'test:web:module-workspace'],
   T080: ['build:server', 'contracts:check', 'taxonomy', 'tb-batch-mapping'],
   T087: ['build:server', 'contracts:check', 'risk'],
   T088: ['build:server', 'contracts:check', 'materiality-persistence', 'lifecycle'],
@@ -108,6 +109,11 @@ for (const step of tasks[id]) {
   if (step === 'ci-workflow' || step === 'install-policy') {
     const script = step === 'ci-workflow' ? 'verify-ci-workflow.mjs' : 'verify-pnpm-install-policy.mjs';
     const result = spawnSync(process.execPath, [`scripts/${script}`], { stdio: 'inherit' });
+    if (result.status !== 0) process.exit(result.status || 1);
+    continue;
+  }
+  if (step === 'proposal-acceptance') {
+    const result = spawnSync(process.execPath, ['--import', 'tsx', '--test', 'apps/api/tests/proposal-acceptance.integration.ts'], { stdio: 'inherit' });
     if (result.status !== 0) process.exit(result.status || 1);
     continue;
   }

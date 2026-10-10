@@ -1,3 +1,4 @@
+import { acceptPresentedProposalFixture } from './factories/proposal-client.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -18,7 +19,7 @@ test('the acceptance questionnaire feeds Key 2 with versioned, segregated, stale
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase, engagementIdentity, applyLifecycleCommand, createProposal, presentProposal, acceptProposal, createEngagement } = await import('@auditsphere/server');
+    const { db, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase, engagementIdentity, applyLifecycleCommand, createProposal, presentProposal, createEngagement } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), userId = randomUUID(), partnerId = randomUUID(), partner2Id = randomUUID();
       await db.user.createMany({ data: [
@@ -72,7 +73,7 @@ test('the acceptance questionnaire feeds Key 2 with versioned, segregated, stale
       await lifecycle(engagementId, 'OPEN_PROPOSAL', userId);
       await presentProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1 });
       await lifecycle(engagementId, 'DISPATCH_PROPOSAL');
-      await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
+      await acceptPresentedProposalFixture(userId, engagementId, proposal.id);
 
       // T057 AC2 — the preparer of the review cannot self-clear.
       await assert.rejects(clearAcceptanceCase(partnerId, engagementId, { idempotencyKey: key(), reason: 'Self-clearing attempt with a full reason.' }), /cannot self-clear/);

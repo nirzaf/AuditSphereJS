@@ -3,6 +3,7 @@
 | Field | Value |
 | :--- | :--- |
 | Initial status | `NOT_STARTED` |
+| Current status | `IN_PROGRESS` (client-acceptance security correction; full dispatch pending) |
 | Execution class | `CORE` |
 | Phase | 05-commercial — Commercial and acceptance onboarding |
 | Owner area | `commercial` |
@@ -13,6 +14,8 @@
 Partner-authorize the proposal before dispatch under the role policy.
 
 ## Required context and prerequisites
+
+**2026-10-09 correction scope (D32):** the confirmed staff-acceptance defect may be corrected using the tested existing portal, contact, audit and receipt interfaces while their wider task reviews remain pending. This does not satisfy T061 comprehensive rendering or T062 notification dispatch. Full task acceptance retains those prerequisites. See [D32](../../decisions/D32-implementation-readiness.md).
 
 Read [root agent rules](../../AGENTS.md), this task, the owning module README when it exists, and the exact relevant source ranges in [the preserved CURRENT requirements](../../sources/requirements-current.md). Do not load every task into the agent context.
 
@@ -51,6 +54,7 @@ Use [the compatibility policy](../../guides/02-compatibility-matrix.md) and [the
 
 - [ ] Partner-authorize the proposal before dispatch under the role policy.
 - [ ] Persist delivery attempts and a secure client-acceptance flow tied to proposal ID/version/fee/terms digest.
+  - Client-acceptance credential, exact displayed commercial terms, partner authorization and portal decision are implemented; automatic document/notification delivery attempts remain pending.
 - [ ] Verify acceptance token scope, expiry and single-use behavior; separate acceptance from ordinary portal access.
 - [ ] A revised fee or scope requires acceptance of the revised proposal, not reuse of an old key.
 

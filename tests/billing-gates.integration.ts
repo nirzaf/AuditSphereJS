@@ -1,3 +1,4 @@
+import { acceptPresentedProposalFixture } from './factories/proposal-client.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -18,7 +19,7 @@ test('the dual-key gate closes all key combinations and billing milestones round
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, createProposal, presentProposal, acceptProposal, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase, recordRiskClearance, approveFirmPostingPolicy, issueInvoice, recordInvoicePayment, issueInvoiceReceipt, applyLifecycleCommand } = await import('@auditsphere/server');
+    const { db, createProposal, presentProposal, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase, recordRiskClearance, approveFirmPostingPolicy, issueInvoice, recordInvoicePayment, issueInvoiceReceipt, applyLifecycleCommand } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), userId = randomUUID(), partnerId = randomUUID(), billingId = randomUUID();
       await db.user.createMany({ data: [
@@ -61,7 +62,7 @@ test('the dual-key gate closes all key combinations and billing milestones round
       await completeAcceptanceReview(userId, engagementId);
       await clearAcceptanceCase(partnerId, engagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance complete; independence confirmed.' });
       await assert.rejects(lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId), /Key 1 is missing/, 'risk clearance without client acceptance never issues the letter');
-      await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
+      await acceptPresentedProposalFixture(userId, engagementId, proposal.id);
       await lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId);
       assert.ok(await db.engagementLetterRecord.findUnique({ where: { engagementId } }));
 
@@ -88,8 +89,8 @@ test('the dual-key gate closes all key combinations and billing milestones round
       await recordAcceptanceAnswer(userId, driftEngagementId, { idempotencyKey: key(), questionId: 'independence', answer: 'Confirmed', evidenceRef: 'independence.pdf' });
       await completeAcceptanceReview(userId, driftEngagementId);
       await clearAcceptanceCase(partnerId, driftEngagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance complete; independence confirmed.' });
-      await acceptProposal(userId, driftEngagementId, driftProposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
-      await db.commercialProposal.update({ where: { id: driftProposal.id }, data: { clientResponse: { revision: 99, evidenceRef: 'tampered.pdf' } } });
+      // Legacy malformed acceptance fixture: the application never produces this staff-style response.
+      await db.commercialProposal.update({ where: { id: driftProposal.id }, data: { status: 'ACCEPTED', clientResponse: { revision: 99, evidenceRef: 'tampered.pdf' } } });
       const drifted = await driftLifecycle('ISSUE_ENGAGEMENT_LETTER').then(() => null, (error: unknown) => error);
       assert.match(drifted instanceof Error ? drifted.message : String(drifted), /does not match its presented revision/i, 'drifted acceptance evidence cannot produce a false clearance');
 

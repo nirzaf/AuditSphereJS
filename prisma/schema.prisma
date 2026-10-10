@@ -215,6 +215,10 @@ model PortalCredentialToken {
   purpose            String
   expiresAt          DateTime
   consumedAt         DateTime?
+  proposalId         String?           @db.Uuid
+  proposalRevision   Int?
+  termsDigest        String?           @db.VarChar(64)
+  proposal           CommercialProposal? @relation(fields: [proposalId], references: [id], onDelete: Restrict)
   createdAt          DateTime          @default(now())
   portalUser         PortalUser        @relation(fields: [portalUserId], references: [id], onDelete: Restrict)
   membership         PortalMembership? @relation(fields: [portalUserId, portalMembershipId], references: [portalUserId, id], onDelete: Restrict)
@@ -1137,6 +1141,7 @@ model CommercialProposal {
   createdAt         DateTime                @default(now())
   letter            EngagementLetterRecord?
   invoices          EngagementInvoice[]
+  acceptanceCredentials PortalCredentialToken[]
 
   @@unique([firmId, clientId, engagementId, id])
   @@index([engagementId, createdAt])

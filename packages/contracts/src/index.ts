@@ -588,6 +588,10 @@ export const acceptProposalSchema = z.object({
   expectedVersion: z.number().int().positive(),
   evidenceRef: z.string().trim().min(3).max(200),
 });
+export const issueProposalAcceptanceSchema = z.object({ idempotencyKey: z.uuid(), expectedVersion: z.number().int().positive(), portalMembershipId: z.uuid() }).strict();
+export const proposalAcceptanceCredentialSchema = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), expiresAt: z.iso.datetime(), proposalId: z.uuid(), revision: z.number().int().positive(), invitationToken: z.string().regex(/^[a-f0-9]{64}$/).optional(), invitationExpiresAt: z.iso.datetime().optional() });
+export const portalAcceptProposalSchema = z.object({ idempotencyKey: z.uuid(), token: z.string().regex(/^[a-f0-9]{64}$/), expectedVersion: z.number().int().positive() }).strict();
+export const portalProposalSchema = z.object({ id: z.uuid(), engagementId: z.uuid(), service: z.string(), periodStart: z.iso.date(), periodEnd: z.iso.date(), totalAmount: moneySchema, currency: z.string(), revision: z.number().int().positive(), status: z.enum(['PRESENTED', 'ACCEPTED']) });
 export const recordRiskClearanceSchema = z.object({ idempotencyKey: z.uuid(), reason: z.string().trim().min(10).max(1000) });
 export const commercialProposalViewSchema = z.object({
   id: z.uuid(), service: z.string().trim().min(3).max(200), periodStart: z.iso.date(), periodEnd: z.iso.date(),
@@ -700,7 +704,7 @@ export const auditCheckpointSchema = z.object({
 });
 export const auditVerificationSchema = z.object({ valid: z.boolean(), reason: z.string().trim().min(1).max(300).optional() });
 export const auditEventSchema = z.object({
-  id: z.uuid(), actorKind: z.enum(['USER', 'SERVICE']), actorId: z.uuid().nullable(), action: z.string().trim().min(1).max(200),
+  id: z.uuid(), actorKind: z.enum(['USER', 'SERVICE', 'PORTAL']), actorId: z.uuid().nullable(), action: z.string().trim().min(1).max(200),
   resourceType: z.string().max(120).nullable(), resourceId: z.string().max(200).nullable(),
   resourceVersion: z.number().int().nonnegative().nullable(), correlationId: z.string().max(64).nullable(),
   payload: z.json(), beforeState: z.json().nullable(), afterState: z.json().nullable(), createdAt: z.iso.datetime(),
@@ -838,6 +842,8 @@ export const contractSchemas = {
   mappingSuggestionItem: mappingSuggestionItemSchema, mappingSuggestions: mappingSuggestionsSchema,
   materiality: calculateMaterialitySchema, materialityApproval: approveMaterialitySchema, risk: createRiskSchema,
   commercialProposal: commercialProposalViewSchema, commercialProposals: commercialProposalsSchema,
+  issueProposalAcceptance: issueProposalAcceptanceSchema, proposalAcceptanceCredential: proposalAcceptanceCredentialSchema,
+  portalAcceptProposal: portalAcceptProposalSchema, portalProposal: portalProposalSchema,
   commercialProposalCreatedResult: commercialProposalCreatedResultSchema, commercialProposalActionResult: commercialProposalActionResultSchema,
   commercialDualKeyStatus: commercialDualKeyStatusSchema, commercialRiskClearanceResult: commercialRiskClearanceResultSchema,
   materialityAssessment: materialityAssessmentSchema, materialityCalculationResult: materialityCalculationResultSchema,

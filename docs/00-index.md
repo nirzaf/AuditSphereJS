@@ -29,15 +29,15 @@ The repository already has most layers. This pack adds only what is missing or w
 
 Status at `9b65b2b` (the baseline this index was written against) and as updated on 2026-10-08 (the current ledger, read from `docs/guides/13-execution-ledger.md`):
 
-| Ledger status | Tasks at `9b65b2b` | Tasks on 2026-10-08 | Note |
+| Ledger status | Tasks at `9b65b2b` | Tasks on 2026-10-09 | Note |
 | --- | --- | --- | --- |
 | DONE | 53 | 53 | Unchanged. Excluded (section 4). |
 | NOT_APPLICABLE | 4 | 4 | T152–T155, optional Microsoft 365. |
 | IN_REVIEW | 33 | 37 | +4: T045, T049 and T079 (moved from NOT_STARTED, as the baseline already noted) and T140 (implemented on 2026-10-08). |
-| IN_PROGRESS | 1 | 1 | T108 (its review-notes module moved to fieldwork under D21). |
-| NOT_STARTED | 80 | 76 | T140 left this group. |
+| IN_PROGRESS | 1 | 2 | T108 and T062 (client-only acceptance correction; document dispatch remains pending). |
+| NOT_STARTED | 80 | 75 | T140 and T062 left this group; T062 remains incomplete. |
 
-**Remaining: 114 tasks** (every status except DONE and NOT_APPLICABLE). Under the cards' own rule that every dependency must be DONE, only T140 could start on 2026-10-08. The other 76 NOT_STARTED tasks wait on IN_REVIEW dependencies, which need independent review. The owner decided on 2026-10-08 to hold dependent tasks until their dependencies close.
+**Remaining: 114 tasks** (every status except DONE and NOT_APPLICABLE). Under the cards' own rule that every dependency must be DONE, only T140 could start on 2026-10-08. The other 76 NOT_STARTED tasks wait on IN_REVIEW dependencies, which need independent review. D32 now permits corrective and CORE implementation against individually verified prerequisite contracts while preserving independent acceptance and full GATE dependencies. Missing prerequisite functionality still blocks reliance on it.
 
 Work done on 2026-10-08, recorded here so that agents skip it:
 
@@ -54,7 +54,7 @@ Work done on 2026-10-08, recorded here so that agents skip it:
 2. **Two FSLI vocabularies contradicted each other.** Partly corrected. The mapping contract no longer restricts codes to the seven labels; the approved taxonomy decides validity (`approveImportMapping` refuses codes outside it), and the statement split follows the taxonomy's `statementSection` (D22). Corrected on 2026-10-08 (STE-JS-01): the mapping screen in `apps/web/src/workspace.ts` offers the lines of the newest approved taxonomy version, the same version `approveImportMapping` checks when none is named. The seven labels are no longer offered. On 2026-10-09, the fresh-upload path was corrected to load those approved choices before rendering the editor; the live import browser journey now verifies the mapping/save path and the PREPARER finalization denial. The feature still needs independent review with T049 and the other mapping tasks.
 3. **Materiality ranges in code differed from CURRENT and D05.** Resolved by DN-07 / D19 (commit `d3e399b`): the four CURRENT benchmarks and ranges, profit before tax normalized only through recorded adjustments, and manager rounding limited to ±5 %.
 4. **Risk colours came from likelihood times magnitude, not from balance against TE and PM.** Corrected in code (STE-JS-03, 2026-10-08; see `docs/evidence/T087/handoff.md`). The colour follows CURRENT section 4 on the absolute published balance against the approved TE and PM, with significant or fraud-risk forced RED (D05). T087 remains IN_REVIEW until an independent reviewer accepts the change.
-5. **Staff can record client acceptance of a proposal, contrary to T062 AC3.** Open (STE-JS-04). `acceptProposal` still accepts a `COMMERCIAL_MANAGE` actor, and Key 1 reads that record. The correction needs the portal acceptance path designed in SPK-03, which is not built. Removing the staff path without it would make Key 1 unreachable, so it was not removed in this pass.
+5. **Staff-recorded proposal acceptance (STE-JS-04).** Corrected on 2026-10-09 under D32. The legacy staff endpoint refuses acceptance; the authenticated primary Managing Director uses a membership-bound, seven-day single-use credential, with exact commercial-terms verification and atomic portal audit/receipt. Key 1 and invoices require consumed credential evidence. T062 remains IN_PROGRESS because comprehensive T061 rendering and notification delivery attempts are still missing. See `docs/evidence/T062/handoff.md`.
 6. **The ledger lags the code.** Resolved for the cited tasks: T045, T049 and T079 are IN_REVIEW in the ledger, and T140 was added on 2026-10-08.
 7. **Session-only workspaces.** The planning gap is resolved: `docs/09-removal-guideline.md` maps all 25 preparation forms to owning tasks and their completion boundaries. The 25 screens remain session-only until those server-backed tasks, tests and review are complete (`docs/evidence/UI-MODULES.md`).
 8. **Placeholder gates in the lifecycle.** Open. Unconditional `fail(...)` calls remain in `packages/server/src/modules/governance/lifecycle.ts` for workprogram completion (T106), the SRM (T110), critical confirmations (T117) and the report opinion (T118). Each is removed by the task that supplies its evidence; those tasks are not done.

@@ -1,11 +1,12 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { db } from '../../platform/db.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { requireCapability, type Scope } from '../../platform/authorization.js';
 import { withUnitOfWork, type UnitOfWork } from '../../platform/unit-of-work.js';
-import { acceptProposalSchema, createProposalSchema, proposalActionSchema, recordRiskClearanceSchema } from '@auditsphere/contracts';
+import { createProposalSchema, proposalActionSchema, recordRiskClearanceSchema } from '@auditsphere/contracts';
+import { hasClientAcceptanceEvidence, proposalTerms } from './proposal-evidence.js';
 import type { PaginationQuery } from '@auditsphere/contracts';
 
 /**
@@ -77,7 +78,7 @@ export async function presentProposal(actorId: string, engagementId: string, pro
     const revision = proposal.revision;
     const changed = await tx.commercialProposal.updateMany({
       where: { id: proposalId, status: 'DRAFT', revision },
-      data: { status: 'PRESENTED', presentedSnapshot: { revision, totalAmount: proposal.totalAmount, service: proposal.service } },
+      data: { status: 'PRESENTED', presentedSnapshot: proposalTerms(proposal) },
     });
     if (changed.count !== 1) throw new ConflictException('Proposal changed; reload before presenting');
     await tx.auditEvent.create({ data: { engagementId, actorId, action: 'PROPOSAL_PRESENTED', payload: { proposalId, revision } } });
@@ -87,34 +88,8 @@ export async function presentProposal(actorId: string, engagementId: string, pro
   });
 }
 
-export async function acceptProposal(actorId: string, engagementId: string, proposalId: string, input: unknown, unitOfWork?: UnitOfWork) {
-  const body = parse(acceptProposalSchema, input);
-  const hash = digest(JSON.stringify({ engagementId, operation: 'ACCEPT_PROPOSAL', proposalId, body }));
-  const engagement = await loadEngagement(db, engagementId);
-  return withUnitOfWork(unitOfWork, async ({ client: tx }) => {
-    await tx.$queryRaw`SELECT id FROM "Engagement" WHERE id = ${engagementId}::uuid FOR UPDATE`;
-    const receipt = await tx.commandReceipt.findUnique({ where: { key: body.idempotencyKey } });
-    if (receipt) {
-      if (receipt.hash !== hash || receipt.actorId !== actorId || receipt.engagementId !== engagementId) throw new ConflictException('Idempotency key reused');
-      return receipt.result;
-    }
-    await requireCapability(tx, actorId, 'COMMERCIAL_MANAGE', scopeOf(engagement));
-    const proposal = await tx.commercialProposal.findFirst({ where: { id: proposalId, engagementId } });
-    if (!proposal) throw new NotFoundException('Proposal not found');
-    if (proposal.status !== 'PRESENTED' || !proposal.presentedSnapshot) throw new ConflictException('Only a presented proposal can be accepted');
-    if (body.expectedVersion !== proposal.revision) throw new ConflictException('Proposal changed; reload before accepting');
-    const snapshot = proposal.presentedSnapshot as { revision: number };
-    if (snapshot.revision !== proposal.revision) throw new ConflictException('The presented revision no longer matches the proposal');
-    const changed = await tx.commercialProposal.updateMany({
-      where: { id: proposalId, status: 'PRESENTED', revision: proposal.revision },
-      data: { status: 'ACCEPTED', clientResponse: { revision: proposal.revision, evidenceRef: body.evidenceRef, acceptedByActorId: actorId } },
-    });
-    if (changed.count !== 1) throw new ConflictException('Proposal changed; reload before accepting');
-    await tx.auditEvent.create({ data: { engagementId, actorId, action: 'PROPOSAL_ACCEPTED', payload: { proposalId, revision: proposal.revision, evidenceRef: body.evidenceRef } } });
-    const result = { id: proposalId, status: 'ACCEPTED', revision: proposal.revision };
-    await tx.commandReceipt.create({ data: { key: body.idempotencyKey, engagementId, actorId, hash, result } });
-    return result;
-  });
+export async function acceptProposal(..._args: unknown[]): Promise<never> {
+  throw new ForbiddenException('Only the authenticated client can accept a proposal through the client portal');
 }
 
 export async function recordRiskClearance(actorId: string, engagementId: string, input: unknown, unitOfWork?: UnitOfWork) {
@@ -142,13 +117,14 @@ export async function recordRiskClearance(actorId: string, engagementId: string,
 export async function dualKeyStatus(engagementId: string) {
   const engagement = await loadEngagement(db, engagementId);
   const [accepted, clearances, letter] = await Promise.all([
-    db.commercialProposal.findFirst({ where: { engagementId, status: 'ACCEPTED' }, orderBy: { createdAt: 'desc' } }),
+    db.commercialProposal.findFirst({ where: { engagementId, status: 'ACCEPTED' }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] }),
     db.riskClearance.findMany({ where: { engagementId }, orderBy: { clearedAt: 'desc' }, take: 5 }),
     db.engagementLetterRecord.findUnique({ where: { engagementId } }),
   ]);
+  const clientAccepted = accepted ? await hasClientAcceptanceEvidence(db, accepted) : false;
   return {
-    key1Status: accepted ? 'RECORDED' : 'PENDING',
-    key1ProposalId: accepted?.id ?? null,
+    key1Status: clientAccepted ? 'RECORDED' : 'PENDING',
+    key1ProposalId: clientAccepted ? accepted!.id : null,
     key2Status: clearances.length ? 'RECORDED' : 'PENDING',
     key2Reason: clearances[0]?.reason ?? null,
     letterIssued: Boolean(letter),

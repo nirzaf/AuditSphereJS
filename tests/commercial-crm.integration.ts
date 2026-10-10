@@ -1,3 +1,4 @@
+import { acceptPresentedProposalFixture } from './factories/proposal-client.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -24,7 +25,7 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
     const env = { ...process.env, NODE_ENV: 'test', SERVICE_NAME: 'integration', DATABASE_URL: uri, MIGRATION_DATABASE_URL: uri };
     execFileSync(process.execPath, [cli, 'migrate', 'deploy'], { env, timeout: 45_000, stdio: 'pipe' });
     Object.assign(process.env, env);
-    const { db, createClient, listClientDirectory, updateClientProfile, setClientParent, addContact, listContacts, resolveRecipient, createLead, listLeads, profileLead, advanceLeadToProposal, createProposal, presentProposal, acceptProposal, recordRiskClearance, applyLifecycleCommand, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase } = await import('@auditsphere/server');
+    const { db, createClient, listClientDirectory, updateClientProfile, setClientParent, addContact, listContacts, resolveRecipient, createLead, listLeads, profileLead, advanceLeadToProposal, createProposal, presentProposal, recordRiskClearance, applyLifecycleCommand, createAcceptanceCase, recordAcceptanceAnswer, completeAcceptanceReview, clearAcceptanceCase } = await import('@auditsphere/server');
     try {
       const firmId = randomUUID(), clientId = randomUUID(), engagementId = randomUUID(), userId = randomUUID(), partnerId = randomUUID();
       await db.user.createMany({ data: [
@@ -103,7 +104,7 @@ test('the commercial CRM directory, contact routing and lead pipeline enforce th
       await completeAcceptanceReview(partnerId, engagementId);
       // The cleared acceptance case is the Key 2 record; a clearance written outside the review would be stale.
       await clearAcceptanceCase(partner2Id, engagementId, { idempotencyKey: key(), reason: 'ISA 220 acceptance reviewed on NC-1 with evidence.' });
-      await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
+      await acceptPresentedProposalFixture(userId, engagementId, proposal.id);
       await lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId);
       const letterBefore = (await db.engagementLetterRecord.findUniqueOrThrow({ where: { engagementId } })).letterText;
       commercialClientProfileViewSchema.parse(await updateClientProfile(userId, engagementId, clientId, { idempotencyKey: key(), address: 'Doha, New Towers, Floor 9' }));

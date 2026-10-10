@@ -8,6 +8,25 @@ const create = async (screen: string, token = 'test-session') => {
   fixture.detectChanges(); await fixture.whenStable(); return fixture;
 };
 afterEach(() => { vi.unstubAllGlobals(); TestBed.resetTestingModule(); });
+it('issues a partner-authorized client code without recording staff acceptance and clears it on scope change', async () => {
+  const id = '11111111-1111-4111-8111-111111111111';
+  const membership = '22222222-2222-4222-8222-222222222222';
+  const request = vi.fn().mockImplementation(async (_url, init) => new Response(JSON.stringify(init?.method === 'POST'
+    ? { proposalId: id, token: 'a'.repeat(64), expiresAt: '2026-10-16T12:00:00.000Z', revision: 3 } : [])));
+  vi.stubGlobal('fetch', request);
+  const fixture = await create('proposals'); const view = fixture.componentInstance;
+  view.rows.set([{ id, status: 'PRESENTED', revision: 3 }]); fixture.detectChanges();
+  expect(fixture.nativeElement.textContent).not.toContain('Record client acceptance');
+  view.openAction({ id, status: 'PRESENTED', revision: 3 }, 'issueAcceptance');
+  view.actionForm.patchValue({ portalMembershipId: membership }); view.saveAction();
+  await vi.waitFor(() => expect(view.busy()).toBe(false));
+  const post = request.mock.calls.find(([, init]) => init?.method === 'POST');
+  expect(post?.[0]).toContain(`/commercial/proposals/${id}/acceptance-credential`);
+  expect(JSON.parse(String(post?.[1]?.body))).toMatchObject({ portalMembershipId: membership, expectedVersion: 3 });
+  expect(view.acceptanceCredential()?.token).toBe('a'.repeat(64));
+  fixture.componentRef.setInput('engagementId', 'engagement-b'); fixture.detectChanges(); await fixture.whenStable();
+  expect(view.acceptanceCredential()).toBeNull(); fixture.destroy();
+});
 it('mounts the real monthly firm statement through the Practice workspace catalog', async () => {
   const fixture = await create('profit-loss');
   expect(fixture.nativeElement.querySelector('practice-profit-loss')).not.toBeNull();

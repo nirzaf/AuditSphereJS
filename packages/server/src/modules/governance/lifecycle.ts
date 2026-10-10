@@ -7,6 +7,7 @@ import { lifecycleCommandSchema, lifecycleCommands, lifecycleTerminalOutcomes } 
 import { requireCapability, requireStaffRole, type StaffRole } from '../../platform/authorization.js';
 import { withUnitOfWork, type UnitOfWork } from '../../platform/unit-of-work.js';
 import { advanceInvoiceEvidence, finalInvoiceEvidence } from '../practice/public.js';
+import { hasClientAcceptanceEvidence } from '../commercial/public.js';
 
 const digest = (value: string) => createHash('sha256').update(value).digest('hex');
 
@@ -171,7 +172,7 @@ async function evaluateEvidence(client: LifecycleClient, engagement: { id: strin
     else values.presentedProposals = presented;
   }
   if (command === 'ISSUE_ENGAGEMENT_LETTER') {
-    const key1 = await client.commercialProposal.findFirst({ where: { engagementId: engagement.id, status: 'ACCEPTED', clientResponse: { not: Prisma.DbNull } } });
+    const key1 = await client.commercialProposal.findFirst({ where: { engagementId: engagement.id, status: 'ACCEPTED', clientResponse: { not: Prisma.DbNull } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] });
     if (!key1) fail('CLIENT_ACCEPTANCE_MISSING', 'Key 1 is missing: the client must accept the exact presented proposal revision with evidence');
     else values.key1ProposalId = key1.id;
     const key2 = await client.riskClearance.findFirst({ where: { engagementId: engagement.id }, orderBy: { clearedAt: 'desc' } });
@@ -193,7 +194,7 @@ async function evaluateEvidence(client: LifecycleClient, engagement: { id: strin
     if (key1) {
       const snapshot = key1.presentedSnapshot as { revision?: number } | null;
       const response = key1.clientResponse as { revision?: number } | null;
-      if (!snapshot || !response || snapshot.revision !== key1.revision || response.revision !== key1.revision) {
+      if (!snapshot || !response || snapshot.revision !== key1.revision || response.revision !== key1.revision || !await hasClientAcceptanceEvidence(client, key1)) {
         fail('CLIENT_ACCEPTANCE_STALE', 'The accepted proposal evidence does not match its presented revision; re-present and re-accept before issuing the letter');
       }
     }
@@ -307,7 +308,7 @@ export async function applyLifecycleCommand(engagementId: string, actorId: strin
     if (changed.count !== 1) throw new ConflictException('Engagement changed; reload before saving');
     if (definition.evidence === 'DUAL_KEY_CLEARED') {
       // The letter pins the exact accepted proposal and is immutable once written.
-      const key1 = await tx.commercialProposal.findFirstOrThrow({ where: { engagementId, status: 'ACCEPTED' }, orderBy: { createdAt: 'desc' } });
+      const key1 = await tx.commercialProposal.findFirstOrThrow({ where: { id: String(evidence.key1ProposalId), engagementId, status: 'ACCEPTED' } });
       const engagement = await tx.engagement.findUniqueOrThrow({ where: { id: engagementId }, include: { client: true } });
       const letterText = [
         `ENGAGEMENT LETTER (ISA 210) — ${engagement.name}`,

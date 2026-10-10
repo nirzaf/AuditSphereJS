@@ -1,5 +1,7 @@
 export { db, databasePool } from './platform/db.js';
 export { CommercialController } from './modules/commercial/commercial-controller.js';
+export { PortalProposalController } from './modules/commercial/portal-proposal-controller.js';
+export { issueProposalAcceptance, readPortalProposal, acceptPortalProposal } from './modules/commercial/proposal-acceptance.js';
 export { createProposal, presentProposal, acceptProposal, recordRiskClearance, dualKeyStatus, listProposals } from './modules/commercial/proposals.js';
 export { createClient, updateClientProfile, setClientParent, listClientDirectory } from './modules/commercial/directory.js';
 export { addContact, listContacts, resolveRecipient } from './modules/commercial/contacts.js';

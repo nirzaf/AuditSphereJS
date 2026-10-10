@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Param, Post, Query, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, Post, Query, SerializeOptions, StandardSchemaSerializerInterceptor, UseGuards, UseInterceptors, UsePipes, StandardSchemaValidationPipe } from '@nestjs/common';
 import { ApiBearerAuth, ApiCreatedResponse, ApiDefaultResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
   acceptProposalSchema, apiProblemSchema, commercialDualKeyStatusSchema, commercialProposalActionResultSchema,
@@ -21,6 +21,8 @@ import { createEngagement, engagementIdentity } from './engagements.js';
 import { InternalGuard } from '../../platform/auth.js';
 import { ReqActor } from '../../platform/request-actor.js';
 import { acceptProposal, createProposal, dualKeyStatus, listProposals, presentProposal, recordRiskClearance } from './proposals.js';
+import { issueProposalAcceptance } from './proposal-acceptance.js';
+import { issueProposalAcceptanceSchema, proposalAcceptanceCredentialSchema } from '@auditsphere/contracts';
 import { toCommercialDualKeyStatus, toCommercialProposalView, toCommercialRiskClearanceResult } from './commercial-response.js';
 
 @ApiTags('Commercial') @ApiBearerAuth() @ApiDefaultResponse({ standardSchema: apiProblemSchema }) @UseGuards(InternalGuard) @UsePipes(new StandardSchemaValidationPipe()) @UseInterceptors(StandardSchemaSerializerInterceptor)
@@ -45,6 +47,13 @@ export class CommercialController {
   @ApiCreatedResponse({ standardSchema: commercialProposalActionResultSchema })
   @SerializeOptions({ schema: commercialProposalActionResultSchema })
   accept(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: acceptProposalSchema }) body: unknown) { return acceptProposal(actorId, engagementId, id, body); }
+
+  @Post('proposals/:id/acceptance-credential') @Header('cache-control', 'no-store')
+  @ApiCreatedResponse({ standardSchema: proposalAcceptanceCredentialSchema })
+  @SerializeOptions({ schema: proposalAcceptanceCredentialSchema })
+  issueAcceptance(@ReqActor() actorId: string, @Param('engagementId') engagementId: string, @Param('id') id: string, @Body({ schema: issueProposalAcceptanceSchema }) body: unknown) {
+    return issueProposalAcceptance(actorId, engagementId, id, body);
+  }
 
   @Get('dual-key')
   @ApiOkResponse({ standardSchema: commercialDualKeyStatusSchema })

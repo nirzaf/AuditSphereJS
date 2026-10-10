@@ -442,5 +442,20 @@
     "professionalAcceptance": "PENDING: Qatar records and audit-methodology owners must confirm applicability and category mapping; tenant label behavior and licensing remain unverified.",
     "decisionRecord": "docs/decisions/D31-qatar-audit-record-retention.md",
     "supersedes": "D30"
-  }
+  },
+{
+  "id": "D32",
+  "title": "Implementation readiness against proven prerequisite contracts",
+  "sourceLines": "docs/00-index.md section 2; docs/BLOCKER-01-independent-review.md; docs/tasks/05-commercial/T062-proposal-dispatch.md",
+  "ambiguity": "Blanket review-state dependencies prevented correction of a confirmed staff/client authority defect even though its required contracts were implemented.",
+  "approvalEvidence": "User request on 2026-10-09 to resolve all blockers, complete them and take better decisions based on project objectives.",
+  "status": "APPROVED_IMPLEMENTATION_DEFAULT",
+  "ownerRole": "Repository owner",
+  "namedOwner": "Codex under user delegation for implementation sequencing",
+  "approvedBy": "User request to resolve all blockers and take better decisions based on project objectives",
+  "approvedAt": "2026-10-09",
+  "implementationDefault": "Allow scoped correctness corrections and CORE implementation against individually verified existing prerequisite contracts; keep missing prerequisite functionality and all GATE, independent-review, professional and release acceptance checks. Never equate IN_REVIEW with DONE or bulk-remove dependencies.",
+  "decisionRecord": "docs/decisions/D32-implementation-readiness.md",
+  "professionalAcceptance": "Separate and unchanged"
+}
 ]

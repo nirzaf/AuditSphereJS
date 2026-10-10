@@ -52,7 +52,8 @@ function setPortalCookies(reply: PortalReply, sessionToken: string, csrfToken: s
   reply.header('set-cookie', [
     `${PORTAL_SESSION_COOKIE}=${encodeURIComponent(sessionToken)}; Path=/api/v1/portal; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`,
     `${PORTAL_SOCKET_SESSION_COOKIE}=${encodeURIComponent(sessionToken)}; Path=/socket.io; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure}`,
-    `auditsphere_portal_csrf=${encodeURIComponent(csrfToken)}; Path=/api/v1/portal; SameSite=Strict; Max-Age=${maxAge}${secure}`,
+    `auditsphere_portal_csrf=${encodeURIComponent(csrfToken)}; Path=/; SameSite=Strict; Max-Age=${maxAge}${secure}`,
+    `auditsphere_portal_csrf=; Path=/api/v1/portal; SameSite=Strict; Max-Age=0${secure}`,
   ]);
 }
 
@@ -62,6 +63,7 @@ function clearPortalCookies(reply: PortalReply): void {
     `${PORTAL_SESSION_COOKIE}=; Path=/api/v1/portal; HttpOnly; SameSite=Lax; Max-Age=0${secure}`,
     `${PORTAL_SOCKET_SESSION_COOKIE}=; Path=/socket.io; HttpOnly; SameSite=Strict; Max-Age=0${secure}`,
     `auditsphere_portal_csrf=; Path=/api/v1/portal; SameSite=Strict; Max-Age=0${secure}`,
+    `auditsphere_portal_csrf=; Path=/; SameSite=Strict; Max-Age=0${secure}`,
   ]);
 }
 

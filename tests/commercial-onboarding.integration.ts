@@ -1,3 +1,4 @@
+import { acceptPresentedProposalFixture } from './factories/proposal-client.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -64,8 +65,8 @@ test('the commercial onboarding spine enforces the dual-key and advance gates en
       // INV-001: the letter is blocked with only one key, in either order.
       await assert.rejects(lifecycle('ISSUE_ENGAGEMENT_LETTER', billingId), /authorized staff role/i, 'billing staff cannot issue the partner engagement-letter gate');
       await assert.rejects(lifecycle('ISSUE_ENGAGEMENT_LETTER', partnerId), /Key 1 is missing/);
-      await assert.rejects(acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 2, evidenceRef: 'signed-acceptance.pdf' }), /Proposal changed; reload before accepting/);
-      await acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 1, evidenceRef: 'signed-acceptance.pdf' });
+      await assert.rejects(acceptProposal(userId, engagementId, proposal.id, { idempotencyKey: key(), expectedVersion: 2, evidenceRef: 'signed-acceptance.pdf' }), /Only the authenticated client/);
+      await acceptPresentedProposalFixture(userId, engagementId, proposal.id);
       await assert.rejects(lifecycle('ISSUE_ENGAGEMENT_LETTER', userId), /Key 2 is missing/);
       await assert.rejects(recordRiskClearance(userId, engagementId, { idempotencyKey: key(), reason: 'Partner clearance attempted without the authority.' }), /not granted/);
       await createAcceptanceCase(userId, engagementId, { idempotencyKey: key(), track: 'NEW_CLIENT' });

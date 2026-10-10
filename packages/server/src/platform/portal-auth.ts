@@ -1,6 +1,7 @@
 import { createHash, randomBytes, scrypt as nodeScrypt, timingSafeEqual } from 'node:crypto';
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { db } from './db.js';
+import { withUnitOfWork, type TransactionClient, type UnitOfWork } from './unit-of-work.js';
 
 const INVITATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const RESET_TTL_MS = 30 * 60 * 1000;
@@ -84,16 +85,28 @@ async function createSession(portalUserId: string, mustChangePassword: boolean, 
   return { sessionToken, csrfToken, expiresAt, mustChangePassword };
 }
 
-/** The only invitation issuer; callers must be the post-payment onboarding workflow. */
-export async function issuePortalInvitation(portalMembershipId: string, now = new Date()): Promise<{ token: string; expiresAt: Date }> {
-  const membership = await db.portalMembership.findUnique({
+async function invitationMembership(tx: TransactionClient, portalMembershipId: string, now: Date) {
+  const membership = await tx.portalMembership.findUnique({
     where: { id: portalMembershipId },
     include: { portalUser: { select: { active: true } } },
   });
-  if (!membership?.portalUser.active || !membership.advanceClearedAt || membership.releasedAt || membership.revokedAt || membership.archivedAt) throw credentialError();
+  if (!membership?.portalUser.active || membership.releasedAt || membership.revokedAt || membership.archivedAt) throw credentialError();
+  if (!membership.advanceClearedAt) {
+    const proposalCredential = await tx.portalCredentialToken.findFirst({ where: {
+      portalMembershipId: membership.id, portalUserId: membership.portalUserId, purpose: 'PROPOSAL_ACCEPTANCE',
+      consumedAt: null, expiresAt: { gt: now }, proposal: { status: 'PRESENTED' },
+    }, select: { id: true } });
+    if (!proposalCredential) throw credentialError();
+  }
+  return membership;
+}
+
+/** Payment activates operational access; a scoped proposal credential permits acceptance-only first login. */
+export async function issuePortalInvitation(portalMembershipId: string, now = new Date(), unitOfWork?: UnitOfWork): Promise<{ token: string; expiresAt: Date }> {
   const token = randomBytes(32).toString('hex');
   const expiresAt = new Date(now.getTime() + INVITATION_TTL_MS);
-  await db.$transaction(async (tx) => {
+  await withUnitOfWork(unitOfWork, async ({ client: tx }) => {
+    const membership = await invitationMembership(tx, portalMembershipId, now);
     await tx.portalCredentialToken.updateMany({
       where: { portalUserId: membership.portalUserId, portalMembershipId: membership.id, purpose: 'INVITATION', consumedAt: null },
       data: { consumedAt: now },
@@ -123,11 +136,12 @@ export async function redeemPortalInvitation(token: string, now = new Date()): P
       where: {
         tokenHash, purpose: 'INVITATION', consumedAt: null, expiresAt: { gt: now }, portalMembershipId: { not: null },
         portalUser: { active: true },
-        membership: { advanceClearedAt: { not: null }, releasedAt: null, archivedAt: null, revokedAt: null },
+        membership: { releasedAt: null, archivedAt: null, revokedAt: null },
       },
-      select: { id: true, portalUserId: true },
+      select: { id: true, portalUserId: true, portalMembershipId: true },
     });
     if (!credential) throw credentialError();
+    await invitationMembership(tx, credential.portalMembershipId!, now);
     const consumed = await tx.portalCredentialToken.updateMany({ where: { id: credential.id, consumedAt: null, expiresAt: { gt: now } }, data: { consumedAt: now } });
     if (consumed.count !== 1) throw credentialError();
     const sessionToken = randomBytes(32).toString('hex');

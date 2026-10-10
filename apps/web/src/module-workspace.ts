@@ -1,6 +1,6 @@
 import { Component, computed, effect, input, signal, inject, ElementRef, Injector, afterNextRender } from '@angular/core';
 import { FormControl, FormRecord, ReactiveFormsModule, Validators } from '@angular/forms';
-import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema, approveMappingSchema, createProposalSchema, acceptProposalSchema, issueInvoiceSchema, recordPaymentSchema, voidInvoiceSchema, recordRiskClearanceSchema } from '@auditsphere/contracts';
+import { calculateMaterialitySchema, createRiskSchema, raiseReviewNoteSchema, publishSchema, createAdjustmentJournalSchema, createTaxonomySchema, approveMappingSchema, createProposalSchema, issueProposalAcceptanceSchema, issueInvoiceSchema, recordPaymentSchema, voidInvoiceSchema, recordRiskClearanceSchema } from '@auditsphere/contracts';
 import { Practice } from './practice';
 import { PracticeRates } from './practice-rates';
 import { PracticeExpenses } from './practice-expenses';
@@ -11,6 +11,7 @@ import { authenticatedFetch } from './api-client';
 import { currentAccessToken } from './identity';
 import { LineEditor, type EditorRow } from './line-editor';
 import { moduleScreens, type ModuleScreen, type ScreenField } from './module-catalog';
+import { proposalAcceptanceCredentialSchema } from '@auditsphere/contracts';
 
 type RecordValue = Record<string, unknown>;
 type DraftValues = Record<string, string>;
@@ -49,8 +50,9 @@ export class ModuleWorkspace {
   readonly search = signal(''); readonly selected = signal<RecordValue | null>(null); readonly confirm = signal(false);
   readonly submitted=signal(false); readonly editorRevision=signal(0);
   readonly lines = signal<EditorRow[]>([]); readonly linesValid = signal(false);
-  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | 'presentProposal' | 'acceptProposal' | 'invoicePayment' | 'invoiceReceipt' | 'invoiceVoid' | null>(null);
+  readonly action = signal<'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | 'presentProposal' | 'issueAcceptance' | 'invoicePayment' | 'invoiceReceipt' | 'invoiceVoid' | null>(null);
   readonly suggestionSummary = signal<RecordValue>({});
+  readonly acceptanceCredential = signal<{ token: string; expiresAt: string; proposalId: string; invitationToken?: string } | null>(null);
   readonly suggestionRows = signal<RecordValue[]>([]);
   readonly suggestionsLoaded = signal(false);
   readonly actionFields = signal<ScreenField[]>([]);
@@ -69,7 +71,7 @@ export class ModuleWorkspace {
       const screen = this.screen(); const draftKey = `${this.engagementId()}:${screen.id}`;
       const identity = this.token(); this.entra();
       if (sessionIdentity !== identity) { sessionDrafts.clear(); sessionIdentity = identity; }
-      this.commandKey = crypto.randomUUID(); this.generation++; this.rows.set([]); this.state.set({}); this.loaded.set(false); this.error.set(''); this.message.set(''); this.busy.set(false); this.search.set(''); this.selected.set(null); this.action.set(null); this.confirm.set(false);
+      this.acceptanceCredential.set(null); this.commandKey = crypto.randomUUID(); this.generation++; this.rows.set([]); this.state.set({}); this.loaded.set(false); this.error.set(''); this.message.set(''); this.busy.set(false); this.search.set(''); this.selected.set(null); this.action.set(null); this.confirm.set(false);
       this.suggestionSummary.set({}); this.suggestionRows.set([]); this.suggestionsLoaded.set(false);
       const draft=sessionDrafts.get(draftKey);
       const saved:unknown=draft?.['__lines']?JSON.parse(draft['__lines']):[];
@@ -163,11 +165,11 @@ export class ModuleWorkspace {
       this.editorRevision.update(value=>value+1);this.submitted.set(false);this.message.set('Saved to the engagement.'); await this.read(generation);
     });
   }
-  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | 'presentProposal' | 'acceptProposal' | 'invoicePayment' | 'invoiceReceipt' | 'invoiceVoid') {
+  openAction(row: RecordValue, action: 'resolve' | 'assess' | 'clear' | 'approve' | 'transition' | 'post' | 'reverse' | 'owner' | 'taxonomyApprove' | 'mappingApprove' | 'suggestions' | 'presentProposal' | 'issueAcceptance' | 'invoicePayment' | 'invoiceReceipt' | 'invoiceVoid') {
     this.selected.set(row); this.action.set(action); this.error.set('');
     this.suggestionSummary.set({}); this.suggestionRows.set([]); this.suggestionsLoaded.set(false);
     this.commandKey=crypto.randomUUID();
-    const fields: ScreenField[] = action === 'mappingApprove' || action === 'suggestions' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'acceptProposal' ? [{key:'evidenceRef',label:'Client acceptance evidence reference',required:true}] : action === 'invoicePayment' ? [{key:'amount',label:'Payment amount · QAR',type:'decimal',required:true},{key:'reference',label:'Payment reference',required:true}] : action === 'invoiceVoid' ? [{key:'reason',label:'Reason for voiding this unpaid invoice',type:'textarea',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
+    const fields: ScreenField[] = action === 'mappingApprove' || action === 'suggestions' ? [{key:'importId',label:'Mapped import ID',required:true}] : action === 'issueAcceptance' ? [{key:'portalMembershipId',label:'Client portal membership ID',required:true}] : action === 'invoicePayment' ? [{key:'amount',label:'Payment amount · QAR',type:'decimal',required:true},{key:'reference',label:'Payment reference',required:true}] : action === 'invoiceVoid' ? [{key:'reason',label:'Reason for voiding this unpaid invoice',type:'textarea',required:true}] : action === 'owner' ? [{key:'ownerUserId',label:'Assigned owner user ID',required:true},{key:'ownerStaffingLevel',label:'Owner staffing level',type:'select',options:['StaffAssociate','SeniorAuditor','AuditManager','EngagementPartner'],required:true}] : action === 'transition' ? [{key:'command',label:'Permitted workflow command',type:'select',options:this.commands(),required:true},{key:'reason',label:'Transition reason',type:'textarea',required:true}] : action === 'resolve' ? [{key:'resolution',label:'Reviewer resolution',type:'textarea',required:true}] : action === 'clear' ? [{key:'note',label:'Partner clearance rationale',type:'textarea',required:true}] : action === 'assess' ? [
       {key:'accountCode',label:'Account code (published trial balance)',required:true},
       {key:'significant',label:'Significant risk',type:'select',options:['No','Yes'],required:true}, {key:'fraudRisk',label:'Fraud risk',type:'select',options:['No','Yes'],required:true},
     ] : [];
@@ -198,8 +200,8 @@ export class ModuleWorkspace {
       });
       return;
     }
-    if(action==='presentProposal') {path=`/commercial/proposals/${encodeURIComponent(id)}/present`;body={idempotencyKey:this.commandKey,expectedVersion:Number(row['version'] ?? 1)};if(!body['expectedVersion'])body['expectedVersion']=1;}
-    else if(action==='acceptProposal') {const parsed=acceptProposalSchema.safeParse({idempotencyKey:this.commandKey,expectedVersion:Number(row['version'] ?? 1),evidenceRef:values['evidenceRef']});if(!parsed.success){this.error.set('Record the client acceptance evidence reference.');return;}path=`/commercial/proposals/${encodeURIComponent(id)}/accept`;body=parsed.data;}
+    if(action==='presentProposal') {path=`/commercial/proposals/${encodeURIComponent(id)}/present`;body={idempotencyKey:this.commandKey,expectedVersion:Number(row['revision'] ?? row['version'] ?? 1)};}
+    else if(action==='issueAcceptance') {const parsed=issueProposalAcceptanceSchema.safeParse({idempotencyKey:this.commandKey,expectedVersion:Number(row['revision'] ?? row['version'] ?? 1),portalMembershipId:values['portalMembershipId']});if(!parsed.success){this.error.set('Provide the assigned client portal membership ID.');return;}path=`/commercial/proposals/${encodeURIComponent(id)}/acceptance-credential`;body=parsed.data;}
     else if(action==='invoicePayment') {const parsed=recordPaymentSchema.safeParse({idempotencyKey:this.commandKey,amount:values['amount'],reference:values['reference']});if(!parsed.success){this.error.set('Record a positive payment amount and reference.');return;}path=`/practice/invoices/${encodeURIComponent(id)}/payment`;body=parsed.data;}
     else if(action==='invoiceVoid') {const parsed=voidInvoiceSchema.safeParse({idempotencyKey:this.commandKey,reason:values['reason']});if(!parsed.success){this.error.set('Provide a reason of at least 10 characters to void this unpaid invoice.');return;}path=`/practice/invoices/${encodeURIComponent(id)}/void`;body=parsed.data;}
     else if(action==='invoiceReceipt') {path=`/practice/invoices/${encodeURIComponent(id)}/receipt`;body={idempotencyKey:this.commandKey};}
@@ -225,6 +227,13 @@ export class ModuleWorkspace {
     else if (action === 'approve') { path = `/materiality/${encodeURIComponent(id)}/approve`; body = {idempotencyKey:this.commandKey}; }
     else if (action === 'clear') { path = `/risks/${encodeURIComponent(id)}/assessments/${encodeURIComponent(String(row['currentAssessmentId']))}/clearance`; }
     else { path = `/risks/${encodeURIComponent(id)}/assessments`; body = {accountCode:values['accountCode'],significant:values['significant']==='Yes',fraudRisk:values['fraudRisk']==='Yes'}; }
-    void this.run(async generation => { await this.request(path,'POST',body); if (generation !== this.generation) return; this.action.set(null); this.selected.set(null); this.message.set('Decision recorded on the engagement.'); await this.read(generation); });
+    void this.run(async generation => {
+      const response = await this.request(path,'POST',body);
+      if (generation !== this.generation) return;
+      if (action === 'issueAcceptance') this.acceptanceCredential.set(proposalAcceptanceCredentialSchema.parse(response));
+      this.action.set(null); this.selected.set(null);
+      this.message.set(action === 'issueAcceptance' ? 'Client acceptance code issued. Acceptance is still pending the client decision.' : 'Decision recorded on the engagement.');
+      await this.read(generation);
+    });
   }
 }

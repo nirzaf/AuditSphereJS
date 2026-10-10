@@ -3,12 +3,13 @@ import { NgOptimizedImage } from '@angular/common';
 import { FormField, email, form, minLength, required, submit } from '@angular/forms/signals';
 import { firstValueFrom } from 'rxjs';
 import { PortalAuthClient } from './portal-auth-client.js';
+import { PortalProposal } from './portal-proposal.js';
 
 type PortalMode = 'login' | 'invitation' | 'reset-token' | 'first-password' | 'signed-in';
 
 @Component({
   selector: 'client-portal',
-  imports: [FormField, NgOptimizedImage],
+  imports: [FormField, NgOptimizedImage, PortalProposal],
   template: `
     <a class="skip-link" href="#portal-content">Skip to client portal</a>
     <main class="portal-layout" id="portal-content" tabindex="-1">
@@ -68,6 +69,7 @@ type PortalMode = 'login' | 'invitation' | 'reset-token' | 'first-password' | 's
             <p>{{ identity()?.email }}</p>
             <p>Your secure session is active. Engagement requests appear here when your workspace is ready.</p>
           </div>
+          <portal-proposal />
           <button class="secondary" type="button" [disabled]="busy()" (click)="signOut()">Sign out</button>
         }
 

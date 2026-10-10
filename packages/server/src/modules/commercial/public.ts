@@ -1,4 +1,6 @@
 import type { Prisma } from '../../generated/prisma/client.js';
+import { hasClientAcceptanceEvidence } from './proposal-evidence.js';
+export { hasClientAcceptanceEvidence } from './proposal-evidence.js';
 
 export type AcceptedInvoiceContract = {
   proposalId: string;
@@ -24,7 +26,7 @@ export async function acceptedInvoiceContract(
     include: { proposal: true },
   });
   const proposal = letter?.proposal;
-  if (!proposal || proposal.status !== 'ACCEPTED'
+  if (!proposal || proposal.status !== 'ACCEPTED' || !await hasClientAcceptanceEvidence(tx, proposal)
     || revisionOf(proposal.presentedSnapshot) !== proposal.revision
     || revisionOf(proposal.clientResponse) !== proposal.revision) return null;
   return {

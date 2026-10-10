@@ -116,6 +116,7 @@ jobs:
             tests/adjustments.integration.ts
             tests/audit-write.integration.ts
             tests/commercial-onboarding.integration.ts
+            apps/api/tests/proposal-acceptance.integration.ts
             tests/billing-gates.integration.ts
             tests/commercial-crm.integration.ts
             tests/acceptance-cases.integration.ts
